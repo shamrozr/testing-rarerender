@@ -1,9 +1,9 @@
-// Brand Directory SPA — nav-first revamp with TopOrder + deep links
+// Brand Directory SPA — Fixed nav-first revamp with proper multi-level handling
 
 const STATE = {
   data: null,
   brand: null,
-  path: [],          // array of labels, e.g., ['BAGS','GUCCI']
+  path: [],          // array of labels, e.g., ['BAGS','FENDI','FENDI TOTES']
   items: [],
   batchSize: 20,
   rendered: 0,
@@ -39,6 +39,7 @@ function applyTheme(theme) {
   root.style.setProperty('--color-bg', theme.colors.bg || '#FEFDFB');
   document.querySelector('meta[name="theme-color"]').setAttribute('content', theme.colors.bg || '#000');
 }
+
 function initialsFor(name) {
   const p = (name || '').split(/\s+/).filter(Boolean);
   const a = p[0]?.[0] || '', b = p.length > 1 ? p[p.length-1][0] : (p[0]?.[1] || '');
@@ -116,32 +117,65 @@ async function loadData() {
   renderPath();
 }
 
+// FIXED: Better item listing that handles all node types correctly
 function listItemsAtPath(path) {
+  console.log('🔍 Listing items at path:', path);
+  
   // Walk to the node for the current path
   let node = STATE.data.catalog.tree;
   for (const segment of path) {
-    if (!node[segment]) return [];
+    if (!node[segment]) {
+      console.log('❌ Segment not found:', segment, 'in', Object.keys(node));
+      return [];
+    }
     node = node[segment];
   }
+
+  console.log('📁 Found node:', { 
+    isProduct: node.isProduct, 
+    hasChildren: !!node.children,
+    childrenCount: Object.keys(node.children || {}).length 
+  });
 
   const isRoot = path.length === 0;
   // At root, the container is the tree object itself
   const container = isRoot ? node : (node.children || {});
   const items = [];
 
+  console.log('🔄 Processing container with keys:', Object.keys(container));
+
   for (const key of Object.keys(container)) {
     const v = container[key];
-    items.push({
+    
+    // FIXED: Better logic to determine what type of item this is
+    const hasChildren = !!v.children && Object.keys(v.children).length > 0;
+    const isProduct = !!v.isProduct;
+    
+    // Calculate count properly
+    let count = 0;
+    if (isProduct) {
+      count = 1;
+    } else if (v.count) {
+      count = v.count;
+    } else if (hasChildren) {
+      // Recursively count children
+      count = countItemsInNode(v);
+    }
+
+    const item = {
       key,
       label: key,
-      count: v.count || (v.isProduct ? 1 : 0),
+      count: count,
       thumbnail: v.thumbnail || '',
-      isProduct: !!v.isProduct,
+      isProduct: isProduct,
       driveLink: v.driveLink || '',
-      hasChildren: !!v.children && Object.keys(v.children).length > 0,
+      hasChildren: hasChildren,
       // used only at root
       topOrder: typeof v.topOrder !== 'undefined' ? v.topOrder : Number.POSITIVE_INFINITY,
-    });
+    };
+
+    console.log(`📦 Item: ${key}, isProduct: ${isProduct}, hasChildren: ${hasChildren}, count: ${count}`);
+    items.push(item);
   }
 
   // Sort: root uses TopOrder; deeper levels use folder-first -> count -> A→Z
@@ -158,9 +192,22 @@ function listItemsAtPath(path) {
       a.label.localeCompare(b.label)
     );
   }
+
+  console.log(`✅ Found ${items.length} items at path: ${path.join('/')}`);
   return items;
 }
 
+// FIXED: Helper function to count items in a node recursively
+function countItemsInNode(node) {
+  if (node.isProduct) return 1;
+  if (!node.children) return 0;
+  
+  let total = 0;
+  for (const child of Object.values(node.children)) {
+    total += countItemsInNode(child);
+  }
+  return total;
+}
 
 function updateURL() {
   if (STATE.isPop) return; // don't push during popstate
@@ -172,6 +219,8 @@ function updateURL() {
 }
 
 function renderPath() {
+  console.log('🎨 Rendering path:', STATE.path);
+  
   els.grid.setAttribute('aria-busy', 'true');
   els.grid.innerHTML = '';
   STATE.items = listItemsAtPath(STATE.path);
@@ -180,10 +229,24 @@ function renderPath() {
   const label = STATE.path.length ? STATE.path[STATE.path.length-1] : 'All';
   els.levelCount.textContent = `${visibleCountText()} in ${label}`;
   renderBreadcrumb();
-  renderNextBatch();
-  setupInfiniteScroll();
+  
+  // FIXED: Add message when no items found
+  if (STATE.items.length === 0) {
+    els.grid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; opacity: 0.6;">
+        <p>No items found in this category.</p>
+        <p>This might be a folder that only contains subfolders.</p>
+      </div>
+    `;
+    els.grid.setAttribute('aria-busy', 'false');
+  } else {
+    renderNextBatch();
+    setupInfiniteScroll();
+  }
+  
   updateURL();
 }
+
 function visibleCountText() {
   const tree = STATE.data.catalog.tree;
   if (STATE.path.length === 0) {
@@ -192,10 +255,12 @@ function visibleCountText() {
     return sum.toLocaleString();
   }
   let node = tree;
-  for (const seg of STATE.path) node = node[seg];
+  for (const seg of STATE.path) {
+    if (!node[seg]) return '0';
+    node = node[seg];
+  }
   return (node?.count || 0).toLocaleString();
 }
-
 
 function renderNextBatch() {
   const start = STATE.rendered;
@@ -222,24 +287,64 @@ function cardEl(item) {
 
   const img = document.createElement('img');
   img.className = 'card-thumb';
-  if (item.thumbnail) { img.loading = 'lazy'; img.decoding = 'async'; img.alt = `${item.label} thumbnail`; img.src = item.thumbnail; }
-  else { img.alt = ''; }
+  if (item.thumbnail) { 
+    img.loading = 'lazy'; 
+    img.decoding = 'async'; 
+    img.alt = `${item.label} thumbnail`; 
+    img.src = item.thumbnail;
+    
+    // FIXED: Add error handling for missing images
+    img.onerror = () => {
+      img.src = '/thumbs/_placeholder.webp'; // fallback to placeholder
+      img.onerror = null; // prevent infinite loop
+    };
+  } else { 
+    img.alt = ''; 
+    img.src = '/thumbs/_placeholder.webp'; // default placeholder
+  }
 
-  const body = document.createElement('div'); body.className = 'card-body';
-  const title = document.createElement('h3'); title.className = 'card-title'; title.textContent = item.label;
-  const right = document.createElement('div'); right.className = 'card-count'; right.textContent = item.hasChildren ? `${item.count}` : '';
-  body.appendChild(title); body.appendChild(right);
-  card.appendChild(img); card.appendChild(body);
+  const body = document.createElement('div'); 
+  body.className = 'card-body';
+  
+  const title = document.createElement('h3'); 
+  title.className = 'card-title'; 
+  title.textContent = item.label;
+  
+  const right = document.createElement('div'); 
+  right.className = 'card-count'; 
+  
+  // FIXED: Show count for folders, empty for products
+  if (item.hasChildren && item.count > 0) {
+    right.textContent = `${item.count}`;
+  } else if (item.isProduct) {
+    right.textContent = ''; // Products don't show count
+  } else {
+    right.textContent = '0'; // Empty folders show 0
+  }
+  
+  body.appendChild(title); 
+  body.appendChild(right);
+  card.appendChild(img); 
+  card.appendChild(body);
 
   const go = () => {
+    console.log('🖱️ Clicked item:', item.label, { isProduct: item.isProduct, hasChildren: item.hasChildren });
+    
     if (item.isProduct && item.driveLink) {
+      console.log('🔗 Opening product drive link:', item.driveLink);
       trackClick(STATE.brand, [...STATE.path, item.label].join('/'));
       window.location.href = item.driveLink;
-    } else {
+    } else if (item.hasChildren) {
+      console.log('📁 Navigating to folder:', [...STATE.path, item.label]);
       STATE.path = [...STATE.path, item.label];
       renderPath();
+    } else {
+      console.log('⚠️ Item has no action available');
+      // Item is neither a product with drive link nor has children
+      // This shouldn't happen in a well-formed catalog
     }
   };
+  
   card.addEventListener('click', go);
   card.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 
@@ -256,7 +361,12 @@ function cardEl(item) {
 
 function preloadChildrenThumbs(path) {
   const children = listItemsAtPath(path).slice(0, CONFIG.HOVER_PRELOAD_CHILDREN);
-  for (const c of children) { if (!c.thumbnail) continue; const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = c.thumbnail; }
+  for (const c of children) { 
+    if (!c.thumbnail) continue; 
+    const i = new Image(); 
+    i.referrerPolicy = 'no-referrer'; 
+    i.src = c.thumbnail; 
+  }
 }
 
 function renderBreadcrumb() {
@@ -307,6 +417,6 @@ window.addEventListener('popstate', () => {
 });
 
 loadData().catch(err => {
-  console.error(err);
+  console.error('💥 Failed to load catalog:', err);
   els.grid.innerHTML = `<p>Failed to load catalog. Please try again later.</p>`;
 });
