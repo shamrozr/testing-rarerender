@@ -1,11 +1,10 @@
-// Brand Directory SPA — vanilla JS (no frameworks)
-// Requirements covered: brand theming, dynamic counts, progressive loading, hover prediction, WhatsApp FAB, breadcrumb
+// Brand Directory SPA — robust brand matching + safe defaults
 
 const STATE = {
   data: null,
   brand: null,
-  path: [], // e.g., ['BAGS', 'GUCCI']
-  items: [], // current level items (categories or products)
+  path: [],
+  items: [],
   batchSize: 20,
   rendered: 0,
   hoverTimer: null,
@@ -23,17 +22,14 @@ const els = {
 };
 
 const CONFIG = {
-  // Optional: Set to your Worker pixel endpoint (e.g., https://pixels.yourdomain.workers.dev/p)
   ANALYTICS_PIXEL_URL: '',
   HOVER_PRELOAD_CHILDREN: 8,
   HOVER_DELAY_MS: 300,
 };
 
-function getQueryBrand(defaultSlug) {
-  const url = new URL(window.location.href);
-  const slug = url.searchParams.get('brand');
-  return slug || defaultSlug;
-}
+const waRe = /^https:\/\/wa\.me\/\d+$/;
+
+const norm = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ''); // case/space/hyphen insensitive
 
 function applyTheme(theme) {
   const root = document.documentElement;
@@ -45,39 +41,57 @@ function applyTheme(theme) {
 }
 
 function initialsFor(name) {
-  const parts = name.split(/\s+/).filter(Boolean);
+  const parts = (name || '').split(/\s+/).filter(Boolean);
   const first = parts[0]?.[0] || '';
   const last = parts.length > 1 ? parts[parts.length - 1][0] : (parts[0]?.[1] || '');
   return (first + last).toUpperCase();
 }
 
 async function loadData() {
-  const res = await fetch('/data.json', { cache: 'no-store' });
+  // no-store + timestamp to avoid stale cache
+  const res = await fetch('/data.json?v=' + Date.now(), { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to load data.json');
   const data = await res.json();
   STATE.data = data;
 
+  // figure out which brand to use (case/format-insensitive)
+  const brandParamRaw = new URL(window.location.href).searchParams.get('brand') || '';
   const brandSlugs = Object.keys(data.brands);
-  const chosen = getQueryBrand(brandSlugs[0]);
-  STATE.brand = data.brands[chosen] ? chosen : brandSlugs[0];
-  const theme = data.brands[STATE.brand];
+  const bySlugNorm = {};
+  const byNameNorm = {};
+  for (const slug of brandSlugs) {
+    bySlugNorm[norm(slug)] = slug;
+    byNameNorm[norm(data.brands[slug].name)] = slug;
+  }
+  const wanted = norm(brandParamRaw);
+  const resolvedSlug = bySlugNorm[wanted] || byNameNorm[wanted] || brandSlugs[0];
 
-  // Theming & brand meta
-applyTheme(theme);
-els.brandName.textContent = theme.name;
-els.brandLogo.textContent = initialsFor(theme.name);
+  STATE.brand = resolvedSlug;
+  const theme = data.brands[resolvedSlug];
 
-// Show/hide WhatsApp FAB depending on data
-const validWA = theme.whatsapp && /^https:\/\/wa\.me\/\d+$/.test(theme.whatsapp);
-if (validWA) {
-  els.waFab.href = theme.whatsapp;
-  els.waFab.style.display = 'grid';
-} else {
-  els.waFab.style.display = 'none';
+  // Theme + header
+  applyTheme(theme);
+  els.brandName.textContent = theme.name;
+  els.brandLogo.textContent = initialsFor(theme.name);
+
+  // WhatsApp FAB (hide if not present/invalid)
+  const validWA = theme.whatsapp && waRe.test(theme.whatsapp);
+  els.waFab.style.display = validWA ? 'grid' : 'none';
+  if (validWA) els.waFab.href = theme.whatsapp;
+
+  // Total products (from whole catalog)
+  els.total.textContent = (data.catalog?.totalProducts || 0).toLocaleString();
+
+  // Start path at default category if valid; else first top-level category; else root
+  const topKeys = Object.keys(data.catalog?.tree || {});
+  const desiredCat = (theme.defaultCategory || '').toString().toUpperCase();
+  const startCat = topKeys.includes(desiredCat) ? desiredCat : (topKeys[0] || '');
+  STATE.path = startCat ? [startCat] : [];
+
+  renderPath();
 }
 
 function listItemsAtPath(path) {
-  // Returns array of { key, label, count, thumbnail, isProduct, driveLink, hasChildren }
   let node = STATE.data.catalog.tree;
   for (const segment of path) {
     if (!node[segment]) return [];
@@ -97,8 +111,11 @@ function listItemsAtPath(path) {
       hasChildren: !!v.children && Object.keys(v.children).length > 0,
     });
   }
-  // Sort by: folders first (desc count), then products by label
-  items.sort((a,b) => (Number(b.hasChildren) - Number(a.hasChildren)) || (b.count - a.count) || a.label.localeCompare(b.label));
+  items.sort((a,b) =>
+    (Number(b.hasChildren) - Number(a.hasChildren)) ||
+    (b.count - a.count) ||
+    a.label.localeCompare(b.label)
+  );
   return items;
 }
 
@@ -114,7 +131,6 @@ function renderPath() {
 }
 
 function visibleCountText() {
-  // Count products under current node
   let node = STATE.data.catalog.tree;
   for (const seg of STATE.path) node = node[seg];
   return (node?.count || 0).toLocaleString();
@@ -123,10 +139,7 @@ function visibleCountText() {
 function renderNextBatch() {
   const start = STATE.rendered;
   const end = Math.min(start + STATE.batchSize, STATE.items.length);
-  for (let i = start; i < end; i++) {
-    const item = STATE.items[i];
-    els.grid.appendChild(cardEl(item));
-  }
+  for (let i = start; i < end; i++) els.grid.appendChild(cardEl(STATE.items[i]));
   STATE.rendered = end;
   els.grid.setAttribute('aria-busy', 'false');
 }
@@ -135,11 +148,7 @@ function setupInfiniteScroll() {
   if (STATE.io) STATE.io.disconnect();
   STATE.io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
-      if (e.isIntersecting) {
-        if (STATE.rendered < STATE.items.length) {
-          renderNextBatch();
-        }
-      }
+      if (e.isIntersecting && STATE.rendered < STATE.items.length) renderNextBatch();
     });
   }, { rootMargin: '1200px 0px 800px 0px' });
   STATE.io.observe(els.sentinel);
@@ -161,29 +170,15 @@ function cardEl(item) {
     img.alt = '';
   }
 
-  const body = document.createElement('div');
-  body.className = 'card-body';
+  const body = document.createElement('div'); body.className = 'card-body';
+  const title = document.createElement('h3'); title.className = 'card-title'; title.textContent = item.label;
+  const right = document.createElement('div'); right.className = 'card-count'; right.textContent = item.hasChildren ? `${item.count}` : '';
 
-  const title = document.createElement('h3');
-  title.className = 'card-title';
-  title.textContent = item.label;
-
-  const right = document.createElement('div');
-  right.className = 'card-count';
-  right.textContent = item.hasChildren ? `${item.count}` : '';
-
-  body.appendChild(title);
-  body.appendChild(right);
-
-  card.appendChild(img);
-  card.appendChild(body);
+  body.appendChild(title); body.appendChild(right);
+  card.appendChild(img); card.appendChild(body);
 
   const go = () => {
     if (item.isProduct && item.driveLink) {
-      trackClick(STATE.brand, [...STATE.path, item.label].join('/'));
-      window.location.href = item.driveLink;
-    } else if (!item.isProduct && !item.hasChildren && item.driveLink) {
-      // empty folder that carries a drive link → open it
       trackClick(STATE.brand, [...STATE.path, item.label].join('/'));
       window.location.href = item.driveLink;
     } else {
@@ -191,11 +186,10 @@ function cardEl(item) {
       renderPath();
     }
   };
-
   card.addEventListener('click', go);
   card.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 
-  // Hover prediction: preload next level images
+  // Hover prediction (optional)
   card.addEventListener('mouseenter', () => {
     if (!item.hasChildren) return;
     clearTimeout(STATE.hoverTimer);
@@ -210,9 +204,7 @@ function preloadChildrenThumbs(path) {
   const children = listItemsAtPath(path).slice(0, CONFIG.HOVER_PRELOAD_CHILDREN);
   for (const c of children) {
     if (!c.thumbnail) continue;
-    const i = new Image();
-    i.referrerPolicy = 'no-referrer';
-    i.src = c.thumbnail;
+    const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = c.thumbnail;
   }
 }
 
@@ -220,10 +212,8 @@ function renderBreadcrumb() {
   const parts = STATE.path;
   const frag = document.createDocumentFragment();
 
-  // root
   const rootA = document.createElement('a');
-  rootA.href = '#';
-  rootA.textContent = 'All';
+  rootA.href = '#'; rootA.textContent = 'All';
   rootA.addEventListener('click', (e) => { e.preventDefault(); STATE.path = []; renderPath(); });
   frag.appendChild(rootA);
 
@@ -231,12 +221,8 @@ function renderBreadcrumb() {
     const isLast = idx === parts.length - 1;
     const el = document.createElement(isLast ? 'span' : 'a');
     el.textContent = p;
-    if (isLast) {
-      el.className = 'current';
-    } else {
-      el.href = '#';
-      el.addEventListener('click', (e) => { e.preventDefault(); STATE.path = parts.slice(0, idx + 1); renderPath(); });
-    }
+    if (isLast) el.className = 'current';
+    else { el.href = '#'; el.addEventListener('click', (e) => { e.preventDefault(); STATE.path = parts.slice(0, idx + 1); renderPath(); }); }
     frag.appendChild(el);
   });
 
@@ -252,13 +238,9 @@ function trackClick(slug, productPath) {
   u.searchParams.set('product_path', productPath);
   u.searchParams.set('r', Math.random().toString(36).slice(2));
   const img = document.createElement('img');
-  img.src = u.toString();
-  img.alt = '';
-  img.width = img.height = 1;
-  img.style.position = 'absolute';
-  img.style.opacity = '0';
-  document.body.appendChild(img);
-  setTimeout(() => img.remove(), 2000);
+  img.src = u.toString(); img.alt = ''; img.width = img.height = 1;
+  img.style.position = 'absolute'; img.style.opacity = '0';
+  document.body.appendChild(img); setTimeout(() => img.remove(), 2000);
 }
 
 loadData().catch(err => {
