@@ -1,0 +1,19 @@
+{
+  "brands": {
+    "sulinabags": {
+      "name": "Sulina Bags",
+      "colors": {
+        "primary": "#C9A961",
+        "accent": "#E8D5A3",
+        "text": "#2C2926",
+        "bg": "#FEFDFB"
+      },
+      "whatsapp": "https://wa.me/923001234567",
+      "defaultCategory": "BAGS"
+    }
+  },
+  "catalog": {
+    "totalProducts": 0,
+    "tree": {}
+  }
+}
