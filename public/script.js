@@ -1,4 +1,4 @@
-// Brand Directory SPA — Working version with basic fixes
+// Brand Directory SPA — Simple case-insensitive fix
 
 const STATE = {
   data: null,
@@ -29,7 +29,6 @@ const CONFIG = {
 };
 
 const waRe = /^https:\/\/wa\.me\/\d+$/;
-const norm = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 function applyTheme(theme) {
   const root = document.documentElement;
@@ -49,44 +48,56 @@ function initialsFor(name) {
 function resolveBrandSlug(brands, raw) {
   const slugs = Object.keys(brands);
   if (!raw) return slugs[0];
-  const target = norm(raw);
-  const bySlug = {}, byName = {};
-  for (const s of slugs) { bySlug[norm(s)] = s; byName[norm(brands[s].name)] = s; }
-  return bySlug[target] || byName[target] || slugs[0];
+  const target = raw.toLowerCase();
+  
+  for (const s of slugs) {
+    if (s.toLowerCase() === target || brands[s].name.toLowerCase() === target) {
+      return s;
+    }
+  }
+  return slugs[0];
 }
 
+// SUPER SIMPLE: Case-insensitive key finder
+function findKeyIgnoreCase(obj, searchKey) {
+  if (!searchKey) return null;
+  const searchLower = searchKey.toLowerCase();
+  
+  for (const key of Object.keys(obj)) {
+    if (key.toLowerCase() === searchLower) {
+      return key; // Return the actual key from the object
+    }
+  }
+  return null;
+}
+
+// SIMPLIFIED: Path resolution that ignores case
 function resolvePathFromParam(tree, rawPath) {
   if (!rawPath) return [];
-  const parts = rawPath.replace(/\\/g,'/').split('/').filter(Boolean);
-  let node = tree, acc = [];
   
-  for (let i = 0; i < parts.length; i++) {
-    const wanted = norm(i === 0 ? parts[i].toUpperCase() : parts[i]);
-    const keys = Object.keys(node);
-    let hit = null;
-    
-    // Try exact match first
-    for (const k of keys) {
-      if (norm(k) === wanted) { 
-        hit = k; 
-        break; 
-      }
-    }
-    
-    if (!hit) {
-      console.log(`Path segment "${parts[i]}" not found. Available: ${keys.join(', ')}`);
+  const parts = rawPath.replace(/\\/g,'/').split('/').filter(Boolean);
+  let node = tree;
+  const resolvedPath = [];
+  
+  for (const part of parts) {
+    const actualKey = findKeyIgnoreCase(node, part);
+    if (!actualKey) {
+      console.log(`❌ "${part}" not found in:`, Object.keys(node));
       break;
     }
     
-    acc.push(hit);
-    const n = node[hit];
-    if (n?.children) {
-      node = n.children;
+    resolvedPath.push(actualKey);
+    node = node[actualKey];
+    
+    if (node.children) {
+      node = node.children;
     } else {
       break;
     }
   }
-  return acc;
+  
+  console.log(`🔍 Resolved "${rawPath}" → [${resolvedPath.join(', ')}]`);
+  return resolvedPath;
 }
 
 async function loadData() {
@@ -96,10 +107,6 @@ async function loadData() {
     
     const data = await res.json();
     STATE.data = data;
-    
-    // Debug: Log available brands and tree structure
-    console.log('Available brands:', Object.keys(data.brands || {}));
-    console.log('Tree root keys:', Object.keys(data.catalog?.tree || {}));
 
     // brand resolution
     const u = new URL(location.href);
@@ -109,7 +116,7 @@ async function loadData() {
     const theme = data.brands[slug];
 
     if (!theme) {
-      throw new Error(`Brand "${slug}" not found in data`);
+      throw new Error(`Brand "${slug}" not found`);
     }
 
     // header
@@ -123,7 +130,7 @@ async function loadData() {
     // totals
     els.total.textContent = (data.catalog?.totalProducts || 0).toLocaleString();
 
-    // path from URL
+    // FIXED: Case-insensitive path resolution
     const pathParam = u.searchParams.get('path') || '';
     const startPath = resolvePathFromParam(data.catalog.tree, pathParam);
     STATE.path = startPath;
@@ -136,7 +143,6 @@ async function loadData() {
       <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
         <h3>Unable to load catalog</h3>
         <p>Error: ${err.message}</p>
-        <p>Please check your internet connection and try again.</p>
         <button onclick="location.reload()">Reload Page</button>
       </div>
     `;
@@ -144,56 +150,41 @@ async function loadData() {
 }
 
 function listItemsAtPath(path) {
-  // Walk to the node for the current path
   let node = STATE.data.catalog.tree;
   
+  // Navigate to the target node
   for (const segment of path) {
     if (!node[segment]) {
-      console.log(`Segment "${segment}" not found in:`, Object.keys(node));
+      console.log(`❌ Segment "${segment}" not found`);
       return [];
     }
     node = node[segment];
-    if (node.children) {
-      // For next iteration, if there are more segments
+    if (path.indexOf(segment) < path.length - 1 && node.children) {
+      node = node.children;
     }
   }
 
-  // Determine what container to use
-  const isRoot = path.length === 0;
+  // Determine what to list
   let container;
-  
-  if (isRoot) {
-    container = node; // At root, node is the tree itself
+  if (path.length === 0) {
+    container = node; // Root level
   } else if (node.children) {
-    container = node.children; // Use children if available
-  } else if (node.isProduct) {
-    return []; // Products have no children to list
+    container = node.children; // Has subcategories
   } else {
-    // This might be an intermediate node - let's see what we can do
-    container = node;
+    return []; // Dead end
   }
 
   const items = [];
-
   for (const key of Object.keys(container)) {
     const v = container[key];
     
-    // Determine item properties
     const hasChildren = !!(v.children && Object.keys(v.children).length > 0);
     const isProduct = !!v.isProduct;
     
-    // Calculate count
-    let count = 0;
-    if (isProduct) {
-      count = 1;
-    } else if (typeof v.count === 'number') {
-      count = v.count;
-    } else if (hasChildren) {
-      // Count children recursively
-      count = countAllDescendants(v);
-    }
+    let count = v.count || 0;
+    if (isProduct) count = 1;
 
-    const item = {
+    items.push({
       key,
       label: key,
       count: count,
@@ -201,40 +192,19 @@ function listItemsAtPath(path) {
       isProduct: isProduct,
       driveLink: v.driveLink || '',
       hasChildren: hasChildren,
-      topOrder: typeof v.topOrder !== 'undefined' ? v.topOrder : Number.POSITIVE_INFINITY,
-    };
-
-    items.push(item);
+      topOrder: v.topOrder || 999,
+    });
   }
 
-  // Sort items
-  if (isRoot) {
-    items.sort((a,b) =>
-      (a.topOrder - b.topOrder) ||
-      (b.count - a.count) ||
-      a.label.localeCompare(b.label)
-    );
+  // Sort
+  if (path.length === 0) {
+    items.sort((a,b) => a.topOrder - b.topOrder || b.count - a.count || a.label.localeCompare(b.label));
   } else {
-    items.sort((a,b) =>
-      (Number(b.hasChildren) - Number(a.hasChildren)) ||
-      (b.count - a.count) ||
-      a.label.localeCompare(b.label)
-    );
+    items.sort((a,b) => Number(b.hasChildren) - Number(a.hasChildren) || b.count - a.count || a.label.localeCompare(b.label));
   }
 
-  console.log(`Found ${items.length} items at path: ${path.join('/')}`);
+  console.log(`✅ Found ${items.length} items at [${path.join(' → ')}]`);
   return items;
-}
-
-function countAllDescendants(node) {
-  if (node.isProduct) return 1;
-  if (!node.children) return 0;
-  
-  let total = 0;
-  for (const child of Object.values(node.children)) {
-    total += countAllDescendants(child);
-  }
-  return total;
 }
 
 function updateURL() {
@@ -258,9 +228,9 @@ function renderPath() {
   
   if (STATE.items.length === 0) {
     els.grid.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; opacity: 0.6;">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
         <p>No items found in this category.</p>
-        <p>Current path: ${STATE.path.join(' → ') || 'Home'}</p>
+        <p>Path: ${STATE.path.join(' → ') || 'Home'}</p>
       </div>
     `;
     els.grid.setAttribute('aria-busy', 'false');
@@ -276,9 +246,7 @@ function visibleCountText() {
   const tree = STATE.data.catalog.tree;
   if (STATE.path.length === 0) {
     let sum = 0;
-    for (const k of Object.keys(tree)) {
-      sum += (tree[k]?.count || 0);
-    }
+    for (const k of Object.keys(tree)) sum += (tree[k]?.count || 0);
     return sum.toLocaleString();
   }
   
@@ -319,17 +287,9 @@ function cardEl(item) {
 
   const img = document.createElement('img');
   img.className = 'card-thumb';
-  if (item.thumbnail) {
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    img.alt = `${item.label} thumbnail`;
-    img.src = item.thumbnail;
-    img.onerror = () => {
-      img.style.display = 'none'; // Hide broken images
-    };
-  } else {
-    img.style.display = 'none'; // Hide if no thumbnail
-  }
+  img.loading = 'lazy';
+  img.alt = item.thumbnail ? `${item.label} thumbnail` : '';
+  img.src = item.thumbnail || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
 
   const body = document.createElement('div');
   body.className = 'card-body';
@@ -340,13 +300,8 @@ function cardEl(item) {
   
   const right = document.createElement('div');
   right.className = 'card-count';
-  
   if (item.hasChildren && item.count > 0) {
     right.textContent = `${item.count}`;
-  } else if (item.isProduct) {
-    right.textContent = '';
-  } else {
-    right.textContent = '';
   }
   
   body.appendChild(title);
@@ -356,9 +311,8 @@ function cardEl(item) {
 
   const go = () => {
     if (item.isProduct && item.driveLink) {
-      trackClick(STATE.brand, [...STATE.path, item.label].join('/'));
       window.open(item.driveLink, '_blank');
-    } else if (item.hasChildren || !item.isProduct) {
+    } else {
       STATE.path = [...STATE.path, item.label];
       renderPath();
     }
@@ -404,11 +358,6 @@ function renderBreadcrumb() {
 
   els.breadcrumb.innerHTML = '';
   els.breadcrumb.appendChild(frag);
-}
-
-function trackClick(slug, productPath) {
-  if (!CONFIG.ANALYTICS_PIXEL_URL) return;
-  // Analytics implementation
 }
 
 window.addEventListener('popstate', () => {
