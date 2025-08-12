@@ -1,14 +1,15 @@
-// Brand Directory SPA — Fixed nav-first revamp with proper multi-level handling
+// Enhanced debug version of script.js with detailed path tracing
+// Replace your current script.js with this version temporarily to debug
 
 const STATE = {
   data: null,
   brand: null,
-  path: [],          // array of labels, e.g., ['BAGS','FENDI','FENDI TOTES']
+  path: [],
   items: [],
   batchSize: 20,
   rendered: 0,
   hoverTimer: null,
-  isPop: false,      // guard to avoid pushState loops
+  isPop: false,
 };
 
 const els = {
@@ -74,22 +75,14 @@ function resolvePathFromParam(tree, rawPath) {
   return acc;
 }
 
-function getNode(tree, path) {
-  let node = tree;
-  for (const seg of path) {
-    if (!node[seg]) return null;
-    node = node[seg];
-    if (!node) return null;
-    if (node.children) node = node; // keep object
-  }
-  return node; // node object with {children?, isProduct?}
-}
-
 async function loadData() {
   const res = await fetch('/data.json?v=' + Date.now(), { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to load data.json');
   const data = await res.json();
   STATE.data = data;
+
+  // Log the entire tree structure for debugging
+  console.log('🌳 FULL TREE STRUCTURE:', JSON.stringify(data.catalog.tree, null, 2));
 
   // brand
   const u = new URL(location.href);
@@ -109,56 +102,94 @@ async function loadData() {
   // totals
   els.total.textContent = (data.catalog?.totalProducts || 0).toLocaleString();
 
-  // path from URL (preferred). If invalid/empty → root.
+  // path from URL
   const pathParam = u.searchParams.get('path') || '';
+  console.log('🔍 Raw path param:', pathParam);
   const startPath = resolvePathFromParam(data.catalog.tree, pathParam);
+  console.log('✅ Resolved path:', startPath);
   STATE.path = startPath;
 
   renderPath();
 }
 
-// FIXED: Better item listing that handles all node types correctly
+// ENHANCED: Debug version with extensive logging
 function listItemsAtPath(path) {
-  console.log('🔍 Listing items at path:', path);
+  console.log('\n🔍 === LISTING ITEMS AT PATH ===');
+  console.log('Path:', path);
+  console.log('Path length:', path.length);
   
   // Walk to the node for the current path
   let node = STATE.data.catalog.tree;
-  for (const segment of path) {
+  console.log('🌳 Starting from tree root with keys:', Object.keys(node));
+  
+  for (let i = 0; i < path.length; i++) {
+    const segment = path[i];
+    console.log(`\n📁 Processing segment ${i}: "${segment}"`);
+    console.log('Available keys at this level:', Object.keys(node));
+    
     if (!node[segment]) {
-      console.log('❌ Segment not found:', segment, 'in', Object.keys(node));
+      console.error(`❌ SEGMENT NOT FOUND: "${segment}"`);
+      console.log('Available alternatives:');
+      Object.keys(node).forEach(key => {
+        console.log(`  - "${key}" (normalized: "${norm(key)}")`);
+      });
       return [];
     }
+    
     node = node[segment];
+    console.log(`✅ Found segment "${segment}"`);
+    console.log('Node type:', {
+      isProduct: !!node.isProduct,
+      hasChildren: !!node.children,
+      childrenCount: Object.keys(node.children || {}).length,
+      count: node.count
+    });
+    
+    // If this is not the last segment, move to children
+    if (i < path.length - 1) {
+      if (!node.children) {
+        console.error(`❌ Expected children but found none at "${segment}"`);
+        return [];
+      }
+      node = node.children;
+      console.log('Moved to children, available keys:', Object.keys(node));
+    }
   }
 
-  console.log('📁 Found node:', { 
-    isProduct: node.isProduct, 
+  console.log('\n📦 Final node analysis:');
+  console.log('Node:', {
+    isProduct: !!node.isProduct,
     hasChildren: !!node.children,
-    childrenCount: Object.keys(node.children || {}).length 
+    count: node.count,
+    thumbnail: node.thumbnail,
+    driveLink: node.driveLink
   });
 
   const isRoot = path.length === 0;
-  // At root, the container is the tree object itself
   const container = isRoot ? node : (node.children || {});
+  
+  console.log('Container keys:', Object.keys(container));
   const items = [];
-
-  console.log('🔄 Processing container with keys:', Object.keys(container));
 
   for (const key of Object.keys(container)) {
     const v = container[key];
+    console.log(`\n🔧 Processing item "${key}":`, {
+      isProduct: !!v.isProduct,
+      hasChildren: !!v.children && Object.keys(v.children).length > 0,
+      count: v.count,
+      thumbnail: v.thumbnail,
+      driveLink: v.driveLink
+    });
     
-    // FIXED: Better logic to determine what type of item this is
     const hasChildren = !!v.children && Object.keys(v.children).length > 0;
     const isProduct = !!v.isProduct;
     
-    // Calculate count properly
     let count = 0;
     if (isProduct) {
       count = 1;
     } else if (v.count) {
       count = v.count;
     } else if (hasChildren) {
-      // Recursively count children
       count = countItemsInNode(v);
     }
 
@@ -170,15 +201,14 @@ function listItemsAtPath(path) {
       isProduct: isProduct,
       driveLink: v.driveLink || '',
       hasChildren: hasChildren,
-      // used only at root
       topOrder: typeof v.topOrder !== 'undefined' ? v.topOrder : Number.POSITIVE_INFINITY,
     };
 
-    console.log(`📦 Item: ${key}, isProduct: ${isProduct}, hasChildren: ${hasChildren}, count: ${count}`);
+    console.log(`📦 Created item:`, item);
     items.push(item);
   }
 
-  // Sort: root uses TopOrder; deeper levels use folder-first -> count -> A→Z
+  // Sort items
   if (isRoot) {
     items.sort((a,b) =>
       (a.topOrder - b.topOrder) ||
@@ -193,11 +223,14 @@ function listItemsAtPath(path) {
     );
   }
 
-  console.log(`✅ Found ${items.length} items at path: ${path.join('/')}`);
+  console.log(`\n✅ FINAL RESULT: ${items.length} items found`);
+  items.forEach((item, i) => {
+    console.log(`  ${i + 1}. ${item.label} (${item.isProduct ? 'product' : 'folder'}, count: ${item.count})`);
+  });
+  
   return items;
 }
 
-// FIXED: Helper function to count items in a node recursively
 function countItemsInNode(node) {
   if (node.isProduct) return 1;
   if (!node.children) return 0;
@@ -210,7 +243,7 @@ function countItemsInNode(node) {
 }
 
 function updateURL() {
-  if (STATE.isPop) return; // don't push during popstate
+  if (STATE.isPop) return;
   const params = new URLSearchParams(location.search);
   params.set('brand', STATE.brand);
   if (STATE.path.length) params.set('path', STATE.path.join('/'));
@@ -219,7 +252,8 @@ function updateURL() {
 }
 
 function renderPath() {
-  console.log('🎨 Rendering path:', STATE.path);
+  console.log('\n🎨 === RENDERING PATH ===');
+  console.log('Current path:', STATE.path);
   
   els.grid.setAttribute('aria-busy', 'true');
   els.grid.innerHTML = '';
@@ -230,16 +264,18 @@ function renderPath() {
   els.levelCount.textContent = `${visibleCountText()} in ${label}`;
   renderBreadcrumb();
   
-  // FIXED: Add message when no items found
   if (STATE.items.length === 0) {
+    console.log('❌ No items found, showing empty message');
     els.grid.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; opacity: 0.6;">
         <p>No items found in this category.</p>
-        <p>This might be a folder that only contains subfolders.</p>
+        <p>Path: ${STATE.path.join(' → ')}</p>
+        <p>Check browser console for detailed debugging info.</p>
       </div>
     `;
     els.grid.setAttribute('aria-busy', 'false');
   } else {
+    console.log(`✅ Rendering ${STATE.items.length} items`);
     renderNextBatch();
     setupInfiniteScroll();
   }
@@ -292,15 +328,13 @@ function cardEl(item) {
     img.decoding = 'async'; 
     img.alt = `${item.label} thumbnail`; 
     img.src = item.thumbnail;
-    
-    // FIXED: Add error handling for missing images
     img.onerror = () => {
-      img.src = '/thumbs/_placeholder.webp'; // fallback to placeholder
-      img.onerror = null; // prevent infinite loop
+      img.src = '/thumbs/_placeholder.webp';
+      img.onerror = null;
     };
   } else { 
     img.alt = ''; 
-    img.src = '/thumbs/_placeholder.webp'; // default placeholder
+    img.src = '/thumbs/_placeholder.webp';
   }
 
   const body = document.createElement('div'); 
@@ -313,13 +347,12 @@ function cardEl(item) {
   const right = document.createElement('div'); 
   right.className = 'card-count'; 
   
-  // FIXED: Show count for folders, empty for products
   if (item.hasChildren && item.count > 0) {
     right.textContent = `${item.count}`;
   } else if (item.isProduct) {
-    right.textContent = ''; // Products don't show count
+    right.textContent = '';
   } else {
-    right.textContent = '0'; // Empty folders show 0
+    right.textContent = '0';
   }
   
   body.appendChild(title); 
@@ -328,27 +361,32 @@ function cardEl(item) {
   card.appendChild(body);
 
   const go = () => {
-    console.log('🖱️ Clicked item:', item.label, { isProduct: item.isProduct, hasChildren: item.hasChildren });
+    console.log('\n🖱️ === CARD CLICKED ===');
+    console.log('Item:', item.label);
+    console.log('Current path:', STATE.path);
+    console.log('Item details:', {
+      isProduct: item.isProduct,
+      hasChildren: item.hasChildren,
+      driveLink: item.driveLink
+    });
     
     if (item.isProduct && item.driveLink) {
       console.log('🔗 Opening product drive link:', item.driveLink);
       trackClick(STATE.brand, [...STATE.path, item.label].join('/'));
       window.location.href = item.driveLink;
     } else if (item.hasChildren) {
-      console.log('📁 Navigating to folder:', [...STATE.path, item.label]);
-      STATE.path = [...STATE.path, item.label];
+      const newPath = [...STATE.path, item.label];
+      console.log('📁 Navigating to new path:', newPath);
+      STATE.path = newPath;
       renderPath();
     } else {
       console.log('⚠️ Item has no action available');
-      // Item is neither a product with drive link nor has children
-      // This shouldn't happen in a well-formed catalog
     }
   };
   
   card.addEventListener('click', go);
   card.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 
-  // Hover prediction
   card.addEventListener('mouseenter', () => {
     if (!item.hasChildren) return;
     clearTimeout(STATE.hoverTimer);
@@ -404,7 +442,7 @@ function trackClick(slug, productPath) {
   const img = document.createElement('img');
   img.src = u.toString(); img.alt = ''; img.width = img.height = 1;
   img.style.position = 'absolute'; img.style.opacity = '0';
-  document.body.appendChild(img); setTimeout(() => img.remove(), 2000);
+  document.body.appendChild(img); setTimeout () => img.remove(), 2000);
 }
 
 window.addEventListener('popstate', () => {
