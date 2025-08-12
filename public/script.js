@@ -1,10 +1,10 @@
-// Modern Luxury Catalog App with Search
+// Modern Luxury Catalog App - Fixed Navigation & Images
 const STATE = {
   data: null,
   brand: null,
   path: [],
   items: [],
-  allProducts: [], // For search functionality
+  allProducts: [],
   batchSize: 24,
   rendered: 0,
   hoverTimer: null,
@@ -36,6 +36,67 @@ const CONFIG = {
 };
 
 const waRe = /^https:\/\/wa\.me\/\d+$/;
+
+// FIXED: Better image URL processing
+function processImageUrl(url) {
+  if (!url || url.trim() === '') {
+    return CONFIG.PLACEHOLDER_IMAGE;
+  }
+
+  const cleanUrl = url.trim();
+  
+  // If it's already a valid HTTP URL, return as-is
+  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+    return cleanUrl;
+  }
+  
+  // If it's a data URL, return as-is
+  if (cleanUrl.startsWith('data:')) {
+    return cleanUrl;
+  }
+  
+  // Handle relative paths - convert to absolute web paths
+  let processedUrl = cleanUrl.replace(/\\/g, '/'); // Convert backslashes
+  
+  // Remove leading slashes and add /thumbs/ prefix if not present
+  processedUrl = processedUrl.replace(/^\/+/, '');
+  
+  if (!processedUrl.startsWith('thumbs/')) {
+    processedUrl = 'thumbs/' + processedUrl;
+  }
+  
+  // Return as absolute path
+  return '/' + processedUrl;
+}
+
+// FIXED: Image validation and fallback
+function createImageElement(src, alt, className = '') {
+  const img = document.createElement('img');
+  if (className) img.className = className;
+  img.alt = alt;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  
+  const processedSrc = processImageUrl(src);
+  console.log(`🖼️ Image: "${src}" → "${processedSrc}"`);
+  
+  // Set up error handling before setting src
+  img.onerror = function() {
+    console.log(`❌ Image failed to load: ${this.src}`);
+    if (this.src !== CONFIG.PLACEHOLDER_IMAGE) {
+      console.log(`🔄 Falling back to placeholder`);
+      this.src = CONFIG.PLACEHOLDER_IMAGE;
+      this.onerror = null; // Prevent infinite loop
+    }
+  };
+  
+  img.onload = function() {
+    console.log(`✅ Image loaded successfully: ${this.src.substring(0, 50)}...`);
+  };
+  
+  img.src = processedSrc;
+  return img;
+}
 
 function applyTheme(theme) {
   const root = document.documentElement;
@@ -111,12 +172,15 @@ function buildSearchIndex(tree, path = [], index = []) {
     const currentPath = [...path, key];
     const pathString = currentPath.join(' → ');
     
+    // Process thumbnail URL
+    const processedThumbnail = processImageUrl(value.thumbnail);
+    
     // Add this item to search index
     index.push({
       title: key,
       path: currentPath,
       pathString: pathString,
-      thumbnail: value.thumbnail || CONFIG.PLACEHOLDER_IMAGE,
+      thumbnail: processedThumbnail,
       isProduct: !!value.isProduct,
       driveLink: value.driveLink || '',
       searchText: `${key} ${pathString}`.toLowerCase(),
@@ -134,16 +198,13 @@ function buildSearchIndex(tree, path = [], index = []) {
 
 // Search functionality
 function performSearch(query) {
-  if (!query.trim()) {
-    return [];
-  }
+  if (!query.trim()) return [];
   
   const searchTerm = query.toLowerCase();
   const results = STATE.allProducts.filter(item => 
     item.searchText.includes(searchTerm)
   );
   
-  // Sort by relevance (exact matches first, then by path depth)
   return results.sort((a, b) => {
     const aExact = a.title.toLowerCase().includes(searchTerm);
     const bExact = b.title.toLowerCase().includes(searchTerm);
@@ -152,7 +213,7 @@ function performSearch(query) {
     if (!aExact && bExact) return 1;
     
     return a.path.length - b.path.length;
-  }).slice(0, 10); // Limit to 10 results
+  }).slice(0, 10);
 }
 
 function renderSearchResults(results) {
@@ -190,7 +251,8 @@ function renderSearchResults(results) {
       clearSearch();
       
       if (isProduct && driveLink) {
-        window.open(driveLink, '_blank');
+        // FIXED: Use location.href for better back button behavior
+        window.location.href = driveLink;
       } else {
         const pathArray = path ? path.split('/') : [];
         STATE.path = pathArray;
@@ -380,7 +442,7 @@ function listItemsAtPath(path) {
       key,
       label: key,
       count: count,
-      thumbnail: v.thumbnail || CONFIG.PLACEHOLDER_IMAGE,
+      thumbnail: processImageUrl(v.thumbnail), // FIXED: Process image URL
       isProduct: isProduct,
       driveLink: v.driveLink || '',
       hasChildren: hasChildren,
@@ -459,24 +521,9 @@ function createCard(item) {
   card.className = 'card';
   card.tabIndex = 0;
 
-  // Thumbnail with forced placeholder fallback
-  const img = document.createElement('img');
-  img.className = 'card-thumb';
-  img.loading = 'lazy';
-  img.decoding = 'async';
-  img.alt = `${item.label} thumbnail`;
+  // FIXED: Better image handling with detailed logging
+  const img = createImageElement(item.thumbnail, `${item.label} thumbnail`, 'card-thumb');
   
-  // Always use placeholder if no thumbnail, or set proper fallback
-  if (item.thumbnail && item.thumbnail !== CONFIG.PLACEHOLDER_IMAGE) {
-    img.src = item.thumbnail;
-    img.onerror = () => {
-      img.src = CONFIG.PLACEHOLDER_IMAGE;
-      img.onerror = null;
-    };
-  } else {
-    img.src = CONFIG.PLACEHOLDER_IMAGE;
-  }
-
   const body = document.createElement('div');
   body.className = 'card-body';
   
@@ -497,12 +544,15 @@ function createCard(item) {
   card.appendChild(img);
   card.appendChild(body);
 
-  // Click handler
+  // FIXED: Better click handling for navigation
   const handleClick = () => {
     if (item.isProduct && item.driveLink) {
-      window.open(item.driveLink, '_blank');
+      console.log(`🔗 Opening product: ${item.label} → ${item.driveLink}`);
+      // FIXED: Use location.href instead of window.open for better back button behavior
+      window.location.href = item.driveLink;
       trackClick(item);
     } else {
+      console.log(`📁 Navigating to: ${item.label}`);
       STATE.path = [...STATE.path, item.label];
       renderPath();
     }
@@ -583,7 +633,6 @@ function renderBreadcrumb() {
 
 function trackClick(item) {
   if (!CONFIG.ANALYTICS_PIXEL_URL) return;
-  // Analytics implementation can go here
   console.log('Product clicked:', item.label);
 }
 
