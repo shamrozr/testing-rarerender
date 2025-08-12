@@ -551,3 +551,276 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+/* Enhanced Product Cards with Visual Indicators */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-border-hover);
+}
+
+.card:active {
+  transform: translateY(-2px);
+}
+
+/* Card Type Specific Styling */
+.card-folder {
+  border-left: 4px solid var(--color-primary);
+}
+
+.card-product {
+  border-left: 4px solid #10B981; /* Green for products */
+}
+
+.card-product:hover {
+  border-color: #059669;
+}
+
+/* Image Container */
+.card-image-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-thumb {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-bg) 95%, var(--color-primary) 5%) 0%,
+    color-mix(in srgb, var(--color-bg) 98%, var(--color-accent) 2%) 100%);
+  display: block;
+  transition: transform var(--transition-slow);
+}
+
+.card:hover .card-thumb {
+  transform: scale(1.05);
+}
+
+/* Overlay for Folders */
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.card-folder:hover .card-overlay {
+  opacity: 1;
+}
+
+.folder-icon {
+  width: 48px;
+  height: 48px;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.folder-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Product Badge */
+.product-badge {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+  opacity: 0.9;
+  transition: all var(--transition-fast);
+}
+
+.card-product:hover .product-badge {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.product-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Card Body */
+.card-body {
+  padding: var(--space-lg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: 80px;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--color-text);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  flex: 1;
+  margin: 0;
+}
+
+/* Right Section (Counts & Indicators) */
+.card-right-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+/* Count Display for Folders */
+.card-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-primary) 15%, transparent), 
+    color-mix(in srgb, var(--color-accent) 10%, transparent));
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  min-width: 48px;
+  text-align: center;
+  line-height: 1.2;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-count-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Product Indicator */
+.product-indicator {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #059669;
+  background: color-mix(in srgb, #10B981 12%, transparent);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid color-mix(in srgb, #10B981 20%, transparent);
+}
+
+/* Hover Animations */
+.card:hover .card-count {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-primary) 20%, transparent), 
+    color-mix(in srgb, var(--color-accent) 15%, transparent));
+  box-shadow: var(--shadow-md);
+}
+
+.card:hover .product-indicator {
+  background: color-mix(in srgb, #10B981 18%, transparent);
+  border-color: color-mix(in srgb, #10B981 30%, transparent);
+}
+
+/* Empty State for Zero Counts */
+.card-count.zero {
+  opacity: 0.5;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+/* Loading State */
+.card[aria-busy="true"] {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.card[aria-busy="true"] .card-thumb {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .card-body {
+    padding: var(--space-md);
+    min-height: 70px;
+  }
+  
+  .card-title {
+    font-size: 1rem;
+  }
+  
+  .card-count {
+    font-size: 1.2rem;
+    min-width: 40px;
+  }
+  
+  .folder-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .folder-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .product-badge {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .product-badge svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Focus States for Accessibility */
+.card:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
