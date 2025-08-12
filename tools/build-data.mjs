@@ -449,6 +449,13 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   // ===== Optimize Static Assets =====
   console.log("⚡ Optimizing static assets...");
   
+  let cssOptimized = false;
+  let jsOptimized = false;
+  let originalCssSize = 0;
+  let originalJsSize = 0;
+  let finalCssSize = 0;
+  let finalJsSize = 0;
+  
   try {
     // Read current CSS and JS files
     const cssPath = path.join(PUBLIC_DIR, "style.css");
@@ -461,14 +468,16 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     
     try {
       cssContent = await fs.readFile(cssPath, "utf8");
-      console.log(`📝 Read CSS file: ${Math.round(cssContent.length / 1024)}KB`);
+      originalCssSize = cssContent.length;
+      console.log(`📝 Read CSS file: ${Math.round(originalCssSize / 1024)}KB`);
     } catch (err) {
       console.log("⚠️  CSS file not found, skipping CSS optimization");
     }
     
     try {
       jsContent = await fs.readFile(jsPath, "utf8");
-      console.log(`📝 Read JS file: ${Math.round(jsContent.length / 1024)}KB`);
+      originalJsSize = jsContent.length;
+      console.log(`📝 Read JS file: ${Math.round(originalJsSize / 1024)}KB`);
     } catch (err) {
       console.log("⚠️  JS file not found, skipping JS optimization");
     }
@@ -481,32 +490,44 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     }
     
     // Optimize CSS
-    if (cssContent) {
+    if (cssContent && cssContent.length > 0) {
       console.log("🎨 Optimizing CSS...");
       
-      // Remove unused CSS
-      const purgedCSS = removeUnusedCSS(cssContent, htmlContent, jsContent);
-      console.log(`🗑️  Removed unused CSS: ${Math.round((cssContent.length - purgedCSS.length) / 1024)}KB saved`);
-      
-      // Minify CSS
-      const minifiedCSS = minifyCSS(purgedCSS);
-      console.log(`📦 Minified CSS: ${Math.round((purgedCSS.length - minifiedCSS.length) / 1024)}KB saved`);
-      
-      // Write optimized CSS
-      await fs.writeFile(cssPath, minifiedCSS, "utf8");
-      console.log(`✅ CSS optimized: ${Math.round(cssContent.length / 1024)}KB → ${Math.round(minifiedCSS.length / 1024)}KB`);
+      try {
+        // Remove unused CSS
+        const purgedCSS = removeUnusedCSS(cssContent, htmlContent, jsContent);
+        console.log(`🗑️  Removed unused CSS: ${Math.round((cssContent.length - purgedCSS.length) / 1024)}KB saved`);
+        
+        // Minify CSS
+        const minifiedCSS = minifyCSS(purgedCSS);
+        finalCssSize = minifiedCSS.length;
+        console.log(`📦 Minified CSS: ${Math.round((purgedCSS.length - minifiedCSS.length) / 1024)}KB saved`);
+        
+        // Write optimized CSS
+        await fs.writeFile(cssPath, minifiedCSS, "utf8");
+        console.log(`✅ CSS optimized: ${Math.round(originalCssSize / 1024)}KB → ${Math.round(finalCssSize / 1024)}KB`);
+        cssOptimized = true;
+      } catch (cssErr) {
+        console.warn("⚠️  CSS optimization failed:", cssErr.message);
+      }
     }
     
     // Optimize JavaScript
-    if (jsContent) {
+    if (jsContent && jsContent.length > 0) {
       console.log("⚡ Optimizing JavaScript...");
       
-      const minifiedJS = minifyJS(jsContent);
-      console.log(`📦 Minified JS: ${Math.round((jsContent.length - minifiedJS.length) / 1024)}KB saved`);
-      
-      // Write optimized JS
-      await fs.writeFile(jsPath, minifiedJS, "utf8");
-      console.log(`✅ JS optimized: ${Math.round(jsContent.length / 1024)}KB → ${Math.round(minifiedJS.length / 1024)}KB`);
+      try {
+        const minifiedJS = minifyJS(jsContent);
+        finalJsSize = minifiedJS.length;
+        console.log(`📦 Minified JS: ${Math.round((jsContent.length - minifiedJS.length) / 1024)}KB saved`);
+        
+        // Write optimized JS
+        await fs.writeFile(jsPath, minifiedJS, "utf8");
+        console.log(`✅ JS optimized: ${Math.round(originalJsSize / 1024)}KB → ${Math.round(finalJsSize / 1024)}KB`);
+        jsOptimized = true;
+      } catch (jsErr) {
+        console.warn("⚠️  JavaScript optimization failed:", jsErr.message);
+      }
     }
     
   } catch (err) {
@@ -529,9 +550,13 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       errors: hardErrors.length,
     },
     optimization: {
-      cssOptimized: cssContent ? true : false,
-      jsOptimized: jsContent ? true : false,
-      assetsMinified: true,
+      cssOptimized: cssOptimized,
+      jsOptimized: jsOptimized,
+      assetsMinified: cssOptimized || jsOptimized,
+      originalCssSize: Math.round(originalCssSize / 1024),
+      finalCssSize: Math.round(finalCssSize / 1024),
+      originalJsSize: Math.round(originalJsSize / 1024),
+      finalJsSize: Math.round(finalJsSize / 1024),
     },
     details: {
       invalidDriveLinks: invalidDriveLinks.slice(0, 5),
