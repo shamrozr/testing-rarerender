@@ -1,7 +1,4 @@
-// Node 20+ (native fetch)
-// Inputs (env): BRANDS_CSV_URL, MASTER_CSV_URL, PLACEHOLDER_THUMB (optional, e.g. /thumbs/_placeholder.webp)
-// Output: /public/data.json + build/health.json (+ job summary for GitHub Actions)
-
+// Enhanced build-data.mjs with better debugging and path handling
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,10 +9,10 @@ const PUBLIC_DIR = path.join(ROOT, "public");
 
 const BRANDS_CSV_URL = process.env.BRANDS_CSV_URL;
 const MASTER_CSV_URL = process.env.MASTER_CSV_URL;
-const PLACEHOLDER_THUMB = (process.env.PLACEHOLDER_THUMB || "").trim(); // optional
+const PLACEHOLDER_THUMB = (process.env.PLACEHOLDER_THUMB || "/thumbs/_placeholder.webp").trim();
 
 if (!BRANDS_CSV_URL || !MASTER_CSV_URL) {
-  console.error("Missing BRANDS_CSV_URL or MASTER_CSV_URL");
+  console.error("❌ Missing BRANDS_CSV_URL or MASTER_CSV_URL");
   process.exit(1);
 }
 
@@ -27,6 +24,7 @@ function parseCSV(text) {
   const lines = text.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
   const rawHeaders = lines[0].split(",").map((h) => h.trim());
   const headers = rawHeaders.map((h) => h.replace(/\s+/g, " ").trim());
+  
   return lines.slice(1).filter(Boolean).map((line) => {
     const cells = [];
     let cur = "", inQ = false;
@@ -43,6 +41,7 @@ function parseCSV(text) {
   });
 }
 
+// Enhanced path normalization
 function normPath(p) {
   if (!p) return "";
   const parts = p.replace(/\\/g, "/").split("/").map(s => s.trim()).filter(Boolean);
@@ -50,17 +49,29 @@ function normPath(p) {
   parts[0] = parts[0].toUpperCase(); // normalize top category
   return parts.join("/");
 }
+
+// Fixed thumbnail path conversion
 function toThumbSitePath(rel) {
   if (!rel) return "";
+  // Normalize Windows paths to web paths
   let p = rel.replace(/\\/g, "/").replace(/^\/+/, "");
-  if (!p.startsWith("thumbs/")) p = "thumbs/" + p;
+  
+  // Ensure it starts with thumbs/
+  if (!p.startsWith("thumbs/")) {
+    p = "thumbs/" + p;
+  }
+  
+  // Return as absolute web path
   return "/" + p;
 }
+
 async function fileExists(relFromPublic) {
   try {
     await fs.access(path.join(PUBLIC_DIR, relFromPublic.replace(/^\//, "")));
     return true;
-  } catch { return false; }
+  } catch { 
+    return false; 
+  }
 }
 
 function ensureFolderNode(tree, segs) {
@@ -71,97 +82,145 @@ function ensureFolderNode(tree, segs) {
   }
   return node;
 }
+
 function setCounts(node) {
   if (node.isProduct) return 1;
   let sum = 0;
-  for (const k of Object.keys(node.children || {})) sum += setCounts(node.children[k]);
+  for (const k of Object.keys(node.children || {})) {
+    sum += setCounts(node.children[k]);
+  }
   node.count = sum;
   return sum;
 }
+
 function propagateThumbsFromChildren(node) {
   for (const k of Object.keys(node)) {
     const n = node[k];
-    if (!n.isProduct) {
+    if (!n.isProduct && n.children) {
+      // First, recurse into children
+      propagateThumbsFromChildren(n.children);
+      
+      // Then, if this node has no thumbnail, try to get one from children
       if (!n.thumbnail) {
-        const ck = Object.keys(n.children || {});
-        for (const ckey of ck) {
-          const c = n.children[ckey];
-          const t = c.thumbnail || (c.children ? c.thumbnail : "");
-          if (t) { n.thumbnail = t; break; }
+        const childKeys = Object.keys(n.children);
+        for (const ckey of childKeys) {
+          const child = n.children[ckey];
+          if (child.thumbnail) {
+            n.thumbnail = child.thumbnail;
+            break;
+          }
         }
       }
-      propagateThumbsFromChildren(n.children || {});
     }
   }
 }
+
 function fillMissingThumbsFromAncestors(node, inherited = "") {
   for (const k of Object.keys(node)) {
     const n = node[k];
     const current = n.thumbnail || inherited || PLACEHOLDER_THUMB || "";
     if (!n.thumbnail && current) n.thumbnail = current;
-    if (!n.isProduct) fillMissingThumbsFromAncestors(n.children || {}, current);
+    if (!n.isProduct && n.children) {
+      fillMissingThumbsFromAncestors(n.children, current);
+    }
   }
 }
 
 (async () => {
+  console.log("🚀 Starting data build process...");
+  
+  // Fetch data
+  console.log("📥 Fetching CSV data...");
   const [brandsRes, masterRes] = await Promise.all([
     fetch(BRANDS_CSV_URL),
     fetch(MASTER_CSV_URL),
   ]);
+  
   if (!brandsRes.ok || !masterRes.ok) {
-    console.error("Failed to fetch one or more CSVs");
+    console.error("❌ Failed to fetch CSVs:", !brandsRes.ok ? "brands" : "", !masterRes.ok ? "master" : "");
     process.exit(1);
   }
+  
   const [brandsCSV, masterCSV] = await Promise.all([brandsRes.text(), masterRes.text()]);
   const brandsRows = parseCSV(brandsCSV);
   const masterRows = parseCSV(masterCSV);
+  
+  console.log(`📊 Parsed ${brandsRows.length} brands and ${masterRows.length} catalog items`);
 
   const warnings = [];
   const hardErrors = [];
 
-  // ===== Brands (tolerant of blanks) =====
+  // ===== Process Brands =====
+  console.log("🏷️  Processing brands...");
   const brands = {};
   for (const r of brandsRows) {
     const slug = (r.csvslug || "").trim();
     const name = (r.brandName || "").trim();
     if (!slug && !name) continue;
-    if (!slug || !name) { warnings.push(`Brand row skipped (needs both slug & name): ${JSON.stringify(r)}`); continue; }
+    if (!slug || !name) { 
+      warnings.push(`Brand row skipped (needs both slug & name): ${JSON.stringify(r)}`); 
+      continue; 
+    }
 
     let primary = (r.primaryColor || "").trim();
     let accent  = (r.accentColor  || "").trim();
     let text    = (r.textColor    || "").trim();
     let bg      = (r.bgColor      || "").trim();
 
-    if (!HEX.test(primary)) { if (primary) warnings.push(`Brand ${slug}: invalid primaryColor "${primary}" → default used`); primary = "#1A1A1A"; }
-    if (!HEX.test(accent))  { if (accent)  warnings.push(`Brand ${slug}: invalid accentColor "${accent}" → default used`);  accent  = "#C9A961"; }
-    if (!HEX.test(text))    { if (text)    warnings.push(`Brand ${slug}: invalid textColor "${text}" → default used`);      text    = "#2C2926"; }
-    if (!HEX.test(bg))      { if (bg)      warnings.push(`Brand ${slug}: invalid bgColor "${bg}" → default used`);          bg      = "#FEFDFB"; }
+    // Provide defaults for missing colors
+    if (!HEX.test(primary)) { 
+      if (primary) warnings.push(`Brand ${slug}: invalid primaryColor "${primary}" → default used`); 
+      primary = "#C9A961"; 
+    }
+    if (!HEX.test(accent))  { 
+      if (accent)  warnings.push(`Brand ${slug}: invalid accentColor "${accent}" → default used`);  
+      accent  = "#E8D5A3"; 
+    }
+    if (!HEX.test(text))    { 
+      if (text)    warnings.push(`Brand ${slug}: invalid textColor "${text}" → default used`);      
+      text    = "#2C2926"; 
+    }
+    if (!HEX.test(bg))      { 
+      if (bg)      warnings.push(`Brand ${slug}: invalid bgColor "${bg}" → default used`);          
+      bg      = "#FEFDFB"; 
+    }
 
     const waRaw = (r.whatsapp || "").trim();
     const whatsapp = WA.test(waRaw) ? waRaw : "";
     if (waRaw && !whatsapp) warnings.push(`Brand ${slug}: WhatsApp is not wa.me/* → ignored (FAB hidden)`);
 
     const defaultCategory = (r.defaultCategory || "").trim() || "BAGS";
-    if (brands[slug]) { warnings.push(`Duplicate brand slug ignored (keeping first): ${slug}`); continue; }
+    if (brands[slug]) { 
+      warnings.push(`Duplicate brand slug ignored (keeping first): ${slug}`); 
+      continue; 
+    }
 
     brands[slug] = { name, colors: { primary, accent, text, bg }, whatsapp, defaultCategory };
   }
+  
+  console.log(`✅ Processed ${Object.keys(brands).length} valid brands`);
 
-  // ===== Precompute parent set =====
+  // ===== Build catalog tree =====
+  console.log("🌳 Building catalog tree...");
+  
+  // Precompute parent set for faster lookup
   const allFullPaths = masterRows.map(r => normPath(r["RelativePath"] || r["Relative Path"] || r["Relative_Path"] || ""));
   const parentsSet = new Set();
   for (const full of allFullPaths) {
     const segs = full.split("/").filter(Boolean);
-    for (let i = 1; i < segs.length; i++) parentsSet.add(segs.slice(0, i).join("/"));
+    for (let i = 1; i < segs.length; i++) {
+      parentsSet.add(segs.slice(0, i).join("/"));
+    }
   }
 
-  // ===== Build catalog tree =====
   const tree = {};
   let totalProducts = 0;
-
   const invalidDriveLinks = [];
-  const folderMeta = new Map(); // key: full path → { thumbnail?, driveLink?, topOrder? }
+  const folderMeta = new Map();
 
+  console.log("📝 Processing catalog entries...");
+  let processedCount = 0;
+  
   for (const r of masterRows) {
     const name = (r["Name"] || r["Folder/Product"] || "").trim();
     const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
@@ -170,6 +229,11 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     const topOrderRaw = (r["TopOrder"] || r["Top Order"] || "").trim();
 
     if (!rel || !name) continue;
+    
+    processedCount++;
+    if (processedCount % 100 === 0) {
+      console.log(`  Processed ${processedCount}/${masterRows.length} items...`);
+    }
 
     const full = rel;
     const segs = full.split("/").filter(Boolean);
@@ -177,25 +241,33 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     const hasChildren = parentsSet.has(full);
     const isLeafProduct = isCandidateProduct && !hasChildren;
 
+    // Validate drive links
     if (isCandidateProduct && !GDRIVE.test(driveLink)) {
       invalidDriveLinks.push({ name, rel, driveLink });
     }
 
+    // Convert thumbnail path to web path
     const normalizedThumb = toThumbSitePath(thumbRel);
 
     if (isLeafProduct) {
+      // This is a product
       const parentSegs = segs.slice(0, -1);
       const children = ensureFolderNode(tree, parentSegs);
-      children[name] = { isProduct: true, driveLink, thumbnail: normalizedThumb || "" };
+      children[name] = { 
+        isProduct: true, 
+        driveLink, 
+        thumbnail: normalizedThumb || PLACEHOLDER_THUMB 
+      };
       totalProducts++;
     } else {
-      // Folder node
+      // This is a folder
       ensureFolderNode(tree, segs);
       const k = segs.join("/");
       const existing = folderMeta.get(k) || {};
       if (normalizedThumb) existing.thumbnail = normalizedThumb;
       if (driveLink) existing.driveLink = driveLink;
-      // Record TopOrder ONLY for top-level rows (depth 1)
+      
+      // Record TopOrder ONLY for top-level categories
       if (segs.length === 1) {
         const n = parseInt(topOrderRaw, 10);
         if (!Number.isNaN(n)) existing.topOrder = n;
@@ -204,7 +276,10 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     }
   }
 
-  // Attach folder meta (thumb, driveLink, topOrder)
+  console.log(`📦 Created tree with ${totalProducts} products`);
+
+  // Attach folder metadata
+  console.log("🔗 Attaching folder metadata...");
   function attachFolderMeta(node, prefix = []) {
     for (const k of Object.keys(node)) {
       const n = node[k];
@@ -213,69 +288,125 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         const meta = folderMeta.get(here);
         if (meta?.thumbnail) n.thumbnail = meta.thumbnail;
         if (meta?.driveLink) n.driveLink = meta.driveLink;
-        if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder; // used at root
-        attachFolderMeta(n.children || {}, [...prefix, k]);
+        if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
+        if (n.children) attachFolderMeta(n.children, [...prefix, k]);
       }
     }
   }
   attachFolderMeta(tree);
 
-  // Convert empty folders with a drive link into leaf products
-  (function convertEmpty(node) {
+  // Convert empty folders with drive links to products
+  console.log("🔄 Converting empty folders with drive links to products...");
+  function convertEmpty(node) {
     for (const k of Object.keys(node)) {
       const n = node[k];
       if (!n.isProduct) {
         const hasChildren = Object.keys(n.children || {}).length > 0;
-        if (!hasChildren && n.driveLink) { delete n.children; n.isProduct = true; totalProducts++; }
-        else convertEmpty(n.children || {});
+        if (!hasChildren && n.driveLink) {
+          delete n.children;
+          n.isProduct = true;
+          totalProducts++;
+        } else if (n.children) {
+          convertEmpty(n.children);
+        }
       }
     }
-  })(tree);
+  }
+  convertEmpty(tree);
 
+  // Propagate thumbnails
+  console.log("🖼️  Propagating thumbnails...");
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
 
-  for (const top of Object.keys(tree)) setCounts(tree[top]);
+  // Set counts
+  console.log("🧮 Calculating counts...");
+  for (const top of Object.keys(tree)) {
+    setCounts(tree[top]);
+  }
 
   // Health checks
+  console.log("🔍 Running health checks...");
   const missingThumbFiles = [];
   async function scanMissingThumbs(node, pfx = []) {
     for (const k of Object.keys(node)) {
       const n = node[k];
-      if (n.thumbnail) {
+      if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
         const exists = await fileExists(n.thumbnail);
-        if (!exists) missingThumbFiles.push({ path: [...pfx, k].join("/"), thumbnail: n.thumbnail });
+        if (!exists) {
+          missingThumbFiles.push({ 
+            path: [...pfx, k].join("/"), 
+            thumbnail: n.thumbnail 
+          });
+        }
       }
-      if (!n.isProduct) await scanMissingThumbs(n.children || {}, [...pfx, k]);
+      if (!n.isProduct && n.children) {
+        await scanMissingThumbs(n.children, [...pfx, k]);
+      }
     }
   }
   await scanMissingThumbs(tree);
 
+  // Generate report
   const report = {
-    totals: { rowsInMaster: masterRows.length, products: totalProducts },
-    invalidDriveLinks,
-    missingThumbFiles,
-    productsWithoutThumb: 0,
-    warnings,
+    totals: { 
+      brandsProcessed: Object.keys(brands).length,
+      rowsInMaster: masterRows.length, 
+      products: totalProducts,
+      categories: Object.keys(tree).length
+    },
+    invalidDriveLinks: invalidDriveLinks.slice(0, 10), // Limit for readability
+    missingThumbFiles: missingThumbFiles.slice(0, 20), // Limit for readability
+    warnings: warnings.slice(0, 10), // Limit for readability
     errors: [],
     hardErrors
   };
 
+  // Save files
+  console.log("💾 Saving data files...");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
-  await fs.writeFile(path.join(PUBLIC_DIR, "data.json"), JSON.stringify({ brands, catalog: { totalProducts, tree } }, null, 2), "utf8");
+  await fs.writeFile(
+    path.join(PUBLIC_DIR, "data.json"), 
+    JSON.stringify({ brands, catalog: { totalProducts, tree } }, null, 2), 
+    "utf8"
+  );
+  
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
-  await fs.writeFile(path.join(ROOT, "build", "health.json"), JSON.stringify(report, null, 2), "utf8");
+  await fs.writeFile(
+    path.join(ROOT, "build", "health.json"), 
+    JSON.stringify(report, null, 2), 
+    "utf8"
+  );
 
+  // Generate summary
   const summary = [
-    "## Data Health Report",
-    `- Rows (master): **${masterRows.length}**`,
-    `- Products (leaf): **${totalProducts}**`,
-    `- Missing thumbnail files on disk: **${missingThumbFiles.length}**`,
-    warnings.length ? `- ⚠️ Warnings: **${warnings.length}**` : "",
-    hardErrors.length ? `- ❌ Hard errors: **${hardErrors.length}**` : "",
+    "## 📊 Data Build Summary",
+    `- **Brands processed:** ${Object.keys(brands).length}`,
+    `- **Catalog entries:** ${masterRows.length}`,
+    `- **Products created:** ${totalProducts}`,
+    `- **Top categories:** ${Object.keys(tree).length}`,
+    `- **Missing thumbnails:** ${missingThumbFiles.length}`,
+    warnings.length ? `- **⚠️ Warnings:** ${warnings.length}` : "",
+    hardErrors.length ? `- **❌ Errors:** ${hardErrors.length}` : "",
+    "",
+    "### 🗂️ Top Categories:",
+    ...Object.keys(tree).map(cat => `- **${cat}:** ${tree[cat].count || 0} items`)
   ].filter(Boolean).join("\n");
-  console.log("\n::group::Data Health Report"); console.log(summary); console.log("::endgroup::\n");
 
-  if (hardErrors.length) process.exit(1);
-  console.log(`✅ Built public/data.json with ${totalProducts} products`);
-})();
+  console.log("\n" + summary);
+  
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await fs.writeFile(process.env.GITHUB_STEP_SUMMARY, summary, "utf8");
+  }
+
+  if (hardErrors.length) {
+    console.error("\n❌ Build failed due to hard errors");
+    process.exit(1);
+  }
+  
+  console.log(`\n✅ Successfully built data.json with ${totalProducts} products!`);
+  console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
+})().catch(err => {
+  console.error("💥 Build failed:", err);
+  process.exit(1);
+});
