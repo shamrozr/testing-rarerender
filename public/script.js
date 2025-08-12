@@ -32,7 +32,7 @@ const els = {
   searchInput: document.getElementById('searchInput'),
   searchResults: document.getElementById('searchResults'),
   searchClear: document.getElementById('searchClear'),
-  searchSection: document.getElementById('searchSection'),
+  els.searchSection = document.getElementById('searchSection'),
   mobileSearchToggle: document.getElementById('mobileSearchToggle'),
   loadingIndicator: document.getElementById('loadingIndicator'),
   skeletonLoader: document.getElementById('skeletonLoader'),
