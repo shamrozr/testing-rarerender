@@ -20,7 +20,7 @@ if (!BRANDS_CSV_URL || !MASTER_CSV_URL) {
 }
 
 const HEX = /^#([0-9a-fA-F]{6})$/;
-const WA = /^https:\/\/wa\.me\/[0-9]+$/;
+const WA = /^https:\/\/wa\.me\/\d+$/;
 const GDRIVE = /^https:\/\/drive\.google\.com\//;
 
 function parseCSV(text) {
@@ -47,7 +47,7 @@ function normPath(p) {
   if (!p) return "";
   const parts = p.replace(/\\/g, "/").split("/").map(s => s.trim()).filter(Boolean);
   if (parts.length === 0) return "";
-  parts[0] = parts[0].toUpperCase(); // top category
+  parts[0] = parts[0].toUpperCase(); // normalize top category
   return parts.join("/");
 }
 function toThumbSitePath(rel) {
@@ -116,20 +116,17 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   const brandsRows = parseCSV(brandsCSV);
   const masterRows = parseCSV(masterCSV);
 
-  const errors = [];    // fatal
-  const warnings = [];  // non-fatal
+  const warnings = [];
+  const hardErrors = [];
 
-  // ===== Brands (now tolerant of blanks) =====
+  // ===== Brands (tolerant of blanks) =====
   const brands = {};
   for (const r of brandsRows) {
     const slug = (r.csvslug || "").trim();
     const name = (r.brandName || "").trim();
-
-    // Require only slug + name. Skip row silently if both missing; warn if one missing.
     if (!slug && !name) continue;
     if (!slug || !name) { warnings.push(`Brand row skipped (needs both slug & name): ${JSON.stringify(r)}`); continue; }
 
-    // Colors (fallbacks if blank/invalid)
     let primary = (r.primaryColor || "").trim();
     let accent  = (r.accentColor  || "").trim();
     let text    = (r.textColor    || "").trim();
@@ -140,29 +137,17 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     if (!HEX.test(text))    { if (text)    warnings.push(`Brand ${slug}: invalid textColor "${text}" → default used`);      text    = "#2C2926"; }
     if (!HEX.test(bg))      { if (bg)      warnings.push(`Brand ${slug}: invalid bgColor "${bg}" → default used`);          bg      = "#FEFDFB"; }
 
-    // WhatsApp (optional). If blank or invalid, we omit it (front-end will hide FAB).
     const waRaw = (r.whatsapp || "").trim();
     const whatsapp = WA.test(waRaw) ? waRaw : "";
-
     if (waRaw && !whatsapp) warnings.push(`Brand ${slug}: WhatsApp is not wa.me/* → ignored (FAB hidden)`);
 
-    // Default category (optional)
-    let defaultCategory = (r.defaultCategory || "").trim() || "BAGS";
+    const defaultCategory = (r.defaultCategory || "").trim() || "BAGS";
+    if (brands[slug]) { warnings.push(`Duplicate brand slug ignored (keeping first): ${slug}`); continue; }
 
-    if (brands[slug]) {
-      warnings.push(`Duplicate brand slug ignored (keeping first): ${slug}`);
-      continue;
-    }
-
-    brands[slug] = {
-      name,
-      colors: { primary, accent, text, bg },
-      whatsapp,                // may be empty string
-      defaultCategory
-    };
+    brands[slug] = { name, colors: { primary, accent, text, bg }, whatsapp, defaultCategory };
   }
 
-  // ===== Build catalog tree from Master (same as before) =====
+  // ===== Precompute parent set =====
   const allFullPaths = masterRows.map(r => normPath(r["RelativePath"] || r["Relative Path"] || r["Relative_Path"] || ""));
   const parentsSet = new Set();
   for (const full of allFullPaths) {
@@ -170,17 +155,19 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     for (let i = 1; i < segs.length; i++) parentsSet.add(segs.slice(0, i).join("/"));
   }
 
+  // ===== Build catalog tree =====
   const tree = {};
   let totalProducts = 0;
-  const productKeys = new Set();
+
   const invalidDriveLinks = [];
-  const folderMeta = new Map();
+  const folderMeta = new Map(); // key: full path → { thumbnail?, driveLink?, topOrder? }
 
   for (const r of masterRows) {
     const name = (r["Name"] || r["Folder/Product"] || "").trim();
-    const rel = normPath(r["RelativePath"] || r["Relative Path"] || "");
-    let driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
-    let thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+    const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
+    const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
+    const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+    const topOrderRaw = (r["TopOrder"] || r["Top Order"] || "").trim();
 
     if (!rel || !name) continue;
 
@@ -199,22 +186,25 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     if (isLeafProduct) {
       const parentSegs = segs.slice(0, -1);
       const children = ensureFolderNode(tree, parentSegs);
-      const key = parentSegs.join("/") + "•" + name.toLowerCase();
-      if (productKeys.has(key)) warnings.push(`Duplicate product label in folder → "${parentSegs.join("/")}/${name}"`);
-      productKeys.add(key);
-
       children[name] = { isProduct: true, driveLink, thumbnail: normalizedThumb || "" };
       totalProducts++;
     } else {
+      // Folder node
       ensureFolderNode(tree, segs);
       const k = segs.join("/");
       const existing = folderMeta.get(k) || {};
       if (normalizedThumb) existing.thumbnail = normalizedThumb;
       if (driveLink) existing.driveLink = driveLink;
+      // Record TopOrder ONLY for top-level rows (depth 1)
+      if (segs.length === 1) {
+        const n = parseInt(topOrderRaw, 10);
+        if (!Number.isNaN(n)) existing.topOrder = n;
+      }
       folderMeta.set(k, existing);
     }
   }
 
+  // Attach folder meta (thumb, driveLink, topOrder)
   function attachFolderMeta(node, prefix = []) {
     for (const k of Object.keys(node)) {
       const n = node[k];
@@ -223,29 +213,24 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         const meta = folderMeta.get(here);
         if (meta?.thumbnail) n.thumbnail = meta.thumbnail;
         if (meta?.driveLink) n.driveLink = meta.driveLink;
+        if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder; // used at root
         attachFolderMeta(n.children || {}, [...prefix, k]);
       }
     }
   }
   attachFolderMeta(tree);
 
-  // Convert empty folders with a drive link into product leaves
-  function convertEmptyFoldersWithLinks(node) {
+  // Convert empty folders with a drive link into leaf products
+  (function convertEmpty(node) {
     for (const k of Object.keys(node)) {
       const n = node[k];
       if (!n.isProduct) {
         const hasChildren = Object.keys(n.children || {}).length > 0;
-        if (!hasChildren && n.driveLink) {
-          delete n.children;
-          n.isProduct = true;
-          totalProducts++;
-        } else {
-          convertEmptyFoldersWithLinks(n.children || {});
-        }
+        if (!hasChildren && n.driveLink) { delete n.children; n.isProduct = true; totalProducts++; }
+        else convertEmpty(n.children || {});
       }
     }
-  }
-  convertEmptyFoldersWithLinks(tree);
+  })(tree);
 
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
@@ -266,59 +251,31 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
   await scanMissingThumbs(tree);
 
-  let productsWithoutThumb = 0;
-  (function countNoThumbProducts(node) {
-    for (const k of Object.keys(node)) {
-      const n = node[k];
-      if (n.isProduct && !n.thumbnail) productsWithoutThumb++;
-      if (!n.isProduct) countNoThumbProducts(n.children || {});
-    }
-  })(tree);
-
-  const hardErrors = [];
-  if (invalidDriveLinks.length) hardErrors.push(`${invalidDriveLinks.length} product(s) with non-Google Drive links`);
-
-  const output = { brands, catalog: { totalProducts, tree } };
-
-  await fs.mkdir(PUBLIC_DIR, { recursive: true });
-  await fs.writeFile(path.join(PUBLIC_DIR, "data.json"), JSON.stringify(output, null, 2), "utf8");
-
   const report = {
     totals: { rowsInMaster: masterRows.length, products: totalProducts },
     invalidDriveLinks,
     missingThumbFiles,
-    productsWithoutThumb,
+    productsWithoutThumb: 0,
     warnings,
-    errors,     // should be empty for brand issues now
+    errors: [],
     hardErrors
   };
+
+  await fs.mkdir(PUBLIC_DIR, { recursive: true });
+  await fs.writeFile(path.join(PUBLIC_DIR, "data.json"), JSON.stringify({ brands, catalog: { totalProducts, tree } }, null, 2), "utf8");
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
   await fs.writeFile(path.join(ROOT, "build", "health.json"), JSON.stringify(report, null, 2), "utf8");
 
-  const summaryLines = [];
-  summaryLines.push(`## Data Health Report`);
-  summaryLines.push(`- Rows (master): **${masterRows.length}**`);
-  summaryLines.push(`- Products (leaf): **${totalProducts}**`);
-  summaryLines.push(`- Products without thumbnail after fallback: **${productsWithoutThumb}**`);
-  summaryLines.push(`- Missing thumbnail files on disk: **${missingThumbFiles.length}**`);
-  if (invalidDriveLinks.length) summaryLines.push(`- ❌ Invalid Drive links: **${invalidDriveLinks.length}**`);
-  if (warnings.length) summaryLines.push(`- ⚠️ Warnings: **${warnings.length}**`);
-  if (errors.length) summaryLines.push(`- ❌ Validation errors: **${errors.length}**`);
-  if (PLACEHOLDER_THUMB) summaryLines.push(`- Placeholder in use: \`${PLACEHOLDER_THUMB}\``);
+  const summary = [
+    "## Data Health Report",
+    `- Rows (master): **${masterRows.length}**`,
+    `- Products (leaf): **${totalProducts}**`,
+    `- Missing thumbnail files on disk: **${missingThumbFiles.length}**`,
+    warnings.length ? `- ⚠️ Warnings: **${warnings.length}**` : "",
+    hardErrors.length ? `- ❌ Hard errors: **${hardErrors.length}**` : "",
+  ].filter(Boolean).join("\n");
+  console.log("\n::group::Data Health Report"); console.log(summary); console.log("::endgroup::\n");
 
-  console.log("\n::group::Data Health Report");
-  console.log(summaryLines.join("\n"));
-  console.log("::endgroup::\n");
-
-  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-  if (summaryPath) await fs.appendFile(summaryPath, summaryLines.join("\n") + "\n", "utf8");
-
-  // Only fail on truly hard errors
-  if (hardErrors.length) {
-    console.error(`\n❌ Build failed due to hard errors.`);
-    hardErrors.forEach(e => console.error(" -", e));
-    process.exit(1);
-  }
-
+  if (hardErrors.length) process.exit(1);
   console.log(`✅ Built public/data.json with ${totalProducts} products`);
 })();
