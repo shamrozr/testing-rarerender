@@ -117,19 +117,23 @@ async function loadData() {
 }
 
 function listItemsAtPath(path) {
+  // Walk to the node for the current path
   let node = STATE.data.catalog.tree;
   for (const segment of path) {
     if (!node[segment]) return [];
     node = node[segment];
   }
+
   const isRoot = path.length === 0;
-  const children = node.children || {};
+  // At root, the "children" are the top-level keys of the tree itself
+  const container = isRoot ? node : (node.children || {});
   const items = [];
 
-  for (const key of Object.keys(children)) {
-    const v = children[key];
+  for (const key of Object.keys(container)) {
+    const v = container[key];
     items.push({
-      key, label: key,
+      key,
+      label: key,
       count: v.count || (v.isProduct ? 1 : 0),
       thumbnail: v.thumbnail || '',
       isProduct: !!v.isProduct,
@@ -139,7 +143,7 @@ function listItemsAtPath(path) {
     });
   }
 
-  // Sorting
+  // Sort: root uses TopOrder; deeper levels use folder-first, then count
   if (isRoot) {
     items.sort((a,b) =>
       (a.topOrder - b.topOrder) ||
@@ -180,7 +184,15 @@ function renderPath() {
 }
 
 function visibleCountText() {
-  let node = STATE.data.catalog.tree;
+  const tree = STATE.data.catalog.tree;
+  if (STATE.path.length === 0) {
+    // Sum counts of all top-level categories
+    let sum = 0;
+    for (const k of Object.keys(tree)) sum += (tree[k]?.count || 0);
+    return sum.toLocaleString();
+  }
+  // Non-root: use node.count
+  let node = tree;
   for (const seg of STATE.path) node = node[seg];
   return (node?.count || 0).toLocaleString();
 }
