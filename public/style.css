@@ -283,7 +283,7 @@ body::before {
   color: var(--color-text);
 }
 
-/* Enhanced Mobile Search Toggle - Proper Search Icon */
+/* Enhanced Mobile Search Toggle - Proper Magnifying Glass */
 .mobile-search-toggle {
   display: none;
   width: 48px;
@@ -320,15 +320,17 @@ body::before {
   background: var(--color-surface-elevated);
   border-color: var(--color-primary);
   transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
 }
 
 .mobile-search-toggle:active {
   transform: scale(0.95);
 }
 
+/* Better magnifying glass icon */
 .search-icon-mobile {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   color: var(--color-text);
   stroke-width: 2.5;
   position: relative;
@@ -341,52 +343,69 @@ body::before {
   transform: scale(1.1);
 }
 
-/* Mobile Layout - Fixed Centering */
+/* Alternative magnifying glass icon using CSS */
+.mobile-search-toggle::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid currentColor;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translate(-2px, -2px);
+  z-index: 2;
+  opacity: 0;
+  transition: opacity var(--transition-swift);
+}
+
+/* Show either SVG or CSS version - using SVG for better clarity */
+.mobile-search-toggle .search-icon-mobile {
+  opacity: 1;
+}
+
+.mobile-search-toggle::after {
+  opacity: 0;
+}
+
+/* Mobile Layout - Fixed with Logo Left, Name Center, Search Right */
 @media (max-width: 768px) {
   .header-content {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-md);
     position: relative;
   }
   
-  /* Left: Empty spacer to balance the search button */
-  .header-content::before {
-    content: '';
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
+  /* Logo stays on the left */
+  .brand-section {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
   }
   
-  /* Center: Brand section */
-  .brand-section {
+  /* Brand name in the center - separate from logo */
+  .brand-section .brand-info {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
+    width: max-content;
   }
   
-  /* Right: Mobile search toggle */
+  /* Search button on the right */
   .mobile-search-toggle {
     display: flex;
-    order: 3;
-    position: relative;
-    z-index: 10;
+    grid-column: 3;
   }
   
   /* Search section for mobile */
   .desktop-search {
     display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
+    grid-column: 1 / -1;
     margin: var(--space-md) 0 0 0;
     max-width: none;
-    z-index: 5;
   }
   
   .desktop-search.mobile-visible {
