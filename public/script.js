@@ -125,7 +125,7 @@ function listItemsAtPath(path) {
   }
 
   const isRoot = path.length === 0;
-  // At root, the "children" are the top-level keys of the tree itself
+  // At root, the container is the tree object itself
   const container = isRoot ? node : (node.children || {});
   const items = [];
 
@@ -139,11 +139,12 @@ function listItemsAtPath(path) {
       isProduct: !!v.isProduct,
       driveLink: v.driveLink || '',
       hasChildren: !!v.children && Object.keys(v.children).length > 0,
+      // used only at root
       topOrder: typeof v.topOrder !== 'undefined' ? v.topOrder : Number.POSITIVE_INFINITY,
     });
   }
 
-  // Sort: root uses TopOrder; deeper levels use folder-first, then count
+  // Sort: root uses TopOrder; deeper levels use folder-first -> count -> A→Z
   if (isRoot) {
     items.sort((a,b) =>
       (a.topOrder - b.topOrder) ||
@@ -159,6 +160,7 @@ function listItemsAtPath(path) {
   }
   return items;
 }
+
 
 function updateURL() {
   if (STATE.isPop) return; // don't push during popstate
@@ -182,20 +184,18 @@ function renderPath() {
   setupInfiniteScroll();
   updateURL();
 }
-
 function visibleCountText() {
   const tree = STATE.data.catalog.tree;
   if (STATE.path.length === 0) {
-    // Sum counts of all top-level categories
     let sum = 0;
     for (const k of Object.keys(tree)) sum += (tree[k]?.count || 0);
     return sum.toLocaleString();
   }
-  // Non-root: use node.count
   let node = tree;
   for (const seg of STATE.path) node = node[seg];
   return (node?.count || 0).toLocaleString();
 }
+
 
 function renderNextBatch() {
   const start = STATE.rendered;
