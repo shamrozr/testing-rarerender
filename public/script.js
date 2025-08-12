@@ -1,13 +1,14 @@
-// Brand Directory SPA — robust brand matching + safe defaults
+// Brand Directory SPA — nav-first revamp with TopOrder + deep links
 
 const STATE = {
   data: null,
   brand: null,
-  path: [],
+  path: [],          // array of labels, e.g., ['BAGS','GUCCI']
   items: [],
   batchSize: 20,
   rendered: 0,
   hoverTimer: null,
+  isPop: false,      // guard to avoid pushState loops
 };
 
 const els = {
@@ -28,8 +29,7 @@ const CONFIG = {
 };
 
 const waRe = /^https:\/\/wa\.me\/\d+$/;
-
-const norm = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ''); // case/space/hyphen insensitive
+const norm = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 function applyTheme(theme) {
   const root = document.documentElement;
@@ -39,54 +39,79 @@ function applyTheme(theme) {
   root.style.setProperty('--color-bg', theme.colors.bg || '#FEFDFB');
   document.querySelector('meta[name="theme-color"]').setAttribute('content', theme.colors.bg || '#000');
 }
-
 function initialsFor(name) {
-  const parts = (name || '').split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] || '';
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : (parts[0]?.[1] || '');
-  return (first + last).toUpperCase();
+  const p = (name || '').split(/\s+/).filter(Boolean);
+  const a = p[0]?.[0] || '', b = p.length > 1 ? p[p.length-1][0] : (p[0]?.[1] || '');
+  return (a + b).toUpperCase();
+}
+
+function resolveBrandSlug(brands, raw) {
+  const slugs = Object.keys(brands);
+  if (!raw) return slugs[0];
+  const target = norm(raw);
+  const bySlug = {}, byName = {};
+  for (const s of slugs) { bySlug[norm(s)] = s; byName[norm(brands[s].name)] = s; }
+  return bySlug[target] || byName[target] || slugs[0];
+}
+
+function resolvePathFromParam(tree, rawPath) {
+  if (!rawPath) return [];
+  const parts = rawPath.replace(/\\/g,'/').split('/').filter(Boolean);
+  let node = tree, acc = [];
+  for (let i=0;i<parts.length;i++) {
+    const wanted = norm(i===0 ? parts[i].toUpperCase() : parts[i]);
+    const keys = Object.keys(node);
+    let hit = null;
+    for (const k of keys) {
+      if (norm(k) === wanted) { hit = k; break; }
+    }
+    if (!hit) break;
+    acc.push(hit);
+    const n = node[hit];
+    if (n?.children) node = n.children; else break;
+  }
+  return acc;
+}
+
+function getNode(tree, path) {
+  let node = tree;
+  for (const seg of path) {
+    if (!node[seg]) return null;
+    node = node[seg];
+    if (!node) return null;
+    if (node.children) node = node; // keep object
+  }
+  return node; // node object with {children?, isProduct?}
 }
 
 async function loadData() {
-  // no-store + timestamp to avoid stale cache
   const res = await fetch('/data.json?v=' + Date.now(), { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to load data.json');
   const data = await res.json();
   STATE.data = data;
 
-  // figure out which brand to use (case/format-insensitive)
-  const brandParamRaw = new URL(window.location.href).searchParams.get('brand') || '';
-  const brandSlugs = Object.keys(data.brands);
-  const bySlugNorm = {};
-  const byNameNorm = {};
-  for (const slug of brandSlugs) {
-    bySlugNorm[norm(slug)] = slug;
-    byNameNorm[norm(data.brands[slug].name)] = slug;
-  }
-  const wanted = norm(brandParamRaw);
-  const resolvedSlug = bySlugNorm[wanted] || byNameNorm[wanted] || brandSlugs[0];
+  // brand
+  const u = new URL(location.href);
+  const brandRaw = u.searchParams.get('brand') || '';
+  const slug = resolveBrandSlug(data.brands, brandRaw);
+  STATE.brand = slug;
+  const theme = data.brands[slug];
 
-  STATE.brand = resolvedSlug;
-  const theme = data.brands[resolvedSlug];
-
-  // Theme + header
+  // header
   applyTheme(theme);
   els.brandName.textContent = theme.name;
   els.brandLogo.textContent = initialsFor(theme.name);
-
-  // WhatsApp FAB (hide if not present/invalid)
   const validWA = theme.whatsapp && waRe.test(theme.whatsapp);
   els.waFab.style.display = validWA ? 'grid' : 'none';
   if (validWA) els.waFab.href = theme.whatsapp;
 
-  // Total products (from whole catalog)
+  // totals
   els.total.textContent = (data.catalog?.totalProducts || 0).toLocaleString();
 
-  // Start path at default category if valid; else first top-level category; else root
-  const topKeys = Object.keys(data.catalog?.tree || {});
-  const desiredCat = (theme.defaultCategory || '').toString().toUpperCase();
-  const startCat = topKeys.includes(desiredCat) ? desiredCat : (topKeys[0] || '');
-  STATE.path = startCat ? [startCat] : [];
+  // path from URL (preferred). If invalid/empty → root.
+  const pathParam = u.searchParams.get('path') || '';
+  const startPath = resolvePathFromParam(data.catalog.tree, pathParam);
+  STATE.path = startPath;
 
   renderPath();
 }
@@ -97,26 +122,47 @@ function listItemsAtPath(path) {
     if (!node[segment]) return [];
     node = node[segment];
   }
+  const isRoot = path.length === 0;
   const children = node.children || {};
   const items = [];
+
   for (const key of Object.keys(children)) {
     const v = children[key];
     items.push({
-      key,
-      label: key,
+      key, label: key,
       count: v.count || (v.isProduct ? 1 : 0),
       thumbnail: v.thumbnail || '',
       isProduct: !!v.isProduct,
       driveLink: v.driveLink || '',
       hasChildren: !!v.children && Object.keys(v.children).length > 0,
+      topOrder: typeof v.topOrder !== 'undefined' ? v.topOrder : Number.POSITIVE_INFINITY,
     });
   }
-  items.sort((a,b) =>
-    (Number(b.hasChildren) - Number(a.hasChildren)) ||
-    (b.count - a.count) ||
-    a.label.localeCompare(b.label)
-  );
+
+  // Sorting
+  if (isRoot) {
+    items.sort((a,b) =>
+      (a.topOrder - b.topOrder) ||
+      (b.count - a.count) ||
+      a.label.localeCompare(b.label)
+    );
+  } else {
+    items.sort((a,b) =>
+      (Number(b.hasChildren) - Number(a.hasChildren)) ||
+      (b.count - a.count) ||
+      a.label.localeCompare(b.label)
+    );
+  }
   return items;
+}
+
+function updateURL() {
+  if (STATE.isPop) return; // don't push during popstate
+  const params = new URLSearchParams(location.search);
+  params.set('brand', STATE.brand);
+  if (STATE.path.length) params.set('path', STATE.path.join('/'));
+  else params.delete('path');
+  history.pushState({ path: STATE.path }, '', `${location.pathname}?${params.toString()}`);
 }
 
 function renderPath() {
@@ -124,10 +170,13 @@ function renderPath() {
   els.grid.innerHTML = '';
   STATE.items = listItemsAtPath(STATE.path);
   STATE.rendered = 0;
-  els.levelCount.textContent = `${visibleCountText()} in ${STATE.path[STATE.path.length-1] || 'All'}`;
+
+  const label = STATE.path.length ? STATE.path[STATE.path.length-1] : 'All';
+  els.levelCount.textContent = `${visibleCountText()} in ${label}`;
   renderBreadcrumb();
   renderNextBatch();
   setupInfiniteScroll();
+  updateURL();
 }
 
 function visibleCountText() {
@@ -161,19 +210,12 @@ function cardEl(item) {
 
   const img = document.createElement('img');
   img.className = 'card-thumb';
-  if (item.thumbnail) {
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    img.alt = `${item.label} thumbnail`;
-    img.src = item.thumbnail;
-  } else {
-    img.alt = '';
-  }
+  if (item.thumbnail) { img.loading = 'lazy'; img.decoding = 'async'; img.alt = `${item.label} thumbnail`; img.src = item.thumbnail; }
+  else { img.alt = ''; }
 
   const body = document.createElement('div'); body.className = 'card-body';
   const title = document.createElement('h3'); title.className = 'card-title'; title.textContent = item.label;
   const right = document.createElement('div'); right.className = 'card-count'; right.textContent = item.hasChildren ? `${item.count}` : '';
-
   body.appendChild(title); body.appendChild(right);
   card.appendChild(img); card.appendChild(body);
 
@@ -182,14 +224,14 @@ function cardEl(item) {
       trackClick(STATE.brand, [...STATE.path, item.label].join('/'));
       window.location.href = item.driveLink;
     } else {
-      STATE.path.push(item.label);
+      STATE.path = [...STATE.path, item.label];
       renderPath();
     }
   };
   card.addEventListener('click', go);
   card.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 
-  // Hover prediction (optional)
+  // Hover prediction
   card.addEventListener('mouseenter', () => {
     if (!item.hasChildren) return;
     clearTimeout(STATE.hoverTimer);
@@ -202,27 +244,27 @@ function cardEl(item) {
 
 function preloadChildrenThumbs(path) {
   const children = listItemsAtPath(path).slice(0, CONFIG.HOVER_PRELOAD_CHILDREN);
-  for (const c of children) {
-    if (!c.thumbnail) continue;
-    const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = c.thumbnail;
-  }
+  for (const c of children) { if (!c.thumbnail) continue; const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = c.thumbnail; }
 }
 
 function renderBreadcrumb() {
-  const parts = STATE.path;
   const frag = document.createDocumentFragment();
 
-  const rootA = document.createElement('a');
-  rootA.href = '#'; rootA.textContent = 'All';
-  rootA.addEventListener('click', (e) => { e.preventDefault(); STATE.path = []; renderPath(); });
-  frag.appendChild(rootA);
+  const home = document.createElement('a');
+  home.href = '#'; home.textContent = 'Home';
+  home.addEventListener('click', (e) => { e.preventDefault(); STATE.path = []; renderPath(); });
+  frag.appendChild(home);
 
-  parts.forEach((p, idx) => {
-    const isLast = idx === parts.length - 1;
-    const el = document.createElement(isLast ? 'span' : 'a');
+  STATE.path.forEach((p, idx) => {
+    const last = idx === STATE.path.length - 1;
+    const el = document.createElement(last ? 'span' : 'a');
     el.textContent = p;
-    if (isLast) el.className = 'current';
-    else { el.href = '#'; el.addEventListener('click', (e) => { e.preventDefault(); STATE.path = parts.slice(0, idx + 1); renderPath(); }); }
+    if (!last) {
+      el.href = '#';
+      el.addEventListener('click', (e) => { e.preventDefault(); STATE.path = STATE.path.slice(0, idx + 1); renderPath(); });
+    } else {
+      el.className = 'current';
+    }
     frag.appendChild(el);
   });
 
@@ -242,6 +284,15 @@ function trackClick(slug, productPath) {
   img.style.position = 'absolute'; img.style.opacity = '0';
   document.body.appendChild(img); setTimeout(() => img.remove(), 2000);
 }
+
+window.addEventListener('popstate', () => {
+  STATE.isPop = true;
+  const u = new URL(location.href);
+  const pathParam = u.searchParams.get('path') || '';
+  STATE.path = resolvePathFromParam(STATE.data.catalog.tree, pathParam);
+  renderPath();
+  STATE.isPop = false;
+});
 
 loadData().catch(err => {
   console.error(err);
