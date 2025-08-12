@@ -20,7 +20,7 @@ if (!BRANDS_CSV_URL || !MASTER_CSV_URL) {
 }
 
 const HEX = /^#([0-9a-fA-F]{6})$/;
-const WA = /^https:\/\/wa\.me\/[0-9]+/;
+const WA = /^https:\/\/wa\.me\/[0-9]+$/;
 const GDRIVE = /^https:\/\/drive\.google\.com\//;
 
 function parseCSV(text) {
@@ -47,7 +47,7 @@ function normPath(p) {
   if (!p) return "";
   const parts = p.replace(/\\/g, "/").split("/").map(s => s.trim()).filter(Boolean);
   if (parts.length === 0) return "";
-  parts[0] = parts[0].toUpperCase();
+  parts[0] = parts[0].toUpperCase(); // top category
   return parts.join("/");
 }
 function toThumbSitePath(rel) {
@@ -71,7 +71,6 @@ function ensureFolderNode(tree, segs) {
   }
   return node;
 }
-
 function setCounts(node) {
   if (node.isProduct) return 1;
   let sum = 0;
@@ -79,7 +78,6 @@ function setCounts(node) {
   node.count = sum;
   return sum;
 }
-
 function propagateThumbsFromChildren(node) {
   for (const k of Object.keys(node)) {
     const n = node[k];
@@ -96,7 +94,6 @@ function propagateThumbsFromChildren(node) {
     }
   }
 }
-
 function fillMissingThumbsFromAncestors(node, inherited = "") {
   for (const k of Object.keys(node)) {
     const n = node[k];
@@ -119,57 +116,71 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   const brandsRows = parseCSV(brandsCSV);
   const masterRows = parseCSV(masterCSV);
 
-  const errors = [];
-  const warnings = [];
+  const errors = [];    // fatal
+  const warnings = [];  // non-fatal
 
-  // ===== Build brands map =====
+  // ===== Brands (now tolerant of blanks) =====
   const brands = {};
   for (const r of brandsRows) {
     const slug = (r.csvslug || "").trim();
     const name = (r.brandName || "").trim();
-    const primary = (r.primaryColor || "").trim();
-    const accent = (r.accentColor || "").trim();
-    const text = (r.textColor || "#2C2926").trim();
-    const bg = (r.bgColor || "#FEFDFB").trim();
-    const whatsapp = (r.whatsapp || "").trim();
-    const defaultCategory = (r.defaultCategory || "").trim();
 
-    if (!slug || !name || !primary || !accent || !whatsapp) {
-      errors.push(`Brand missing required fields: ${JSON.stringify(r)}`); continue;
-    }
-    if (![primary, accent, text, bg].every(c => HEX.test(c))) {
-      errors.push(`Brand color invalid: ${slug}`);
-    }
-    if (!WA.test(whatsapp)) errors.push(`WhatsApp URL invalid: ${slug}`);
-    if (brands[slug]) errors.push(`Duplicate brand slug: ${slug}`);
+    // Require only slug + name. Skip row silently if both missing; warn if one missing.
+    if (!slug && !name) continue;
+    if (!slug || !name) { warnings.push(`Brand row skipped (needs both slug & name): ${JSON.stringify(r)}`); continue; }
 
-    brands[slug] = { name, colors: { primary, accent, text, bg }, whatsapp, defaultCategory };
+    // Colors (fallbacks if blank/invalid)
+    let primary = (r.primaryColor || "").trim();
+    let accent  = (r.accentColor  || "").trim();
+    let text    = (r.textColor    || "").trim();
+    let bg      = (r.bgColor      || "").trim();
+
+    if (!HEX.test(primary)) { if (primary) warnings.push(`Brand ${slug}: invalid primaryColor "${primary}" → default used`); primary = "#1A1A1A"; }
+    if (!HEX.test(accent))  { if (accent)  warnings.push(`Brand ${slug}: invalid accentColor "${accent}" → default used`);  accent  = "#C9A961"; }
+    if (!HEX.test(text))    { if (text)    warnings.push(`Brand ${slug}: invalid textColor "${text}" → default used`);      text    = "#2C2926"; }
+    if (!HEX.test(bg))      { if (bg)      warnings.push(`Brand ${slug}: invalid bgColor "${bg}" → default used`);          bg      = "#FEFDFB"; }
+
+    // WhatsApp (optional). If blank or invalid, we omit it (front-end will hide FAB).
+    const waRaw = (r.whatsapp || "").trim();
+    const whatsapp = WA.test(waRaw) ? waRaw : "";
+
+    if (waRaw && !whatsapp) warnings.push(`Brand ${slug}: WhatsApp is not wa.me/* → ignored (FAB hidden)`);
+
+    // Default category (optional)
+    let defaultCategory = (r.defaultCategory || "").trim() || "BAGS";
+
+    if (brands[slug]) {
+      warnings.push(`Duplicate brand slug ignored (keeping first): ${slug}`);
+      continue;
+    }
+
+    brands[slug] = {
+      name,
+      colors: { primary, accent, text, bg },
+      whatsapp,                // may be empty string
+      defaultCategory
+    };
   }
 
-  // ===== Precompute path relations =====
+  // ===== Build catalog tree from Master (same as before) =====
   const allFullPaths = masterRows.map(r => normPath(r["RelativePath"] || r["Relative Path"] || r["Relative_Path"] || ""));
   const parentsSet = new Set();
   for (const full of allFullPaths) {
     const segs = full.split("/").filter(Boolean);
-    for (let i = 1; i < segs.length; i++) {
-      parentsSet.add(segs.slice(0, i).join("/"));
-    }
+    for (let i = 1; i < segs.length; i++) parentsSet.add(segs.slice(0, i).join("/"));
   }
 
-  // ===== Build catalog tree from master rows =====
   const tree = {};
   let totalProducts = 0;
-
   const productKeys = new Set();
   const invalidDriveLinks = [];
-
   const folderMeta = new Map();
 
   for (const r of masterRows) {
     const name = (r["Name"] || r["Folder/Product"] || "").trim();
     const rel = normPath(r["RelativePath"] || r["Relative Path"] || "");
     let driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
-    let thumbRel = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+    let thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
 
     if (!rel || !name) continue;
 
@@ -189,16 +200,10 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       const parentSegs = segs.slice(0, -1);
       const children = ensureFolderNode(tree, parentSegs);
       const key = parentSegs.join("/") + "•" + name.toLowerCase();
-      if (productKeys.has(key)) {
-        warnings.push(`Duplicate product label under same folder → "${parentSegs.join("/")}/${name}" (auto-suffix will be applied)`);
-      }
+      if (productKeys.has(key)) warnings.push(`Duplicate product label in folder → "${parentSegs.join("/")}/${name}"`);
       productKeys.add(key);
 
-      children[name] = {
-        isProduct: true,
-        driveLink,
-        thumbnail: normalizedThumb || "",
-      };
+      children[name] = { isProduct: true, driveLink, thumbnail: normalizedThumb || "" };
       totalProducts++;
     } else {
       ensureFolderNode(tree, segs);
@@ -224,7 +229,8 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
   attachFolderMeta(tree);
 
-  function convertEmptyFoldersWithLinks(node, prefix = []) {
+  // Convert empty folders with a drive link into product leaves
+  function convertEmptyFoldersWithLinks(node) {
     for (const k of Object.keys(node)) {
       const n = node[k];
       if (!n.isProduct) {
@@ -234,7 +240,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
           n.isProduct = true;
           totalProducts++;
         } else {
-          convertEmptyFoldersWithLinks(n.children || {}, [...prefix, k]);
+          convertEmptyFoldersWithLinks(n.children || {});
         }
       }
     }
@@ -246,6 +252,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
 
   for (const top of Object.keys(tree)) setCounts(tree[top]);
 
+  // Health checks
   const missingThumbFiles = [];
   async function scanMissingThumbs(node, pfx = []) {
     for (const k of Object.keys(node)) {
@@ -260,14 +267,13 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   await scanMissingThumbs(tree);
 
   let productsWithoutThumb = 0;
-  function countNoThumbProducts(node) {
+  (function countNoThumbProducts(node) {
     for (const k of Object.keys(node)) {
       const n = node[k];
       if (n.isProduct && !n.thumbnail) productsWithoutThumb++;
       if (!n.isProduct) countNoThumbProducts(n.children || {});
     }
-  }
-  countNoThumbProducts(tree);
+  })(tree);
 
   const hardErrors = [];
   if (invalidDriveLinks.length) hardErrors.push(`${invalidDriveLinks.length} product(s) with non-Google Drive links`);
@@ -283,7 +289,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     missingThumbFiles,
     productsWithoutThumb,
     warnings,
-    errors,
+    errors,     // should be empty for brand issues now
     hardErrors
   };
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
@@ -305,13 +311,11 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   console.log("::endgroup::\n");
 
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
-  if (summaryPath) {
-    await fs.appendFile(summaryPath, summaryLines.join("\n") + "\n", "utf8");
-  }
+  if (summaryPath) await fs.appendFile(summaryPath, summaryLines.join("\n") + "\n", "utf8");
 
-  if (errors.length || hardErrors.length) {
-    console.error(`\n❌ Build failed due to validation/hard errors.`);
-    errors.forEach(e => console.error(" -", e));
+  // Only fail on truly hard errors
+  if (hardErrors.length) {
+    console.error(`\n❌ Build failed due to hard errors.`);
     hardErrors.forEach(e => console.error(" -", e));
     process.exit(1);
   }
