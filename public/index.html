@@ -6,7 +6,7 @@
   <title>Luxury Catalog</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="/favicon.ico" />
   <link rel="stylesheet" href="/style.css" />
   <meta name="theme-color" content="#000000" />
@@ -14,35 +14,80 @@
 <body>
   <noscript>This site requires JavaScript to navigate the product catalog.</noscript>
 
-  <header class="app-header container">
-    <div class="brand">
-      <div id="brandLogo" class="brand-logo" aria-hidden="true">SB</div>
-      <div class="brand-meta">
-        <h1 id="brandName" class="brand-name">Sulina Bags</h1>
-        <div class="brand-stats">
-          <span>Total: <strong id="totalProducts">0</strong></span>
-          <span class="dot">•</span>
-          <span id="levelCount">Loading…</span>
+  <!-- Modern Header -->
+  <header class="modern-header">
+    <div class="container">
+      <div class="header-content">
+        <!-- Brand Identity -->
+        <div class="brand-section">
+          <div id="brandLogo" class="brand-logo">LB</div>
+          <div class="brand-info">
+            <h1 id="brandName" class="brand-name">Luxury Bags</h1>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-section">
+          <div class="search-container">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="21 21l-4.35-4.35"></path>
+            </svg>
+            <input 
+              type="text" 
+              id="searchInput" 
+              class="search-input" 
+              placeholder="Search products, brands, categories..."
+              autocomplete="off"
+            />
+            <button id="searchClear" class="search-clear" style="display: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Search Results Dropdown -->
+          <div id="searchResults" class="search-results" style="display: none;"></div>
         </div>
       </div>
     </div>
   </header>
 
-  <main class="container">
-    <nav id="breadcrumb" class="breadcrumb" aria-label="Breadcrumb"></nav>
+  <!-- Navigation Breadcrumb -->
+  <nav class="breadcrumb-nav">
+    <div class="container">
+      <div id="breadcrumb" class="breadcrumb"></div>
+    </div>
+  </nav>
 
-    <section id="grid" class="card-grid" aria-live="polite" aria-busy="true">
-      <!-- Cards render here -->
-    </section>
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Category Grid -->
+      <section id="grid" class="product-grid" aria-live="polite" aria-busy="false">
+        <!-- Cards render here -->
+      </section>
 
-    <div id="infiniteSentinel" class="sentinel" aria-hidden="true"></div>
+      <!-- Loading Indicator -->
+      <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Loading more products...</p>
+      </div>
+
+      <!-- Infinite Scroll Sentinel -->
+      <div id="infiniteSentinel" class="sentinel" aria-hidden="true"></div>
+    </div>
   </main>
 
-  <a id="whatsAppFab" class="fab" href="#" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
-    <!-- simple WhatsApp icon -->
-    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.94 14.56L2 22l5.6-1.47A10 10 0 1 0 12 2Zm5.44 14.06c-.23.66-1.13 1.2-1.83 1.36-.49.11-1.12.2-3.25-.67-2.73-1.13-4.5-3.9-4.64-4.08-.13-.18-1.11-1.48-1.11-2.83s.7-2 .95-2.27c.23-.26.61-.38.98-.38.12 0 .23 0 .33.01.29.01.44.03.64.5.23.55.79 1.9.86 2.04.07.14.11.31.02.49-.09.18-.14.29-.28.45-.14.16-.3.36-.43.48-.14.12-.29.25-.13.52.16.26.71 1.16 1.53 1.88 1.05.93 1.93 1.22 2.2 1.35.27.13.43.11.59-.07.16-.18.68-.79.86-1.06.18-.27.37-.22.62-.13.25.09 1.58.75 1.86.89.28.14.46.21.53.33.07.12.07.7-.16 1.36Z" fill="currentColor"/></svg>
+  <!-- WhatsApp FAB -->
+  <a id="whatsAppFab" class="whatsapp-fab" href="#" target="_blank" rel="noopener" aria-label="Chat on WhatsApp" style="display: none;">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.382"/>
+    </svg>
   </a>
 
-<script src="/script.js?v=nav3" type="module"></script>
+  <script src="/script.js?v=revamp1" type="module"></script>
 </body>
 </html>
