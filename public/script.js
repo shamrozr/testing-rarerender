@@ -98,14 +98,367 @@ function createImageElement(src, alt, className = '') {
   return img;
 }
 
-function applyTheme(theme) {
-  const root = document.documentElement;
-  root.style.setProperty('--color-primary', theme.colors.primary);
-  root.style.setProperty('--color-accent', theme.colors.accent);
-  root.style.setProperty('--color-text', theme.colors.text || '#1a1a1a');
-  root.style.setProperty('--color-bg', theme.colors.bg || '#fefefe');
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme.colors.primary);
+// Smart Color System - Auto-generates readable color schemes
+class SmartColorSystem {
+  constructor() {
+    this.fallbackColors = {
+      primary: '#2563EB',    // Professional blue
+      accent: '#3B82F6',     // Lighter blue
+      text: '#1F2937',       // Dark gray
+      bg: '#FFFFFF',         // Clean white
+      surface: '#F9FAFB',    // Light gray
+    };
+  }
+
+  // Convert hex to RGB
+  hexToRgb(hex) {
+    if (!hex || typeof hex !== 'string') return null;
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  // Convert RGB to hex
+  rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  // Calculate luminance for contrast checking
+  getLuminance(r, g, b) {
+    const [rs, gs, bs] = [r, g, b].map(c => {
+      c = c / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  }
+
+  // Calculate contrast ratio between two colors
+  getContrastRatio(color1, color2) {
+    const rgb1 = this.hexToRgb(color1);
+    const rgb2 = this.hexToRgb(color2);
+    
+    if (!rgb1 || !rgb2) return 1;
+    
+    const lum1 = this.getLuminance(rgb1.r, rgb1.g, rgb1.b);
+    const lum2 = this.getLuminance(rgb2.r, rgb2.g, rgb2.b);
+    
+    const brightest = Math.max(lum1, lum2);
+    const darkest = Math.min(lum1, lum2);
+    
+    return (brightest + 0.05) / (darkest + 0.05);
+  }
+
+  // Adjust color brightness
+  adjustBrightness(hex, amount) {
+    const rgb = this.hexToRgb(hex);
+    if (!rgb) return hex;
+
+    const adjust = (value) => Math.max(0, Math.min(255, value + amount));
+    
+    return this.rgbToHex(
+      adjust(rgb.r),
+      adjust(rgb.g),
+      adjust(rgb.b)
+    );
+  }
+
+  // Generate smart accent color from primary
+  generateAccent(primary) {
+    const rgb = this.hexToRgb(primary);
+    if (!rgb) return this.fallbackColors.accent;
+
+    // Make accent lighter and slightly different hue
+    const accent = this.rgbToHex(
+      Math.min(255, rgb.r + 30),
+      Math.min(255, rgb.g + 20),
+      Math.min(255, rgb.b + 40)
+    );
+
+    return accent;
+  }
+
+  // Generate readable text color based on background
+  generateTextColor(backgroundColor) {
+    const bg = this.hexToRgb(backgroundColor);
+    if (!bg) return this.fallbackColors.text;
+
+    const luminance = this.getLuminance(bg.r, bg.g, bg.b);
+    
+    // If background is dark, use light text. If light, use dark text.
+    return luminance > 0.5 ? '#1F2937' : '#F9FAFB';
+  }
+
+  // Generate smart color palette
+  generateSmartPalette(brandColors) {
+    const palette = { ...this.fallbackColors };
+
+    try {
+      // Use provided primary or fallback
+      let primary = brandColors.primary;
+      if (!primary || !this.hexToRgb(primary)) {
+        console.log('🎨 Invalid primary color, using fallback');
+        primary = this.fallbackColors.primary;
+      }
+
+      // Smart accent generation
+      let accent = brandColors.accent;
+      if (!accent || !this.hexToRgb(accent)) {
+        accent = this.generateAccent(primary);
+        console.log('🎨 Generated smart accent color:', accent);
+      }
+
+      // Ensure good contrast for accent
+      const contrastRatio = this.getContrastRatio(primary, accent);
+      if (contrastRatio < 1.5) {
+        accent = this.adjustBrightness(primary, primary.includes('f') ? -60 : 60);
+        console.log('🎨 Adjusted accent for better contrast:', accent);
+      }
+
+      // Smart background color
+      let bg = brandColors.bg;
+      if (!bg || !this.hexToRgb(bg)) {
+        bg = '#FFFFFF'; // Always use clean white for backgrounds
+      }
+
+      // Smart text color based on background
+      let text = this.generateTextColor(bg);
+      
+      // Ensure text has good contrast with background
+      const textContrast = this.getContrastRatio(text, bg);
+      if (textContrast < 4.5) {
+        text = bg === '#FFFFFF' ? '#1F2937' : '#F9FAFB';
+        console.log('🎨 Adjusted text color for accessibility:', text);
+      }
+
+      // Generate surface color (slightly tinted background)
+      const surfaceRgb = this.hexToRgb(bg);
+      const primaryRgb = this.hexToRgb(primary);
+      
+      if (surfaceRgb && primaryRgb) {
+        const surface = this.rgbToHex(
+          Math.round(surfaceRgb.r * 0.98 + primaryRgb.r * 0.02),
+          Math.round(surfaceRgb.g * 0.98 + primaryRgb.g * 0.02),
+          Math.round(surfaceRgb.b * 0.98 + primaryRgb.b * 0.02)
+        );
+        palette.surface = surface;
+      }
+
+      // Assign final palette
+      palette.primary = primary;
+      palette.accent = accent;
+      palette.text = text;
+      palette.bg = bg;
+
+      console.log('🎨 Generated smart color palette:', palette);
+      return palette;
+
+    } catch (error) {
+      console.error('🎨 Error generating color palette, using fallbacks:', error);
+      return this.fallbackColors;
+    }
+  }
+
+  // Generate additional UI colors
+  generateUIColors(palette) {
+    return {
+      // Button colors with good contrast
+      buttonPrimary: palette.primary,
+      buttonPrimaryHover: this.adjustBrightness(palette.primary, -20),
+      buttonSecondary: palette.accent,
+      buttonSecondaryHover: this.adjustBrightness(palette.accent, -15),
+      
+      // Border colors
+      border: this.adjustBrightness(palette.bg, -15),
+      borderHover: this.adjustBrightness(palette.bg, -30),
+      
+      // Status colors (always readable)
+      success: '#10B981',
+      warning: '#F59E0B',
+      error: '#EF4444',
+      info: palette.primary,
+      
+      // Overlay colors
+      overlay: 'rgba(0, 0, 0, 0.1)',
+      overlayDark: 'rgba(0, 0, 0, 0.3)',
+    };
+  }
 }
+
+// Enhanced theme application with smart colors
+function applyTheme(theme) {
+  const colorSystem = new SmartColorSystem();
+  
+  // Generate smart color palette
+  const smartPalette = colorSystem.generateSmartPalette(theme.colors);
+  const uiColors = colorSystem.generateUIColors(smartPalette);
+  
+  const root = document.documentElement;
+  
+  // Apply main colors
+  root.style.setProperty('--color-primary', smartPalette.primary);
+  root.style.setProperty('--color-accent', smartPalette.accent);
+  root.style.setProperty('--color-text', smartPalette.text);
+  root.style.setProperty('--color-bg', smartPalette.bg);
+  root.style.setProperty('--color-surface', smartPalette.surface);
+  
+  // Apply UI colors
+  root.style.setProperty('--color-button-primary', uiColors.buttonPrimary);
+  root.style.setProperty('--color-button-primary-hover', uiColors.buttonPrimaryHover);
+  root.style.setProperty('--color-button-secondary', uiColors.buttonSecondary);
+  root.style.setProperty('--color-button-secondary-hover', uiColors.buttonSecondaryHover);
+  
+  root.style.setProperty('--color-border', uiColors.border);
+  root.style.setProperty('--color-border-hover', uiColors.borderHover);
+  
+  root.style.setProperty('--color-success', uiColors.success);
+  root.style.setProperty('--color-warning', uiColors.warning);
+  root.style.setProperty('--color-error', uiColors.error);
+  root.style.setProperty('--color-info', uiColors.info);
+  
+  // Set theme color for mobile browsers
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', smartPalette.primary);
+  
+  console.log('🎨 Applied smart theme for:', theme.name);
+  console.log('🎨 Primary contrast ratio:', colorSystem.getContrastRatio(smartPalette.primary, smartPalette.bg));
+  console.log('🎨 Text contrast ratio:', colorSystem.getContrastRatio(smartPalette.text, smartPalette.bg));
+}
+
+// Smart scroll reset functionality
+class SmartScrollManager {
+  constructor() {
+    this.scrollPositions = new Map(); // Store scroll positions for each path
+    this.isNavigating = false;
+    this.resetTimeout = null;
+  }
+
+  // Save current scroll position for current path
+  saveScrollPosition(path) {
+    const pathKey = path.join('/') || 'home';
+    const scrollY = window.scrollY;
+    this.scrollPositions.set(pathKey, scrollY);
+    console.log(`💾 Saved scroll position for ${pathKey}: ${scrollY}`);
+  }
+
+  // Smart scroll reset - always go to top for new navigation
+  resetScrollPosition(delay = 0) {
+    clearTimeout(this.resetTimeout);
+    
+    this.resetTimeout = setTimeout(() => {
+      if (this.isNavigating) {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'smooth'
+        });
+        console.log('📱 Reset scroll position to top');
+      }
+    }, delay);
+  }
+
+  // Mark navigation start
+  startNavigation() {
+    this.isNavigating = true;
+    // Save current position before navigating
+    this.saveScrollPosition(STATE.path);
+  }
+
+  // Mark navigation complete
+  endNavigation() {
+    // Always reset to top after navigation
+    this.resetScrollPosition(100); // Small delay to ensure DOM is updated
+    
+    setTimeout(() => {
+      this.isNavigating = false;
+    }, 300);
+  }
+
+  // Handle browser back/forward
+  handlePopstateNavigation() {
+    // For browser navigation, also reset to top
+    this.startNavigation();
+    this.endNavigation();
+  }
+}
+
+// Initialize scroll manager
+const scrollManager = new SmartScrollManager();
+
+// Enhanced renderPath with scroll reset
+function renderPath() {
+  console.log('🎨 Rendering path:', STATE.path);
+  
+  // Start navigation tracking
+  scrollManager.startNavigation();
+  
+  els.grid.innerHTML = '';
+  STATE.items = listItemsAtPath(STATE.path);
+  STATE.rendered = 0;
+
+  renderBreadcrumb();
+  
+  if (STATE.items.length === 0) {
+    els.grid.innerHTML = `
+      <div class="empty-state">
+        <h3>No items found</h3>
+        <p>This category appears to be empty or the path may not exist.</p>
+        <p>Current path: ${STATE.path.join(' → ') || 'Home'}</p>
+      </div>
+    `;
+  } else {
+    renderNextBatch();
+    setupInfiniteScroll();
+  }
+  
+  updateURL();
+  
+  // End navigation and reset scroll
+  scrollManager.endNavigation();
+}
+
+// Enhanced click handler with scroll management
+function createCard(item) {
+  const card = document.createElement('article');
+  card.className = `card ${item.isProduct ? 'card-product' : 'card-folder'}`;
+  card.tabIndex = 0;
+
+  // ... [Previous card creation code remains the same until click handler]
+
+  // Enhanced click handler with scroll reset
+  const handleClick = () => {
+    if (item.isProduct && item.driveLink) {
+      console.log(`🔗 Opening product: ${item.label} → ${item.driveLink}`);
+      // Save scroll position before leaving
+      scrollManager.saveScrollPosition(STATE.path);
+      window.location.href = item.driveLink;
+      trackClick(item);
+    } else {
+      console.log(`📁 Navigating to: ${item.label}`);
+      // Start navigation tracking
+      scrollManager.startNavigation();
+      STATE.path = [...STATE.path, item.label];
+      renderPath();
+    }
+  };
+  
+  // ... [Rest of card creation remains the same]
+
+  return card;
+}
+
+// Enhanced browser navigation with scroll reset
+window.addEventListener('popstate', () => {
+  STATE.isPop = true;
+  scrollManager.handlePopstateNavigation();
+  
+  const u = new URL(location.href);
+  const pathParam = u.searchParams.get('path') || '';
+  STATE.path = resolvePathFromParam(STATE.data.catalog.tree, pathParam);
+  renderPath();
+  STATE.isPop = false;
+});
 
 function initialsFor(name) {
   const parts = (name || '').split(/\s+/).filter(Boolean);
