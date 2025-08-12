@@ -6,7 +6,7 @@
   <title>Luxury Catalog</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="/favicon.ico" />
   <link rel="stylesheet" href="/style.css" />
   <meta name="theme-color" content="#000000" />
@@ -14,20 +14,28 @@
 <body>
   <noscript>This site requires JavaScript to navigate the product catalog.</noscript>
 
-  <!-- Modern Header -->
-  <header class="modern-header">
+  <!-- Modern Luxury Header -->
+  <header class="luxury-header">
     <div class="container">
       <div class="header-content">
         <!-- Brand Identity -->
         <div class="brand-section">
-          <div id="brandLogo" class="brand-logo">LB</div>
+          <div id="brandLogo" class="brand-logo clickable-logo">LB</div>
           <div class="brand-info">
             <h1 id="brandName" class="brand-name">Luxury Bags</h1>
           </div>
         </div>
 
+        <!-- Mobile Search Toggle -->
+        <button id="mobileSearchToggle" class="mobile-search-toggle" aria-label="Toggle Search">
+          <svg class="search-icon-mobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="21 21l-4.35-4.35"></path>
+          </svg>
+        </button>
+
         <!-- Search Bar -->
-        <div class="search-section">
+        <div class="search-section" id="searchSection">
           <div class="search-container">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
@@ -37,7 +45,7 @@
               type="text" 
               id="searchInput" 
               class="search-input" 
-              placeholder="Search products, brands, categories..."
+              placeholder="Search luxury products..."
               autocomplete="off"
             />
             <button id="searchClear" class="search-clear" style="display: none;">
@@ -62,9 +70,31 @@
     </div>
   </nav>
 
+  <!-- Inspirational Banner -->
+  <section class="inspiration-banner">
+    <div class="container">
+      <div id="inspirationText" class="inspiration-text">
+        💖 Screenshot lovely products & we'll quote you the price! 💬
+      </div>
+    </div>
+  </section>
+
   <!-- Main Content -->
   <main class="main-content">
     <div class="container">
+      <!-- Loading Skeleton -->
+      <div id="skeletonLoader" class="skeleton-loader" style="display: none;">
+        <div class="skeleton-grid">
+          <div class="skeleton-card" v-for="i in 8">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-title"></div>
+              <div class="skeleton-subtitle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Category Grid -->
       <section id="grid" class="product-grid" aria-live="polite" aria-busy="false">
         <!-- Cards render here -->
@@ -72,8 +102,8 @@
 
       <!-- Loading Indicator -->
       <div class="loading-indicator" id="loadingIndicator" style="display: none;">
-        <div class="loading-spinner"></div>
-        <p>Loading more products...</p>
+        <div class="luxury-spinner"></div>
+        <p>Loading more luxury items...</p>
       </div>
 
       <!-- Infinite Scroll Sentinel -->
@@ -88,6 +118,35 @@
     </svg>
   </a>
 
-  <script src="/script.js?v=revamp1" type="module"></script>
+  <script>
+    // Inspiration texts rotation
+    const inspirationTexts = [
+      "💖 Screenshot lovely products & we'll quote you the price! 💬",
+      "✨ Discover luxury crafted with perfection ✨",
+      "🎭 Where elegance meets exceptional quality 🎭",
+      "💎 Curated collection of premium treasures 💎",
+      "🌟 Experience the art of luxury shopping 🌟",
+      "🏆 Exclusive pieces for discerning tastes 🏆",
+      "🎪 Step into a world of sophisticated style 🎪",
+      "🔮 Magical moments begin with perfect pieces 🔮"
+    ];
+    
+    function rotateInspiration() {
+      const element = document.getElementById('inspirationText');
+      if (element) {
+        const randomText = inspirationTexts[Math.floor(Math.random() * inspirationTexts.length)];
+        element.style.opacity = '0';
+        setTimeout(() => {
+          element.textContent = randomText;
+          element.style.opacity = '1';
+        }, 300);
+      }
+    }
+    
+    // Rotate inspiration text every 10 seconds
+    setInterval(rotateInspiration, 10000);
+  </script>
+  
+  <script src="/script.js?v=luxury-dark" type="module"></script>
 </body>
 </html>
