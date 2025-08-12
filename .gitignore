@@ -1,2 +1,5 @@
 .DS_Store
 build/
+# Ignore generated data and thumbnails
+public/data.json
+public/thumbs/
