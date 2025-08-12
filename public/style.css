@@ -25,11 +25,21 @@
   --color-shadow-heavy: rgba(0, 0, 0, 0.8);
   --color-glow: rgba(212, 175, 55, 0.2);
   
-  /* Typography */
+/* Enhanced Typography - Luxury Font Options */
+:root {
+  /* Font Family Options for Brand Names */
   --font-primary: 'Inter', system-ui, sans-serif;
   --font-display: 'Playfair Display', serif;
   --font-luxury: 'Cormorant Garamond', serif;
   --font-elegant: 'Cinzel', serif;
+  
+  /* Additional Luxury Font Options */
+  --font-luxury-modern: 'Montserrat', sans-serif;
+  --font-luxury-classic: 'Didot', 'Bodoni MT', serif;
+  --font-luxury-minimal: 'Futura', 'Avenir Next', sans-serif;
+  --font-luxury-script: 'Dancing Script', cursive;
+  --font-luxury-display: 'Oswald', sans-serif;
+}
   
   /* Spacing */
   --space-xs: 0.25rem;
@@ -188,8 +198,9 @@ body::before {
   box-shadow: var(--shadow-luxury-heavy), var(--glow-luxury);
 }
 
+/* Brand Name - Keeping Cormorant Garamond */
 .brand-name {
-  font-family: var(--font-luxury);
+  font-family: var(--font-luxury); /* Cormorant Garamond */
   font-size: 2rem;
   font-weight: 600;
   color: var(--color-text);
@@ -272,57 +283,110 @@ body::before {
   color: var(--color-text);
 }
 
-/* Mobile Search Toggle */
+/* Enhanced Mobile Search Toggle - Proper Search Icon */
 .mobile-search-toggle {
   display: none;
   width: 48px;
   height: 48px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-full);
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-swift);
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-search-toggle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  opacity: 0;
+  transition: opacity var(--transition-swift);
+}
+
+.mobile-search-toggle:hover::before {
+  opacity: 0.1;
 }
 
 .mobile-search-toggle:hover {
   background: var(--color-surface-elevated);
-  border-color: var(--color-border-hover);
+  border-color: var(--color-primary);
+  transform: scale(1.05);
+}
+
+.mobile-search-toggle:active {
+  transform: scale(0.95);
 }
 
 .search-icon-mobile {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   color: var(--color-text);
+  stroke-width: 2.5;
+  position: relative;
+  z-index: 1;
+  transition: all var(--transition-swift);
 }
 
-/* Mobile Layout */
+.mobile-search-toggle:hover .search-icon-mobile {
+  color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+/* Mobile Layout - Fixed Centering */
 @media (max-width: 768px) {
   .header-content {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    position: relative;
+  }
+  
+  /* Left: Empty spacer to balance the search button */
+  .header-content::before {
+    content: '';
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+  }
+  
+  /* Center: Brand section */
+  .brand-section {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
     align-items: center;
     gap: var(--space-md);
   }
   
-  .brand-section {
-    order: 2;
-    justify-self: center;
-  }
-  
+  /* Right: Mobile search toggle */
   .mobile-search-toggle {
     display: flex;
     order: 3;
+    position: relative;
+    z-index: 10;
   }
   
+  /* Search section for mobile */
   .desktop-search {
     display: none;
-    order: 1;
-    grid-column: 1 / -1;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     margin: var(--space-md) 0 0 0;
     max-width: none;
+    z-index: 5;
   }
   
   .desktop-search.mobile-visible {
