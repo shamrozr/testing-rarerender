@@ -516,14 +516,50 @@ function setupInfiniteScroll() {
   STATE.io.observe(els.sentinel);
 }
 
+// Enhanced createCard function with counts and visual indicators
 function createCard(item) {
   const card = document.createElement('article');
-  card.className = 'card';
+  card.className = `card ${item.isProduct ? 'card-product' : 'card-folder'}`;
   card.tabIndex = 0;
 
-  // FIXED: Better image handling with detailed logging
+  // Image container with overlay for visual distinction
+  const imageContainer = document.createElement('div');
+  imageContainer.className = 'card-image-container';
+
   const img = createImageElement(item.thumbnail, `${item.label} thumbnail`, 'card-thumb');
-  
+  imageContainer.appendChild(img);
+
+  // Add visual indicator overlay for folders
+  if (!item.isProduct && item.hasChildren) {
+    const overlay = document.createElement('div');
+    overlay.className = 'card-overlay';
+    
+    const folderIcon = document.createElement('div');
+    folderIcon.className = 'folder-icon';
+    folderIcon.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+      </svg>
+    `;
+    
+    overlay.appendChild(folderIcon);
+    imageContainer.appendChild(overlay);
+  }
+
+  // Add product badge for products
+  if (item.isProduct) {
+    const productBadge = document.createElement('div');
+    productBadge.className = 'product-badge';
+    productBadge.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+        <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+        <line x1="12" y1="22.08" x2="12" y2="12"/>
+      </svg>
+    `;
+    imageContainer.appendChild(productBadge);
+  }
+
   const body = document.createElement('div');
   body.className = 'card-body';
   
@@ -531,24 +567,39 @@ function createCard(item) {
   title.className = 'card-title';
   title.textContent = item.label;
   
-  const count = document.createElement('div');
-  count.className = 'card-count';
-  if (item.hasChildren && item.count > 0) {
+  // Enhanced count display with better logic
+  const rightSection = document.createElement('div');
+  rightSection.className = 'card-right-section';
+  
+  if (!item.isProduct && item.hasChildren && item.count > 0) {
+    // Folder with items - show count
+    const count = document.createElement('div');
+    count.className = 'card-count';
     count.textContent = item.count.toString();
-  } else {
-    count.style.display = 'none';
+    
+    const countLabel = document.createElement('div');
+    countLabel.className = 'card-count-label';
+    countLabel.textContent = item.count === 1 ? 'item' : 'items';
+    
+    rightSection.appendChild(count);
+    rightSection.appendChild(countLabel);
+  } else if (item.isProduct) {
+    // Product - show product indicator
+    const productIndicator = document.createElement('div');
+    productIndicator.className = 'product-indicator';
+    productIndicator.textContent = 'Product';
+    rightSection.appendChild(productIndicator);
   }
   
   body.appendChild(title);
-  body.appendChild(count);
-  card.appendChild(img);
+  body.appendChild(rightSection);
+  card.appendChild(imageContainer);
   card.appendChild(body);
 
-  // FIXED: Better click handling for navigation
+  // Click handler
   const handleClick = () => {
     if (item.isProduct && item.driveLink) {
       console.log(`🔗 Opening product: ${item.label} → ${item.driveLink}`);
-      // FIXED: Use location.href instead of window.open for better back button behavior
       window.location.href = item.driveLink;
       trackClick(item);
     } else {
@@ -566,7 +617,7 @@ function createCard(item) {
     }
   });
 
-  // Hover preloading
+  // Hover effects
   card.addEventListener('mouseenter', () => {
     if (item.hasChildren) {
       clearTimeout(STATE.hoverTimer);
