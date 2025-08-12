@@ -1,4 +1,8 @@
-// Modern Luxury Catalog App - Fixed Navigation & Images
+// Modern Luxury Catalog App - Complete Version with All Features
+// =================================================================
+
+// State Management
+// ================
 const STATE = {
   data: null,
   brand: null,
@@ -14,6 +18,8 @@ const STATE = {
   searchTimeout: null,
 };
 
+// DOM Elements
+// ============
 const els = {
   grid: document.getElementById('grid'),
   breadcrumb: document.getElementById('breadcrumb'),
@@ -27,6 +33,8 @@ const els = {
   loadingIndicator: document.getElementById('loadingIndicator'),
 };
 
+// Configuration
+// =============
 const CONFIG = {
   ANALYTICS_PIXEL_URL: '',
   HOVER_PRELOAD_CHILDREN: 8,
@@ -37,76 +45,227 @@ const CONFIG = {
 
 const waRe = /^https:\/\/wa\.me\/\d+$/;
 
-// FIXED: Better image URL processing
-function processImageUrl(url) {
-  if (!url || url.trim() === '') {
-    return CONFIG.PLACEHOLDER_IMAGE;
+// Smart Color System
+// ==================
+class SmartColorSystem {
+  constructor() {
+    this.fallbackColors = {
+      primary: '#2563EB',
+      accent: '#3B82F6',
+      text: '#1F2937',
+      bg: '#FFFFFF',
+      surface: '#F9FAFB',
+    };
   }
 
-  const cleanUrl = url.trim();
-  
-  // If it's already a valid HTTP URL, return as-is
-  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
-    return cleanUrl;
+  hexToRgb(hex) {
+    if (!hex || typeof hex !== 'string') return null;
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
   }
-  
-  // If it's a data URL, return as-is
-  if (cleanUrl.startsWith('data:')) {
-    return cleanUrl;
-  }
-  
-  // Handle relative paths - convert to absolute web paths
-  let processedUrl = cleanUrl.replace(/\\/g, '/'); // Convert backslashes
-  
-  // Remove leading slashes and add /thumbs/ prefix if not present
-  processedUrl = processedUrl.replace(/^\/+/, '');
-  
-  if (!processedUrl.startsWith('thumbs/')) {
-    processedUrl = 'thumbs/' + processedUrl;
-  }
-  
-  // Return as absolute path
-  return '/' + processedUrl;
-}
 
-// FIXED: Image validation and fallback
-function createImageElement(src, alt, className = '') {
-  const img = document.createElement('img');
-  if (className) img.className = className;
-  img.alt = alt;
-  img.loading = 'lazy';
-  img.decoding = 'async';
-  
-  const processedSrc = processImageUrl(src);
-  console.log(`🖼️ Image: "${src}" → "${processedSrc}"`);
-  
-  // Set up error handling before setting src
-  img.onerror = function() {
-    console.log(`❌ Image failed to load: ${this.src}`);
-    if (this.src !== CONFIG.PLACEHOLDER_IMAGE) {
-      console.log(`🔄 Falling back to placeholder`);
-      this.src = CONFIG.PLACEHOLDER_IMAGE;
-      this.onerror = null; // Prevent infinite loop
+  rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  getLuminance(r, g, b) {
+    const [rs, gs, bs] = [r, g, b].map(c => {
+      c = c / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+  }
+
+  getContrastRatio(color1, color2) {
+    const rgb1 = this.hexToRgb(color1);
+    const rgb2 = this.hexToRgb(color2);
+    
+    if (!rgb1 || !rgb2) return 1;
+    
+    const lum1 = this.getLuminance(rgb1.r, rgb1.g, rgb1.b);
+    const lum2 = this.getLuminance(rgb2.r, rgb2.g, rgb2.b);
+    
+    const brightest = Math.max(lum1, lum2);
+    const darkest = Math.min(lum1, lum2);
+    
+    return (brightest + 0.05) / (darkest + 0.05);
+  }
+
+  adjustBrightness(hex, amount) {
+    const rgb = this.hexToRgb(hex);
+    if (!rgb) return hex;
+
+    const adjust = (value) => Math.max(0, Math.min(255, value + amount));
+    
+    return this.rgbToHex(
+      adjust(rgb.r),
+      adjust(rgb.g),
+      adjust(rgb.b)
+    );
+  }
+
+  generateAccent(primary) {
+    const rgb = this.hexToRgb(primary);
+    if (!rgb) return this.fallbackColors.accent;
+
+    const accent = this.rgbToHex(
+      Math.min(255, rgb.r + 30),
+      Math.min(255, rgb.g + 20),
+      Math.min(255, rgb.b + 40)
+    );
+
+    return accent;
+  }
+
+  generateTextColor(backgroundColor) {
+    const bg = this.hexToRgb(backgroundColor);
+    if (!bg) return this.fallbackColors.text;
+
+    const luminance = this.getLuminance(bg.r, bg.g, bg.b);
+    return luminance > 0.5 ? '#1F2937' : '#F9FAFB';
+  }
+
+  generateSmartPalette(brandColors) {
+    const palette = { ...this.fallbackColors };
+
+    try {
+      let primary = brandColors.primary;
+      if (!primary || !this.hexToRgb(primary)) {
+        console.log('🎨 Invalid primary color, using fallback');
+        primary = this.fallbackColors.primary;
+      }
+
+      let accent = brandColors.accent;
+      if (!accent || !this.hexToRgb(accent)) {
+        accent = this.generateAccent(primary);
+        console.log('🎨 Generated smart accent color:', accent);
+      }
+
+      const contrastRatio = this.getContrastRatio(primary, accent);
+      if (contrastRatio < 1.5) {
+        accent = this.adjustBrightness(primary, primary.includes('f') ? -60 : 60);
+        console.log('🎨 Adjusted accent for better contrast:', accent);
+      }
+
+      let bg = brandColors.bg;
+      if (!bg || !this.hexToRgb(bg)) {
+        bg = '#FFFFFF';
+      }
+
+      let text = this.generateTextColor(bg);
+      
+      const textContrast = this.getContrastRatio(text, bg);
+      if (textContrast < 4.5) {
+        text = bg === '#FFFFFF' ? '#1F2937' : '#F9FAFB';
+        console.log('🎨 Adjusted text color for accessibility:', text);
+      }
+
+      const surfaceRgb = this.hexToRgb(bg);
+      const primaryRgb = this.hexToRgb(primary);
+      
+      if (surfaceRgb && primaryRgb) {
+        const surface = this.rgbToHex(
+          Math.round(surfaceRgb.r * 0.98 + primaryRgb.r * 0.02),
+          Math.round(surfaceRgb.g * 0.98 + primaryRgb.g * 0.02),
+          Math.round(surfaceRgb.b * 0.98 + primaryRgb.b * 0.02)
+        );
+        palette.surface = surface;
+      }
+
+      palette.primary = primary;
+      palette.accent = accent;
+      palette.text = text;
+      palette.bg = bg;
+
+      console.log('🎨 Generated smart color palette:', palette);
+      return palette;
+
+    } catch (error) {
+      console.error('🎨 Error generating color palette, using fallbacks:', error);
+      return this.fallbackColors;
     }
-  };
-  
-  img.onload = function() {
-    console.log(`✅ Image loaded successfully: ${this.src.substring(0, 50)}...`);
-  };
-  
-  img.src = processedSrc;
-  return img;
+  }
+
+  generateUIColors(palette) {
+    return {
+      buttonPrimary: palette.primary,
+      buttonPrimaryHover: this.adjustBrightness(palette.primary, -20),
+      buttonSecondary: palette.accent,
+      buttonSecondaryHover: this.adjustBrightness(palette.accent, -15),
+      
+      border: this.adjustBrightness(palette.bg, -15),
+      borderHover: this.adjustBrightness(palette.bg, -30),
+      
+      success: '#10B981',
+      warning: '#F59E0B',
+      error: '#EF4444',
+      info: palette.primary,
+      
+      overlay: 'rgba(0, 0, 0, 0.1)',
+      overlayDark: 'rgba(0, 0, 0, 0.3)',
+    };
+  }
 }
 
-function applyTheme(theme) {
-  const root = document.documentElement;
-  root.style.setProperty('--color-primary', theme.colors.primary);
-  root.style.setProperty('--color-accent', theme.colors.accent);
-  root.style.setProperty('--color-text', theme.colors.text || '#1a1a1a');
-  root.style.setProperty('--color-bg', theme.colors.bg || '#fefefe');
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', theme.colors.primary);
+// Smart Scroll Manager
+// ===================
+class SmartScrollManager {
+  constructor() {
+    this.scrollPositions = new Map();
+    this.isNavigating = false;
+    this.resetTimeout = null;
+  }
+
+  saveScrollPosition(path) {
+    const pathKey = path.join('/') || 'home';
+    const scrollY = window.scrollY;
+    this.scrollPositions.set(pathKey, scrollY);
+    console.log(`💾 Saved scroll position for ${pathKey}: ${scrollY}`);
+  }
+
+  resetScrollPosition(delay = 0) {
+    clearTimeout(this.resetTimeout);
+    
+    this.resetTimeout = setTimeout(() => {
+      if (this.isNavigating) {
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'smooth'
+        });
+        console.log('📱 Reset scroll position to top');
+      }
+    }, delay);
+  }
+
+  startNavigation() {
+    this.isNavigating = true;
+    this.saveScrollPosition(STATE.path);
+  }
+
+  endNavigation() {
+    this.resetScrollPosition(100);
+    
+    setTimeout(() => {
+      this.isNavigating = false;
+    }, 300);
+  }
+
+  handlePopstateNavigation() {
+    this.startNavigation();
+    this.endNavigation();
+  }
 }
 
+// Initialize managers
+const scrollManager = new SmartScrollManager();
+
+// Utility Functions
+// =================
 function initialsFor(name) {
   const parts = (name || '').split(/\s+/).filter(Boolean);
   const first = parts[0]?.[0] || '';
@@ -166,16 +325,186 @@ function resolvePathFromParam(tree, rawPath) {
   return resolvedPath;
 }
 
-// Build search index from all products
+// Enhanced Theme Application
+// =========================
+function applyTheme(theme) {
+  const colorSystem = new SmartColorSystem();
+  
+  const smartPalette = colorSystem.generateSmartPalette(theme.colors);
+  const uiColors = colorSystem.generateUIColors(smartPalette);
+  
+  const root = document.documentElement;
+  
+  // Apply main colors
+  root.style.setProperty('--color-primary', smartPalette.primary);
+  root.style.setProperty('--color-accent', smartPalette.accent);
+  root.style.setProperty('--color-text', smartPalette.text);
+  root.style.setProperty('--color-bg', smartPalette.bg);
+  root.style.setProperty('--color-surface', smartPalette.surface);
+  
+  // Apply UI colors
+  root.style.setProperty('--color-button-primary', uiColors.buttonPrimary);
+  root.style.setProperty('--color-button-primary-hover', uiColors.buttonPrimaryHover);
+  root.style.setProperty('--color-button-secondary', uiColors.buttonSecondary);
+  root.style.setProperty('--color-button-secondary-hover', uiColors.buttonSecondaryHover);
+  
+  root.style.setProperty('--color-border', uiColors.border);
+  root.style.setProperty('--color-border-hover', uiColors.borderHover);
+  
+  root.style.setProperty('--color-success', uiColors.success);
+  root.style.setProperty('--color-warning', uiColors.warning);
+  root.style.setProperty('--color-error', uiColors.error);
+  root.style.setProperty('--color-info', uiColors.info);
+  
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', smartPalette.primary);
+  
+  console.log('🎨 Applied smart theme for:', theme.name);
+  console.log('🎨 Primary contrast ratio:', colorSystem.getContrastRatio(smartPalette.primary, smartPalette.bg));
+  console.log('🎨 Text contrast ratio:', colorSystem.getContrastRatio(smartPalette.text, smartPalette.bg));
+}
+
+// Image Processing
+// ===============
+function processImageUrl(url) {
+  if (!url || url.trim() === '') {
+    return CONFIG.PLACEHOLDER_IMAGE;
+  }
+
+  const cleanUrl = url.trim();
+  
+  if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+    return cleanUrl;
+  }
+  
+  if (cleanUrl.startsWith('data:')) {
+    return cleanUrl;
+  }
+  
+  let processedUrl = cleanUrl.replace(/\\/g, '/');
+  processedUrl = processedUrl.replace(/^\/+/, '');
+  
+  // Clean duplicate path segments (like Shoes/Shoes → Shoes)
+  const pathParts = processedUrl.split('/').filter(Boolean);
+  const cleanedParts = [];
+  
+  for (let i = 0; i < pathParts.length; i++) {
+    const current = pathParts[i];
+    const previous = pathParts[i - 1];
+    
+    if (previous && current.toLowerCase() === previous.toLowerCase()) {
+      continue;
+    }
+    
+    cleanedParts.push(current);
+  }
+  
+  processedUrl = cleanedParts.join('/');
+  
+  if (!processedUrl.startsWith('thumbs/')) {
+    processedUrl = 'thumbs/' + processedUrl;
+  }
+  
+  return '/' + processedUrl;
+}
+
+function generateFallbackPaths(originalUrl) {
+  if (!originalUrl || originalUrl.trim() === '') return [];
+  
+  const cleanUrl = originalUrl.trim().replace(/\\/g, '/');
+  const fallbacks = [];
+  
+  const parts = cleanUrl.split('/').filter(Boolean);
+  
+  // Try removing first occurrence of duplicates
+  const deduped1 = [];
+  const seen = new Set();
+  for (const part of parts) {
+    const lowerPart = part.toLowerCase();
+    if (!seen.has(lowerPart)) {
+      deduped1.push(part);
+      seen.add(lowerPart);
+    }
+  }
+  
+  if (deduped1.length !== parts.length) {
+    const path1 = '/thumbs/' + deduped1.join('/');
+    fallbacks.push(path1);
+  }
+  
+  // Try without the first segment
+  if (parts.length > 2) {
+    const withoutFirst = parts.slice(1);
+    const path2 = '/thumbs/' + withoutFirst.join('/');
+    fallbacks.push(path2);
+  }
+  
+  // Try with just the last few segments
+  if (parts.length > 3) {
+    const lastThree = parts.slice(-3);
+    const path3 = '/thumbs/' + lastThree.join('/');
+    fallbacks.push(path3);
+  }
+  
+  // Try direct path
+  if (!cleanUrl.startsWith('thumbs/')) {
+    const direct = '/' + cleanUrl;
+    fallbacks.push(direct);
+  }
+  
+  return [...new Set(fallbacks)];
+}
+
+function createImageElement(src, alt, className = '') {
+  const img = document.createElement('img');
+  if (className) img.className = className;
+  img.alt = alt;
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  
+  const originalPath = processImageUrl(src);
+  const fallbackPaths = generateFallbackPaths(src);
+  
+  console.log(`🔍 Trying image paths for "${src}":`, [originalPath, ...fallbackPaths]);
+  
+  let currentAttempt = 0;
+  const allPaths = [originalPath, ...fallbackPaths];
+  
+  function tryNextPath() {
+    if (currentAttempt >= allPaths.length) {
+      console.log(`❌ All paths failed for "${src}", using placeholder`);
+      img.src = CONFIG.PLACEHOLDER_IMAGE;
+      return;
+    }
+    
+    const pathToTry = allPaths[currentAttempt];
+    console.log(`🔄 Attempting path ${currentAttempt + 1}/${allPaths.length}: ${pathToTry}`);
+    
+    img.onerror = function() {
+      console.log(`❌ Path ${currentAttempt + 1} failed: ${pathToTry}`);
+      currentAttempt++;
+      tryNextPath();
+    };
+    
+    img.onload = function() {
+      console.log(`✅ Image loaded successfully on attempt ${currentAttempt + 1}: ${pathToTry}`);
+    };
+    
+    img.src = pathToTry;
+  }
+  
+  tryNextPath();
+  return img;
+}
+
+// Search Functionality
+// ===================
 function buildSearchIndex(tree, path = [], index = []) {
   for (const [key, value] of Object.entries(tree)) {
     const currentPath = [...path, key];
     const pathString = currentPath.join(' → ');
     
-    // Process thumbnail URL
     const processedThumbnail = processImageUrl(value.thumbnail);
     
-    // Add this item to search index
     index.push({
       title: key,
       path: currentPath,
@@ -187,7 +516,6 @@ function buildSearchIndex(tree, path = [], index = []) {
       count: value.count || 0,
     });
     
-    // Recursively index children
     if (value.children && !value.isProduct) {
       buildSearchIndex(value.children, currentPath, index);
     }
@@ -196,7 +524,6 @@ function buildSearchIndex(tree, path = [], index = []) {
   return index;
 }
 
-// Search functionality
 function performSearch(query) {
   if (!query.trim()) return [];
   
@@ -240,7 +567,6 @@ function renderSearchResults(results) {
     </div>
   `).join('');
   
-  // Add click handlers to search results
   els.searchResults.querySelectorAll('.search-result').forEach(result => {
     result.addEventListener('click', () => {
       const path = result.dataset.path;
@@ -251,10 +577,11 @@ function renderSearchResults(results) {
       clearSearch();
       
       if (isProduct && driveLink) {
-        // FIXED: Use location.href for better back button behavior
+        scrollManager.saveScrollPosition(STATE.path);
         window.location.href = driveLink;
       } else {
         const pathArray = path ? path.split('/') : [];
+        scrollManager.startNavigation();
         STATE.path = pathArray;
         renderPath();
       }
@@ -282,7 +609,6 @@ function updateSearchClearButton() {
   els.searchClear.style.display = STATE.searchQuery ? 'flex' : 'none';
 }
 
-// Initialize search functionality
 function initSearch() {
   els.searchInput.addEventListener('input', (e) => {
     const query = e.target.value;
@@ -311,14 +637,12 @@ function initSearch() {
   
   els.searchClear.addEventListener('click', clearSearch);
   
-  // Hide search results when clicking outside
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.search-section')) {
       hideSearchResults();
     }
   });
   
-  // Keyboard navigation
   els.searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       hideSearchResults();
@@ -327,6 +651,8 @@ function initSearch() {
   });
 }
 
+// Data Loading and Initialization
+// ==============================
 async function loadData() {
   try {
     showLoading();
@@ -337,11 +663,9 @@ async function loadData() {
     const data = await res.json();
     STATE.data = data;
 
-    // Build search index
     STATE.allProducts = buildSearchIndex(data.catalog.tree);
     console.log(`🔍 Built search index with ${STATE.allProducts.length} items`);
 
-    // Brand resolution
     const u = new URL(location.href);
     const brandRaw = u.searchParams.get('brand') || '';
     const slug = resolveBrandSlug(data.brands, brandRaw);
@@ -352,22 +676,18 @@ async function loadData() {
       throw new Error(`Brand "${slug}" not found`);
     }
 
-    // Apply theme and setup header
     applyTheme(theme);
     els.brandName.textContent = theme.name;
     els.brandLogo.textContent = initialsFor(theme.name);
     
-    // WhatsApp FAB
     const validWA = theme.whatsapp && waRe.test(theme.whatsapp);
     els.waFab.style.display = validWA ? 'flex' : 'none';
     if (validWA) els.waFab.href = theme.whatsapp;
 
-    // Path resolution
     const pathParam = u.searchParams.get('path') || '';
     const startPath = resolvePathFromParam(data.catalog.tree, pathParam);
     STATE.path = startPath;
 
-    // Initialize search
     initSearch();
     
     hideLoading();
@@ -381,12 +701,12 @@ async function loadData() {
 }
 
 function showLoading() {
-  els.loadingIndicator.style.display = 'block';
+  if (els.loadingIndicator) els.loadingIndicator.style.display = 'block';
   els.grid.setAttribute('aria-busy', 'true');
 }
 
 function hideLoading() {
-  els.loadingIndicator.style.display = 'none';
+  if (els.loadingIndicator) els.loadingIndicator.style.display = 'none';
   els.grid.setAttribute('aria-busy', 'false');
 }
 
@@ -403,10 +723,11 @@ function showError(message) {
   `;
 }
 
+// Catalog Navigation
+// =================
 function listItemsAtPath(path) {
   let node = STATE.data.catalog.tree;
   
-  // Navigate to target node
   for (const segment of path) {
     if (!node[segment]) {
       console.log(`❌ Segment "${segment}" not found`);
@@ -418,7 +739,6 @@ function listItemsAtPath(path) {
     }
   }
 
-  // Determine container
   let container;
   if (path.length === 0) {
     container = node;
@@ -442,7 +762,7 @@ function listItemsAtPath(path) {
       key,
       label: key,
       count: count,
-      thumbnail: processImageUrl(v.thumbnail), // FIXED: Process image URL
+      thumbnail: processImageUrl(v.thumbnail),
       isProduct: isProduct,
       driveLink: v.driveLink || '',
       hasChildren: hasChildren,
@@ -450,7 +770,6 @@ function listItemsAtPath(path) {
     });
   }
 
-  // Sort items
   if (path.length === 0) {
     items.sort((a,b) => a.topOrder - b.topOrder || b.count - a.count || a.label.localeCompare(b.label));
   } else {
@@ -471,6 +790,10 @@ function updateURL() {
 }
 
 function renderPath() {
+  console.log('🎨 Rendering path:', STATE.path);
+  
+  scrollManager.startNavigation();
+  
   els.grid.innerHTML = '';
   STATE.items = listItemsAtPath(STATE.path);
   STATE.rendered = 0;
@@ -491,6 +814,7 @@ function renderPath() {
   }
   
   updateURL();
+  scrollManager.endNavigation();
 }
 
 function renderNextBatch() {
@@ -516,7 +840,8 @@ function setupInfiniteScroll() {
   STATE.io.observe(els.sentinel);
 }
 
-// Enhanced createCard function with counts and visual indicators
+// Enhanced Card Creation with Visual Indicators
+// ============================================
 function createCard(item) {
   const card = document.createElement('article');
   card.className = `card ${item.isProduct ? 'card-product' : 'card-folder'}`;
@@ -596,14 +921,16 @@ function createCard(item) {
   card.appendChild(imageContainer);
   card.appendChild(body);
 
-  // Click handler
+  // Enhanced click handler with scroll management
   const handleClick = () => {
     if (item.isProduct && item.driveLink) {
       console.log(`🔗 Opening product: ${item.label} → ${item.driveLink}`);
+      scrollManager.saveScrollPosition(STATE.path);
       window.location.href = item.driveLink;
       trackClick(item);
     } else {
       console.log(`📁 Navigating to: ${item.label}`);
+      scrollManager.startNavigation();
       STATE.path = [...STATE.path, item.label];
       renderPath();
     }
@@ -644,6 +971,8 @@ function preloadChildren(path) {
   });
 }
 
+// Breadcrumb Navigation
+// ====================
 function renderBreadcrumb() {
   const fragment = document.createDocumentFragment();
 
@@ -653,6 +982,7 @@ function renderBreadcrumb() {
   home.textContent = 'Home';
   home.addEventListener('click', (e) => {
     e.preventDefault();
+    scrollManager.startNavigation();
     STATE.path = [];
     renderPath();
   });
@@ -670,6 +1000,7 @@ function renderBreadcrumb() {
       element.href = '#';
       element.addEventListener('click', (e) => {
         e.preventDefault();
+        scrollManager.startNavigation();
         STATE.path = STATE.path.slice(0, index + 1);
         renderPath();
       });
@@ -682,14 +1013,36 @@ function renderBreadcrumb() {
   els.breadcrumb.appendChild(fragment);
 }
 
+// Analytics and Tracking
+// ======================
 function trackClick(item) {
   if (!CONFIG.ANALYTICS_PIXEL_URL) return;
-  console.log('Product clicked:', item.label);
+  
+  const u = new URL(CONFIG.ANALYTICS_PIXEL_URL);
+  u.searchParams.set('d', new Date().toISOString().slice(0,10));
+  u.searchParams.set('slug', STATE.brand);
+  u.searchParams.set('product_path', [...STATE.path, item.label].join('/'));
+  u.searchParams.set('r', Math.random().toString(36).slice(2));
+  
+  const img = document.createElement('img');
+  img.src = u.toString();
+  img.alt = '';
+  img.width = img.height = 1;
+  img.style.position = 'absolute';
+  img.style.opacity = '0';
+  document.body.appendChild(img);
+  
+  setTimeout(() => img.remove(), 2000);
+  
+  console.log('📊 Product clicked:', item.label);
 }
 
-// Browser navigation
+// Browser Navigation
+// =================
 window.addEventListener('popstate', () => {
   STATE.isPop = true;
+  scrollManager.handlePopstateNavigation();
+  
   const u = new URL(location.href);
   const pathParam = u.searchParams.get('path') || '';
   STATE.path = resolvePathFromParam(STATE.data.catalog.tree, pathParam);
@@ -697,5 +1050,123 @@ window.addEventListener('popstate', () => {
   STATE.isPop = false;
 });
 
-// Initialize app
-loadData();
+// Keyboard Shortcuts
+// ==================
+document.addEventListener('keydown', (e) => {
+  // ESC key - close search or go back
+  if (e.key === 'Escape') {
+    if (STATE.searchResults.length > 0) {
+      hideSearchResults();
+      clearSearch();
+    } else if (STATE.path.length > 0) {
+      scrollManager.startNavigation();
+      STATE.path = STATE.path.slice(0, -1);
+      renderPath();
+    }
+    return;
+  }
+  
+  // Ctrl/Cmd + K - focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    els.searchInput.focus();
+    return;
+  }
+  
+  // Backspace - go back (when not in input)
+  if (e.key === 'Backspace' && 
+      !e.target.matches('input, textarea, [contenteditable]') && 
+      STATE.path.length > 0) {
+    e.preventDefault();
+    scrollManager.startNavigation();
+    STATE.path = STATE.path.slice(0, -1);
+    renderPath();
+    return;
+  }
+});
+
+// Performance Optimization
+// ========================
+// Lazy load images when they're about to enter viewport
+const imageObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+        imageObserver.unobserve(img);
+      }
+    }
+  });
+}, {
+  rootMargin: '200px 0px'
+});
+
+// Service Worker Registration (optional)
+// =====================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('🔧 Service Worker registered:', registration.scope);
+      })
+      .catch((error) => {
+        console.log('🔧 Service Worker registration failed:', error);
+      });
+  });
+}
+
+// Error Handling
+// ==============
+window.addEventListener('error', (e) => {
+  console.error('💥 Global error:', e.error);
+  
+  // Don't crash the app on image load errors
+  if (e.target && e.target.tagName === 'IMG') {
+    e.target.src = CONFIG.PLACEHOLDER_IMAGE;
+    return;
+  }
+  
+  // Show user-friendly error for critical failures
+  if (e.error && e.error.message) {
+    showError(`Something went wrong: ${e.error.message}`);
+  }
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('💥 Unhandled promise rejection:', e.reason);
+  e.preventDefault(); // Prevent browser console spam
+});
+
+// Initialize Application
+// =====================
+console.log('🚀 Initializing Luxury Catalog App...');
+console.log('📱 User Agent:', navigator.userAgent);
+console.log('🌐 Location:', window.location.href);
+
+// Start the application
+loadData().catch(err => {
+  console.error('💥 Failed to initialize app:', err);
+  showError('Failed to load the catalog. Please refresh the page.');
+});
+
+// Development helpers (remove in production)
+// ==========================================
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  // Development mode - add helpful debugging
+  window.DEBUG = {
+    STATE,
+    els,
+    CONFIG,
+    scrollManager,
+    processImageUrl,
+    generateFallbackPaths,
+    listItemsAtPath,
+    renderPath,
+    clearSearch,
+  };
+  
+  console.log('🔧 Development mode - DEBUG object available on window');
+  console.log('🔧 Available debug functions:', Object.keys(window.DEBUG));
+}
