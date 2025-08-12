@@ -63,16 +63,17 @@ async function loadData() {
   const theme = data.brands[STATE.brand];
 
   // Theming & brand meta
-  applyTheme(theme);
-  els.brandName.textContent = theme.name;
-  els.brandLogo.textContent = initialsFor(theme.name);
+applyTheme(theme);
+els.brandName.textContent = theme.name;
+els.brandLogo.textContent = initialsFor(theme.name);
+
+// Show/hide WhatsApp FAB depending on data
+const validWA = theme.whatsapp && /^https:\/\/wa\.me\/\d+$/.test(theme.whatsapp);
+if (validWA) {
   els.waFab.href = theme.whatsapp;
-
-  els.total.textContent = data.catalog.totalProducts.toLocaleString();
-
-  // Start at brand default category, else root
-  STATE.path = theme.defaultCategory ? [theme.defaultCategory] : [];
-  renderPath();
+  els.waFab.style.display = 'grid';
+} else {
+  els.waFab.style.display = 'none';
 }
 
 function listItemsAtPath(path) {
