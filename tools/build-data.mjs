@@ -1,4 +1,4 @@
-// Enhanced build-data.mjs with CSS/JS optimization and luxury theme support
+// Simplified build-data.mjs - focusing on core functionality without minification
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,116 +19,6 @@ if (!BRANDS_CSV_URL || !MASTER_CSV_URL) {
 const HEX = /^#([0-9a-fA-F]{6})$/;
 const WA = /^https:\/\/wa\.me\/\d+$/;
 const GDRIVE = /^https:\/\/drive\.google\.com\//;
-
-// CSS Minification (Simple but effective)
-function minifyCSS(css) {
-  return css
-    // Remove comments
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    // Remove unnecessary whitespace
-    .replace(/\s+/g, ' ')
-    // Remove spaces around certain characters
-    .replace(/\s*([{}:;,>+~])\s*/g, '$1')
-    // Remove trailing semicolons
-    .replace(/;}/g, '}')
-    // Remove leading/trailing spaces
-    .trim();
-}
-
-// JavaScript Minification (Basic)
-function minifyJS(js) {
-  return js
-    // Remove single-line comments (but preserve URLs)
-    .replace(/\/\/(?![^\r\n]*https?:\/\/)[^\r\n]*/g, '')
-    // Remove multi-line comments
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    // Remove extra whitespace
-    .replace(/\s+/g, ' ')
-    // Remove spaces around operators and punctuation
-    .replace(/\s*([=+\-*/<>!&|(){}[\],;])\s*/g, '$1')
-    // Remove trailing semicolons where safe
-    .replace(/;(\s*})/g, '$1')
-    .trim();
-}
-
-// PurgeCSS-like unused CSS removal
-function removeUnusedCSS(css, htmlContent, jsContent) {
-  // Extract all class names and IDs from HTML and JS
-  const classRegex = /class[=\s]*["'][^"']*["']/g;
-  const idRegex = /id[=\s]*["'][^"']*["']/g;
-  const jsClassRegex = /className\s*[=:]\s*["'][^"']*["']/g;
-  const jsIdRegex = /getElementById\s*\(\s*["'][^"']*["']\s*\)/g;
-  
-  const usedClasses = new Set();
-  const usedIds = new Set();
-  
-  // Extract from HTML
-  const htmlClasses = htmlContent.match(classRegex) || [];
-  const htmlIds = htmlContent.match(idRegex) || [];
-  
-  htmlClasses.forEach(match => {
-    const classes = match.match(/["']([^"']*)["']/)[1].split(/\s+/);
-    classes.forEach(cls => cls && usedClasses.add(cls));
-  });
-  
-  htmlIds.forEach(match => {
-    const id = match.match(/["']([^"']*)["']/)[1];
-    id && usedIds.add(id);
-  });
-  
-  // Extract from JavaScript
-  const jsClasses = jsContent.match(jsClassRegex) || [];
-  const jsIds = jsContent.match(jsIdRegex) || [];
-  
-  jsClasses.forEach(match => {
-    const classes = match.match(/["']([^"']*)["']/)[1].split(/\s+/);
-    classes.forEach(cls => cls && usedClasses.add(cls));
-  });
-  
-  jsIds.forEach(match => {
-    const id = match.match(/["']([^"']*)["']/)[1];
-    id && usedIds.add(id);
-  });
-  
-  // Add commonly used classes that might be dynamically generated
-  const commonClasses = [
-    'card', 'card-product', 'card-folder', 'card-thumb', 'card-body', 'card-title',
-    'card-count', 'card-overlay', 'folder-icon', 'product-badge', 'product-indicator',
-    'search-result', 'search-results', 'skeleton-card', 'skeleton-image', 'luxury-spinner',
-    'mobile-visible', 'clickable-logo', 'current', 'empty-state', 'loading-indicator'
-  ];
-  
-  commonClasses.forEach(cls => usedClasses.add(cls));
-  
-  // Filter CSS to only include used selectors
-  const cssRules = css.split('}');
-  const filteredRules = cssRules.filter(rule => {
-    if (!rule.trim()) return false;
-    
-    const selector = rule.split('{')[0];
-    if (!selector) return false;
-    
-    // Keep root variables, @media, @keyframes, and element selectors
-    if (selector.includes(':root') || 
-        selector.includes('@media') || 
-        selector.includes('@keyframes') ||
-        selector.match(/^[a-z]+(\s|,|:|>|\+|~|$)/)) {
-      return true;
-    }
-    
-    // Check if any used class or ID is in the selector
-    const hasUsedClass = Array.from(usedClasses).some(cls => 
-      selector.includes(`.${cls}`)
-    );
-    const hasUsedId = Array.from(usedIds).some(id => 
-      selector.includes(`#${id}`)
-    );
-    
-    return hasUsedClass || hasUsedId;
-  });
-  
-  return filteredRules.join('}') + '}';
-}
 
 function parseCSV(text) {
   const lines = text.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
@@ -151,16 +41,14 @@ function parseCSV(text) {
   });
 }
 
-// Enhanced path normalization for luxury catalog
 function normPath(p) {
   if (!p) return "";
   const parts = p.replace(/\\/g, "/").split("/").map(s => s.trim()).filter(Boolean);
   if (parts.length === 0) return "";
-  parts[0] = parts[0].toUpperCase(); // normalize top category
+  parts[0] = parts[0].toUpperCase();
   return parts.join("/");
 }
 
-// Optimized thumbnail path conversion
 function toThumbSitePath(rel) {
   if (!rel) return "";
   let p = rel.replace(/\\/g, "/").replace(/^\/+/, "");
@@ -231,7 +119,6 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
 }
 
-// Enhanced build process with optimization
 (async () => {
   console.log("🚀 Starting luxury catalog build process...");
   
@@ -256,7 +143,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   const warnings = [];
   const hardErrors = [];
 
-  // ===== Process Brands with Enhanced Validation =====
+  // Process Brands
   console.log("🏷️  Processing luxury brands...");
   const brands = {};
   for (const r of brandsRows) {
@@ -276,19 +163,19 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     // Enhanced defaults for luxury dark theme
     if (!HEX.test(primary)) { 
       if (primary) warnings.push(`Brand ${slug}: invalid primaryColor "${primary}" → luxury gold used`); 
-      primary = "#d4af37"; // Luxury gold
+      primary = "#d4af37";
     }
     if (!HEX.test(accent))  { 
       if (accent)  warnings.push(`Brand ${slug}: invalid accentColor "${accent}" → rose gold used`);  
-      accent  = "#e8b4a0"; // Rose gold
+      accent  = "#e8b4a0";
     }
     if (!HEX.test(text))    { 
       if (text)    warnings.push(`Brand ${slug}: invalid textColor "${text}" → luxury white used`);      
-      text    = "#f5f5f5"; // Luxury white
+      text    = "#f5f5f5";
     }
     if (!HEX.test(bg))      { 
       if (bg)      warnings.push(`Brand ${slug}: invalid bgColor "${bg}" → luxury black used`);          
-      bg      = "#0a0a0a"; // Luxury black
+      bg      = "#0a0a0a";
     }
 
     const waRaw = (r.whatsapp || "").trim();
@@ -306,7 +193,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   
   console.log(`✅ Processed ${Object.keys(brands).length} luxury brands`);
 
-  // ===== Build Enhanced Catalog Tree =====
+  // Build catalog tree
   console.log("🌳 Building luxury catalog tree...");
   
   const allFullPaths = masterRows.map(r => normPath(r["RelativePath"] || r["Relative Path"] || r["Relative_Path"] || ""));
@@ -414,7 +301,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
   convertEmpty(tree);
 
-  // Enhance catalog with thumbnails and counts
+  // Enhance catalog
   console.log("🖼️  Enhancing visual elements...");
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
@@ -424,7 +311,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     setCounts(tree[top]);
   }
 
-  // Enhanced health checks
+  // Health checks
   console.log("🔍 Running quality assurance checks...");
   const missingThumbFiles = [];
   async function scanMissingThumbs(node, pfx = []) {
@@ -446,95 +333,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
   await scanMissingThumbs(tree);
 
-  // ===== Optimize Static Assets =====
-  console.log("⚡ Optimizing static assets...");
-  
-  let cssOptimized = false;
-  let jsOptimized = false;
-  let originalCssSize = 0;
-  let originalJsSize = 0;
-  let finalCssSize = 0;
-  let finalJsSize = 0;
-  
-  try {
-    // Read current CSS and JS files
-    const cssPath = path.join(PUBLIC_DIR, "style.css");
-    const jsPath = path.join(PUBLIC_DIR, "script.js");
-    const htmlPath = path.join(PUBLIC_DIR, "index.html");
-    
-    let cssContent = "";
-    let jsContent = "";
-    let htmlContent = "";
-    
-    try {
-      cssContent = await fs.readFile(cssPath, "utf8");
-      originalCssSize = cssContent.length;
-      console.log(`📝 Read CSS file: ${Math.round(originalCssSize / 1024)}KB`);
-    } catch (err) {
-      console.log("⚠️  CSS file not found, skipping CSS optimization");
-    }
-    
-    try {
-      jsContent = await fs.readFile(jsPath, "utf8");
-      originalJsSize = jsContent.length;
-      console.log(`📝 Read JS file: ${Math.round(originalJsSize / 1024)}KB`);
-    } catch (err) {
-      console.log("⚠️  JS file not found, skipping JS optimization");
-    }
-    
-    try {
-      htmlContent = await fs.readFile(htmlPath, "utf8");
-      console.log(`📝 Read HTML file: ${Math.round(htmlContent.length / 1024)}KB`);
-    } catch (err) {
-      console.log("⚠️  HTML file not found, skipping asset optimization");
-    }
-    
-    // Optimize CSS
-    if (cssContent && cssContent.length > 0) {
-      console.log("🎨 Optimizing CSS...");
-      
-      try {
-        // Remove unused CSS
-        const purgedCSS = removeUnusedCSS(cssContent, htmlContent, jsContent);
-        console.log(`🗑️  Removed unused CSS: ${Math.round((cssContent.length - purgedCSS.length) / 1024)}KB saved`);
-        
-        // Minify CSS
-        const minifiedCSS = minifyCSS(purgedCSS);
-        finalCssSize = minifiedCSS.length;
-        console.log(`📦 Minified CSS: ${Math.round((purgedCSS.length - minifiedCSS.length) / 1024)}KB saved`);
-        
-        // Write optimized CSS
-        await fs.writeFile(cssPath, minifiedCSS, "utf8");
-        console.log(`✅ CSS optimized: ${Math.round(originalCssSize / 1024)}KB → ${Math.round(finalCssSize / 1024)}KB`);
-        cssOptimized = true;
-      } catch (cssErr) {
-        console.warn("⚠️  CSS optimization failed:", cssErr.message);
-      }
-    }
-    
-    // Optimize JavaScript
-    if (jsContent && jsContent.length > 0) {
-      console.log("⚡ Optimizing JavaScript...");
-      
-      try {
-        const minifiedJS = minifyJS(jsContent);
-        finalJsSize = minifiedJS.length;
-        console.log(`📦 Minified JS: ${Math.round((jsContent.length - minifiedJS.length) / 1024)}KB saved`);
-        
-        // Write optimized JS
-        await fs.writeFile(jsPath, minifiedJS, "utf8");
-        console.log(`✅ JS optimized: ${Math.round(originalJsSize / 1024)}KB → ${Math.round(finalJsSize / 1024)}KB`);
-        jsOptimized = true;
-      } catch (jsErr) {
-        console.warn("⚠️  JavaScript optimization failed:", jsErr.message);
-      }
-    }
-    
-  } catch (err) {
-    console.warn("⚠️  Asset optimization failed:", err.message);
-  }
-
-  // Generate comprehensive report
+  // Generate report
   const report = {
     timestamp: new Date().toISOString(),
     performance: {
@@ -549,15 +348,6 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       warnings: warnings.length,
       errors: hardErrors.length,
     },
-    optimization: {
-      cssOptimized: cssOptimized,
-      jsOptimized: jsOptimized,
-      assetsMinified: cssOptimized || jsOptimized,
-      originalCssSize: Math.round(originalCssSize / 1024),
-      finalCssSize: Math.round(finalCssSize / 1024),
-      originalJsSize: Math.round(originalJsSize / 1024),
-      finalJsSize: Math.round(finalJsSize / 1024),
-    },
     details: {
       invalidDriveLinks: invalidDriveLinks.slice(0, 5),
       missingThumbFiles: missingThumbFiles.slice(0, 10),
@@ -569,8 +359,8 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     }
   };
 
-  // Save optimized data and reports
-  console.log("💾 Saving optimized catalog...");
+  // Save files
+  console.log("💾 Saving luxury catalog...");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   await fs.writeFile(
     path.join(PUBLIC_DIR, "data.json"), 
@@ -585,7 +375,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     "utf8"
   );
 
-  // Generate enhanced summary
+  // Generate summary
   const summary = [
     "## 🏆 Luxury Catalog Build Summary",
     "",
@@ -600,11 +390,6 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     `- **Invalid Drive Links:** ${invalidDriveLinks.length}`,
     warnings.length ? `- **⚠️ Warnings:** ${warnings.length}` : "- **✅ No Warnings**",
     hardErrors.length ? `- **❌ Errors:** ${hardErrors.length}` : "- **✅ No Errors**",
-    "",
-    "### ⚡ **Optimization Results**",
-    "- **CSS:** Purged unused styles & minified",
-    "- **JavaScript:** Minified for performance",
-    "- **Assets:** Optimized for fast loading",
     "",
     "### 🗂️ **Luxury Categories**",
     ...Object.keys(tree).map(cat => `- **${cat}:** ${tree[cat].count || 0} premium items`)
@@ -622,7 +407,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
   
   console.log(`\n🎉 Successfully built luxury catalog with ${totalProducts} premium products!`);
-  console.log(`📁 Optimized output: ${path.join(PUBLIC_DIR, "data.json")}`);
+  console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log("✨ Ready for luxury shopping experience!");
 })().catch(err => {
   console.error("💥 Build failed:", err);
