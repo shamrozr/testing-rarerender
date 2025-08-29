@@ -225,11 +225,14 @@ class CSVCatalogApp {
 
   // New method to show category view
   showCategoryView() {
-    console.log('📁 Showing category view for path:', this.currentPath);
-    
-    // Navigate to the current path in the data tree
-    let currentNode = this.data.catalog.tree;
-    let breadcrumbs = [];
+  console.log('📁 Showing category view for path:', this.currentPath);
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // Navigate to the current path in the data tree
+  let currentNode = this.data.catalog.tree;
+  let breadcrumbs = [];
     
     for (const segment of this.currentPath) {
       if (currentNode[segment]) {
@@ -414,39 +417,42 @@ class CSVCatalogApp {
   }
 
   navigateToHome() {
-    console.log('🏠 Navigating to home');
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.delete('path');
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ brand: this.currentBrand }, '', newURL);
-    
-    // Reset state
-    this.currentPath = [];
-    
-    // Re-render homepage
-    this.setupDynamicSections();
-    
-    // Show taxonomy section
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'block';
-    }
-
-    // Reset hero
-    this.setupBrandInfo();
-    
-    // Remove breadcrumbs
-    const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
-    if (existingBreadcrumbs) {
-      existingBreadcrumbs.remove();
-    }
+  console.log('🏠 Navigating to home');
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.delete('path');
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
   }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ brand: this.currentBrand }, '', newURL);
+  
+  // Reset state
+  this.currentPath = [];
+  
+  // Re-render homepage
+  this.setupDynamicSections();
+  
+  // Show taxonomy section
+  const taxonomySection = document.querySelector('.taxonomy-section');
+  if (taxonomySection) {
+    taxonomySection.style.display = 'block';
+  }
+
+  // Reset hero
+  this.setupBrandInfo();
+  
+  // Remove breadcrumbs
+  const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+  if (existingBreadcrumbs) {
+    existingBreadcrumbs.remove();
+  }
+}
 
   setupBrandInfo() {
     const brand = this.data.brands[this.currentBrand];
@@ -780,17 +786,20 @@ if (searchInput) {
   }
 
   navigateToCategory(category) {
-    console.log('🔗 Navigate to category:', category);
-    
-    // Build new path
-    let newPath;
-    if (this.currentPath.length === 0) {
-      // From homepage
-      newPath = [category];
-    } else {
-      // From current path
-      newPath = [...this.currentPath, category];
-    }
+  console.log('🔗 Navigate to category:', category);
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // Build new path
+  let newPath;
+  if (this.currentPath.length === 0) {
+    // From homepage
+    newPath = [category];
+  } else {
+    // From current path
+    newPath = [...this.currentPath, category];
+  }
     
     // Update state
     this.currentPath = newPath;
