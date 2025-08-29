@@ -670,12 +670,3 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('💥 Unhandled promise rejection:', e.reason);
   e.preventDefault();
 });
-
-detectAndSetBrand() {
-  const params = new URLSearchParams(location.search);
-  this.currentBrand = params.get('brand') || this.pickRandomBrand();
-  this.setupBrand(this.currentBrand);
-
-  const firstCategory = params.get('path');
-  if (firstCategory) this.navigateToCategory(firstCategory, true); // render view without pushing history
-}
