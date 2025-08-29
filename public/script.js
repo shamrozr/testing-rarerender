@@ -1104,25 +1104,25 @@ setupFABFunctionality() {
   // Image files configuration - ready for /icons/ folder
   const imageFiles = {
     'Reviews': [
-      'Reviews/1.jpg',
-      'Reviews/2.jpg', 
-      'Reviews/3.jpg',
-      'Reviews/4.jpg',
-      'Reviews/5.jpg'
+      'Reviews/1.webp',
+      'Reviews/2.webp', 
+      'Reviews/3.webp',
+      'Reviews/4.webp',
+      'Reviews/5.webp'
     ],
     'Delivered': [
-      'Delivered/1.jpg',
-      'Delivered/2.jpg',
-      'Delivered/3.jpg',
-      'Delivered/4.jpg',
-      'Delivered/5.jpg'
+      'Delivered/1.webp',
+      'Delivered/2.webp',
+      'Delivered/3.webp',
+      'Delivered/4.webp',
+      'Delivered/5.webp'
     ],
     'Payment': [
-      'Payment/1.jpg',
-      'Payment/2.jpg',
-      'Payment/3.jpg',
-      'Payment/4.jpg',
-      'Payment/5.jpg'
+      'Payment/1.webp',
+      'Payment/2.webp',
+      'Payment/3.webp',
+      'Payment/4.webp',
+      'Payment/5.webp'
     ]
   };
 
