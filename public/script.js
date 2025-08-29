@@ -85,7 +85,6 @@ class CSVCatalogApp {
 
     try {
       this.setupBrandInfo();
-      this.setupStats();
       
       // Check if we need to show category view or homepage
       if (this.currentPath.length > 0) {
@@ -544,8 +543,6 @@ class CSVCatalogApp {
     }
   }
 
-  setupStats() {
- }
 
     this.groupItemsBySection();
     
