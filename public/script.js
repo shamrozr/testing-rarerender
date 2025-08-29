@@ -671,20 +671,11 @@ window.addEventListener('unhandledrejection', (e) => {
   e.preventDefault();
 });
 
+detectAndSetBrand() {
+  const params = new URLSearchParams(location.search);
+  this.currentBrand = params.get('brand') || this.pickRandomBrand();
+  this.setupBrand(this.currentBrand);
 
-// inside class CSVCatalogApp
-navigateToCategory(category, skipHistory = false) {
-  this.renderCategory(category);          // NEW – draw the requested view
-
-  if (!skipHistory) {
-    const params = new URLSearchParams(window.location.search);
-    params.set('brand', this.currentBrand);
-    params.set('path', category);
-    history.pushState({ category }, '', `?${params.toString()}`);
-  }
+  const firstCategory = params.get('path');
+  if (firstCategory) this.navigateToCategory(firstCategory, true); // render view without pushing history
 }
-
-// Fire on back / forward navigation
-window.addEventListener('popstate', e => {
-  if (e.state?.category) app.navigateToCategory(e.state.category, true);
-});
