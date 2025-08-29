@@ -1,61 +1,69 @@
-// Professional CSV-Driven Catalog App
-// ===================================
+// Enhanced script.js with proper navigation handling
+// Professional CSV-Driven Catalog App with Enhanced Navigation
+// =============================================================
 
 class CSVCatalogApp {
   constructor() {
     console.log('🏗️ CSVCatalogApp constructor called');
     this.data = null;
     this.currentBrand = null;
+    this.currentPath = [];
     this.sections = new Map();
     this.isLoading = false;
     
-    // Immediate brand detection and setup
-    this.detectAndSetBrand();
+    // Initialize navigation state from URL
+    this.initializeFromURL();
   }
 
-  detectAndSetBrand() {
-    console.log('🔍 Detecting brand from URL...');
+  initializeFromURL() {
+    console.log('🔍 Initializing from URL...');
     
-    // Get brand from URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     const brandFromURL = urlParams.get('brand');
+    const pathFromURL = urlParams.get('path');
     
     console.log('🌐 Current URL:', window.location.href);
     console.log('🏷️ Brand parameter:', brandFromURL);
+    console.log('📍 Path parameter:', pathFromURL);
     
-    // Set brand name immediately if available
+    // Set brand
     if (brandFromURL) {
       this.currentBrand = brandFromURL;
-      
-      // Update brand name immediately from URL
-      const brandNameElement = document.getElementById('brandName');
-      const brandLogoElement = document.getElementById('brandLogo');
-      
-      if (brandNameElement) {
-        // Convert brand slug to display name
-        const displayName = this.slugToDisplayName(brandFromURL);
-        brandNameElement.textContent = displayName;
-        console.log('📝 Updated brand name to:', displayName);
-      }
-      
-      if (brandLogoElement) {
-        const initials = this.getInitials(this.slugToDisplayName(brandFromURL));
-        brandLogoElement.textContent = initials;
-        console.log('🔤 Updated logo initials to:', initials);
-      }
-    } else {
-      console.log('⚠️ No brand parameter found in URL');
+      this.updateBrandDisplay(brandFromURL);
+    }
+    
+    // Set path
+    if (pathFromURL) {
+      this.currentPath = pathFromURL.split('/').filter(Boolean);
+      console.log('📁 Current path:', this.currentPath);
+    }
+  }
+
+  updateBrandDisplay(brandFromURL) {
+    // Update brand name immediately from URL
+    const brandNameElement = document.getElementById('brandName');
+    const brandLogoElement = document.getElementById('brandLogo');
+    
+    if (brandNameElement) {
+      const displayName = this.slugToDisplayName(brandFromURL);
+      brandNameElement.textContent = displayName;
+      console.log('📝 Updated brand name to:', displayName);
+    }
+    
+    if (brandLogoElement) {
+      const initials = this.getInitials(this.slugToDisplayName(brandFromURL));
+      brandLogoElement.textContent = initials;
+      console.log('🔤 Updated logo initials to:', initials);
     }
   }
 
   slugToDisplayName(slug) {
-    // Convert slug like "LiyanaBags" to "Liyana Bags"
     return slug
-      .replace(/([A-Z])/g, ' $1')  // Add space before capitals
-      .replace(/^bags$/i, 'Bags')   // Handle "bags" at end
-      .replace(/bags$/i, ' Bags')   // Add space before "Bags"
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^bags$/i, 'Bags')
+      .replace(/bags$/i, ' Bags')
       .trim()
-      .replace(/^\w/, c => c.toUpperCase()); // Capitalize first letter
+      .replace(/^\w/, c => c.toUpperCase());
   }
 
   async init() {
@@ -71,13 +79,23 @@ class CSVCatalogApp {
     console.log('📊 Starting setup with data:', {
       brands: Object.keys(this.data.brands || {}),
       catalogItems: Object.keys(this.data.catalog?.tree || {}),
-      currentBrand: this.currentBrand
+      currentBrand: this.currentBrand,
+      currentPath: this.currentPath
     });
 
     try {
       this.setupBrandInfo();
       this.setupStats();
-      this.setupDynamicSections();
+      
+      // Check if we need to show category view or homepage
+      if (this.currentPath.length > 0) {
+        console.log('📁 Showing category view for path:', this.currentPath);
+        this.showCategoryView();
+      } else {
+        console.log('🏠 Showing homepage view');
+        this.setupDynamicSections();
+      }
+      
       this.setupTaxonomy();
       this.setupFooter();
       this.setupEventListeners();
@@ -97,7 +115,6 @@ class CSVCatalogApp {
         this.data = await response.json();
         console.log('✅ Data loaded successfully:', this.data);
         
-        // Get brand from URL or use first available brand
         const urlParams = new URLSearchParams(window.location.search);
         const brandFromURL = urlParams.get('brand');
         
@@ -118,7 +135,7 @@ class CSVCatalogApp {
     } catch (error) {
       console.error('❌ Error loading data:', error);
       console.log('📦 Falling back to mock data...');
-      this.loadMockData(); // Fallback for demo
+      this.loadMockData();
     } finally {
       this.hideLoading();
     }
@@ -127,7 +144,6 @@ class CSVCatalogApp {
   loadMockData() {
     console.log('📦 Loading mock data as fallback...');
     
-    // Mock data structure matching your CSV format
     this.data = {
       brands: {
         'LiyanaBags': {
@@ -154,25 +170,282 @@ class CSVCatalogApp {
       catalog: {
         totalProducts: 547,
         tree: {
-          'BAGS': { count: 234, thumbnail: '', section: 'Featured' },
-          'SHOES': { count: 156, thumbnail: '', section: 'Trending' },
-          'JEWELRY': { count: 89, thumbnail: '', section: 'Featured' },
-          'WATCHES': { count: 68, thumbnail: '', section: 'Premium' }
+          'BAGS': { 
+            count: 234, 
+            thumbnail: '', 
+            section: 'Featured',
+            children: {
+              'Chanel': {
+                count: 45,
+                thumbnail: '',
+                children: {
+                  'Chanel Bag 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/1', thumbnail: '' },
+                  'Chanel Bag 2': { isProduct: true, driveLink: 'https://drive.google.com/file/d/2', thumbnail: '' }
+                }
+              },
+              'Gucci': {
+                count: 38,
+                thumbnail: '',
+                children: {
+                  'Gucci Bag 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/3', thumbnail: '' }
+                }
+              }
+            }
+          },
+          'SHOES': { 
+            count: 156, 
+            thumbnail: '', 
+            section: 'Trending',
+            children: {
+              'Nike': {
+                count: 25,
+                thumbnail: '',
+                children: {
+                  'Nike Shoe 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/4', thumbnail: '' }
+                }
+              }
+            }
+          },
+          'JEWELRY': { count: 89, thumbnail: '', section: 'Featured', children: {} },
+          'WATCHES': { count: 68, thumbnail: '', section: 'Premium', children: {} }
         }
       }
     };
     
-    // Set current brand based on URL or default
     if (!this.currentBrand) {
       this.currentBrand = Object.keys(this.data.brands)[0];
     }
     
-    // Ensure the current brand exists in mock data
     if (!this.data.brands[this.currentBrand]) {
       this.currentBrand = Object.keys(this.data.brands)[0];
     }
     
     console.log('✅ Mock data loaded, current brand:', this.currentBrand);
+  }
+
+  // New method to show category view
+  showCategoryView() {
+    console.log('📁 Showing category view for path:', this.currentPath);
+    
+    // Navigate to the current path in the data tree
+    let currentNode = this.data.catalog.tree;
+    let breadcrumbs = [];
+    
+    for (const segment of this.currentPath) {
+      if (currentNode[segment]) {
+        breadcrumbs.push({
+          name: segment,
+          path: breadcrumbs.length === 0 ? segment : breadcrumbs[breadcrumbs.length - 1].path + '/' + segment
+        });
+        currentNode = currentNode[segment].children || {};
+      } else {
+        console.error('❌ Path not found:', segment, 'in', Object.keys(currentNode));
+        this.showNotification(`Category "${segment}" not found`);
+        this.navigateToHome();
+        return;
+      }
+    }
+
+    console.log('🗂️ Current node contents:', Object.keys(currentNode));
+    console.log('🍞 Breadcrumbs:', breadcrumbs);
+
+    // Update hero section for category view
+    this.updateHeroForCategory(breadcrumbs);
+
+    // Hide taxonomy section
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'none';
+    }
+
+    // Show category contents
+    this.renderCategoryContents(currentNode, breadcrumbs);
+  }
+
+  updateHeroForCategory(breadcrumbs) {
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    
+    if (heroTitle && breadcrumbs.length > 0) {
+      const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
+      heroTitle.textContent = `${currentCategory} Collection`;
+    }
+    
+    if (heroSubtitle && breadcrumbs.length > 0) {
+      const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
+      heroSubtitle.textContent = `Explore our premium ${currentCategory.toLowerCase()} collection with carefully curated items.`;
+    }
+
+    // Add breadcrumb navigation
+    this.addBreadcrumbNavigation(breadcrumbs);
+  }
+
+  addBreadcrumbNavigation(breadcrumbs) {
+    const hero = document.querySelector('.hero .hero-content');
+    if (!hero) return;
+
+    // Remove existing breadcrumbs
+    const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
+
+    // Create breadcrumb navigation
+    const breadcrumbNav = document.createElement('nav');
+    breadcrumbNav.className = 'breadcrumb-nav';
+    breadcrumbNav.style.cssText = `
+      margin-bottom: var(--space-6);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+    `;
+
+    // Home link
+    const homeLink = document.createElement('a');
+    homeLink.href = '#';
+    homeLink.textContent = 'Home';
+    homeLink.style.cssText = `
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 500;
+    `;
+    homeLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.navigateToHome();
+    });
+
+    breadcrumbNav.appendChild(homeLink);
+
+    // Add breadcrumb items
+    breadcrumbs.forEach((crumb, index) => {
+      // Add separator
+      const separator = document.createElement('span');
+      separator.textContent = ' / ';
+      separator.style.color = 'var(--color-text-muted)';
+      breadcrumbNav.appendChild(separator);
+
+      if (index === breadcrumbs.length - 1) {
+        // Current page - no link
+        const current = document.createElement('span');
+        current.textContent = crumb.name;
+        current.style.fontWeight = '600';
+        breadcrumbNav.appendChild(current);
+      } else {
+        // Clickable breadcrumb
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = crumb.name;
+        link.style.cssText = `
+          color: var(--color-primary);
+          text-decoration: none;
+          font-weight: 500;
+        `;
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.navigateToCategory(crumb.path);
+        });
+        breadcrumbNav.appendChild(link);
+      }
+    });
+
+    hero.insertBefore(breadcrumbNav, hero.firstChild);
+  }
+
+  renderCategoryContents(currentNode, breadcrumbs) {
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
+
+    const items = Object.entries(currentNode).map(([key, item]) => {
+      if (item.isProduct) {
+        return {
+          key,
+          title: key,
+          description: 'Premium product from our luxury collection',
+          count: 1,
+          thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+          isProduct: true,
+          driveLink: item.driveLink
+        };
+      } else {
+        return {
+          key,
+          title: key.replace(/_/g, ' '),
+          description: `Explore ${item.count || 0} items in this collection`,
+          count: item.count || 0,
+          thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+          isProduct: false
+        };
+      }
+    });
+
+    console.log('🎯 Rendering category contents:', items);
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <section class="content-section">
+          <div class="container">
+            <div class="section-header">
+              <h2 class="section-title">No Items Found</h2>
+              <p class="section-description">This category is currently empty.</p>
+            </div>
+          </div>
+        </section>
+      `;
+      return;
+    }
+
+    const gridClass = this.getGridClass(items.length);
+    
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">${breadcrumbs[breadcrumbs.length - 1]?.name || 'Category'} Collection</h2>
+            <p class="section-description">Discover ${items.length} item${items.length === 1 ? '' : 's'} in this collection</p>
+          </div>
+          <div class="cards-grid ${gridClass}">
+            ${items.map(item => this.createCardHTML(item)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  navigateToHome() {
+    console.log('🏠 Navigating to home');
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.delete('path');
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ brand: this.currentBrand }, '', newURL);
+    
+    // Reset state
+    this.currentPath = [];
+    
+    // Re-render homepage
+    this.setupDynamicSections();
+    
+    // Show taxonomy section
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'block';
+    }
+
+    // Reset hero
+    this.setupBrandInfo();
+    
+    // Remove breadcrumbs
+    const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
   }
 
   setupBrandInfo() {
@@ -184,24 +457,20 @@ class CSVCatalogApp {
 
     console.log('🏷️ Setting up brand info for:', brand);
 
-    // Update brand elements - handle different field names from CSV
     this.updateElement('brandName', brand.brandName || brand.name);
     this.updateElement('brandTagline', brand.tagline || 'Premium Quality Collection');
     this.updateElement('heroTitle', brand.heroTitle || 'Discover Luxury Collections');
     this.updateElement('heroSubtitle', brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.');
     this.updateElement('footerBrandName', brand.brandName || brand.name);
     
-    // Update logo
     const logo = document.getElementById('brandLogo');
     if (logo) {
       logo.textContent = this.getInitials(brand.brandName || brand.name);
     }
 
-    // Apply brand colors
     if (brand.colors) {
       this.applyBrandColors(brand.colors);
     } else {
-      // If colors are directly on brand object (CSV structure)
       const colors = {
         primary: brand.primaryColor || '#6366f1',
         accent: brand.accentColor || '#8b5cf6',
@@ -211,7 +480,6 @@ class CSVCatalogApp {
       this.applyBrandColors(colors);
     }
 
-    // WhatsApp
     const whatsApp = document.getElementById('whatsappFab');
     if (whatsApp && brand.whatsapp) {
       whatsApp.href = brand.whatsapp;
@@ -242,7 +510,6 @@ class CSVCatalogApp {
     if (colors.primary) root.style.setProperty('--color-primary', colors.primary);
     if (colors.accent) root.style.setProperty('--color-accent', colors.accent);
     
-    // Update meta theme color
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme && colors.primary) {
       metaTheme.setAttribute('content', colors.primary);
@@ -251,12 +518,7 @@ class CSVCatalogApp {
 
   setupStats() {
     const statsGrid = document.getElementById('statsGrid');
-    if (!statsGrid) {
-      console.error('❌ statsGrid element not found');
-      return;
-    }
-
-    console.log('📊 Setting up stats...');
+    if (!statsGrid) return;
 
     const stats = [
       { number: Object.keys(this.data.brands || {}).length + '+', label: 'Luxury Brands' },
@@ -265,42 +527,27 @@ class CSVCatalogApp {
       { number: '24/7', label: 'Customer Support' }
     ];
 
-    console.log('📈 Stats to display:', stats);
-
     statsGrid.innerHTML = stats.map(stat => `
       <div class="stat-item">
         <div class="stat-number">${stat.number}</div>
         <div class="stat-label">${stat.label}</div>
       </div>
     `).join('');
-
-    console.log('✅ Stats setup complete');
   }
 
   setupDynamicSections() {
     const container = document.getElementById('dynamicSections');
-    if (!container) {
-      console.error('❌ dynamicSections container not found');
-      return;
-    }
-
-    console.log('🌳 Setting up dynamic sections...');
-    console.log('📊 Catalog data:', this.data.catalog);
+    if (!container) return;
 
     if (!this.data.catalog || !this.data.catalog.tree) {
       console.error('❌ No catalog tree data found');
       return;
     }
 
-    console.log('📁 Catalog tree:', this.data.catalog.tree);
-
-    // Group catalog items by section
     this.groupItemsBySection();
     
-    // Create sections in order - only show sections that have items
     const sectionOrder = ['Featured', 'Trending', 'Premium', 'New Arrivals', 'Best Sellers'];
     
-    // Clear existing content first
     container.innerHTML = '';
     let sectionsCreated = 0;
     
@@ -309,17 +556,13 @@ class CSVCatalogApp {
         const sectionHTML = this.createSectionHTML(sectionName, this.sections.get(sectionName));
         container.insertAdjacentHTML('beforeend', sectionHTML);
         sectionsCreated++;
-        console.log(`✅ Created section: ${sectionName} with ${this.sections.get(sectionName).length} items`);
       }
     });
 
-    // If no sections were created, create a default Featured section with all items
     if (sectionsCreated === 0) {
-      console.log('⚠️ No sectioned items found, creating default Featured section');
       const allItems = [];
       
       Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
-        console.log(`📦 Processing item: ${key}`, item);
         allItems.push({
           key,
           title: key.replace(/_/g, ' '),
@@ -330,29 +573,17 @@ class CSVCatalogApp {
         });
       });
 
-      console.log('📋 All items collected:', allItems);
-
       if (allItems.length > 0) {
         const sectionHTML = this.createSectionHTML('Featured Collection', allItems);
         container.insertAdjacentHTML('beforeend', sectionHTML);
-        console.log(`✅ Created default section with ${allItems.length} items`);
-        sectionsCreated++;
-      } else {
-        console.error('❌ No items found in catalog tree');
-        // Keep the fallback content
-        return;
       }
     }
-
-    console.log(`🎉 Setup complete: ${sectionsCreated} sections created`);
   }
 
   groupItemsBySection() {
     this.sections.clear();
     
-    // Process catalog items and group by section
     Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
-      // Check if item has section property, otherwise default to 'Featured'
       const section = item.section || 'Featured';
       
       if (!this.sections.has(section)) {
@@ -369,15 +600,8 @@ class CSVCatalogApp {
       });
     });
 
-    // Sort items within each section by topOrder
     this.sections.forEach(items => {
       items.sort((a, b) => a.topOrder - b.topOrder);
-    });
-
-    // Debug: Log the sections
-    console.log('📊 Sections created:', Array.from(this.sections.keys()));
-    this.sections.forEach((items, section) => {
-      console.log(`📁 ${section}:`, items.length, 'items');
     });
   }
 
@@ -413,8 +637,10 @@ class CSVCatalogApp {
       `<img src="${imageSrc}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">` : 
       this.getEmojiForCategory(item.key);
 
+    const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
+
     return `
-      <div class="content-card" data-category="${item.key}" role="button" tabindex="0">
+      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" role="button" tabindex="0">
         <div class="card-image">
           ${imageContent}
           <div class="card-overlay"></div>
@@ -423,7 +649,7 @@ class CSVCatalogApp {
           <h3 class="card-title">${item.title}</h3>
           <p class="card-description">${item.description}</p>
           <div class="card-footer">
-            <span class="card-badge">${item.count} Items</span>
+            <span class="card-badge">${badgeText}</span>
             <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="m9 18 6-6-6-6"/>
             </svg>
@@ -444,14 +670,15 @@ class CSVCatalogApp {
       'SUNGLASSES': '🕶️',
       'PERFUMES': '🌸',
       'SCARVES': '🧣',
-      'BELTS': '👔'
+      'BELTS': '👔',
+      'PRODUCT': '✨'
     };
-    return emojiMap[category.toUpperCase()] || '🎁';
+    return emojiMap[category?.toUpperCase()] || '🎁';
   }
 
   setupTaxonomy() {
     const taxonomyGrid = document.getElementById('taxonomyGrid');
-    if (!taxonomyGrid) return;
+    if (!taxonomyGrid || !this.data.catalog?.tree) return;
 
     const taxonomyItems = Object.entries(this.data.catalog.tree)
       .map(([key, item]) => ({
@@ -501,11 +728,11 @@ class CSVCatalogApp {
   }
 
   setupEventListeners() {
-    // Logo click - scroll to top
+    // Logo click - go to home
     const logo = document.getElementById('brandLogo');
     if (logo) {
       logo.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        this.navigateToHome();
       });
     }
 
@@ -514,7 +741,16 @@ class CSVCatalogApp {
       const card = e.target.closest('.content-card, .taxonomy-item');
       if (card) {
         const category = card.dataset.category;
-        this.navigateToCategory(category);
+        const isProduct = card.dataset.isProduct === 'true';
+        const driveLink = card.dataset.driveLink;
+        
+        if (isProduct && driveLink) {
+          // Open product link
+          this.openProduct(driveLink);
+        } else {
+          // Navigate to category
+          this.navigateToCategory(category);
+        }
       }
     });
 
@@ -529,38 +765,65 @@ class CSVCatalogApp {
         }, 300);
       });
     }
+
+    // Browser back/forward navigation
+    window.addEventListener('popstate', (e) => {
+      console.log('🔙 Browser navigation detected:', e.state);
+      this.handleBrowserNavigation();
+    });
+  }
+
+  openProduct(driveLink) {
+    console.log('🔗 Opening product:', driveLink);
+    this.showNotification('Opening product...');
+    window.open(driveLink, '_blank', 'noopener,noreferrer');
   }
 
   navigateToCategory(category) {
     console.log('🔗 Navigate to category:', category);
     
-    // Check if your original navigation system exists
-    if (window.STATE && typeof window.renderPath === 'function') {
-      // Use your existing navigation system
-      console.log('📱 Using existing navigation system');
-      window.STATE.path = [category];
-      window.renderPath();
-      
-      // Update URL
-      const params = new URLSearchParams(window.location.search);
-      params.set('path', category);
-      if (this.currentBrand) {
-        params.set('brand', this.currentBrand);
-      }
-      const newURL = `${window.location.pathname}?${params.toString()}`;
-      window.history.pushState({ category, brand: this.currentBrand }, '', newURL);
-      
+    // Build new path
+    let newPath;
+    if (this.currentPath.length === 0) {
+      // From homepage
+      newPath = [category];
     } else {
-      // Navigate using page reload method
-      console.log('🔄 Using page reload navigation');
-      const params = new URLSearchParams(window.location.search);
-      params.set('path', category);
-      if (this.currentBrand) {
-        params.set('brand', this.currentBrand);
-      }
-      
-      const newURL = `${window.location.pathname}?${params.toString()}`;
-      window.location.href = newURL;
+      // From current path
+      newPath = [...this.currentPath, category];
+    }
+    
+    // Update state
+    this.currentPath = newPath;
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.set('path', newPath.join('/'));
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ 
+      category, 
+      brand: this.currentBrand, 
+      path: newPath 
+    }, '', newURL);
+    
+    // Show category view
+    this.showCategoryView();
+  }
+
+  handleBrowserNavigation() {
+    console.log('🔙 Handling browser navigation');
+    
+    // Re-initialize from URL
+    this.initializeFromURL();
+    
+    // Re-render based on new state
+    if (this.currentPath.length > 0) {
+      this.showCategoryView();
+    } else {
+      this.navigateToHome();
     }
   }
 
@@ -568,105 +831,3 @@ class CSVCatalogApp {
     if (!query.trim()) return;
     console.log('🔍 Searching for:', query);
     this.showNotification(`Searching for "${query}"...`);
-  }
-
-  showNotification(message) {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 100px;
-      right: 20px;
-      background: var(--color-primary);
-      color: white;
-      padding: 16px 24px;
-      border-radius: 12px;
-      box-shadow: var(--shadow-lg);
-      z-index: 1000;
-      font-weight: 500;
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
-      max-width: 300px;
-    `;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
-    setTimeout(() => {
-      notification.style.transform = 'translateX(100%)';
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
-  }
-
-  showLoading() {
-    this.isLoading = true;
-    document.body.classList.add('loading');
-  }
-
-  hideLoading() {
-    this.isLoading = false;
-    document.body.classList.remove('loading');
-  }
-}
-
-// Initialize the application
-console.log('🔧 Script loaded, starting initialization...');
-
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('📄 DOM loaded, creating app instance...');
-  const app = new CSVCatalogApp();
-  app.init().catch(error => {
-    console.error('💥 App initialization failed:', error);
-    // Show fallback content
-    document.body.innerHTML += `
-      <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                  background: red; color: white; padding: 20px; border-radius: 10px; z-index: 9999;">
-        <h3>Initialization Error</h3>
-        <p>Error: ${error.message}</p>
-        <p>Check console for details</p>
-      </div>
-    `;
-  });
-  
-  // Make app globally available for debugging
-  window.catalogApp = app;
-  console.log('🔧 App instance created and available as window.catalogApp');
-});
-
-// Also try immediate initialization as backup
-if (document.readyState === 'loading') {
-  console.log('⏳ Document still loading, waiting for DOMContentLoaded...');
-} else {
-  console.log('🚀 Document already loaded, initializing immediately...');
-  setTimeout(() => {
-    if (!window.catalogApp) {
-      console.log('🔄 Backup initialization starting...');
-      const app = new CSVCatalogApp();
-      app.init().catch(console.error);
-      window.catalogApp = app;
-    }
-  }, 100);
-}
-
-// Handle browser navigation
-window.addEventListener('popstate', (e) => {
-  console.log('🔙 Browser navigation detected:', e.state);
-  if (window.catalogApp && e.state?.category) {
-    console.log('🔙 Browser navigation to:', e.state.category);
-  }
-});
-
-// Global error handler
-window.addEventListener('error', (e) => {
-  console.error('💥 Global error:', e.error);
-  console.error('💥 Error details:', {
-    message: e.message,
-    filename: e.filename,
-    lineno: e.lineno,
-    colno: e.colno
-  });
-});
-
-window.addEventListener('unhandledrejection', (e) => {
-  console.error('💥 Unhandled promise rejection:', e.reason);
-  e.preventDefault();
-});
