@@ -533,13 +533,35 @@ class CSVCatalogApp {
 
   navigateToCategory(category) {
     console.log('🔗 Navigate to category:', category);
-    this.showNotification(`Opening ${category.replace(/_/g, ' ')} collection...`);
     
-    // Update URL without page reload
-    const params = new URLSearchParams(window.location.search);
-    params.set('path', category);
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ category }, '', newURL);
+    // Check if your original navigation system exists
+    if (window.STATE && typeof window.renderPath === 'function') {
+      // Use your existing navigation system
+      console.log('📱 Using existing navigation system');
+      window.STATE.path = [category];
+      window.renderPath();
+      
+      // Update URL
+      const params = new URLSearchParams(window.location.search);
+      params.set('path', category);
+      if (this.currentBrand) {
+        params.set('brand', this.currentBrand);
+      }
+      const newURL = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({ category, brand: this.currentBrand }, '', newURL);
+      
+    } else {
+      // Navigate using page reload method
+      console.log('🔄 Using page reload navigation');
+      const params = new URLSearchParams(window.location.search);
+      params.set('path', category);
+      if (this.currentBrand) {
+        params.set('brand', this.currentBrand);
+      }
+      
+      const newURL = `${window.location.pathname}?${params.toString()}`;
+      window.location.href = newURL;
+    }
   }
 
   handleSearch(query) {
