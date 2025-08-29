@@ -85,16 +85,16 @@ class CSVCatalogApp {
 
     try {
       this.setupBrandInfo();
-
-// Check if we need to show category view or homepage
-if (this.currentPath.length > 0) {
-  console.log('📁 Showing category view for path:', this.currentPath);
-  this.showCategoryView();
-} else {
-  console.log('🏠 Showing homepage view');
-  this.setupStats();
-  this.setupDynamicSections();
-}
+      this.setupStats();
+      
+      // Check if we need to show category view or homepage
+      if (this.currentPath.length > 0) {
+        console.log('📁 Showing category view for path:', this.currentPath);
+        this.showCategoryView();
+      } else {
+        console.log('🏠 Showing homepage view');
+        this.setupDynamicSections();
+      }
       
       this.setupTaxonomy();
       this.setupFooter();
@@ -263,99 +263,95 @@ if (this.currentPath.length > 0) {
   }
 
   updateHeroForCategory(breadcrumbs) {
-  // Hide the entire hero section for category pages
-  const heroSection = document.querySelector('.hero');
-  if (heroSection) {
-    heroSection.style.display = 'none';
-  }
-
-  // Add breadcrumb navigation to header instead
-  this.addBreadcrumbToHeader(breadcrumbs);
-}
-
-addBreadcrumbToHeader(breadcrumbs) {
-  const header = document.querySelector('.header');
-  if (!header) return;
-
-  // Remove existing breadcrumbs
-  const existingBreadcrumbs = header.querySelector('.breadcrumb-nav');
-  if (existingBreadcrumbs) {
-    existingBreadcrumbs.remove();
-  }
-
-  // Create breadcrumb navigation
-  const breadcrumbNav = document.createElement('nav');
-  breadcrumbNav.className = 'breadcrumb-nav';
-  breadcrumbNav.style.cssText = `
-    background: rgba(99, 102, 241, 0.1);
-    padding: var(--space-2) var(--space-4);
-    margin: 0;
-    border-radius: 0;
-    border-top: 1px solid var(--color-border);
-  `;
-
-  // Home link
-  const homeLink = document.createElement('a');
-  homeLink.href = '#';
-  homeLink.textContent = 'Home';
-  homeLink.style.cssText = `
-    color: var(--color-primary);
-    text-decoration: none;
-    font-weight: 600;
-  `;
-  homeLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    this.navigateToHome();
-  });
-
-  breadcrumbNav.appendChild(homeLink);
-
-  // Add breadcrumb items
-  breadcrumbs.forEach((crumb, index) => {
-    const separator = document.createElement('span');
-    separator.textContent = ' / ';
-    separator.style.color = 'var(--color-text-muted)';
-    breadcrumbNav.appendChild(separator);
-
-    if (index === breadcrumbs.length - 1) {
-      const current = document.createElement('span');
-      current.textContent = crumb.name;
-      current.style.cssText = `
-        font-weight: 700;
-        color: var(--color-text-primary);
-      `;
-      breadcrumbNav.appendChild(current);
-    } else {
-      const link = document.createElement('a');
-      link.href = '#';
-      link.textContent = crumb.name;
-      link.style.cssText = `
-        color: var(--color-primary);
-        text-decoration: none;
-        font-weight: 600;
-      `;
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const pathSegments = crumb.path.split('/');
-        this.currentPath = pathSegments;
-        
-        const params = new URLSearchParams(window.location.search);
-        params.set('path', crumb.path);
-        if (this.currentBrand) {
-          params.set('brand', this.currentBrand);
-        }
-        
-        const newURL = `${window.location.pathname}?${params.toString()}`;
-        window.history.pushState({ path: pathSegments, brand: this.currentBrand }, '', newURL);
-        
-        this.showCategoryView();
-      });
-      breadcrumbNav.appendChild(link);
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    
+    if (heroTitle && breadcrumbs.length > 0) {
+      const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
+      heroTitle.textContent = `${currentCategory} Collection`;
     }
-  });
+    
+    if (heroSubtitle && breadcrumbs.length > 0) {
+      const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
+      heroSubtitle.textContent = `Explore our premium ${currentCategory.toLowerCase()} collection with carefully curated items.`;
+    }
 
-  header.appendChild(breadcrumbNav);
-}
+    // Add breadcrumb navigation
+    this.addBreadcrumbNavigation(breadcrumbs);
+  }
+
+  addBreadcrumbNavigation(breadcrumbs) {
+    const hero = document.querySelector('.hero .hero-content');
+    if (!hero) return;
+
+    // Remove existing breadcrumbs
+    const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
+
+    // Create breadcrumb navigation
+    const breadcrumbNav = document.createElement('nav');
+    breadcrumbNav.className = 'breadcrumb-nav';
+    breadcrumbNav.style.cssText = `
+      margin-bottom: var(--space-6);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+    `;
+
+    // Home link
+    const homeLink = document.createElement('a');
+    homeLink.href = '#';
+    homeLink.textContent = 'Home';
+    homeLink.style.cssText = `
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 500;
+    `;
+    homeLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.navigateToHome();
+    });
+
+    breadcrumbNav.appendChild(homeLink);
+
+    // Add breadcrumb items
+    breadcrumbs.forEach((crumb, index) => {
+      // Add separator
+      const separator = document.createElement('span');
+      separator.textContent = ' / ';
+      separator.style.color = 'var(--color-text-muted)';
+      breadcrumbNav.appendChild(separator);
+
+      if (index === breadcrumbs.length - 1) {
+        // Current page - no link
+        const current = document.createElement('span');
+        current.textContent = crumb.name;
+        current.style.fontWeight = '600';
+        breadcrumbNav.appendChild(current);
+      } else {
+        // Clickable breadcrumb
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = crumb.name;
+        link.style.cssText = `
+          color: var(--color-primary);
+          text-decoration: none;
+          font-weight: 500;
+        `;
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.navigateToCategory(crumb.path);
+        });
+        breadcrumbNav.appendChild(link);
+      }
+    });
+
+    hero.insertBefore(breadcrumbNav, hero.firstChild);
+  }
 
   renderCategoryContents(currentNode, breadcrumbs) {
     const container = document.getElementById('dynamicSections');
@@ -433,33 +429,23 @@ addBreadcrumbToHeader(breadcrumbs) {
     // Reset state
     this.currentPath = [];
     
-// Re-render homepage
-this.setupDynamicSections();
+    // Re-render homepage
+    this.setupDynamicSections();
+    
+    // Show taxonomy section
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'block';
+    }
 
-// Reset scroll to top
-window.scrollTo({ top: 0, behavior: 'smooth' });
-this.setupStats();
-
-// Show taxonomy section
-const taxonomySection = document.querySelector('.taxonomy-section');
-if (taxonomySection) {
-  taxonomySection.style.display = 'block';
-}
-
-    // Show hero section on homepage
-const heroSection = document.querySelector('.hero');
-if (heroSection) {
-  heroSection.style.display = 'block';
-}
-
-// Reset hero
-this.setupBrandInfo();
-
-// Remove breadcrumbs
-const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
-if (existingBreadcrumbs) {
-  existingBreadcrumbs.remove();
-}
+    // Reset hero
+    this.setupBrandInfo();
+    
+    // Remove breadcrumbs
+    const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
   }
 
   setupBrandInfo() {
@@ -653,10 +639,9 @@ if (existingBreadcrumbs) {
 
     const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
 
-    const cardClass = item.isProduct ? 'content-card product-card' : 'content-card';
-return `
-  <div class="${cardClass}" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" role="button" tabindex="0">
-  <div class="card-image">
+    return `
+      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" role="button" tabindex="0">
+        <div class="card-image">
           ${imageContent}
           <div class="card-overlay"></div>
         </div>
@@ -718,22 +703,28 @@ return `
     const brand = this.data.brands[this.currentBrand];
     const footerText = brand?.footerText || 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.';
 
-footerContent.innerHTML = `
-  <div class="footer-section">
-    <h3>${brand?.brandName || brand?.name || 'Luxury Collection'}</h3>
-    <p>${footerText}</p>
-  </div>
-  <div class="footer-section">
-    <h3>Customer Service</h3>
-    <p>24/7 Support Available</p>
-    <p>Premium Customer Care</p>
-    <p>Worldwide Shipping</p>
-  </div>
-  <div class="footer-section">
-    <h3>Connect With Us</h3>
-    <p>Follow us for the latest luxury collections and exclusive offers.</p>
-  </div>
-`;
+    footerContent.innerHTML = `
+      <div class="footer-section">
+        <h3>${brand?.brandName || brand?.name || 'Luxury Collection'}</h3>
+        <p>${footerText}</p>
+      </div>
+      <div class="footer-section">
+        <h3>Quick Links</h3>
+        <a href="#categories">Categories</a>
+        <a href="#products">Products</a>
+        <a href="#contact">Contact Us</a>
+      </div>
+      <div class="footer-section">
+        <h3>Customer Service</h3>
+        <p>24/7 Support Available</p>
+        <p>Premium Customer Care</p>
+        <p>Worldwide Shipping</p>
+      </div>
+      <div class="footer-section">
+        <h3>Connect With Us</h3>
+        <p>Follow us for the latest luxury collections and exclusive offers.</p>
+      </div>
+    `;
   }
 
   setupEventListeners() {
@@ -818,11 +809,8 @@ footerContent.innerHTML = `
       path: newPath 
     }, '', newURL);
     
-// Show category view
-this.showCategoryView();
-
-// Reset scroll to top
-window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Show category view
+    this.showCategoryView();
   }
 
   handleBrowserNavigation() {
