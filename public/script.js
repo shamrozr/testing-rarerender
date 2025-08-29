@@ -870,3 +870,49 @@ class CSVCatalogApp {
     document.body.classList.remove('loading');
   }
 }
+// Initialize the application
+console.log('🔧 Script loaded, starting initialization...');
+
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('📄 DOM loaded, creating app instance...');
+  const app = new CSVCatalogApp();
+  app.init().catch(error => {
+    console.error('💥 App initialization failed:', error);
+    document.body.innerHTML += `
+      <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                  background: red; color: white; padding: 20px; border-radius: 10px; z-index: 9999;">
+        <h3>Initialization Error</h3>
+        <p>Error: ${error.message}</p>
+        <p>Check console for details</p>
+      </div>
+    `;
+  });
+  
+  window.catalogApp = app;
+  console.log('🔧 App instance created and available as window.catalogApp');
+});
+
+// Backup initialization
+if (document.readyState === 'loading') {
+  console.log('⏳ Document still loading, waiting for DOMContentLoaded...');
+} else {
+  console.log('🚀 Document already loaded, initializing immediately...');
+  setTimeout(() => {
+    if (!window.catalogApp) {
+      console.log('🔄 Backup initialization starting...');
+      const app = new CSVCatalogApp();
+      app.init().catch(console.error);
+      window.catalogApp = app;
+    }
+  }, 100);
+}
+
+// Global error handlers
+window.addEventListener('error', (e) => {
+  console.error('💥 Global error:', e.error);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('💥 Unhandled promise rejection:', e.reason);
+  e.preventDefault();
+});
