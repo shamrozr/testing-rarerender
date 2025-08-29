@@ -550,18 +550,7 @@ class CSVCatalogApp {
     };
     this.applyBrandColors(fallbackColors);
   }
-// Debug method to check brand switching
-debugBrandSwitching() {
-  console.log('🔍 BRAND DEBUG INFO:');
-  console.log('Current brand:', this.currentBrand);
-  console.log('Available brands:', Object.keys(this.data?.brands || {}));
-  console.log('URL params:', new URLSearchParams(window.location.search).toString());
-  console.log('Brand data:', this.data?.brands[this.currentBrand]);
-  
-  // Check if elements are being updated
-  console.log('Brand name element:', document.getElementById('brandName')?.textContent);
-  console.log('Hero title element:', document.getElementById('heroTitle')?.textContent);
-}
+
   // Setup WhatsApp button
   const whatsApp = document.getElementById('whatsappFab');
   if (whatsApp && brand.whatsapp) {
@@ -572,6 +561,19 @@ debugBrandSwitching() {
 
   console.log('✅ Brand info setup complete for:', this.currentBrand);
 }
+
+  // Debug method to check brand switching
+  debugBrandSwitching() {
+    console.log('🔍 BRAND DEBUG INFO:');
+    console.log('Current brand:', this.currentBrand);
+    console.log('Available brands:', Object.keys(this.data?.brands || {}));
+    console.log('URL params:', new URLSearchParams(window.location.search).toString());
+    console.log('Brand data:', this.data?.brands[this.currentBrand]);
+    
+    // Check if elements are being updated
+    console.log('Brand name element:', document.getElementById('brandName')?.textContent);
+    console.log('Hero title element:', document.getElementById('heroTitle')?.textContent);
+  }
 
   getInitials(name) {
     return name.split(' ')
