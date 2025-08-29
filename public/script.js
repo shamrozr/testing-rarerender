@@ -4,16 +4,19 @@
 
 class CSVCatalogApp {
   constructor() {
-    console.log('🏗️ CSVCatalogApp constructor called');
-    this.data = null;
-    this.currentBrand = null;
-    this.currentPath = [];
-    this.sections = new Map();
-    this.isLoading = false;
-    
-    // Initialize navigation state from URL
-    this.initializeFromURL();
-  }
+  console.log('🏗️ CSVCatalogApp constructor called');
+  this.data = null;
+  this.currentBrand = null;
+  this.currentPath = [];
+  this.sections = new Map();
+  this.isLoading = false;
+  
+  // Force brand refresh on page load
+  this.forceRefreshOnLoad = true;
+  
+  // Initialize navigation state from URL
+  this.initializeFromURL();
+}
 
   initializeFromURL() {
     console.log('🔍 Initializing from URL...');
@@ -105,40 +108,54 @@ class CSVCatalogApp {
   }
 
   async loadData() {
-    try {
-      this.showLoading();
-      console.log('📥 Attempting to load data from /data.json...');
+  try {
+    this.showLoading();
+    console.log('📥 Attempting to load data from /data.json...');
+    
+    const response = await fetch('/data.json?v=' + Date.now());
+    if (response.ok) {
+      this.data = await response.json();
+      console.log('✅ Data loaded successfully:', this.data);
       
-      const response = await fetch('/data.json?v=' + Date.now());
-      if (response.ok) {
-        this.data = await response.json();
-        console.log('✅ Data loaded successfully:', this.data);
+      // Get brand from URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const brandFromURL = urlParams.get('brand');
+      
+      const availableBrands = Object.keys(this.data.brands || {});
+      console.log('🏷️ Available brands:', availableBrands);
+      console.log('🌐 Brand from URL:', brandFromURL);
+      
+      // Set current brand based on URL or use first available
+      if (brandFromURL && this.data.brands[brandFromURL]) {
+        this.currentBrand = brandFromURL;
+        console.log('✅ Using brand from URL:', brandFromURL);
+      } else if (availableBrands.length > 0) {
+        this.currentBrand = availableBrands[0];
+        console.log('⚠️ Brand from URL not found, using first available:', this.currentBrand);
         
-        const urlParams = new URLSearchParams(window.location.search);
-        const brandFromURL = urlParams.get('brand');
-        
-        const availableBrands = Object.keys(this.data.brands);
-        console.log('🏷️ Available brands:', availableBrands);
-        
-        if (brandFromURL && this.data.brands[brandFromURL]) {
-          this.currentBrand = brandFromURL;
-        } else {
-          this.currentBrand = availableBrands[0];
-        }
-        
-        console.log('🎯 Using brand:', this.currentBrand);
-        
+        // Update URL to reflect the actual brand being used
+        const params = new URLSearchParams(window.location.search);
+        params.set('brand', this.currentBrand);
+        const newURL = `${window.location.pathname}?${params.toString()}`;
+        window.history.replaceState(null, '', newURL);
       } else {
-        throw new Error(`Failed to load data: ${response.status}`);
+        console.error('❌ No brands found in data');
+        throw new Error('No brands available');
       }
-    } catch (error) {
-      console.error('❌ Error loading data:', error);
-      console.log('📦 Falling back to mock data...');
-      this.loadMockData();
-    } finally {
-      this.hideLoading();
+      
+      console.log('🎯 Final brand selection:', this.currentBrand);
+      
+    } else {
+      throw new Error(`Failed to load data: ${response.status}`);
     }
+  } catch (error) {
+    console.error('❌ Error loading data:', error);
+    console.log('📦 Falling back to mock data...');
+    this.loadMockData();
+  } finally {
+    this.hideLoading();
   }
+}
 
   loadMockData() {
     console.log('📦 Loading mock data as fallback...');
@@ -232,10 +249,13 @@ class CSVCatalogApp {
 
   // New method to show category view
   showCategoryView() {
-    console.log('📁 Showing category view for path:', this.currentPath);
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  console.log('📁 Showing category view for path:', this.currentPath);
+  
+  // Add body attribute for CSS targeting
+  document.body.setAttribute('data-page-type', 'category');
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
     
     // Navigate to the current path in the data tree
     let currentNode = this.data.catalog.tree;
@@ -412,15 +432,14 @@ class CSVCatalogApp {
 
     if (items.length === 0) {
       container.innerHTML = `
-        <section class="content-section">
-          <div class="container">
-            <div class="section-header">
-              <h2 class="section-title">No Items Found</h2>
-              <p class="section-description">This category is currently empty.</p>
-            </div>
-          </div>
-        </section>
-      `;
+  <section class="content-section">
+    <div class="container">
+      <div class="cards-grid ${gridClass}">
+        ${items.map(item => this.createCardHTML(item)).join('')}
+      </div>
+    </div>
+  </section>
+`;
       return;
     }
 
@@ -442,10 +461,13 @@ class CSVCatalogApp {
   }
 
   navigateToHome() {
-    console.log('🏠 Navigating to home');
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  console.log('🏠 Navigating to home');
+  
+  // Remove category page attribute
+  document.body.removeAttribute('data-page-type');
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
     
     // Update URL
     const params = new URLSearchParams(window.location.search);
@@ -480,43 +502,76 @@ class CSVCatalogApp {
   }
 
   setupBrandInfo() {
-    const brand = this.data.brands[this.currentBrand];
-    if (!brand) {
-      console.error('❌ Brand not found:', this.currentBrand);
-      return;
-    }
-
-    console.log('🏷️ Setting up brand info for:', brand);
-
-    this.updateElement('brandName', brand.name);
-    this.updateElement('brandTagline', brand.tagline || 'Premium Quality Collection');
-    this.updateElement('heroTitle', brand.heroTitle || 'Discover Luxury Collections');
-    this.updateElement('heroSubtitle', brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.');
-    this.updateElement('footerBrandName', brand.name);
-    
-    // Reset subtitle display for homepage
-    const heroSubtitle = document.getElementById('heroSubtitle');
-    if (heroSubtitle) {
-      heroSubtitle.style.display = 'block';
-    }
-    
-    const logo = document.getElementById('brandLogo');
-    if (logo) {
-      logo.textContent = this.getInitials(brand.name);
-    }
-
-    if (brand.colors) {
-      this.applyBrandColors(brand.colors);
-    }
-
-    const whatsApp = document.getElementById('whatsappFab');
-    if (whatsApp && brand.whatsapp) {
-      whatsApp.href = brand.whatsapp;
-      whatsApp.style.display = 'flex';
-    }
-
-    console.log('✅ Brand info setup complete');
+  if (!this.data || !this.data.brands) {
+    console.error('❌ No brand data available');
+    return;
   }
+
+  const brand = this.data.brands[this.currentBrand];
+  if (!brand) {
+    console.error('❌ Brand not found:', this.currentBrand);
+    console.log('Available brands:', Object.keys(this.data.brands));
+    return;
+  }
+
+  console.log('🏷️ Setting up brand info for:', this.currentBrand, brand);
+
+  // Update brand elements with actual data
+  this.updateElement('brandName', brand.name || brand.brandName || this.currentBrand);
+  this.updateElement('brandTagline', brand.tagline || 'Premium Quality Collection');
+  this.updateElement('heroTitle', brand.heroTitle || 'Discover Luxury Collections');
+  this.updateElement('heroSubtitle', brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.');
+  this.updateElement('footerBrandName', brand.name || brand.brandName || this.currentBrand);
+  
+  // Reset subtitle display for homepage
+  const heroSubtitle = document.getElementById('heroSubtitle');
+  if (heroSubtitle) {
+    heroSubtitle.style.display = 'block';
+  }
+  
+  // Update logo with brand initials
+  const logo = document.getElementById('brandLogo');
+  if (logo) {
+    const brandName = brand.name || brand.brandName || this.currentBrand;
+    logo.textContent = this.getInitials(brandName);
+  }
+
+  // Apply brand colors
+  if (brand.colors) {
+    console.log('🎨 Applying brand colors:', brand.colors);
+    this.applyBrandColors(brand.colors);
+  } else {
+    // Fallback colors if no colors specified
+    const fallbackColors = {
+      primary: '#6366f1',
+      accent: '#8b5cf6',
+      text: '#202124',
+      bg: '#ffffff'
+    };
+    this.applyBrandColors(fallbackColors);
+  }
+// Debug method to check brand switching
+debugBrandSwitching() {
+  console.log('🔍 BRAND DEBUG INFO:');
+  console.log('Current brand:', this.currentBrand);
+  console.log('Available brands:', Object.keys(this.data?.brands || {}));
+  console.log('URL params:', new URLSearchParams(window.location.search).toString());
+  console.log('Brand data:', this.data?.brands[this.currentBrand]);
+  
+  // Check if elements are being updated
+  console.log('Brand name element:', document.getElementById('brandName')?.textContent);
+  console.log('Hero title element:', document.getElementById('heroTitle')?.textContent);
+}
+  // Setup WhatsApp button
+  const whatsApp = document.getElementById('whatsappFab');
+  if (whatsApp && brand.whatsapp) {
+    whatsApp.href = brand.whatsapp;
+    whatsApp.style.display = 'flex';
+    console.log('📱 WhatsApp link set:', brand.whatsapp);
+  }
+
+  console.log('✅ Brand info setup complete for:', this.currentBrand);
+}
 
   getInitials(name) {
     return name.split(' ')
