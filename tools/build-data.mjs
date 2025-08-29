@@ -1,4 +1,4 @@
-// Simplified build-data.mjs - focusing on core functionality without minification
+// Enhanced build-data.mjs - CSV-driven with sections support
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -120,7 +120,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
 }
 
 (async () => {
-  console.log("🚀 Starting luxury catalog build process...");
+  console.log("🚀 Starting CSV-driven catalog build...");
   
   // Fetch data
   console.log("📥 Fetching CSV data...");
@@ -143,58 +143,78 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   const warnings = [];
   const hardErrors = [];
 
-  // Process Brands
-  console.log("🏷️  Processing luxury brands...");
+  // Process Enhanced Brands with Homepage Content
+  console.log("🏷️  Processing enhanced brands...");
   const brands = {};
   for (const r of brandsRows) {
-    const slug = (r.csvslug || "").trim();
-    const name = (r.brandName || "").trim();
+    const slug = (r.csvslug || r.slug || "").trim();
+    const name = (r.brandName || r.name || "").trim();
     if (!slug && !name) continue;
     if (!slug || !name) { 
       warnings.push(`Brand row skipped (needs both slug & name): ${JSON.stringify(r)}`); 
       continue; 
     }
 
-    let primary = (r.primaryColor || "").trim();
-    let accent  = (r.accentColor  || "").trim();
-    let text    = (r.textColor    || "").trim();
-    let bg      = (r.bgColor      || "").trim();
+    // Enhanced brand properties from CSV
+    const brandData = {
+      name,
+      // Homepage content
+      tagline: (r.tagline || r.brandTagline || "").trim(),
+      heroTitle: (r.heroTitle || r.hero_title || "").trim(),
+      heroSubtitle: (r.heroSubtitle || r.hero_subtitle || "").trim(),
+      footerText: (r.footerText || r.footer_text || "").trim(),
+      
+      // Color validation
+      colors: {}
+    };
 
-    // Enhanced defaults for luxury dark theme
+    // Process colors with enhanced defaults
+    let primary = (r.primaryColor || r.primary_color || "").trim();
+    let accent = (r.accentColor || r.accent_color || "").trim();
+    let text = (r.textColor || r.text_color || "").trim();
+    let bg = (r.bgColor || r.bg_color || "").trim();
+
+    // Enhanced defaults for light professional theme
     if (!HEX.test(primary)) { 
-      if (primary) warnings.push(`Brand ${slug}: invalid primaryColor "${primary}" → luxury gold used`); 
-      primary = "#d4af37";
+      if (primary) warnings.push(`Brand ${slug}: invalid primaryColor "${primary}" → professional blue used`); 
+      primary = "#6366f1";
     }
     if (!HEX.test(accent))  { 
-      if (accent)  warnings.push(`Brand ${slug}: invalid accentColor "${accent}" → rose gold used`);  
-      accent  = "#e8b4a0";
+      if (accent)  warnings.push(`Brand ${slug}: invalid accentColor "${accent}" → professional purple used`);  
+      accent  = "#8b5cf6";
     }
     if (!HEX.test(text))    { 
-      if (text)    warnings.push(`Brand ${slug}: invalid textColor "${text}" → luxury white used`);      
-      text    = "#f5f5f5";
+      if (text)    warnings.push(`Brand ${slug}: invalid textColor "${text}" → professional dark used`);      
+      text    = "#202124";
     }
     if (!HEX.test(bg))      { 
-      if (bg)      warnings.push(`Brand ${slug}: invalid bgColor "${bg}" → luxury black used`);          
-      bg      = "#0a0a0a";
+      if (bg)      warnings.push(`Brand ${slug}: invalid bgColor "${bg}" → clean white used`);          
+      bg      = "#ffffff";
     }
 
+    brandData.colors = { primary, accent, text, bg };
+
+    // WhatsApp validation
     const waRaw = (r.whatsapp || "").trim();
     const whatsapp = WA.test(waRaw) ? waRaw : "";
     if (waRaw && !whatsapp) warnings.push(`Brand ${slug}: WhatsApp is not wa.me/* → ignored`);
+    if (whatsapp) brandData.whatsapp = whatsapp;
 
-    const defaultCategory = (r.defaultCategory || "").trim() || "BAGS";
+    // Default category
+    brandData.defaultCategory = (r.defaultCategory || r.default_category || "").trim() || "BAGS";
+
     if (brands[slug]) { 
       warnings.push(`Duplicate brand slug ignored: ${slug}`); 
       continue; 
     }
 
-    brands[slug] = { name, colors: { primary, accent, text, bg }, whatsapp, defaultCategory };
+    brands[slug] = brandData;
   }
   
-  console.log(`✅ Processed ${Object.keys(brands).length} luxury brands`);
+  console.log(`✅ Processed ${Object.keys(brands).length} enhanced brands`);
 
-  // Build catalog tree
-  console.log("🌳 Building luxury catalog tree...");
+  // Build enhanced catalog tree with sections
+  console.log("🌳 Building section-aware catalog tree...");
   
   const allFullPaths = masterRows.map(r => normPath(r["RelativePath"] || r["Relative Path"] || r["Relative_Path"] || ""));
   const parentsSet = new Set();
@@ -209,8 +229,9 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   let totalProducts = 0;
   const invalidDriveLinks = [];
   const folderMeta = new Map();
+  const sectionStats = new Map();
 
-  console.log("📝 Processing luxury catalog entries...");
+  console.log("📝 Processing enhanced catalog entries...");
   let processedCount = 0;
   
   for (const r of masterRows) {
@@ -218,14 +239,24 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
     const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
     const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-    const topOrderRaw = (r["TopOrder"] || r["Top Order"] || "").trim();
+    const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
+    
+    // Enhanced section support
+    const section = (r["Section"] || r["section"] || "").trim() || "Featured";
+    const category = (r["Category"] || r["category"] || "").trim();
 
     if (!rel || !name) continue;
     
     processedCount++;
     if (processedCount % 100 === 0) {
-      console.log(`  ✨ Processed ${processedCount}/${masterRows.length} luxury items...`);
+      console.log(`  ✨ Processed ${processedCount}/${masterRows.length} items...`);
     }
+
+    // Track section statistics
+    if (!sectionStats.has(section)) {
+      sectionStats.set(section, 0);
+    }
+    sectionStats.set(section, sectionStats.get(section) + 1);
 
     const full = rel;
     const segs = full.split("/").filter(Boolean);
@@ -245,7 +276,9 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       children[name] = { 
         isProduct: true, 
         driveLink, 
-        thumbnail: normalizedThumb || PLACEHOLDER_THUMB 
+        thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+        section: section,
+        category: category
       };
       totalProducts++;
     } else {
@@ -254,7 +287,10 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       const existing = folderMeta.get(k) || {};
       if (normalizedThumb) existing.thumbnail = normalizedThumb;
       if (driveLink) existing.driveLink = driveLink;
+      if (section) existing.section = section;
+      if (category) existing.category = category;
       
+      // Handle topOrder for categories (first level items)
       if (segs.length === 1) {
         const n = parseInt(topOrderRaw, 10);
         if (!Number.isNaN(n)) existing.topOrder = n;
@@ -263,10 +299,11 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     }
   }
 
-  console.log(`📦 Created luxury catalog with ${totalProducts} products`);
+  console.log(`📦 Created section-aware catalog with ${totalProducts} products`);
+  console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
 
-  // Attach folder metadata
-  console.log("🔗 Enhancing catalog structure...");
+  // Attach enhanced folder metadata
+  console.log("🔗 Enhancing catalog with sections...");
   function attachFolderMeta(node, prefix = []) {
     for (const k of Object.keys(node)) {
       const n = node[k];
@@ -275,6 +312,8 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         const meta = folderMeta.get(here);
         if (meta?.thumbnail) n.thumbnail = meta.thumbnail;
         if (meta?.driveLink) n.driveLink = meta.driveLink;
+        if (meta?.section) n.section = meta.section;
+        if (meta?.category) n.category = meta.category;
         if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
         if (n.children) attachFolderMeta(n.children, [...prefix, k]);
       }
@@ -301,19 +340,31 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
   convertEmpty(tree);
 
-  // Enhance catalog
-  console.log("🖼️  Enhancing visual elements...");
+  // Enhance catalog with visual and section data
+  console.log("🖼️  Enhancing visual and section elements...");
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
 
-  console.log("🧮 Calculating luxury catalog metrics...");
+  console.log("🧮 Calculating enhanced catalog metrics...");
   for (const top of Object.keys(tree)) {
     setCounts(tree[top]);
   }
 
-  // Health checks
-  console.log("🔍 Running quality assurance checks...");
+  // Enhanced health checks
+  console.log("🔍 Running enhanced quality assurance...");
   const missingThumbFiles = [];
+  const sectionAnalysis = {};
+  
+  // Analyze sections
+  Object.entries(tree).forEach(([key, item]) => {
+    const section = item.section || 'Featured';
+    if (!sectionAnalysis[section]) {
+      sectionAnalysis[section] = { categories: [], totalItems: 0 };
+    }
+    sectionAnalysis[section].categories.push(key);
+    sectionAnalysis[section].totalItems += item.count || 0;
+  });
+
   async function scanMissingThumbs(node, pfx = []) {
     for (const k of Object.keys(node)) {
       const n = node[k];
@@ -322,7 +373,8 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         if (!exists) {
           missingThumbFiles.push({ 
             path: [...pfx, k].join("/"), 
-            thumbnail: n.thumbnail 
+            thumbnail: n.thumbnail,
+            section: n.section || 'Unknown'
           });
         }
       }
@@ -333,15 +385,18 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   }
   await scanMissingThumbs(tree);
 
-  // Generate report
+  // Generate enhanced report
   const report = {
     timestamp: new Date().toISOString(),
+    build_version: "2.0.0-sections",
     performance: {
       totalBrands: Object.keys(brands).length,
       totalProducts: totalProducts,
       totalCategories: Object.keys(tree).length,
       catalogEntries: masterRows.length,
+      sectionsFound: Object.keys(sectionAnalysis).length,
     },
+    sections: sectionAnalysis,
     quality: {
       invalidDriveLinks: invalidDriveLinks.length,
       missingThumbnails: missingThumbFiles.length,
@@ -352,64 +407,4 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       invalidDriveLinks: invalidDriveLinks.slice(0, 5),
       missingThumbFiles: missingThumbFiles.slice(0, 10),
       warnings: warnings.slice(0, 5),
-      sampleCategories: Object.keys(tree).slice(0, 10).map(cat => ({
-        name: cat,
-        items: tree[cat].count || 0
-      }))
-    }
-  };
-
-  // Save files
-  console.log("💾 Saving luxury catalog...");
-  await fs.mkdir(PUBLIC_DIR, { recursive: true });
-  await fs.writeFile(
-    path.join(PUBLIC_DIR, "data.json"), 
-    JSON.stringify({ brands, catalog: { totalProducts, tree } }, null, 2), 
-    "utf8"
-  );
-  
-  await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
-  await fs.writeFile(
-    path.join(ROOT, "build", "health.json"), 
-    JSON.stringify(report, null, 2), 
-    "utf8"
-  );
-
-  // Generate summary
-  const summary = [
-    "## 🏆 Luxury Catalog Build Summary",
-    "",
-    "### 📊 **Performance Metrics**",
-    `- **Luxury Brands:** ${Object.keys(brands).length}`,
-    `- **Premium Products:** ${totalProducts}`,
-    `- **Category Collections:** ${Object.keys(tree).length}`,
-    `- **Catalog Entries Processed:** ${masterRows.length}`,
-    "",
-    "### 🎨 **Quality Assurance**",
-    `- **Missing Thumbnails:** ${missingThumbFiles.length}`,
-    `- **Invalid Drive Links:** ${invalidDriveLinks.length}`,
-    warnings.length ? `- **⚠️ Warnings:** ${warnings.length}` : "- **✅ No Warnings**",
-    hardErrors.length ? `- **❌ Errors:** ${hardErrors.length}` : "- **✅ No Errors**",
-    "",
-    "### 🗂️ **Luxury Categories**",
-    ...Object.keys(tree).map(cat => `- **${cat}:** ${tree[cat].count || 0} premium items`)
-  ].filter(Boolean).join("\n");
-
-  console.log("\n" + summary);
-  
-  if (process.env.GITHUB_STEP_SUMMARY) {
-    await fs.writeFile(process.env.GITHUB_STEP_SUMMARY, summary, "utf8");
-  }
-
-  if (hardErrors.length) {
-    console.error("\n❌ Build failed due to critical errors");
-    process.exit(1);
-  }
-  
-  console.log(`\n🎉 Successfully built luxury catalog with ${totalProducts} premium products!`);
-  console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
-  console.log("✨ Ready for luxury shopping experience!");
-})().catch(err => {
-  console.error("💥 Build failed:", err);
-  process.exit(1);
-});
+      sectionsBreakdown: Object.entries(sectionAnalysis).map(
