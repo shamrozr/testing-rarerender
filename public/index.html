@@ -121,6 +121,7 @@
 
   <!-- WhatsApp FAB -->
 <!-- Enhanced Floating Action Buttons -->
+<!-- Enhanced Floating Action Buttons -->
 <div class="fab-container" id="fabContainer">
   <!-- Main FAB Toggle -->
   <button class="fab-toggle" id="fabToggle">
@@ -130,22 +131,21 @@
   
   <!-- Action Buttons -->
   <div class="fab-actions" id="fabActions">
-    <button class="fab-action" id="reviewsFab" data-folder="reviews">
+    <button class="fab-action" id="reviewsFab" data-folder="Reviews">
       <span class="fab-text">Reviews</span>
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
       </svg>
     </button>
     
-    <button class="fab-action" id="deliveryFab" data-folder="delivery">
-      <span class="fab-text">Delivery</span>
+    <button class="fab-action" id="deliveredFab" data-folder="Delivered">
+      <span class="fab-text">Delivered</span>
       <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M3 4H1v16h2V4zm18-2H6C4.89 2 4 2.89 4 4v16c0 1.11.89 2 2 2h15c1.11 0 2-.89 2-2V4c0-1.11-.89-2-2-2zm0 18H6V4h15v16z"/>
-        <path d="M7 6h2v2H7zm0 4h10v2H7zm0 4h10v2H7z"/>
+        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
     </button>
     
-    <button class="fab-action" id="paymentFab" data-folder="payment">
+    <button class="fab-action" id="paymentFab" data-folder="Payment">
       <span class="fab-text">Payment</span>
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
@@ -176,5 +176,27 @@
 
   <!-- JavaScript -->
   <script src="/script.js" type="module"></script>
+  <!-- Temporary Debug Button - Remove after testing -->
+<button onclick="testImageFolders()" style="position:fixed;top:10px;left:10px;z-index:9999;padding:10px;background:red;color:white;border:none;border-radius:5px;">
+  Test Image Folders
+</button>
+
+<script>
+function testImageFolders() {
+  console.log('🧪 Testing image folders...');
+  
+  // Test if folders exist
+  const folders = ['Reviews', 'Delivered', 'Payment'];
+  folders.forEach(async (folder) => {
+    const testPath = `/${folder}/1.jpg`;
+    console.log(`Testing: ${testPath}`);
+    
+    const img = new Image();
+    img.onload = () => console.log(`✅ ${folder} folder accessible`);
+    img.onerror = () => console.log(`❌ ${folder} folder or image not found`);
+    img.src = testPath;
+  });
+}
+</script>
 </body>
 </html>
