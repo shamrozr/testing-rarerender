@@ -988,7 +988,7 @@ class CSVCatalogApp {
     let currentImages = [];
     let currentImageIndex = 0;
     let currentFolderIndex = 0;
-    let allFolders = ['reviews', 'delivery', 'payment'];
+    let allFolders = ['Reviews', 'Delivered', 'Payment'];
     const modal = document.getElementById('imageViewerModal');
     const viewerImage = document.getElementById('viewerImage');
     const viewerCounter = document.getElementById('viewerCounter');
@@ -998,52 +998,77 @@ class CSVCatalogApp {
     const viewerNext = document.getElementById('viewerNext');
     const viewerOverlay = document.getElementById('viewerOverlay');
 
-    // Dynamic image loading function
-    const loadFolderImages = async (folderName) => {
-      try {
-        const images = [];
-        const basePath = `/thumbs/${folderName}/`;
-        
-        const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-        const maxImages = 50;
-        
-        for (let i = 1; i <= maxImages; i++) {
-          for (const ext of extensions) {
-            const imagePath = `${basePath}${folderName}${i}.${ext}`;
-            const exists = await this.checkImageExists(imagePath);
-            if (exists) {
-              images.push({
-                src: imagePath,
-                title: `${folderName.charAt(0).toUpperCase() + folderName.slice(1)} ${i}`
-              });
-              break;
-            }
-          }
+    // Replace the loadFolderImages function with this corrected version
+const loadFolderImages = async (folderName) => {
+  try {
+    console.log(`Loading images from folder: ${folderName}`);
+    const images = [];
+    const basePath = `/${folderName}/`; // Direct path to public/Reviews, public/Payment, etc.
+    
+    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG', 'WEBP', 'GIF'];
+    const maxImages = 20; // Check up to 20 images
+    
+    // Try numbered files: 1.jpg, 2.jpg, etc.
+    for (let i = 1; i <= maxImages; i++) {
+      let found = false;
+      for (const ext of extensions) {
+        const imagePath = `${basePath}${i}.${ext}`;
+        const exists = await checkImageExists(imagePath);
+        if (exists) {
+          images.push({
+            src: imagePath,
+            title: `${folderName} ${i}`
+          });
+          found = true;
+          break;
         }
-        
-        if (images.length === 0) {
-          const commonNames = ['1', '2', '3', '4', '5', 'image1', 'image2', 'image3', 'photo1', 'photo2'];
-          for (const name of commonNames) {
-            for (const ext of extensions) {
-              const imagePath = `${basePath}${name}.${ext}`;
-              const exists = await this.checkImageExists(imagePath);
-              if (exists) {
-                images.push({
-                  src: imagePath,
-                  title: `${folderName.charAt(0).toUpperCase() + folderName.slice(1)} - ${name}`
-                });
-                break;
-              }
-            }
-          }
-        }
-        
-        return images;
-      } catch (error) {
-        console.error(`Error loading images for ${folderName}:`, error);
-        return [];
       }
-    };
+      if (!found && i > 5) break; // Stop looking after 5 consecutive misses
+    }
+    
+    // If no numbered images found, try common names
+    if (images.length === 0) {
+      const commonNames = ['image1', 'image2', 'image3', 'photo1', 'photo2', 'pic1', 'pic2', 'img1', 'img2'];
+      for (const name of commonNames) {
+        for (const ext of extensions) {
+          const imagePath = `${basePath}${name}.${ext}`;
+          const exists = await checkImageExists(imagePath);
+          if (exists) {
+            images.push({
+              src: imagePath,
+              title: `${folderName} - ${name}`
+            });
+            break;
+          }
+        }
+      }
+    }
+    
+    // Try files with folder name
+    if (images.length === 0) {
+      const folderBasedNames = [`${folderName.toLowerCase()}1`, `${folderName.toLowerCase()}2`, `${folderName.toLowerCase()}3`];
+      for (const name of folderBasedNames) {
+        for (const ext of extensions) {
+          const imagePath = `${basePath}${name}.${ext}`;
+          const exists = await checkImageExists(imagePath);
+          if (exists) {
+            images.push({
+              src: imagePath,
+              title: `${folderName} - ${name}`
+            });
+            break;
+          }
+        }
+      }
+    }
+    
+    console.log(`Found ${images.length} images in ${folderName}:`, images.map(img => img.src));
+    return images;
+  } catch (error) {
+    console.error(`Error loading images for ${folderName}:`, error);
+    return [];
+  }
+};
 
     // FAB action listeners
     fabActions.forEach((action, index) => {
@@ -1161,13 +1186,24 @@ class CSVCatalogApp {
   }
 
   checkImageExists(imageSrc) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = imageSrc;
-    });
-  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      console.log(`✅ Image found: ${imageSrc}`);
+      resolve(true);
+    };
+    img.onerror = () => {
+      console.log(`❌ Image not found: ${imageSrc}`);
+      resolve(false);
+    };
+    // Add timeout to prevent hanging
+    setTimeout(() => {
+      console.log(`⏰ Timeout for: ${imageSrc}`);
+      resolve(false);
+    }, 3000);
+    img.src = imageSrc;
+  });
+}
 
   showNotification(message) {
     const notification = document.createElement('div');
