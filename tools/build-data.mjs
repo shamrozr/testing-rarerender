@@ -407,4 +407,144 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       invalidDriveLinks: invalidDriveLinks.slice(0, 5),
       missingThumbFiles: missingThumbFiles.slice(0, 10),
       warnings: warnings.slice(0, 5),
-      sectionsBreakdown: Object.entries(sectionAnalysis).map(
+      sectionsBreakdown: Object.entries(sectionAnalysis).map(([section, data]) => ({
+        section,
+        categories: data.categories,
+        totalItems: data.totalItems
+      })),
+      sampleCategories: Object.keys(tree).slice(0, 10).map(cat => ({
+        name: cat,
+        items: tree[cat].count || 0,
+        section: tree[cat].section || 'Featured',
+        topOrder: tree[cat].topOrder || 999
+      }))
+    }
+  };
+
+  // Save enhanced files
+  console.log("💾 Saving enhanced CSV-driven catalog...");
+  await fs.mkdir(PUBLIC_DIR, { recursive: true });
+  
+  // Create enhanced data.json with sections support
+  const enhancedData = {
+    brands,
+    catalog: {
+      totalProducts,
+      tree,
+      sections: Object.keys(sectionAnalysis),
+      sectionStats: Object.fromEntries(
+        Object.entries(sectionAnalysis).map(([name, data]) => [name, data.totalItems])
+      )
+    },
+    meta: {
+      buildVersion: "2.0.0-sections",
+      buildTime: new Date().toISOString(),
+      features: [
+        "csv_driven_homepage",
+        "dynamic_sections", 
+        "enhanced_branding",
+        "section_based_organization"
+      ]
+    }
+  };
+
+  await fs.writeFile(
+    path.join(PUBLIC_DIR, "data.json"), 
+    JSON.stringify(enhancedData, null, 2), 
+    "utf8"
+  );
+  
+  await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
+  await fs.writeFile(
+    path.join(ROOT, "build", "health.json"), 
+    JSON.stringify(report, null, 2), 
+    "utf8"
+  );
+
+  // Generate enhanced summary with sections
+  const summary = [
+    "## 🏆 Enhanced CSV-Driven Catalog Build Summary",
+    "",
+    "### 📊 **Performance Metrics**",
+    `- **Enhanced Brands:** ${Object.keys(brands).length}`,
+    `- **Premium Products:** ${totalProducts}`,
+    `- **Category Collections:** ${Object.keys(tree).length}`,
+    `- **Dynamic Sections:** ${Object.keys(sectionAnalysis).length}`,
+    `- **Catalog Entries Processed:** ${masterRows.length}`,
+    "",
+    "### 🎨 **Section Organization**",
+    ...Object.entries(sectionAnalysis).map(([section, data]) => 
+      `- **${section}:** ${data.categories.length} categories, ${data.totalItems} items`
+    ),
+    "",
+    "### 🔧 **Enhanced Features**",
+    "- ✅ CSV-driven homepage content",
+    "- ✅ Dynamic section organization", 
+    "- ✅ Enhanced brand customization",
+    "- ✅ TopOrder-based sorting",
+    "- ✅ Professional light theme",
+    "",
+    "### 🎯 **Quality Assurance**",
+    `- **Missing Thumbnails:** ${missingThumbFiles.length}`,
+    `- **Invalid Drive Links:** ${invalidDriveLinks.length}`,
+    warnings.length ? `- **⚠️ Warnings:** ${warnings.length}` : "- **✅ No Warnings**",
+    hardErrors.length ? `- **❌ Errors:** ${hardErrors.length}` : "- **✅ No Errors**",
+    "",
+    "### 🗂️ **Category Structure**",
+    ...Object.keys(tree)
+      .sort((a, b) => (tree[a].topOrder || 999) - (tree[b].topOrder || 999))
+      .map(cat => {
+        const section = tree[cat].section || 'Featured';
+        const order = tree[cat].topOrder || 'Auto';
+        return `- **${cat}** (${section}): ${tree[cat].count || 0} items [Order: ${order}]`;
+      }),
+    "",
+    "### 📋 **CSV Column Reference**",
+    "",
+    "**Brands CSV Columns:**",
+    "- `csvslug` - Brand identifier",
+    "- `brandName` - Display name", 
+    "- `tagline` - Subtitle under brand name",
+    "- `heroTitle` - Main homepage title",
+    "- `heroSubtitle` - Homepage description",
+    "- `footerText` - Footer description",
+    "- `primaryColor` - Main brand color (#hex)",
+    "- `accentColor` - Secondary color (#hex)",
+    "- `whatsapp` - WhatsApp link (wa.me format)",
+    "",
+    "**Master CSV Columns:**",
+    "- `Name` - Item/category name",
+    "- `RelativePath` - Catalog path",
+    "- `Section` - Homepage section (Featured/Trending/Premium/etc)",
+    "- `TopOrder` - Sort order within section (lower = first)",
+    "- `Category` - Additional categorization",
+    "- `Thumbs Path` - Thumbnail image path",
+    "- `Drive Link` - Google Drive link for products",
+    "",
+    "### 🚀 **Next Steps**",
+    "1. Update your CSV files with the new columns",
+    "2. Set `Section` values: Featured, Trending, Premium, New Arrivals, Best Sellers",
+    "3. Use `TopOrder` to control display sequence",
+    "4. Add brand content: tagline, heroTitle, heroSubtitle, footerText",
+    "5. Test the new professional interface"
+  ].filter(Boolean).join("\n");
+
+  console.log("\n" + summary);
+  
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await fs.writeFile(process.env.GITHUB_STEP_SUMMARY, summary, "utf8");
+  }
+
+  if (hardErrors.length) {
+    console.error("\n❌ Build failed due to critical errors");
+    process.exit(1);
+  }
+  
+  console.log(`\n🎉 Successfully built enhanced CSV-driven catalog!`);
+  console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
+  console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
+  console.log("✨ Ready for professional CSV-driven experience!");
+})().catch(err => {
+  console.error("💥 Enhanced build failed:", err);
+  process.exit(1);
+});
