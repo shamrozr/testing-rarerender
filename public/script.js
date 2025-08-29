@@ -146,23 +146,31 @@ class CSVCatalogApp {
     this.data = {
       brands: {
         'LiyanaBags': {
-          brandName: 'Liyana Designer Collection',
+          name: 'Liyana Designer Collection',
           tagline: 'Artisan Excellence Personified',
           heroTitle: 'Where Craftsmanship Meets Beauty',
           heroSubtitle: 'Premium handbags designed for women who appreciate the finer details and exquisite quality',
           footerText: 'Liyana has been creating bespoke luxury handbags with meticulous attention to detail.',
-          primaryColor: '#C9A961',
-          accentColor: '#E8D5A3',
+          colors: {
+            primary: '#C9A961',
+            accent: '#E8D5A3',
+            text: '#2C2926',
+            bg: '#FEFDFB'
+          },
           whatsapp: 'https://wa.me/923001234567'
         },
         'MeriyaBags': {
-          brandName: 'Meriya Heritage Collection',
+          name: 'Meriya Heritage Collection',
           tagline: 'Heritage Meets Modernity',
           heroTitle: 'Honor Your Heritage',
           heroSubtitle: 'Heritage-inspired luxury handbags with modern functionality for today\'s sophisticated woman',
           footerText: 'Meriya honors traditional craftsmanship heritage while creating modern luxury handbags.',
-          primaryColor: '#9B59B6',
-          accentColor: '#BB8FCE',
+          colors: {
+            primary: '#9B59B6',
+            accent: '#BB8FCE',
+            text: '#2C2926',
+            bg: '#FEFDFB'
+          },
           whatsapp: 'https://wa.me/923001234567'
         }
       },
@@ -224,14 +232,14 @@ class CSVCatalogApp {
 
   // New method to show category view
   showCategoryView() {
-  console.log('📁 Showing category view for path:', this.currentPath);
-  
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  
-  // Navigate to the current path in the data tree
-  let currentNode = this.data.catalog.tree;
-  let breadcrumbs = [];
+    console.log('📁 Showing category view for path:', this.currentPath);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Navigate to the current path in the data tree
+    let currentNode = this.data.catalog.tree;
+    let breadcrumbs = [];
     
     for (const segment of this.currentPath) {
       if (currentNode[segment]) {
@@ -274,8 +282,8 @@ class CSVCatalogApp {
     }
     
     if (heroSubtitle) {
-  heroSubtitle.style.display = 'none'; // Hide subtitle on category pages
-}
+      heroSubtitle.style.display = 'none'; // Hide subtitle on category pages
+    }
 
     // Add breadcrumb navigation
     this.addBreadcrumbNavigation(breadcrumbs);
@@ -344,28 +352,28 @@ class CSVCatalogApp {
           font-weight: 500;
         `;
         link.addEventListener('click', (e) => {
-  e.preventDefault();
-  
-  // Split the path and navigate properly
-  const pathSegments = crumb.path.split('/').filter(Boolean);
-  this.currentPath = pathSegments;
-  
-  // Update URL
-  const params = new URLSearchParams(window.location.search);
-  params.set('path', crumb.path);
-  if (this.currentBrand) {
-    params.set('brand', this.currentBrand);
-  }
-  
-  const newURL = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ 
-    path: pathSegments, 
-    brand: this.currentBrand 
-  }, '', newURL);
-  
-  // Show the category view
-  this.showCategoryView();
-});
+          e.preventDefault();
+          
+          // Split the path and navigate properly
+          const pathSegments = crumb.path.split('/').filter(Boolean);
+          this.currentPath = pathSegments;
+          
+          // Update URL
+          const params = new URLSearchParams(window.location.search);
+          params.set('path', crumb.path);
+          if (this.currentBrand) {
+            params.set('brand', this.currentBrand);
+          }
+          
+          const newURL = `${window.location.pathname}?${params.toString()}`;
+          window.history.pushState({ 
+            path: pathSegments, 
+            brand: this.currentBrand 
+          }, '', newURL);
+          
+          // Show the category view
+          this.showCategoryView();
+        });
         breadcrumbNav.appendChild(link);
       }
     });
@@ -434,42 +442,42 @@ class CSVCatalogApp {
   }
 
   navigateToHome() {
-  console.log('🏠 Navigating to home');
-  
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  
-  // Update URL
-  const params = new URLSearchParams(window.location.search);
-  params.delete('path');
-  if (this.currentBrand) {
-    params.set('brand', this.currentBrand);
-  }
-  
-  const newURL = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ brand: this.currentBrand }, '', newURL);
-  
-  // Reset state
-  this.currentPath = [];
-  
-  // Re-render homepage
-  this.setupDynamicSections();
-  
-  // Show taxonomy section
-  const taxonomySection = document.querySelector('.taxonomy-section');
-  if (taxonomySection) {
-    taxonomySection.style.display = 'block';
-  }
+    console.log('🏠 Navigating to home');
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.delete('path');
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ brand: this.currentBrand }, '', newURL);
+    
+    // Reset state
+    this.currentPath = [];
+    
+    // Re-render homepage
+    this.setupDynamicSections();
+    
+    // Show taxonomy section
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'block';
+    }
 
-  // Reset hero
-  this.setupBrandInfo();
-  
-  // Remove breadcrumbs
-  const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
-  if (existingBreadcrumbs) {
-    existingBreadcrumbs.remove();
+    // Reset hero
+    this.setupBrandInfo();
+    
+    // Remove breadcrumbs
+    const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
   }
-}
 
   setupBrandInfo() {
     const brand = this.data.brands[this.currentBrand];
@@ -480,31 +488,25 @@ class CSVCatalogApp {
 
     console.log('🏷️ Setting up brand info for:', brand);
 
-    this.updateElement('brandName', brand.brandName || brand.name);
+    this.updateElement('brandName', brand.name);
     this.updateElement('brandTagline', brand.tagline || 'Premium Quality Collection');
     this.updateElement('heroTitle', brand.heroTitle || 'Discover Luxury Collections');
     this.updateElement('heroSubtitle', brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.');
+    this.updateElement('footerBrandName', brand.name);
+    
+    // Reset subtitle display for homepage
     const heroSubtitle = document.getElementById('heroSubtitle');
     if (heroSubtitle) {
-      heroSubtitle.style.display = 'block'; // Reset display for homepage
+      heroSubtitle.style.display = 'block';
     }
-    this.updateElement('footerBrandName', brand.brandName || brand.name);
     
     const logo = document.getElementById('brandLogo');
     if (logo) {
-      logo.textContent = this.getInitials(brand.brandName || brand.name);
+      logo.textContent = this.getInitials(brand.name);
     }
 
     if (brand.colors) {
       this.applyBrandColors(brand.colors);
-    } else {
-      const colors = {
-        primary: brand.primaryColor || '#6366f1',
-        accent: brand.accentColor || '#8b5cf6',
-        text: brand.textColor || '#202124',
-        bg: brand.bgColor || '#ffffff'
-      };
-      this.applyBrandColors(colors);
     }
 
     const whatsApp = document.getElementById('whatsappFab');
@@ -543,6 +545,14 @@ class CSVCatalogApp {
     }
   }
 
+  setupDynamicSections() {
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
+
+    if (!this.data.catalog || !this.data.catalog.tree) {
+      console.error('❌ No catalog tree data found');
+      return;
+    }
 
     this.groupItemsBySection();
     
@@ -640,7 +650,7 @@ class CSVCatalogApp {
     const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
 
     return `
-      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" role="button" tabindex="0">
+      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" data-search-path="${item.searchPath || ''}" role="button" tabindex="0">
         <div class="card-image">
           ${imageContent}
           <div class="card-overlay"></div>
@@ -697,29 +707,30 @@ class CSVCatalogApp {
   }
 
   setupFooter() {
-  const footerContent = document.getElementById('footerContent');
-  if (!footerContent) return;
+    const footerContent = document.getElementById('footerContent');
+    if (!footerContent) return;
 
-  const brand = this.data.brands[this.currentBrand];
-  const footerText = brand?.footerText || 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.';
+    const brand = this.data.brands[this.currentBrand];
+    const footerText = brand?.footerText || 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.';
 
-  footerContent.innerHTML = `
-    <div class="footer-section">
-      <h3>${brand?.brandName || brand?.name || 'Luxury Collection'}</h3>
-      <p>${footerText}</p>
-    </div>
-    <div class="footer-section">
-      <h3>Customer Service</h3>
-      <p>24/7 Support Available</p>
-      <p>Premium Customer Care</p>
-      <p>Worldwide Shipping</p>
-    </div>
-    <div class="footer-section">
-      <h3>Connect With Us</h3>
-      <p>Follow us for the latest luxury collections and exclusive offers.</p>
-    </div>
-  `;
-}
+    footerContent.innerHTML = `
+      <div class="footer-section">
+        <h3>${brand?.name || 'Luxury Collection'}</h3>
+        <p>${footerText}</p>
+      </div>
+      <div class="footer-section">
+        <h3>Customer Service</h3>
+        <p>24/7 Support Available</p>
+        <p>Premium Customer Care</p>
+        <p>Worldwide Shipping</p>
+      </div>
+      <div class="footer-section">
+        <h3>Connect With Us</h3>
+        <p>Follow us for the latest luxury collections and exclusive offers.</p>
+      </div>
+    `;
+  }
+
   setupEventListeners() {
     // Logo click - go to home
     const logo = document.getElementById('brandLogo');
@@ -736,327 +747,67 @@ class CSVCatalogApp {
         const category = card.dataset.category;
         const isProduct = card.dataset.isProduct === 'true';
         const driveLink = card.dataset.driveLink;
+        const searchPath = card.dataset.searchPath;
         
         if (isProduct && driveLink) {
           // Open product link
           this.openProduct(driveLink);
+        } else if (searchPath) {
+          // Navigate using search path
+          this.navigateToPath(searchPath);
         } else {
           // Navigate to category
           this.navigateToCategory(category);
         }
       }
     });
-// Enhanced FAB and Image Viewer functionality
-// Add this to the end of setupEventListeners() method in script.js
 
-// FAB functionality
-const fabToggle = document.getElementById('fabToggle');
-const fabContainer = document.getElementById('fabContainer');
-const fabActions = document.querySelectorAll('.fab-action[data-folder]');
-
-if (fabToggle && fabContainer) {
-  fabToggle.addEventListener('click', (e) => {
-    e.stopPropagation();
-    fabContainer.classList.toggle('expanded');
-  });
-
-  // Close FAB when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!fabContainer.contains(e.target)) {
-      fabContainer.classList.remove('expanded');
-    }
-  });
-}
-
-// Image viewer functionality with dynamic folder loading
-let currentImages = [];
-let currentImageIndex = 0;
-let currentFolderIndex = 0;
-let allFolders = ['reviews', 'delivery', 'payment'];
-const modal = document.getElementById('imageViewerModal');
-const viewerImage = document.getElementById('viewerImage');
-const viewerCounter = document.getElementById('viewerCounter');
-const viewerTitle = document.getElementById('viewerTitle');
-const viewerClose = document.getElementById('viewerClose');
-const viewerPrev = document.getElementById('viewerPrev');
-const viewerNext = document.getElementById('viewerNext');
-const viewerOverlay = document.getElementById('viewerOverlay');
-
-// Dynamic image loading function
-async function loadFolderImages(folderName) {
-  try {
-    // Try to load images dynamically from the folder
-    const images = [];
-    const basePath = `/thumbs/${folderName}/`;
-    
-    // Common image extensions to try
-    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    const maxImages = 50; // Maximum images to try loading
-    
-    for (let i = 1; i <= maxImages; i++) {
-      for (const ext of extensions) {
-        const imagePath = `${basePath}${folderName}${i}.${ext}`;
-        const exists = await checkImageExists(imagePath);
-        if (exists) {
-          images.push({
-            src: imagePath,
-            title: `${folderName.charAt(0).toUpperCase() + folderName.slice(1)} ${i}`
-          });
-          break; // Found one with this number, move to next
-        }
-      }
-    }
-    
-    // If no numbered images found, try common names
-    if (images.length === 0) {
-      const commonNames = ['1', '2', '3', '4', '5', 'image1', 'image2', 'image3', 'photo1', 'photo2'];
-      for (const name of commonNames) {
-        for (const ext of extensions) {
-          const imagePath = `${basePath}${name}.${ext}`;
-          const exists = await checkImageExists(imagePath);
-          if (exists) {
-            images.push({
-              src: imagePath,
-              title: `${folderName.charAt(0).toUpperCase() + folderName.slice(1)} - ${name}`
-            });
-            break;
-          }
-        }
-      }
-    }
-    
-    return images;
-  } catch (error) {
-    console.error(`Error loading images for ${folderName}:`, error);
-    return [];
-  }
-}
-
-// Check if image exists
-function checkImageExists(imageSrc) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = imageSrc;
-  });
-}
-
-// FAB action listeners
-fabActions.forEach((action, index) => {
-  action.addEventListener('click', async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const folderName = action.dataset.folder;
-    currentFolderIndex = allFolders.indexOf(folderName);
-    await openImageViewer(folderName);
-  });
-});
-
-async function openImageViewer(folderName) {
-  console.log(`Opening image viewer for: ${folderName}`);
-  
-  const images = await loadFolderImages(folderName);
-  
-  if (images.length === 0) {
-    console.log(`No images found for ${folderName}`);
-    // Show a placeholder or error message
-    currentImages = [{
-      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAke2ZvbGRlck5hbWV9IGZvbGRlcjwvdGV4dD48L3N2Zz4=',
-      title: `No images found in ${folderName} folder`
-    }];
-  } else {
-    currentImages = images;
-  }
-  
-  currentImageIndex = 0;
-  showImage();
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
-  
-  // Close FAB menu
-  if (fabContainer) {
-    fabContainer.classList.remove('expanded');
-  }
-}
-
-function closeImageViewer() {
-  modal.classList.remove('active');
-  document.body.style.overflow = 'auto';
-}
-
-function showImage() {
-  if (currentImages.length === 0) return;
-  
-  const image = currentImages[currentImageIndex];
-  viewerImage.src = image.src;
-  viewerTitle.textContent = image.title;
-  viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-  
-  // Preload next image for smooth navigation
-  if (currentImageIndex < currentImages.length - 1) {
-    const nextImg = new Image();
-    nextImg.src = currentImages[currentImageIndex + 1].src;
-  }
-}
-
-function showNextImage() {
-  if (currentImages.length === 0) return;
-  currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-  showImage();
-}
-
-function showPrevImage() {
-  if (currentImages.length === 0) return;
-  currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-  showImage();
-}
-
-async function switchToNextFolder() {
-  currentFolderIndex = (currentFolderIndex + 1) % allFolders.length;
-  const nextFolder = allFolders[currentFolderIndex];
-  const images = await loadFolderImages(nextFolder);
-  
-  if (images.length > 0) {
-    currentImages = images;
-    currentImageIndex = 0;
-    showImage();
-  }
-}
-
-async function switchToPrevFolder() {
-  currentFolderIndex = (currentFolderIndex - 1 + allFolders.length) % allFolders.length;
-  const prevFolder = allFolders[currentFolderIndex];
-  const images = await loadFolderImages(prevFolder);
-  
-  if (images.length > 0) {
-    currentImages = images;
-    currentImageIndex = 0;
-    showImage();
-  }
-}
-
-// Event listeners for image viewer
-if (viewerClose) {
-  viewerClose.addEventListener('click', closeImageViewer);
-}
-
-if (viewerOverlay) {
-  viewerOverlay.addEventListener('click', closeImageViewer);
-}
-
-if (viewerNext) {
-  viewerNext.addEventListener('click', showNextImage);
-}
-
-if (viewerPrev) {
-  viewerPrev.addEventListener('click', showPrevImage);
-}
-
-// Click on image to go to next
-if (viewerImage) {
-  viewerImage.addEventListener('click', (e) => {
-    e.stopPropagation();
-    showNextImage();
-  });
-}
-
-// Keyboard navigation
-document.addEventListener('keydown', (e) => {
-  if (!modal.classList.contains('active')) return;
-  
-  switch(e.key) {
-    case 'Escape':
-      closeImageViewer();
-      break;
-    case 'ArrowRight':
-      showNextImage();
-      break;
-    case 'ArrowLeft':
-      showPrevImage();
-      break;
-    case 'ArrowUp':
-      e.preventDefault();
-      switchToNextFolder();
-      break;
-    case 'ArrowDown':
-      e.preventDefault();
-      switchToPrevFolder();
-      break;
-  }
-});
-
-// Enhanced touch/swipe support for mobile
-let touchStartX = 0;
-let touchEndX = 0;
-let touchStartY = 0;
-let touchEndY = 0;
-
-if (modal) {
-  modal.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
-  }, { passive: true });
-
-  modal.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
-    handleSwipe();
-  }, { passive: true });
-}
-
-function handleSwipe() {
-  const swipeDistanceX = touchStartX - touchEndX;
-  const swipeDistanceY = touchStartY - touchEndY;
-  const minSwipeDistance = 50;
-
-  // Determine if it's a horizontal or vertical swipe
-  if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY)) {
-    // Horizontal swipe - change images
-    if (Math.abs(swipeDistanceX) > minSwipeDistance) {
-      if (swipeDistanceX > 0) {
-        showNextImage(); // Swipe left, next image
-      } else {
-        showPrevImage(); // Swipe right, previous image
-      }
-    }
-  } else {
-    // Vertical swipe - change folders
-    if (Math.abs(swipeDistanceY) > minSwipeDistance) {
-      if (swipeDistanceY > 0) {
-        switchToNextFolder(); // Swipe up, next folder
-      } else {
-        switchToPrevFolder(); // Swipe down, previous folder
-      }
-    }
-  }
-}
-
-// Initialize images on load to show them immediately
-document.addEventListener('DOMContentLoaded', () => {
-  // Preload some images for faster viewing
-  allFolders.forEach(async (folder) => {
-    const images = await loadFolderImages(folder);
-    console.log(`Preloaded ${images.length} images for ${folder} folder`);
-  });
-});
-    // Search functionality
     // Search functionality - only on Enter press
-const searchInput = document.getElementById('searchInput');
-if (searchInput) {
-  searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      this.handleSearch(e.target.value);
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.handleSearch(e.target.value);
+        }
+      });
     }
-  });
-}
 
     // Browser back/forward navigation
     window.addEventListener('popstate', (e) => {
       console.log('🔙 Browser navigation detected:', e.state);
       this.handleBrowserNavigation();
     });
+
+    // FAB functionality
+    this.setupFABFunctionality();
+  }
+
+  navigateToPath(path) {
+    console.log('🔗 Navigate to path:', path);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Build new path
+    const pathSegments = path.split('/').filter(Boolean);
+    this.currentPath = pathSegments;
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.set('path', path);
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ 
+      path: pathSegments, 
+      brand: this.currentBrand 
+    }, '', newURL);
+    
+    // Show category view
+    this.showCategoryView();
   }
 
   openProduct(driveLink) {
@@ -1066,20 +817,20 @@ if (searchInput) {
   }
 
   navigateToCategory(category) {
-  console.log('🔗 Navigate to category:', category);
-  
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  
-  // Build new path
-  let newPath;
-  if (this.currentPath.length === 0) {
-    // From homepage
-    newPath = [category];
-  } else {
-    // From current path
-    newPath = [...this.currentPath, category];
-  }
+    console.log('🔗 Navigate to category:', category);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Build new path
+    let newPath;
+    if (this.currentPath.length === 0) {
+      // From homepage
+      newPath = [category];
+    } else {
+      // From current path
+      newPath = [...this.currentPath, category];
+    }
     
     // Update state
     this.currentPath = newPath;
@@ -1116,99 +867,307 @@ if (searchInput) {
     }
   }
 
- handleSearch(query) {
-  if (!query.trim()) return;
-  
-  console.log('🔍 Searching for:', query);
-  this.showNotification(`Searching for "${query}"...`);
-  
-  // Actual search implementation
-  const results = this.performSearch(query.toLowerCase());
-  this.displaySearchResults(results, query);
-}
+  // Enhanced search functionality
+  handleSearch(query) {
+    if (!query.trim()) return;
+    
+    console.log('🔍 Searching for:', query);
+    this.showNotification(`Searching for "${query}"...`);
+    
+    // Actual search implementation
+    const results = this.performSearch(query.toLowerCase());
+    this.displaySearchResults(results, query);
+  }
 
-performSearch(query) {
-  const results = [];
-  
-  function searchNode(node, path = []) {
-    for (const [key, item] of Object.entries(node)) {
-      const currentPath = [...path, key];
-      
-      // Check if current item matches search
-      if (key.toLowerCase().includes(query) || 
-          (item.title && item.title.toLowerCase().includes(query))) {
-        results.push({
-          name: key,
-          path: currentPath.join('/'),
-          isProduct: item.isProduct,
-          count: item.count,
-          thumbnail: item.thumbnail
-        });
-      }
-      
-      // Search in children
-      if (item.children && !item.isProduct) {
-        searchNode(item.children, currentPath);
+  performSearch(query) {
+    const results = [];
+    
+    function searchNode(node, path = []) {
+      for (const [key, item] of Object.entries(node)) {
+        const currentPath = [...path, key];
+        
+        // Check if current item matches search
+        if (key.toLowerCase().includes(query) || 
+            (item.title && item.title.toLowerCase().includes(query))) {
+          results.push({
+            name: key,
+            path: currentPath.join('/'),
+            isProduct: item.isProduct,
+            count: item.count,
+            thumbnail: item.thumbnail,
+            driveLink: item.driveLink
+          });
+        }
+        
+        // Search in children
+        if (item.children && !item.isProduct) {
+          searchNode(item.children, currentPath);
+        }
       }
     }
+    
+    if (this.data && this.data.catalog && this.data.catalog.tree) {
+      searchNode(this.data.catalog.tree);
+    }
+    
+    return results;
   }
-  
-  if (this.data && this.data.catalog && this.data.catalog.tree) {
-    searchNode(this.data.catalog.tree);
-  }
-  
-  return results;
-}
 
-displaySearchResults(results, query) {
-  const container = document.getElementById('dynamicSections');
-  if (!container) return;
-  
-  if (results.length === 0) {
+  displaySearchResults(results, query) {
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
+    
+    if (results.length === 0) {
+      container.innerHTML = `
+        <section class="content-section">
+          <div class="container">
+            <div class="section-header">
+              <h2 class="section-title">No Results Found</h2>
+              <p class="section-description">No items found for "${query}". Try different keywords.</p>
+            </div>
+          </div>
+        </section>
+      `;
+      return;
+    }
+    
+    const gridClass = this.getGridClass(results.length);
+    const resultsHTML = results.map(result => ({
+      key: result.name,
+      title: result.name.replace(/_/g, ' '),
+      description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
+      count: result.count || (result.isProduct ? 1 : 0),
+      thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
+      isProduct: result.isProduct,
+      searchPath: result.path,
+      driveLink: result.driveLink
+    }));
+    
     container.innerHTML = `
       <section class="content-section">
         <div class="container">
           <div class="section-header">
-            <h2 class="section-title">No Results Found</h2>
-            <p class="section-description">No items found for "${query}". Try different keywords.</p>
+            <h2 class="section-title">Search Results</h2>
+            <p class="section-description">Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query}"</p>
+          </div>
+          <div class="cards-grid ${gridClass}">
+            ${resultsHTML.map(item => this.createCardHTML(item)).join('')}
           </div>
         </div>
       </section>
     `;
-    return;
+    
+    // Hide taxonomy section during search
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'none';
+    }
   }
-  
-  const gridClass = this.getGridClass(results.length);
-  const resultsHTML = results.map(result => ({
-    key: result.name,
-    title: result.name.replace(/_/g, ' '),
-    description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
-    count: result.count || (result.isProduct ? 1 : 0),
-    thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
-    isProduct: result.isProduct,
-    searchPath: result.path
-  }));
-  
-  container.innerHTML = `
-    <section class="content-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Search Results</h2>
-          <p class="section-description">Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query}"</p>
-        </div>
-        <div class="cards-grid ${gridClass}">
-          ${resultsHTML.map(item => this.createCardHTML(item)).join('')}
-        </div>
-      </div>
-    </section>
-  `;
-  
-  // Hide taxonomy section during search
-  const taxonomySection = document.querySelector('.taxonomy-section');
-  if (taxonomySection) {
-    taxonomySection.style.display = 'none';
+
+  // FAB functionality
+  setupFABFunctionality() {
+    const fabToggle = document.getElementById('fabToggle');
+    const fabContainer = document.getElementById('fabContainer');
+    const fabActions = document.querySelectorAll('.fab-action[data-folder]');
+
+    if (fabToggle && fabContainer) {
+      fabToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fabContainer.classList.toggle('expanded');
+      });
+
+      // Close FAB when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!fabContainer.contains(e.target)) {
+          fabContainer.classList.remove('expanded');
+        }
+      });
+    }
+
+    // Image viewer functionality with dynamic folder loading
+    let currentImages = [];
+    let currentImageIndex = 0;
+    let currentFolderIndex = 0;
+    let allFolders = ['reviews', 'delivery', 'payment'];
+    const modal = document.getElementById('imageViewerModal');
+    const viewerImage = document.getElementById('viewerImage');
+    const viewerCounter = document.getElementById('viewerCounter');
+    const viewerTitle = document.getElementById('viewerTitle');
+    const viewerClose = document.getElementById('viewerClose');
+    const viewerPrev = document.getElementById('viewerPrev');
+    const viewerNext = document.getElementById('viewerNext');
+    const viewerOverlay = document.getElementById('viewerOverlay');
+
+    // Dynamic image loading function
+    const loadFolderImages = async (folderName) => {
+      try {
+        const images = [];
+        const basePath = `/thumbs/${folderName}/`;
+        
+        const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        const maxImages = 50;
+        
+        for (let i = 1; i <= maxImages; i++) {
+          for (const ext of extensions) {
+            const imagePath = `${basePath}${folderName}${i}.${ext}`;
+            const exists = await this.checkImageExists(imagePath);
+            if (exists) {
+              images.push({
+                src: imagePath,
+                title: `${folderName.charAt(0).toUpperCase() + folderName.slice(1)} ${i}`
+              });
+              break;
+            }
+          }
+        }
+        
+        if (images.length === 0) {
+          const commonNames = ['1', '2', '3', '4', '5', 'image1', 'image2', 'image3', 'photo1', 'photo2'];
+          for (const name of commonNames) {
+            for (const ext of extensions) {
+              const imagePath = `${basePath}${name}.${ext}`;
+              const exists = await this.checkImageExists(imagePath);
+              if (exists) {
+                images.push({
+                  src: imagePath,
+                  title: `${folderName.charAt(0).toUpperCase() + folderName.slice(1)} - ${name}`
+                });
+                break;
+              }
+            }
+          }
+        }
+        
+        return images;
+      } catch (error) {
+        console.error(`Error loading images for ${folderName}:`, error);
+        return [];
+      }
+    };
+
+    // FAB action listeners
+    fabActions.forEach((action, index) => {
+      action.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const folderName = action.dataset.folder;
+        currentFolderIndex = allFolders.indexOf(folderName);
+        
+        const images = await loadFolderImages(folderName);
+        
+        if (images.length === 0) {
+          currentImages = [{
+            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAnICsgZm9sZGVyTmFtZSArICcgZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
+            title: `No images found in ${folderName} folder`
+          }];
+        } else {
+          currentImages = images;
+        }
+        
+        currentImageIndex = 0;
+        showImage();
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        if (fabContainer) {
+          fabContainer.classList.remove('expanded');
+        }
+      });
+    });
+
+    const showImage = () => {
+      if (currentImages.length === 0) return;
+      
+      const image = currentImages[currentImageIndex];
+      viewerImage.src = image.src;
+      viewerTitle.textContent = image.title;
+      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+      
+      if (currentImageIndex < currentImages.length - 1) {
+        const nextImg = new Image();
+        nextImg.src = currentImages[currentImageIndex + 1].src;
+      }
+    };
+
+    const closeImageViewer = () => {
+      modal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    };
+
+    const showNextImage = () => {
+      if (currentImages.length === 0) return;
+      currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+      showImage();
+    };
+
+    const showPrevImage = () => {
+      if (currentImages.length === 0) return;
+      currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+      showImage();
+    };
+
+    // Event listeners
+    if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
+    if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
+    if (viewerNext) viewerNext.addEventListener('click', showNextImage);
+    if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
+    if (viewerImage) {
+      viewerImage.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showNextImage();
+      });
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (!modal.classList.contains('active')) return;
+      
+      switch(e.key) {
+        case 'Escape':
+          closeImageViewer();
+          break;
+        case 'ArrowRight':
+          showNextImage();
+          break;
+        case 'ArrowLeft':
+          showPrevImage();
+          break;
+      }
+    });
+
+    // Touch support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    if (modal) {
+      modal.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      modal.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const swipeDistance = touchStartX - touchEndX;
+        const minSwipeDistance = 50;
+
+        if (Math.abs(swipeDistance) > minSwipeDistance) {
+          if (swipeDistance > 0) {
+            showNextImage();
+          } else {
+            showPrevImage();
+          }
+        }
+      }, { passive: true });
+    }
   }
-}
+
+  checkImageExists(imageSrc) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = imageSrc;
+    });
+  }
 
   showNotification(message) {
     const notification = document.createElement('div');
@@ -1247,6 +1206,7 @@ displaySearchResults(results, query) {
     document.body.classList.remove('loading');
   }
 }
+
 // Initialize the application
 console.log('🔧 Script loaded, starting initialization...');
 
