@@ -735,9 +735,25 @@
           const response = await fetch('/data.json?v=' + Date.now());
           if (response.ok) {
             this.data = await response.json();
-            this.currentBrand = this.getBrandFromURL() || Object.keys(this.data.brands)[0];
+            console.log('✅ Data loaded successfully:', this.data);
+            
+            // Get brand from URL or use first available brand
+            const urlParams = new URLSearchParams(window.location.search);
+            const brandFromURL = urlParams.get('brand');
+            
+            const availableBrands = Object.keys(this.data.brands);
+            console.log('🏷️  Available brands:', availableBrands);
+            
+            if (brandFromURL && this.data.brands[brandFromURL]) {
+              this.currentBrand = brandFromURL;
+            } else {
+              this.currentBrand = availableBrands[0];
+            }
+            
+            console.log('🎯 Using brand:', this.currentBrand);
+            
           } else {
-            throw new Error('Failed to load data');
+            throw new Error(`Failed to load data: ${response.status}`);
           }
         } catch (error) {
           console.error('❌ Error loading data:', error);
