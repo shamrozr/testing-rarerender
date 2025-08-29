@@ -485,6 +485,10 @@ class CSVCatalogApp {
     this.updateElement('brandTagline', brand.tagline || 'Premium Quality Collection');
     this.updateElement('heroTitle', brand.heroTitle || 'Discover Luxury Collections');
     this.updateElement('heroSubtitle', brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    if (heroSubtitle) {
+      heroSubtitle.style.display = 'block'; // Reset display for homepage
+    }
     this.updateElement('footerBrandName', brand.brandName || brand.name);
     
     const logo = document.getElementById('brandLogo');
