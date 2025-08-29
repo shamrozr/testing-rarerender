@@ -1054,17 +1054,19 @@ debugBrandSwitching() {
     const viewerOverlay = document.getElementById('viewerOverlay');
 
     // Replace the loadFolderImages function with this corrected version
+// Enhanced image loading function with extensive file name patterns
 const loadFolderImages = async (folderName) => {
   try {
-    console.log(`Loading images from folder: ${folderName}`);
+    console.log(`🔍 Loading images from folder: ${folderName}`);
     const images = [];
-    const basePath = `/${folderName}/`; // Direct path to public/Reviews, public/Payment, etc.
+    const basePath = `/${folderName}/`;
     
-    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG', 'WEBP', 'GIF'];
-    const maxImages = 20; // Check up to 20 images
+    // All possible file extensions
+    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG', 'WEBP', 'GIF', 'bmp', 'BMP'];
     
-    // Try numbered files: 1.jpg, 2.jpg, etc.
-    for (let i = 1; i <= maxImages; i++) {
+    // Pattern 1: Simple numbers (1.jpg, 2.jpg, etc.)
+    console.log(`📝 Trying pattern: ${folderName}/1.jpg, 2.jpg, etc.`);
+    for (let i = 1; i <= 10; i++) {
       let found = false;
       for (const ext of extensions) {
         const imagePath = `${basePath}${i}.${ext}`;
@@ -1075,15 +1077,44 @@ const loadFolderImages = async (folderName) => {
             title: `${folderName} ${i}`
           });
           found = true;
+          console.log(`✅ Found: ${imagePath}`);
           break;
         }
       }
-      if (!found && i > 5) break; // Stop looking after 5 consecutive misses
+      if (!found && i > 3 && images.length === 0) break; // Stop if no images found in first 3
     }
     
-    // If no numbered images found, try common names
+    // Pattern 2: Folder name + numbers (reviews1.jpg, payment1.jpg, etc.)
     if (images.length === 0) {
-      const commonNames = ['image1', 'image2', 'image3', 'photo1', 'photo2', 'pic1', 'pic2', 'img1', 'img2'];
+      console.log(`📝 Trying pattern: ${folderName.toLowerCase()}1.jpg, etc.`);
+      for (let i = 1; i <= 10; i++) {
+        for (const ext of extensions) {
+          const imagePath = `${basePath}${folderName.toLowerCase()}${i}.${ext}`;
+          const exists = await checkImageExists(imagePath);
+          if (exists) {
+            images.push({
+              src: imagePath,
+              title: `${folderName} ${i}`
+            });
+            console.log(`✅ Found: ${imagePath}`);
+            break;
+          }
+        }
+        if (images.length > 0) break;
+      }
+    }
+    
+    // Pattern 3: Common image names
+    if (images.length === 0) {
+      const commonNames = [
+        'image1', 'image2', 'image3', 'image4', 'image5',
+        'img1', 'img2', 'img3', 'img4', 'img5',
+        'photo1', 'photo2', 'photo3', 'photo4', 'photo5',
+        'pic1', 'pic2', 'pic3', 'pic4', 'pic5',
+        'screenshot1', 'screenshot2', 'screenshot3'
+      ];
+      
+      console.log(`📝 Trying common names: image1.jpg, photo1.jpg, etc.`);
       for (const name of commonNames) {
         for (const ext of extensions) {
           const imagePath = `${basePath}${name}.${ext}`;
@@ -1093,16 +1124,19 @@ const loadFolderImages = async (folderName) => {
               src: imagePath,
               title: `${folderName} - ${name}`
             });
+            console.log(`✅ Found: ${imagePath}`);
             break;
           }
         }
       }
     }
     
-    // Try files with folder name
+    // Pattern 4: Any files in the directory (fallback)
     if (images.length === 0) {
-      const folderBasedNames = [`${folderName.toLowerCase()}1`, `${folderName.toLowerCase()}2`, `${folderName.toLowerCase()}3`];
-      for (const name of folderBasedNames) {
+      console.log(`📝 Trying any files pattern...`);
+      const anyFileNames = ['a', 'b', 'c', 'd', 'e', 'test', 'sample', folderName.toLowerCase()];
+      
+      for (const name of anyFileNames) {
         for (const ext of extensions) {
           const imagePath = `${basePath}${name}.${ext}`;
           const exists = await checkImageExists(imagePath);
@@ -1111,16 +1145,25 @@ const loadFolderImages = async (folderName) => {
               src: imagePath,
               title: `${folderName} - ${name}`
             });
+            console.log(`✅ Found: ${imagePath}`);
             break;
           }
         }
       }
     }
     
-    console.log(`Found ${images.length} images in ${folderName}:`, images.map(img => img.src));
+    console.log(`📊 Total images found in ${folderName}: ${images.length}`);
+    if (images.length === 0) {
+      console.error(`❌ No images found in ${folderName} folder. Checked patterns:
+        - ${folderName}/1.jpg, 2.jpg, etc.
+        - ${folderName}/${folderName.toLowerCase()}1.jpg, etc.
+        - ${folderName}/image1.jpg, photo1.jpg, etc.
+        - ${folderName}/[any-name].jpg, etc.`);
+    }
+    
     return images;
   } catch (error) {
-    console.error(`Error loading images for ${folderName}:`, error);
+    console.error(`💥 Error loading images for ${folderName}:`, error);
     return [];
   }
 };
@@ -1243,23 +1286,28 @@ const loadFolderImages = async (folderName) => {
   checkImageExists(imageSrc) {
   return new Promise((resolve) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous'; // Handle CORS if needed
+    
+    const timeout = setTimeout(() => {
+      console.log(`⏰ Timeout checking: ${imageSrc}`);
+      resolve(false);
+    }, 2000); // Reduced timeout
+    
     img.onload = () => {
-      console.log(`✅ Image found: ${imageSrc}`);
+      clearTimeout(timeout);
+      console.log(`✅ Image exists: ${imageSrc}`);
       resolve(true);
     };
+    
     img.onerror = () => {
+      clearTimeout(timeout);
       console.log(`❌ Image not found: ${imageSrc}`);
       resolve(false);
     };
-    // Add timeout to prevent hanging
-    setTimeout(() => {
-      console.log(`⏰ Timeout for: ${imageSrc}`);
-      resolve(false);
-    }, 3000);
+    
     img.src = imageSrc;
   });
 }
-
   showNotification(message) {
     const notification = document.createElement('div');
     notification.style.cssText = `
