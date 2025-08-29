@@ -81,13 +81,7 @@ class CSVCatalogApp {
       this.setupTaxonomy();
       this.setupFooter();
       this.setupEventListeners();
-
-// If URL has ?path=xyz load that category immediately
-const initialPath = new URLSearchParams(window.location.search).get('path');
-if (initialPath) {
-  this.navigateToCategory(initialPath, true);
-}
-
+      this.applyInitialPath();
       console.log('✅ CSV catalog initialization complete!');
     } catch (error) {
       console.error('❌ Error during initialization:', error);
@@ -532,47 +526,48 @@ if (initialPath) {
       searchInput.addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-          this.
-
-renderCategory(category) {
-  // Hide all cards and sections first
-  document.querySelectorAll('.content-card').forEach(card => {
-    card.style.display = (card.dataset.category === category) ? '' : 'none';
-  });
-
-  document.querySelectorAll('.content-section').forEach(section => {
-    const visibleCards = section.querySelectorAll('.content-card:not([style*="display: none"])');
-    section.style.display = visibleCards.length ? '' : 'none';
-  });
-}
-
-showAllSections() {
-  document.querySelectorAll('.content-card').forEach(card => card.style.display = '');
-  document.querySelectorAll('.content-section').forEach(section => section.style.display = '');
-}
-handleSearch(e.target.value);
+          this.handleSearch(e.target.value);
         }, 300);
       });
     }
   }
 
-  navigateToCategory(category) {
+  navigateToCategory(category, skipHistory = false) {
+    console.log('🔗 Navigate to category:', category);
 
-console.log('🔗 Navigate to category:', category);
+    // ===== Filter cards and sections =====
+    document.querySelectorAll('.content-card').forEach(card => {
+      card.style.display = (category && card.dataset.category !== category) ? 'none' : '';
+    });
 
-// Render the requested category
-this.renderCategory(category);
+    document.querySelectorAll('.content-section').forEach(section => {
+      const visibleCards = section.querySelectorAll('.content-card:not([style*="display: none"])').length;
+      section.style.display = visibleCards ? '' : 'none';
+    });
 
-// Update the address bar
-if (!skipHistory) {
-  const params = new URLSearchParams(window.location.search);
-  if (this.currentBrand) params.set('brand', this.currentBrand);
-  params.set('path', category);
-  history.pushState({ category }, '', \`\${window.location.pathname}?\${params.toString()}\`);
-}
-
+    // ===== Update URL / history =====
+    if (!skipHistory) {
+      const params = new URLSearchParams(window.location.search);
+      if (this.currentBrand) params.set('brand', this.currentBrand);
+      params.set('path', category);
+      history.pushState({ category }, '', `?${params.toString()}`);
+    }
   }
 
+  applyInitialPath() {
+    const params = new URLSearchParams(window.location.search);
+    const initialCategory = params.get('path');
+    if (initialCategory) {
+      this.navigateToCategory(initialCategory, true);
+    } else {
+      this.showAllSections();
+    }
+  }
+
+  showAllSections() {
+    document.querySelectorAll('.content-card').forEach(card => card.style.display = '');
+    document.querySelectorAll('.content-section').forEach(section => section.style.display = '');
+  }
 
   handleSearch(query) {
     if (!query.trim()) return;
@@ -658,7 +653,6 @@ if (document.readyState === 'loading') {
 }
 
 // Handle browser navigation
-
 window.addEventListener('popstate', (e) => {
   if (window.catalogApp && e.state?.category) {
     window.catalogApp.navigateToCategory(e.state.category, true);
@@ -666,7 +660,6 @@ window.addEventListener('popstate', (e) => {
     window.catalogApp.showAllSections();
   }
 });
-
 
 // Global error handler
 window.addEventListener('error', (e) => {
