@@ -119,45 +119,47 @@
     </div>
   </footer>
 
-  <!-- WhatsApp FAB -->
-<!-- Enhanced Floating Action Buttons -->
-<!-- Enhanced Floating Action Buttons -->
-<div class="fab-container" id="fabContainer">
-  <!-- Main FAB Toggle -->
-  <button class="fab-toggle" id="fabToggle">
-    <span class="fab-dots">⋯</span>
-    <span class="fab-close">×</span>
+  <!-- Separated Floating Action Buttons -->
+<!-- WhatsApp FAB (separate) -->
+<a href="#" class="whatsapp-fab-solo" id="whatsappFab" target="_blank" rel="noopener" style="display: none;">
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.382"/>
+  </svg>
+</a>
+
+<!-- 3-Dot Menu Container -->
+<div class="three-dot-menu" id="threeDotMenu">
+  <!-- Main 3-Dot Toggle Button -->
+  <button class="three-dot-toggle" id="threeDotToggle">
+    <span class="three-dots">⋯</span>
+    <span class="three-close">×</span>
   </button>
   
-  <!-- Action Buttons -->
-  <div class="fab-actions" id="fabActions">
-    <button class="fab-action" id="reviewsFab" data-folder="Reviews">
-      <span class="fab-text">Reviews</span>
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-      </svg>
-    </button>
+  <!-- Menu Items -->
+  <div class="three-dot-items" id="threeDotItems">
+    <div class="menu-item" id="reviewsItem" data-folder="Reviews">
+      <button class="menu-button">
+        <img src="/icons/reviews.svg" alt="Reviews" class="menu-icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="icon-placeholder" style="display:none;">⭐</div>
+      </button>
+      <span class="menu-label">Reviews</span>
+    </div>
     
-    <button class="fab-action" id="deliveredFab" data-folder="Delivered">
-      <span class="fab-text">Delivered</span>
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-    </button>
+    <div class="menu-item" id="paymentsItem" data-folder="Payment">
+      <button class="menu-button">
+        <img src="/icons/payments.svg" alt="Payments" class="menu-icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="icon-placeholder" style="display:none;">💳</div>
+      </button>
+      <span class="menu-label">Payments</span>
+    </div>
     
-    <button class="fab-action" id="paymentFab" data-folder="Payment">
-      <span class="fab-text">Payment</span>
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
-      </svg>
-    </button>
-    
-    <a href="#" class="fab-action whatsapp-fab" id="whatsappFab" target="_blank" rel="noopener">
-      <span class="fab-text">WhatsApp</span>
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.382"/>
-      </svg>
-    </a>
+    <div class="menu-item" id="deliveredItem" data-folder="Delivered">
+      <button class="menu-button">
+        <img src="/icons/delivered.svg" alt="Delivered" class="menu-icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="icon-placeholder" style="display:none;">📦</div>
+      </button>
+      <span class="menu-label">Delivered</span>
+    </div>
   </div>
 </div>
 
@@ -176,54 +178,84 @@
 
   <!-- JavaScript -->
   <script src="/script.js" type="module"></script>
-  <!-- Enhanced Debug Button -->
-<button onclick="testFolderAccess()" style="position:fixed;top:10px;left:10px;z-index:9999;padding:10px;background:red;color:white;border:none;border-radius:5px;font-size:12px;">
-  Test Folders
-</button>
+ <!-- Enhanced Debug Console -->
+<div id="debugConsole" style="position:fixed;top:10px;left:10px;z-index:9999;background:rgba(0,0,0,0.8);color:white;padding:10px;border-radius:5px;font-family:monospace;font-size:12px;max-width:320px;">
+  <div id="debugInfo"></div>
+  <button onclick="testBrandUpdate()" style="margin:2px;padding:5px;background:blue;color:white;border:none;border-radius:3px;font-size:10px;">
+    Force Brand
+  </button>
+  <button onclick="testThreeDotMenu()" style="margin:2px;padding:5px;background:green;color:white;border:none;border-radius:3px;font-size:10px;">
+    Test Menu
+  </button>
+  <button onclick="testImagePaths()" style="margin:2px;padding:5px;background:orange;color:white;border:none;border-radius:3px;font-size:10px;">
+    Test Images
+  </button>
+  <button onclick="toggleDebug()" style="margin:2px;padding:5px;background:red;color:white;border:none;border-radius:3px;font-size:10px;">
+    Hide
+  </button>
+</div>
 
 <script>
-async function testFolderAccess() {
-  console.log('🧪 Testing folder access...');
-  
-  const folders = ['Reviews', 'Delivered', 'Payment'];
-  const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG'];
-  
-  for (const folder of folders) {
-    console.log(`\n📁 Testing folder: ${folder}`);
-    
-    // Test multiple file patterns
-    const testPatterns = [
-      `/${folder}/1`,
-      `/${folder}/2`,
-      `/${folder}/image1`,
-      `/${folder}/photo1`,
-      `/${folder}/${folder.toLowerCase()}1`,
-      `/${folder}/img1`
-    ];
-    
-    let foundAny = false;
-    
-    for (const pattern of testPatterns) {
-      for (const ext of extensions) {
-        const testPath = `${pattern}.${ext}`;
-        
-        try {
-          const response = await fetch(testPath, { method: 'HEAD' });
-          if (response.ok) {
-            console.log(`✅ Found: ${testPath}`);
-            foundAny = true;
-          }
-        } catch (error) {
-          // Ignore errors, just continue testing
-        }
-      }
-    }
-    
-    if (!foundAny) {
-      console.log(`❌ No images found in ${folder} folder`);
-    }
+function updateDebugInfo() {
+  const debugDiv = document.getElementById('debugInfo');
+  if (debugDiv && window.catalogApp) {
+    const urlParams = new URLSearchParams(window.location.search);
+    debugDiv.innerHTML = `
+      <div><strong>Debug Info:</strong></div>
+      <div>URL Brand: ${urlParams.get('brand') || 'none'}</div>
+      <div>Current Brand: ${window.catalogApp.currentBrand || 'none'}</div>
+      <div>Display Name: ${document.getElementById('brandName')?.textContent || 'none'}</div>
+      <div>Available: ${window.catalogApp.data ? Object.keys(window.catalogApp.data.brands).slice(0,2).join(', ') + '...' : 'loading...'}</div>
+    `;
   }
 }
+
+function testBrandUpdate() {
+  console.log('🧪 Testing brand update...');
+  if (window.catalogApp) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedBrand = urlParams.get('brand') || 'LiyanaBags';
+    
+    console.log('Forcing brand to:', requestedBrand);
+    window.catalogApp.currentBrand = requestedBrand;
+    window.catalogApp.setupBrandInfo();
+    updateDebugInfo();
+  }
+}
+
+function testThreeDotMenu() {
+  console.log('🧪 Testing 3-dot menu...');
+  const menu = document.getElementById('threeDotMenu');
+  if (menu) {
+    menu.classList.toggle('expanded');
+    console.log('Menu expanded:', menu.classList.contains('expanded'));
+  }
+}
+
+function testImagePaths() {
+  console.log('🧪 Testing image paths...');
+  const testPaths = [
+    'Reviews/1.jpg',
+    '/Reviews/1.jpg', 
+    'Delivered/1.jpg',
+    'Payment/1.jpg'
+  ];
+  
+  testPaths.forEach(path => {
+    const img = new Image();
+    img.onload = () => console.log('✅ Found:', path);
+    img.onerror = () => console.log('❌ Missing:', path);
+    img.src = path;
+  });
+}
+
+function toggleDebug() {
+  const debug = document.getElementById('debugConsole');
+  debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
+}
+
+// Update debug info every 3 seconds
+setInterval(updateDebugInfo, 3000);
 </script>
 </body>
 </html>
