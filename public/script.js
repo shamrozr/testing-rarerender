@@ -703,36 +703,29 @@ class CSVCatalogApp {
   }
 
   setupFooter() {
-    const footerContent = document.getElementById('footerContent');
-    if (!footerContent) return;
+  const footerContent = document.getElementById('footerContent');
+  if (!footerContent) return;
 
-    const brand = this.data.brands[this.currentBrand];
-    const footerText = brand?.footerText || 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.';
+  const brand = this.data.brands[this.currentBrand];
+  const footerText = brand?.footerText || 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.';
 
-    footerContent.innerHTML = `
-      <div class="footer-section">
-        <h3>${brand?.brandName || brand?.name || 'Luxury Collection'}</h3>
-        <p>${footerText}</p>
-      </div>
-      <div class="footer-section">
-        <h3>Quick Links</h3>
-        <a href="#categories">Categories</a>
-        <a href="#products">Products</a>
-        <a href="#contact">Contact Us</a>
-      </div>
-      <div class="footer-section">
-        <h3>Customer Service</h3>
-        <p>24/7 Support Available</p>
-        <p>Premium Customer Care</p>
-        <p>Worldwide Shipping</p>
-      </div>
-      <div class="footer-section">
-        <h3>Connect With Us</h3>
-        <p>Follow us for the latest luxury collections and exclusive offers.</p>
-      </div>
-    `;
-  }
-
+  footerContent.innerHTML = `
+    <div class="footer-section">
+      <h3>${brand?.brandName || brand?.name || 'Luxury Collection'}</h3>
+      <p>${footerText}</p>
+    </div>
+    <div class="footer-section">
+      <h3>Customer Service</h3>
+      <p>24/7 Support Available</p>
+      <p>Premium Customer Care</p>
+      <p>Worldwide Shipping</p>
+    </div>
+    <div class="footer-section">
+      <h3>Connect With Us</h3>
+      <p>Follow us for the latest luxury collections and exclusive offers.</p>
+    </div>
+  `;
+}
   setupEventListeners() {
     // Logo click - go to home
     const logo = document.getElementById('brandLogo');
