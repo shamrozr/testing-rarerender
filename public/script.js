@@ -670,3 +670,21 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error('💥 Unhandled promise rejection:', e.reason);
   e.preventDefault();
 });
+
+
+// inside class CSVCatalogApp
+navigateToCategory(category, skipHistory = false) {
+  this.renderCategory(category);          // NEW – draw the requested view
+
+  if (!skipHistory) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('brand', this.currentBrand);
+    params.set('path', category);
+    history.pushState({ category }, '', `?${params.toString()}`);
+  }
+}
+
+// Fire on back / forward navigation
+window.addEventListener('popstate', e => {
+  if (e.state?.category) app.navigateToCategory(e.state.category, true);
+});
