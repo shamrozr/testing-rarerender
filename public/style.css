@@ -383,7 +383,16 @@ body {
   margin: 0 auto;
   line-height: 1.6;
 }
+/* Alternating Section Colors */
+/* ========================== */
 
+.content-section:nth-child(odd) {
+  background: var(--color-light-gray);
+}
+
+.content-section:nth-child(even) {
+  background: var(--color-white);
+}
 /* Grid System */
 /* =========== */
 
