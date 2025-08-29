@@ -547,7 +547,18 @@ body {
 .content-card:hover .card-arrow {
   transform: translateX(4px);
 }
+/* Ensure products use brand colors */
+.content-card[data-is-product="true"] .card-title {
+  color: var(--color-primary);
+}
 
+.content-card[data-is-product="true"]:hover {
+  border-color: var(--color-primary);
+  background: linear-gradient(135deg, 
+    rgba(var(--color-primary-rgb, 99, 102, 241), 0.02), 
+    var(--color-surface-elevated)
+  );
+}
 /* Taxonomy Section */
 /* ================ */
 
