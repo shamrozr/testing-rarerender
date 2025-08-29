@@ -81,7 +81,6 @@ class CSVCatalogApp {
       this.setupTaxonomy();
       this.setupFooter();
       this.setupEventListeners();
-      this.applyInitialPath();
       console.log('✅ CSV catalog initialization complete!');
     } catch (error) {
       console.error('❌ Error during initialization:', error);
@@ -532,41 +531,37 @@ class CSVCatalogApp {
     }
   }
 
-  navigateToCategory(category, skipHistory = false) {
+  navigateToCategory(category) {
     console.log('🔗 Navigate to category:', category);
-
-    // ===== Filter cards and sections =====
-    document.querySelectorAll('.content-card').forEach(card => {
-      card.style.display = (category && card.dataset.category !== category) ? 'none' : '';
-    });
-
-    document.querySelectorAll('.content-section').forEach(section => {
-      const visibleCards = section.querySelectorAll('.content-card:not([style*="display: none"])').length;
-      section.style.display = visibleCards ? '' : 'none';
-    });
-
-    // ===== Update URL / history =====
-    if (!skipHistory) {
+    
+    // Check if your original navigation system exists
+    if (window.STATE && typeof window.renderPath === 'function') {
+      // Use your existing navigation system
+      console.log('📱 Using existing navigation system');
+      window.STATE.path = [category];
+      window.renderPath();
+      
+      // Update URL
       const params = new URLSearchParams(window.location.search);
-      if (this.currentBrand) params.set('brand', this.currentBrand);
       params.set('path', category);
-      history.pushState({ category }, '', `?${params.toString()}`);
-    }
-  }
-
-  applyInitialPath() {
-    const params = new URLSearchParams(window.location.search);
-    const initialCategory = params.get('path');
-    if (initialCategory) {
-      this.navigateToCategory(initialCategory, true);
+      if (this.currentBrand) {
+        params.set('brand', this.currentBrand);
+      }
+      const newURL = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({ category, brand: this.currentBrand }, '', newURL);
+      
     } else {
-      this.showAllSections();
+      // Navigate using page reload method
+      console.log('🔄 Using page reload navigation');
+      const params = new URLSearchParams(window.location.search);
+      params.set('path', category);
+      if (this.currentBrand) {
+        params.set('brand', this.currentBrand);
+      }
+      
+      const newURL = `${window.location.pathname}?${params.toString()}`;
+      window.location.href = newURL;
     }
-  }
-
-  showAllSections() {
-    document.querySelectorAll('.content-card').forEach(card => card.style.display = '');
-    document.querySelectorAll('.content-section').forEach(section => section.style.display = '');
   }
 
   handleSearch(query) {
@@ -654,10 +649,9 @@ if (document.readyState === 'loading') {
 
 // Handle browser navigation
 window.addEventListener('popstate', (e) => {
+  console.log('🔙 Browser navigation detected:', e.state);
   if (window.catalogApp && e.state?.category) {
-    window.catalogApp.navigateToCategory(e.state.category, true);
-  } else if (window.catalogApp) {
-    window.catalogApp.showAllSections();
+    console.log('🔙 Browser navigation to:', e.state.category);
   }
 });
 
