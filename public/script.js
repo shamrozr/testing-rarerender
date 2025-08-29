@@ -755,16 +755,16 @@ class CSVCatalogApp {
     });
 
     // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-      let searchTimeout;
-      searchInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          this.handleSearch(e.target.value);
-        }, 300);
-      });
+    // Search functionality - only on Enter press
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this.handleSearch(e.target.value);
     }
+  });
+}
 
     // Browser back/forward navigation
     window.addEventListener('popstate', (e) => {
