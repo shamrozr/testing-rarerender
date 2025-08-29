@@ -19,28 +19,33 @@ class CSVCatalogApp {
 }
 
   initializeFromURL() {
-    console.log('🔍 Initializing from URL...');
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const brandFromURL = urlParams.get('brand');
-    const pathFromURL = urlParams.get('path');
-    
-    console.log('🌐 Current URL:', window.location.href);
-    console.log('🏷️ Brand parameter:', brandFromURL);
-    console.log('📍 Path parameter:', pathFromURL);
-    
-    // Set brand
-    if (brandFromURL) {
-      this.currentBrand = brandFromURL;
-      this.updateBrandDisplay(brandFromURL);
-    }
-    
-    // Set path
-    if (pathFromURL) {
-      this.currentPath = pathFromURL.split('/').filter(Boolean);
-      console.log('📁 Current path:', this.currentPath);
-    }
+  console.log('🔍 Initializing from URL...');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const brandFromURL = urlParams.get('brand');
+  const pathFromURL = urlParams.get('path');
+  
+  console.log('🌐 Current URL:', window.location.href);
+  console.log('🏷️ Brand parameter:', brandFromURL);
+  console.log('📍 Path parameter:', pathFromURL);
+  
+  // FORCE brand update - don't use cached values
+  this.currentBrand = null;
+  
+  // Set brand from URL FIRST, before any other initialization
+  if (brandFromURL) {
+    this.currentBrand = brandFromURL;
+    console.log('✅ Brand set from URL:', brandFromURL);
   }
+  
+  // Set path
+  if (pathFromURL) {
+    this.currentPath = pathFromURL.split('/').filter(Boolean);
+    console.log('📁 Current path:', this.currentPath);
+  } else {
+    this.currentPath = [];
+  }
+}
 
   updateBrandDisplay(brandFromURL) {
     // Update brand name immediately from URL
@@ -112,35 +117,30 @@ class CSVCatalogApp {
     this.showLoading();
     console.log('📥 Attempting to load data from /data.json...');
     
-    const response = await fetch('/data.json?v=' + Date.now());
+    // Add cache-busting parameter
+    const response = await fetch('/data.json?v=' + Date.now() + '&random=' + Math.random());
     if (response.ok) {
       this.data = await response.json();
       console.log('✅ Data loaded successfully:', this.data);
       
-      // Get brand from URL parameters
-      const urlParams = new URLSearchParams(window.location.search);
-      const brandFromURL = urlParams.get('brand');
-      
       const availableBrands = Object.keys(this.data.brands || {});
-      console.log('🏷️ Available brands:', availableBrands);
-      console.log('🌐 Brand from URL:', brandFromURL);
+      console.log('🏷️ Available brands in data:', availableBrands);
       
-      // Set current brand based on URL or use first available
-      if (brandFromURL && this.data.brands[brandFromURL]) {
-        this.currentBrand = brandFromURL;
-        console.log('✅ Using brand from URL:', brandFromURL);
-      } else if (availableBrands.length > 0) {
-        this.currentBrand = availableBrands[0];
-        console.log('⚠️ Brand from URL not found, using first available:', this.currentBrand);
-        
-        // Update URL to reflect the actual brand being used
-        const params = new URLSearchParams(window.location.search);
-        params.set('brand', this.currentBrand);
-        const newURL = `${window.location.pathname}?${params.toString()}`;
-        window.history.replaceState(null, '', newURL);
+      // Use brand from URL if it exists in data, otherwise use first available
+      if (this.currentBrand && this.data.brands[this.currentBrand]) {
+        console.log('✅ Using brand from URL (found in data):', this.currentBrand);
+      } else if (this.currentBrand) {
+        console.warn('⚠️ Brand from URL not found in data:', this.currentBrand);
+        console.log('Available brands:', availableBrands);
+        // Use first available brand
+        this.currentBrand = availableBrands[0] || null;
       } else {
-        console.error('❌ No brands found in data');
-        throw new Error('No brands available');
+        // No brand in URL, use first available
+        this.currentBrand = availableBrands[0] || null;
+      }
+      
+      if (!this.currentBrand) {
+        throw new Error('No valid brand found');
       }
       
       console.log('🎯 Final brand selection:', this.currentBrand);
@@ -156,7 +156,6 @@ class CSVCatalogApp {
     this.hideLoading();
   }
 }
-
   loadMockData() {
     console.log('📦 Loading mock data as fallback...');
     
@@ -1021,270 +1020,189 @@ class CSVCatalogApp {
     }
   }
 
-  // FAB functionality
-  setupFABFunctionality() {
-    const fabToggle = document.getElementById('fabToggle');
-    const fabContainer = document.getElementById('fabContainer');
-    const fabActions = document.querySelectorAll('.fab-action[data-folder]');
 
-    if (fabToggle && fabContainer) {
-      fabToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        fabContainer.classList.toggle('expanded');
-      });
+setupFABFunctionality() {
+  const fabToggle = document.getElementById('fabToggle');
+  const fabContainer = document.getElementById('fabContainer');
+  const fabActions = document.querySelectorAll('.fab-action[data-folder]');
 
-      // Close FAB when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!fabContainer.contains(e.target)) {
-          fabContainer.classList.remove('expanded');
-        }
-      });
-    }
+  // Hardcoded image files based on your repository structure
+  const imageFiles = {
+    'Reviews': [
+      '/Reviews/1.jpg',
+      '/Reviews/2.jpg', 
+      '/Reviews/3.jpg',
+      '/Reviews/4.jpg',
+      '/Reviews/5.jpg'
+    ],
+    'Delivered': [
+      '/Delivered/1.jpg',
+      '/Delivered/2.jpg',
+      '/Delivered/3.jpg',
+      '/Delivered/4.jpg',
+      '/Delivered/5.jpg'
+    ],
+    'Payment': [
+      '/Payment/1.jpg',
+      '/Payment/2.jpg',
+      '/Payment/3.jpg',
+      '/Payment/4.jpg',
+      '/Payment/5.jpg'
+    ]
+  };
 
-    // Image viewer functionality with dynamic folder loading
-    let currentImages = [];
-    let currentImageIndex = 0;
-    let currentFolderIndex = 0;
-    let allFolders = ['Reviews', 'Delivered', 'Payment'];
-    const modal = document.getElementById('imageViewerModal');
-    const viewerImage = document.getElementById('viewerImage');
-    const viewerCounter = document.getElementById('viewerCounter');
-    const viewerTitle = document.getElementById('viewerTitle');
-    const viewerClose = document.getElementById('viewerClose');
-    const viewerPrev = document.getElementById('viewerPrev');
-    const viewerNext = document.getElementById('viewerNext');
-    const viewerOverlay = document.getElementById('viewerOverlay');
-
-    // Replace the loadFolderImages function with this corrected version
-// Enhanced image loading function with extensive file name patterns
-const loadFolderImages = async (folderName) => {
-  try {
-    console.log(`🔍 Loading images from folder: ${folderName}`);
-    const images = [];
-    const basePath = `/${folderName}/`;
-    
-    // All possible file extensions
-    const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG', 'WEBP', 'GIF', 'bmp', 'BMP'];
-    
-    // Pattern 1: Simple numbers (1.jpg, 2.jpg, etc.)
-    console.log(`📝 Trying pattern: ${folderName}/1.jpg, 2.jpg, etc.`);
-    for (let i = 1; i <= 10; i++) {
-      let found = false;
-      for (const ext of extensions) {
-        const imagePath = `${basePath}${i}.${ext}`;
-        const exists = await checkImageExists(imagePath);
-        if (exists) {
-          images.push({
-            src: imagePath,
-            title: `${folderName} ${i}`
-          });
-          found = true;
-          console.log(`✅ Found: ${imagePath}`);
-          break;
-        }
-      }
-      if (!found && i > 3 && images.length === 0) break; // Stop if no images found in first 3
-    }
-    
-    // Pattern 2: Folder name + numbers (reviews1.jpg, payment1.jpg, etc.)
-    if (images.length === 0) {
-      console.log(`📝 Trying pattern: ${folderName.toLowerCase()}1.jpg, etc.`);
-      for (let i = 1; i <= 10; i++) {
-        for (const ext of extensions) {
-          const imagePath = `${basePath}${folderName.toLowerCase()}${i}.${ext}`;
-          const exists = await checkImageExists(imagePath);
-          if (exists) {
-            images.push({
-              src: imagePath,
-              title: `${folderName} ${i}`
-            });
-            console.log(`✅ Found: ${imagePath}`);
-            break;
-          }
-        }
-        if (images.length > 0) break;
-      }
-    }
-    
-    // Pattern 3: Common image names
-    if (images.length === 0) {
-      const commonNames = [
-        'image1', 'image2', 'image3', 'image4', 'image5',
-        'img1', 'img2', 'img3', 'img4', 'img5',
-        'photo1', 'photo2', 'photo3', 'photo4', 'photo5',
-        'pic1', 'pic2', 'pic3', 'pic4', 'pic5',
-        'screenshot1', 'screenshot2', 'screenshot3'
-      ];
-      
-      console.log(`📝 Trying common names: image1.jpg, photo1.jpg, etc.`);
-      for (const name of commonNames) {
-        for (const ext of extensions) {
-          const imagePath = `${basePath}${name}.${ext}`;
-          const exists = await checkImageExists(imagePath);
-          if (exists) {
-            images.push({
-              src: imagePath,
-              title: `${folderName} - ${name}`
-            });
-            console.log(`✅ Found: ${imagePath}`);
-            break;
-          }
-        }
-      }
-    }
-    
-    // Pattern 4: Any files in the directory (fallback)
-    if (images.length === 0) {
-      console.log(`📝 Trying any files pattern...`);
-      const anyFileNames = ['a', 'b', 'c', 'd', 'e', 'test', 'sample', folderName.toLowerCase()];
-      
-      for (const name of anyFileNames) {
-        for (const ext of extensions) {
-          const imagePath = `${basePath}${name}.${ext}`;
-          const exists = await checkImageExists(imagePath);
-          if (exists) {
-            images.push({
-              src: imagePath,
-              title: `${folderName} - ${name}`
-            });
-            console.log(`✅ Found: ${imagePath}`);
-            break;
-          }
-        }
-      }
-    }
-    
-    console.log(`📊 Total images found in ${folderName}: ${images.length}`);
-    if (images.length === 0) {
-      console.error(`❌ No images found in ${folderName} folder. Checked patterns:
-        - ${folderName}/1.jpg, 2.jpg, etc.
-        - ${folderName}/${folderName.toLowerCase()}1.jpg, etc.
-        - ${folderName}/image1.jpg, photo1.jpg, etc.
-        - ${folderName}/[any-name].jpg, etc.`);
-    }
-    
-    return images;
-  } catch (error) {
-    console.error(`💥 Error loading images for ${folderName}:`, error);
-    return [];
-  }
-};
-
-    // FAB action listeners
-    fabActions.forEach((action, index) => {
-      action.addEventListener('click', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const folderName = action.dataset.folder;
-        currentFolderIndex = allFolders.indexOf(folderName);
-        
-        const images = await loadFolderImages(folderName);
-        
-        if (images.length === 0) {
-          currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAnICsgZm9sZGVyTmFtZSArICcgZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
-            title: `No images found in ${folderName} folder`
-          }];
-        } else {
-          currentImages = images;
-        }
-        
-        currentImageIndex = 0;
-        showImage();
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        
-        if (fabContainer) {
-          fabContainer.classList.remove('expanded');
-        }
-      });
+  if (fabToggle && fabContainer) {
+    fabToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fabContainer.classList.toggle('expanded');
+      console.log('FAB toggled:', fabContainer.classList.contains('expanded'));
     });
 
-    const showImage = () => {
-      if (currentImages.length === 0) return;
-      
-      const image = currentImages[currentImageIndex];
-      viewerImage.src = image.src;
-      viewerTitle.textContent = image.title;
-      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-      
-      if (currentImageIndex < currentImages.length - 1) {
-        const nextImg = new Image();
-        nextImg.src = currentImages[currentImageIndex + 1].src;
+    document.addEventListener('click', (e) => {
+      if (!fabContainer.contains(e.target)) {
+        fabContainer.classList.remove('expanded');
       }
-    };
+    });
+  }
 
-    const closeImageViewer = () => {
-      modal.classList.remove('active');
-      document.body.style.overflow = 'auto';
-    };
+  // Image viewer variables
+  let currentImages = [];
+  let currentImageIndex = 0;
+  const modal = document.getElementById('imageViewerModal');
+  const viewerImage = document.getElementById('viewerImage');
+  const viewerCounter = document.getElementById('viewerCounter');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const viewerClose = document.getElementById('viewerClose');
+  const viewerPrev = document.getElementById('viewerPrev');
+  const viewerNext = document.getElementById('viewerNext');
+  const viewerOverlay = document.getElementById('viewerOverlay');
 
-    const showNextImage = () => {
-      if (currentImages.length === 0) return;
-      currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+  // FAB action listeners
+  fabActions.forEach((action) => {
+    action.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const folderName = action.dataset.folder;
+      console.log('FAB clicked:', folderName);
+      
+      const images = imageFiles[folderName] || [];
+      console.log('Images for', folderName, ':', images);
+      
+      if (images.length === 0) {
+        console.error('No images configured for folder:', folderName);
+        return;
+      }
+
+      currentImages = images.map((src, index) => ({
+        src: src,
+        title: `${folderName} ${index + 1}`
+      }));
+      
+      currentImageIndex = 0;
       showImage();
-    };
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      
+      if (fabContainer) {
+        fabContainer.classList.remove('expanded');
+      }
+    });
+  });
 
-    const showPrevImage = () => {
-      if (currentImages.length === 0) return;
-      currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-      showImage();
-    };
+  const showImage = () => {
+    if (currentImages.length === 0) return;
+    
+    const image = currentImages[currentImageIndex];
+    viewerImage.src = image.src;
+    viewerTitle.textContent = image.title;
+    viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    
+    console.log('Showing image:', image.src);
+  };
 
-    // Event listeners
-    if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
-    if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
-    if (viewerNext) viewerNext.addEventListener('click', showNextImage);
-    if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
-    if (viewerImage) {
-      viewerImage.addEventListener('click', (e) => {
-        e.stopPropagation();
+  const closeImageViewer = () => {
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+  };
+
+  const showNextImage = () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    showImage();
+  };
+
+  const showPrevImage = () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+    showImage();
+  };
+
+  // Event listeners
+  if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
+  if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
+  if (viewerNext) viewerNext.addEventListener('click', showNextImage);
+  if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
+  if (viewerImage) {
+    viewerImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showNextImage();
+    });
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!modal.classList.contains('active')) return;
+    
+    switch(e.key) {
+      case 'Escape':
+        closeImageViewer();
+        break;
+      case 'ArrowRight':
         showNextImage();
-      });
+        break;
+      case 'ArrowLeft':
+        showPrevImage();
+        break;
     }
+  });
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (!modal.classList.contains('active')) return;
-      
-      switch(e.key) {
-        case 'Escape':
-          closeImageViewer();
-          break;
-        case 'ArrowRight':
+  // Touch support
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (modal) {
+    modal.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      const minSwipeDistance = 50;
+
+      if (Math.abs(swipeDistance) > minSwipeDistance) {
+        if (swipeDistance > 0) {
           showNextImage();
-          break;
-        case 'ArrowLeft':
+        } else {
           showPrevImage();
-          break;
-      }
-    });
-
-    // Touch support
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    if (modal) {
-      modal.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-      }, { passive: true });
-
-      modal.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        const swipeDistance = touchStartX - touchEndX;
-        const minSwipeDistance = 50;
-
-        if (Math.abs(swipeDistance) > minSwipeDistance) {
-          if (swipeDistance > 0) {
-            showNextImage();
-          } else {
-            showPrevImage();
-          }
         }
-      }, { passive: true });
-    }
+      }
+    }, { passive: true });
   }
-
+}
+// Force page refresh when brand changes
+handleBrandChange(newBrand) {
+  console.log('🔄 Handling brand change to:', newBrand);
+  
+  if (newBrand !== this.currentBrand) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('brand', newBrand);
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    
+    console.log('🌐 Redirecting to:', newURL);
+    window.location.href = newURL; // Force full page reload
+  }
+}
   checkImageExists(imageSrc) {
   return new Promise((resolve) => {
     const img = new Image();
