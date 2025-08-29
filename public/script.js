@@ -48,22 +48,28 @@ class CSVCatalogApp {
 }
 
   updateBrandDisplay(brandFromURL) {
-    // Update brand name immediately from URL
-    const brandNameElement = document.getElementById('brandName');
-    const brandLogoElement = document.getElementById('brandLogo');
-    
-    if (brandNameElement) {
-      const displayName = this.slugToDisplayName(brandFromURL);
-      brandNameElement.textContent = displayName;
-      console.log('📝 Updated brand name to:', displayName);
-    }
-    
-    if (brandLogoElement) {
-      const initials = this.getInitials(this.slugToDisplayName(brandFromURL));
-      brandLogoElement.textContent = initials;
-      console.log('🔤 Updated logo initials to:', initials);
-    }
+  console.log('🔄 Updating brand display for:', brandFromURL);
+  
+  // Update brand name immediately from URL
+  const brandNameElement = document.getElementById('brandName');
+  const brandLogoElement = document.getElementById('brandLogo');
+  
+  if (brandNameElement) {
+    const displayName = this.slugToDisplayName(brandFromURL);
+    brandNameElement.textContent = displayName;
+    console.log('📝 Updated brand name element to:', displayName);
   }
+  
+  if (brandLogoElement) {
+    const initials = this.getInitials(this.slugToDisplayName(brandFromURL));
+    brandLogoElement.textContent = initials;
+    console.log('🔤 Updated logo element to:', initials);
+  }
+  
+  // Also update page title
+  const title = this.slugToDisplayName(brandFromURL);
+  document.title = title + ' - Luxury Collection';
+}
 
   slugToDisplayName(slug) {
     return slug
@@ -75,42 +81,62 @@ class CSVCatalogApp {
   }
 
   async init() {
-    console.log('🚀 Initializing CSV-driven catalog...');
-    
-    await this.loadData();
-    
-    if (!this.data) {
-      console.error('❌ No data available, initialization failed');
-      return;
-    }
+  console.log('🚀 Initializing CSV-driven catalog...');
+  
+  // FIRST: Get brand from URL before loading data
+  const urlParams = new URLSearchParams(window.location.search);
+  const requestedBrand = urlParams.get('brand');
+  console.log('🌐 Brand requested from URL:', requestedBrand);
+  
+  await this.loadData();
+  
+  if (!this.data) {
+    console.error('❌ No data available, initialization failed');
+    return;
+  }
 
-    console.log('📊 Starting setup with data:', {
-      brands: Object.keys(this.data.brands || {}),
-      catalogItems: Object.keys(this.data.catalog?.tree || {}),
-      currentBrand: this.currentBrand,
-      currentPath: this.currentPath
-    });
-
-    try {
-      this.setupBrandInfo();
-      
-      // Check if we need to show category view or homepage
-      if (this.currentPath.length > 0) {
-        console.log('📁 Showing category view for path:', this.currentPath);
-        this.showCategoryView();
-      } else {
-        console.log('🏠 Showing homepage view');
-        this.setupDynamicSections();
-      }
-      
-      this.setupTaxonomy();
-      this.setupFooter();
-      this.setupEventListeners();
-      console.log('✅ CSV catalog initialization complete!');
-    } catch (error) {
-      console.error('❌ Error during initialization:', error);
+  // FORCE brand update from URL if specified
+  if (requestedBrand) {
+    if (this.data.brands[requestedBrand]) {
+      console.log('✅ Forcing brand from URL:', requestedBrand);
+      this.currentBrand = requestedBrand;
+    } else {
+      console.warn('⚠️ Requested brand not found:', requestedBrand);
+      console.log('Available brands:', Object.keys(this.data.brands));
+      // Still try to use the first available brand
+      this.currentBrand = Object.keys(this.data.brands)[0];
     }
   }
+
+  console.log('📊 Starting setup with data:', {
+    brands: Object.keys(this.data.brands || {}),
+    catalogItems: Object.keys(this.data.catalog?.tree || {}),
+    currentBrand: this.currentBrand,
+    currentPath: this.currentPath,
+    requestedBrand: requestedBrand
+  });
+
+  try {
+    // FORCE brand info setup
+    this.setupBrandInfo();
+    
+    // Check if we need to show category view or homepage
+    if (this.currentPath.length > 0) {
+      console.log('📁 Showing category view for path:', this.currentPath);
+      this.showCategoryView();
+    } else {
+      console.log('🏠 Showing homepage view');
+      this.setupDynamicSections();
+    }
+    
+    this.setupTaxonomy();
+    this.setupFooter();
+    this.setupEventListeners();
+    console.log('✅ CSV catalog initialization complete!');
+  } catch (error) {
+    console.error('❌ Error during initialization:', error);
+  }
+}
 
   async loadData() {
   try {
@@ -501,6 +527,17 @@ class CSVCatalogApp {
   }
 
   setupBrandInfo() {
+  console.log('🏷️ Setting up brand info...');
+  
+  // Get brand from URL first
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlBrand = urlParams.get('brand');
+  
+  if (urlBrand && (!this.currentBrand || this.currentBrand !== urlBrand)) {
+    console.log('🔄 URL brand differs from current, updating:', urlBrand);
+    this.currentBrand = urlBrand;
+  }
+  
   if (!this.data || !this.data.brands) {
     console.error('❌ No brand data available');
     return;
@@ -510,44 +547,80 @@ class CSVCatalogApp {
   if (!brand) {
     console.error('❌ Brand not found:', this.currentBrand);
     console.log('Available brands:', Object.keys(this.data.brands));
-    return;
+    
+    // Use first available brand as fallback
+    const firstBrand = Object.keys(this.data.brands)[0];
+    if (firstBrand) {
+      console.log('⚠️ Falling back to first brand:', firstBrand);
+      this.currentBrand = firstBrand;
+      const brand = this.data.brands[this.currentBrand];
+    } else {
+      return;
+    }
   }
 
   console.log('🏷️ Setting up brand info for:', this.currentBrand, brand);
 
-  // Update brand elements with actual data
-  this.updateElement('brandName', brand.name || brand.brandName || this.currentBrand);
-  this.updateElement('brandTagline', brand.tagline || 'Premium Quality Collection');
-  this.updateElement('heroTitle', brand.heroTitle || 'Discover Luxury Collections');
-  this.updateElement('heroSubtitle', brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.');
-  this.updateElement('footerBrandName', brand.name || brand.brandName || this.currentBrand);
-  
-  // Reset subtitle display for homepage
-  const heroSubtitle = document.getElementById('heroSubtitle');
-  if (heroSubtitle) {
-    heroSubtitle.style.display = 'block';
+  // FORCE update brand elements
+  const brandName = brand.name || brand.brandName || this.slugToDisplayName(this.currentBrand);
+  const tagline = brand.tagline || 'Premium Quality Collection';
+  const heroTitle = brand.heroTitle || 'Discover Luxury Collections';
+  const heroSubtitle = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
+
+  // Force DOM updates
+  const brandNameEl = document.getElementById('brandName');
+  const brandTaglineEl = document.getElementById('brandTagline');
+  const heroTitleEl = document.getElementById('heroTitle');
+  const heroSubtitleEl = document.getElementById('heroSubtitle');
+  const footerBrandEl = document.getElementById('footerBrandName');
+  const logoEl = document.getElementById('brandLogo');
+
+  if (brandNameEl) {
+    brandNameEl.textContent = brandName;
+    console.log('✅ Updated brandName:', brandName);
   }
   
-  // Update logo with brand initials
-  const logo = document.getElementById('brandLogo');
-  if (logo) {
-    const brandName = brand.name || brand.brandName || this.currentBrand;
-    logo.textContent = this.getInitials(brandName);
+  if (brandTaglineEl) {
+    brandTaglineEl.textContent = tagline;
+    console.log('✅ Updated tagline:', tagline);
+  }
+  
+  if (heroTitleEl) {
+    heroTitleEl.textContent = heroTitle;
+    console.log('✅ Updated heroTitle:', heroTitle);
+  }
+  
+  if (heroSubtitleEl) {
+    heroSubtitleEl.textContent = heroSubtitle;
+    heroSubtitleEl.style.display = 'block';
+    console.log('✅ Updated heroSubtitle:', heroSubtitle);
+  }
+  
+  if (footerBrandEl) {
+    footerBrandEl.textContent = brandName;
+    console.log('✅ Updated footerBrand:', brandName);
+  }
+  
+  if (logoEl) {
+    const initials = this.getInitials(brandName);
+    logoEl.textContent = initials;
+    console.log('✅ Updated logo:', initials);
   }
 
-  // Apply brand colors
+  // FORCE apply brand colors
   if (brand.colors) {
     console.log('🎨 Applying brand colors:', brand.colors);
     this.applyBrandColors(brand.colors);
   } else {
-    // Fallback colors if no colors specified
-    const fallbackColors = {
+    console.log('⚠️ No colors found for brand, using defaults');
+    // Use default colors
+    const defaultColors = {
       primary: '#6366f1',
       accent: '#8b5cf6',
       text: '#202124',
       bg: '#ffffff'
     };
-    this.applyBrandColors(fallbackColors);
+    this.applyBrandColors(defaultColors);
   }
 
   // Setup WhatsApp button
@@ -557,6 +630,9 @@ class CSVCatalogApp {
     whatsApp.style.display = 'flex';
     console.log('📱 WhatsApp link set:', brand.whatsapp);
   }
+
+  // Update page title
+  document.title = `${brandName} - Luxury Collection`;
 
   console.log('✅ Brand info setup complete for:', this.currentBrand);
 }
@@ -672,22 +748,18 @@ class CSVCatalogApp {
   }
 
   createSectionHTML(sectionName, items) {
-    const gridClass = this.getGridClass(items.length);
-    
-    return `
-      <section class="content-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">${sectionName}</h2>
-            <p class="section-description">Discover our curated ${sectionName.toLowerCase()} collection</p>
-          </div>
-          <div class="cards-grid ${gridClass}">
-            ${items.map(item => this.createCardHTML(item)).join('')}
-          </div>
+  const gridClass = this.getGridClass(items.length);
+  
+  return `
+    <section class="content-section">
+      <div class="container">
+        <div class="cards-grid ${gridClass}">
+          ${items.map(item => this.createCardHTML(item)).join('')}
         </div>
-      </section>
-    `;
-  }
+      </div>
+    </section>
+  `;
+}
 
   getGridClass(itemCount) {
     if (itemCount === 1) return 'grid-1';
@@ -1021,46 +1093,51 @@ class CSVCatalogApp {
   }
 
 
+// New 3-Dot Menu functionality
 setupFABFunctionality() {
-  const fabToggle = document.getElementById('fabToggle');
-  const fabContainer = document.getElementById('fabContainer');
-  const fabActions = document.querySelectorAll('.fab-action[data-folder]');
+  console.log('🔘 Setting up 3-dot menu functionality...');
+  
+  const threeDotToggle = document.getElementById('threeDotToggle');
+  const threeDotMenu = document.getElementById('threeDotMenu');
+  const menuItems = document.querySelectorAll('.menu-item');
 
-  // Hardcoded image files based on your repository structure
+  // Image files configuration - ready for /icons/ folder
   const imageFiles = {
     'Reviews': [
-      '/Reviews/1.jpg',
-      '/Reviews/2.jpg', 
-      '/Reviews/3.jpg',
-      '/Reviews/4.jpg',
-      '/Reviews/5.jpg'
+      'Reviews/1.jpg',
+      'Reviews/2.jpg', 
+      'Reviews/3.jpg',
+      'Reviews/4.jpg',
+      'Reviews/5.jpg'
     ],
     'Delivered': [
-      '/Delivered/1.jpg',
-      '/Delivered/2.jpg',
-      '/Delivered/3.jpg',
-      '/Delivered/4.jpg',
-      '/Delivered/5.jpg'
+      'Delivered/1.jpg',
+      'Delivered/2.jpg',
+      'Delivered/3.jpg',
+      'Delivered/4.jpg',
+      'Delivered/5.jpg'
     ],
     'Payment': [
-      '/Payment/1.jpg',
-      '/Payment/2.jpg',
-      '/Payment/3.jpg',
-      '/Payment/4.jpg',
-      '/Payment/5.jpg'
+      'Payment/1.jpg',
+      'Payment/2.jpg',
+      'Payment/3.jpg',
+      'Payment/4.jpg',
+      'Payment/5.jpg'
     ]
   };
 
-  if (fabToggle && fabContainer) {
-    fabToggle.addEventListener('click', (e) => {
+  // 3-dot menu toggle
+  if (threeDotToggle && threeDotMenu) {
+    threeDotToggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      fabContainer.classList.toggle('expanded');
-      console.log('FAB toggled:', fabContainer.classList.contains('expanded'));
+      threeDotMenu.classList.toggle('expanded');
+      console.log('3-dot menu toggled:', threeDotMenu.classList.contains('expanded'));
     });
 
+    // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-      if (!fabContainer.contains(e.target)) {
-        fabContainer.classList.remove('expanded');
+      if (!threeDotMenu.contains(e.target)) {
+        threeDotMenu.classList.remove('expanded');
       }
     });
   }
@@ -1077,38 +1154,44 @@ setupFABFunctionality() {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // FAB action listeners
-  fabActions.forEach((action) => {
-    action.addEventListener('click', (e) => {
+  // Menu item click handlers
+  menuItems.forEach((item) => {
+    item.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const folderName = action.dataset.folder;
-      console.log('FAB clicked:', folderName);
+      const folderName = item.dataset.folder;
+      console.log('Menu item clicked:', folderName);
       
       const images = imageFiles[folderName] || [];
       console.log('Images for', folderName, ':', images);
       
       if (images.length === 0) {
         console.error('No images configured for folder:', folderName);
-        return;
+        // Show fallback message
+        currentImages = [{
+          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAnICsgZm9sZGVyTmFtZSArICcgZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
+          title: `No images found in ${folderName} folder`
+        }];
+      } else {
+        currentImages = images.map((src, index) => ({
+          src: src,
+          title: `${folderName} ${index + 1}`
+        }));
       }
-
-      currentImages = images.map((src, index) => ({
-        src: src,
-        title: `${folderName} ${index + 1}`
-      }));
       
       currentImageIndex = 0;
       showImage();
       modal.classList.add('active');
       document.body.style.overflow = 'hidden';
       
-      if (fabContainer) {
-        fabContainer.classList.remove('expanded');
+      // Close menu after selection
+      if (threeDotMenu) {
+        threeDotMenu.classList.remove('expanded');
       }
     });
   });
 
+  // Image viewer functions
   const showImage = () => {
     if (currentImages.length === 0) return;
     
@@ -1137,7 +1220,7 @@ setupFABFunctionality() {
     showImage();
   };
 
-  // Event listeners
+  // Image viewer event listeners
   if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
   if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
   if (viewerNext) viewerNext.addEventListener('click', showNextImage);
@@ -1189,6 +1272,8 @@ setupFABFunctionality() {
       }
     }, { passive: true });
   }
+
+  console.log('✅ 3-dot menu setup complete');
 }
 // Force page refresh when brand changes
 handleBrandChange(newBrand) {
@@ -1264,29 +1349,70 @@ handleBrandChange(newBrand) {
     this.isLoading = false;
     document.body.classList.remove('loading');
   }
+  // Force brand refresh method
+forceBrandRefresh() {
+  console.log('🔄 Forcing brand refresh...');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlBrand = urlParams.get('brand');
+  
+  if (urlBrand && urlBrand !== this.currentBrand) {
+    console.log('🔄 Brand mismatch detected, forcing update:', urlBrand);
+    this.currentBrand = urlBrand;
+    
+    // Force immediate DOM updates
+    this.updateBrandDisplay(urlBrand);
+    
+    // Setup brand info again
+    if (this.data && this.data.brands) {
+      this.setupBrandInfo();
+    }
+  }
+}
 }
 
 // Initialize the application
+// Enhanced initialization with forced brand refresh
 console.log('🔧 Script loaded, starting initialization...');
 
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('📄 DOM loaded, creating app instance...');
+function initializeApp() {
+  console.log('📄 Initializing app...');
+  
   const app = new CSVCatalogApp();
-  app.init().catch(error => {
+  
+  app.init().then(() => {
+    // Force brand refresh after initialization
+    setTimeout(() => {
+      app.forceBrandRefresh();
+    }, 100);
+  }).catch(error => {
     console.error('💥 App initialization failed:', error);
-    document.body.innerHTML += `
-      <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                  background: red; color: white; padding: 20px; border-radius: 10px; z-index: 9999;">
-        <h3>Initialization Error</h3>
-        <p>Error: ${error.message}</p>
-        <p>Check console for details</p>
-      </div>
-    `;
   });
   
   window.catalogApp = app;
   console.log('🔧 App instance created and available as window.catalogApp');
-});
+  
+  // Monitor URL changes for brand switching
+  window.addEventListener('popstate', () => {
+    console.log('🔄 URL changed, refreshing brand...');
+    app.forceBrandRefresh();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// Backup initialization
+if (document.readyState === 'loading') {
+  console.log('⏳ Document still loading, waiting for DOMContentLoaded...');
+} else {
+  console.log('🚀 Document already loaded, initializing immediately...');
+  setTimeout(() => {
+    if (!window.catalogApp) {
+      console.log('🔄 Backup initialization starting...');
+      initializeApp();
+    }
+  }, 100);
+}
 
 // Backup initialization
 if (document.readyState === 'loading') {
