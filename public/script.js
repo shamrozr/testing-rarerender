@@ -85,16 +85,16 @@ class CSVCatalogApp {
 
     try {
       this.setupBrandInfo();
-      this.setupStats();
-      
-      // Check if we need to show category view or homepage
-      if (this.currentPath.length > 0) {
-        console.log('📁 Showing category view for path:', this.currentPath);
-        this.showCategoryView();
-      } else {
-        console.log('🏠 Showing homepage view');
-        this.setupDynamicSections();
-      }
+
+// Check if we need to show category view or homepage
+if (this.currentPath.length > 0) {
+  console.log('📁 Showing category view for path:', this.currentPath);
+  this.showCategoryView();
+} else {
+  console.log('🏠 Showing homepage view');
+  this.setupStats();
+  this.setupDynamicSections();
+}
       
       this.setupTaxonomy();
       this.setupFooter();
@@ -343,9 +343,22 @@ class CSVCatalogApp {
           font-weight: 500;
         `;
         link.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.navigateToCategory(crumb.path);
-        });
+  e.preventDefault();
+  const pathSegments = crumb.path.split('/');
+  this.currentPath = pathSegments;
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('path', crumb.path);
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ path: pathSegments, brand: this.currentBrand }, '', newURL);
+  
+  this.showCategoryView();
+});
         breadcrumbNav.appendChild(link);
       }
     });
@@ -429,14 +442,18 @@ class CSVCatalogApp {
     // Reset state
     this.currentPath = [];
     
-    // Re-render homepage
-    this.setupDynamicSections();
-    
-    // Show taxonomy section
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'block';
-    }
+// Re-render homepage
+this.setupDynamicSections();
+
+// Reset scroll to top
+window.scrollTo({ top: 0, behavior: 'smooth' });
+this.setupStats();
+
+// Show taxonomy section
+const taxonomySection = document.querySelector('.taxonomy-section');
+if (taxonomySection) {
+  taxonomySection.style.display = 'block';
+}
 
     // Reset hero
     this.setupBrandInfo();
@@ -639,9 +656,10 @@ class CSVCatalogApp {
 
     const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
 
-    return `
-      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" role="button" tabindex="0">
-        <div class="card-image">
+    const cardClass = item.isProduct ? 'content-card product-card' : 'content-card';
+return `
+  <div class="${cardClass}" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" role="button" tabindex="0">
+  <div class="card-image">
           ${imageContent}
           <div class="card-overlay"></div>
         </div>
@@ -703,28 +721,22 @@ class CSVCatalogApp {
     const brand = this.data.brands[this.currentBrand];
     const footerText = brand?.footerText || 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.';
 
-    footerContent.innerHTML = `
-      <div class="footer-section">
-        <h3>${brand?.brandName || brand?.name || 'Luxury Collection'}</h3>
-        <p>${footerText}</p>
-      </div>
-      <div class="footer-section">
-        <h3>Quick Links</h3>
-        <a href="#categories">Categories</a>
-        <a href="#products">Products</a>
-        <a href="#contact">Contact Us</a>
-      </div>
-      <div class="footer-section">
-        <h3>Customer Service</h3>
-        <p>24/7 Support Available</p>
-        <p>Premium Customer Care</p>
-        <p>Worldwide Shipping</p>
-      </div>
-      <div class="footer-section">
-        <h3>Connect With Us</h3>
-        <p>Follow us for the latest luxury collections and exclusive offers.</p>
-      </div>
-    `;
+footerContent.innerHTML = `
+  <div class="footer-section">
+    <h3>${brand?.brandName || brand?.name || 'Luxury Collection'}</h3>
+    <p>${footerText}</p>
+  </div>
+  <div class="footer-section">
+    <h3>Customer Service</h3>
+    <p>24/7 Support Available</p>
+    <p>Premium Customer Care</p>
+    <p>Worldwide Shipping</p>
+  </div>
+  <div class="footer-section">
+    <h3>Connect With Us</h3>
+    <p>Follow us for the latest luxury collections and exclusive offers.</p>
+  </div>
+`;
   }
 
   setupEventListeners() {
@@ -809,8 +821,11 @@ class CSVCatalogApp {
       path: newPath 
     }, '', newURL);
     
-    // Show category view
-    this.showCategoryView();
+// Show category view
+this.showCategoryView();
+
+// Reset scroll to top
+window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   handleBrowserNavigation() {
