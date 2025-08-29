@@ -752,7 +752,167 @@ class CSVCatalogApp {
         }
       }
     });
+// Add this to the end of setupEventListeners() method in script.js
 
+// FAB functionality
+const fabToggle = document.getElementById('fabToggle');
+const fabContainer = document.getElementById('fabContainer');
+const fabActions = document.querySelectorAll('.fab-action[data-folder]');
+
+if (fabToggle && fabContainer) {
+  fabToggle.addEventListener('click', () => {
+    fabContainer.classList.toggle('expanded');
+  });
+
+  // Close FAB when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!fabContainer.contains(e.target)) {
+      fabContainer.classList.remove('expanded');
+    }
+  });
+}
+
+// Image viewer functionality
+let currentImages = [];
+let currentImageIndex = 0;
+const modal = document.getElementById('imageViewerModal');
+const viewerImage = document.getElementById('viewerImage');
+const viewerCounter = document.getElementById('viewerCounter');
+const viewerTitle = document.getElementById('viewerTitle');
+const viewerClose = document.getElementById('viewerClose');
+const viewerPrev = document.getElementById('viewerPrev');
+const viewerNext = document.getElementById('viewerNext');
+const viewerOverlay = document.getElementById('viewerOverlay');
+
+// Sample image data (you'll need to update this with actual folder contents)
+const folderImages = {
+  reviews: [
+    { src: '/thumbs/reviews/review1.jpg', title: 'Customer Review 1' },
+    { src: '/thumbs/reviews/review2.jpg', title: 'Customer Review 2' },
+    { src: '/thumbs/reviews/review3.jpg', title: 'Customer Review 3' }
+  ],
+  delivery: [
+    { src: '/thumbs/delivery/packaging1.jpg', title: 'Premium Packaging' },
+    { src: '/thumbs/delivery/shipping1.jpg', title: 'Secure Shipping' },
+    { src: '/thumbs/delivery/delivery1.jpg', title: 'Safe Delivery' }
+  ],
+  payment: [
+    { src: '/thumbs/payment/methods1.jpg', title: 'Payment Methods' },
+    { src: '/thumbs/payment/security1.jpg', title: 'Secure Payments' },
+    { src: '/thumbs/payment/receipt1.jpg', title: 'Payment Confirmation' }
+  ]
+};
+
+// FAB action listeners
+fabActions.forEach(action => {
+  action.addEventListener('click', (e) => {
+    e.preventDefault();
+    const folderName = action.dataset.folder;
+    openImageViewer(folderName);
+  });
+});
+
+function openImageViewer(folderName) {
+  const images = folderImages[folderName] || [];
+  if (images.length === 0) {
+    console.log(`No images found for ${folderName}`);
+    return;
+  }
+
+  currentImages = images;
+  currentImageIndex = 0;
+  showImage();
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageViewer() {
+  modal.classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+function showImage() {
+  if (currentImages.length === 0) return;
+  
+  const image = currentImages[currentImageIndex];
+  viewerImage.src = image.src;
+  viewerTitle.textContent = image.title;
+  viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+}
+
+function showNextImage() {
+  if (currentImages.length === 0) return;
+  currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+  showImage();
+}
+
+function showPrevImage() {
+  if (currentImages.length === 0) return;
+  currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+  showImage();
+}
+
+// Event listeners for image viewer
+if (viewerClose) {
+  viewerClose.addEventListener('click', closeImageViewer);
+}
+
+if (viewerOverlay) {
+  viewerOverlay.addEventListener('click', closeImageViewer);
+}
+
+if (viewerNext) {
+  viewerNext.addEventListener('click', showNextImage);
+}
+
+if (viewerPrev) {
+  viewerPrev.addEventListener('click', showPrevImage);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (!modal.classList.contains('active')) return;
+  
+  switch(e.key) {
+    case 'Escape':
+      closeImageViewer();
+      break;
+    case 'ArrowRight':
+      showNextImage();
+      break;
+    case 'ArrowLeft':
+      showPrevImage();
+      break;
+  }
+});
+
+// Touch/swipe support for mobile
+let touchStartX = 0;
+let touchEndX = 0;
+
+if (modal) {
+  modal.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+
+  modal.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  });
+}
+
+function handleSwipe() {
+  const swipeDistance = touchStartX - touchEndX;
+  const minSwipeDistance = 50;
+
+  if (Math.abs(swipeDistance) > minSwipeDistance) {
+    if (swipeDistance > 0) {
+      showNextImage(); // Swipe left, next image
+    } else {
+      showPrevImage(); // Swipe right, previous image
+    }
+  }
+}
     // Search functionality
     // Search functionality - only on Enter press
 const searchInput = document.getElementById('searchInput');
