@@ -827,7 +827,46 @@ class CSVCatalogApp {
     }
   }
 
-  handleSearch(query) {
+ handleSearch(query) {
     if (!query.trim()) return;
     console.log('🔍 Searching for:', query);
     this.showNotification(`Searching for "${query}"...`);
+  }
+
+  showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: var(--color-primary);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+      font-weight: 500;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      max-width: 300px;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  showLoading() {
+    this.isLoading = true;
+    document.body.classList.add('loading');
+  }
+
+  hideLoading() {
+    this.isLoading = false;
+    document.body.classList.remove('loading');
+  }
+}
