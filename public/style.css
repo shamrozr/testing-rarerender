@@ -260,7 +260,20 @@ body {
   margin-bottom: var(--space-10);
   line-height: 1.6;
 }
+/* Reduce spacing between hero and first section */
+.hero + #dynamicSections .content-section:first-child {
+  padding-top: var(--space-8);
+}
 
+/* Remove section header from category pages */
+.content-section .section-header {
+  margin-bottom: var(--space-8);
+}
+
+/* Hide section headers on category pages */
+body[data-page-type="category"] .section-header {
+  display: none;
+}
 /* Breadcrumb Navigation */
 /* ===================== */
 
