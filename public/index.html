@@ -719,14 +719,31 @@
 
       async init() {
         console.log('🚀 Initializing CSV-driven catalog...');
+        
         await this.loadData();
-        this.setupBrandInfo();
-        this.setupStats();
-        this.setupDynamicSections();
-        this.setupTaxonomy();
-        this.setupFooter();
-        this.setupEventListeners();
-        console.log('✅ CSV catalog ready!');
+        
+        if (!this.data) {
+          console.error('❌ No data available, initialization failed');
+          return;
+        }
+
+        console.log('📊 Starting setup with data:', {
+          brands: Object.keys(this.data.brands || {}),
+          catalogItems: Object.keys(this.data.catalog?.tree || {}),
+          currentBrand: this.currentBrand
+        });
+
+        try {
+          this.setupBrandInfo();
+          this.setupStats();
+          this.setupDynamicSections();
+          this.setupTaxonomy();
+          this.setupFooter();
+          this.setupEventListeners();
+          console.log('✅ CSV catalog initialization complete!');
+        } catch (error) {
+          console.error('❌ Error during initialization:', error);
+        }
       }
 
       async loadData() {
