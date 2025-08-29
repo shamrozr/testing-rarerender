@@ -176,26 +176,53 @@
 
   <!-- JavaScript -->
   <script src="/script.js" type="module"></script>
-  <!-- Temporary Debug Button - Remove after testing -->
-<button onclick="testImageFolders()" style="position:fixed;top:10px;left:10px;z-index:9999;padding:10px;background:red;color:white;border:none;border-radius:5px;">
-  Test Image Folders
+  <!-- Enhanced Debug Button -->
+<button onclick="testFolderAccess()" style="position:fixed;top:10px;left:10px;z-index:9999;padding:10px;background:red;color:white;border:none;border-radius:5px;font-size:12px;">
+  Test Folders
 </button>
 
 <script>
-function testImageFolders() {
-  console.log('🧪 Testing image folders...');
+async function testFolderAccess() {
+  console.log('🧪 Testing folder access...');
   
-  // Test if folders exist
   const folders = ['Reviews', 'Delivered', 'Payment'];
-  folders.forEach(async (folder) => {
-    const testPath = `/${folder}/1.jpg`;
-    console.log(`Testing: ${testPath}`);
+  const extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG'];
+  
+  for (const folder of folders) {
+    console.log(`\n📁 Testing folder: ${folder}`);
     
-    const img = new Image();
-    img.onload = () => console.log(`✅ ${folder} folder accessible`);
-    img.onerror = () => console.log(`❌ ${folder} folder or image not found`);
-    img.src = testPath;
-  });
+    // Test multiple file patterns
+    const testPatterns = [
+      `/${folder}/1`,
+      `/${folder}/2`,
+      `/${folder}/image1`,
+      `/${folder}/photo1`,
+      `/${folder}/${folder.toLowerCase()}1`,
+      `/${folder}/img1`
+    ];
+    
+    let foundAny = false;
+    
+    for (const pattern of testPatterns) {
+      for (const ext of extensions) {
+        const testPath = `${pattern}.${ext}`;
+        
+        try {
+          const response = await fetch(testPath, { method: 'HEAD' });
+          if (response.ok) {
+            console.log(`✅ Found: ${testPath}`);
+            foundAny = true;
+          }
+        } catch (error) {
+          // Ignore errors, just continue testing
+        }
+      }
+    }
+    
+    if (!foundAny) {
+      console.log(`❌ No images found in ${folder} folder`);
+    }
+  }
 }
 </script>
 </body>
