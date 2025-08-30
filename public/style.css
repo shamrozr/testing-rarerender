@@ -726,50 +726,25 @@ body[data-page-type="category"] .section-header {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-.menu-toggle-icon,
-.menu-close-icon {
-  width: 24px;
-  height: 24px;
-  filter: brightness(0) invert(1);
-}
-
-.icon-placeholder,
-.close-placeholder {
-  font-size: 20px;
-  color: white;
+.three-close {
+  display: none;
+  font-size: 24px;
+  font-weight: 300;
   line-height: 1;
 }
 
-.close-placeholder {
-  font-size: 24px;
-  font-weight: 300;
+.three-dots {
+  display: block;
+  font-size: 20px;
+  line-height: 1;
 }
 
-.three-dot-menu.expanded .menu-toggle-icon,
-.three-dot-menu.expanded .icon-placeholder {
+.three-dot-menu.expanded .three-dots {
   display: none;
 }
 
-.three-dot-menu.expanded .menu-close-icon,
-.three-dot-menu.expanded .close-placeholder {
-  display: block !important;
-}
-
-/* Menu Items Container */
-.three-dot-items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all var(--transition-smooth);
-  pointer-events: none;
-}
-
-.three-dot-menu.expanded .three-dot-items {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: all;
+.three-dot-menu.expanded .three-close {
+  display: block;
 }
 
 /* Individual Menu Item */
