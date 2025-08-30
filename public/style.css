@@ -724,8 +724,16 @@ body[data-page-type="category"] .section-header {
 
 .footer-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--space-8);
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-12);
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
 }
 
 .footer-section h3 {
@@ -754,23 +762,20 @@ body[data-page-type="category"] .section-header {
   padding-top: var(--space-8);
   text-align: center;
   color: rgba(255, 255, 255, 0.6);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .footer-bottom p {
   margin: 0;
-  display: inline;
   white-space: nowrap;
+  display: inline-block;
+  font-size: 0.9rem;
 }
 
 /* Mobile footer fix */
 @media (max-width: 768px) {
-  .footer-bottom {
+  .footer-bottom p {
     white-space: normal;
-    overflow: visible;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 }
 
