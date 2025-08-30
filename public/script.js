@@ -1146,16 +1146,16 @@ class CSVCatalogApp {
 
 // COMPLETE REPLACEMENT - Replace entire setupFABFunctionality() method with this WORKING version:
 
+// SUPER FAST REPLACEMENT - Replace entire setupFABFunctionality() method:
+
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
-  // Global state
-  const imageCache = new Map();
+  // Simple state management
   let currentImages = [];
   let currentImageIndex = 0;
-  let currentFolder = '';
   
   const modal = document.getElementById('imageViewerModal');
   const viewerImage = document.getElementById('viewerImage');
@@ -1166,7 +1166,7 @@ setupFABFunctionality() {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // Menu toggle functionality
+  // Menu functionality
   if (threeDotToggle && threeDotMenu) {
     threeDotMenu.classList.remove('expanded');
     
@@ -1182,121 +1182,95 @@ setupFABFunctionality() {
     });
   }
 
-  // Simple, fast image check
-  const checkImage = (url) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const timeout = setTimeout(() => resolve(false), 500);
+  // INSTANT WebP file discovery - Try known common names FIRST
+  const discoverWebPFiles = async (folderName) => {
+    console.log(`🚀 INSTANT scanning ${folderName} for .webp files...`);
+    
+    const foundImages = [];
+    
+    // STRATEGY: Try most common webp naming patterns FAST
+    const quickPatterns = [
+      // Your current pattern
+      ...Array.from({length: 25}, (_, i) => `image${i + 1}`),
+      // Common alternatives  
+      ...Array.from({length: 25}, (_, i) => `${i + 1}`),
+      ...Array.from({length: 10}, (_, i) => `img${i + 1}`),
+      // Descriptive names
+      'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
+      'photo', 'pic', 'screenshot', 'scan', 'document', 'file'
+    ];
+    
+    // PARALLEL checking for MAXIMUM SPEED
+    const checkPromises = quickPatterns.map(async (pattern) => {
+      const webpPath = `${folderName}/${pattern}.webp`;
       
-      img.onload = () => {
-        clearTimeout(timeout);
-        resolve(true);
-      };
-      
-      img.onerror = () => {
-        clearTimeout(timeout);
-        resolve(false);
-      };
-      
-      img.src = url + '?t=' + Date.now();
+      try {
+        const response = await fetch(webpPath, { method: 'HEAD' });
+        if (response.ok) {
+          return {
+            src: webpPath,
+            title: `${folderName} - ${pattern}`,
+            name: pattern,
+            index: parseInt(pattern.replace(/\D/g, '')) || 999
+          };
+        }
+      } catch (error) {
+        // Silent fail - continue checking other files
+      }
+      return null;
     });
-  };
-
-  // Simple image loading for your exact file structure
-  const loadFolderImages = async (folderName) => {
-    console.log(`Loading images from ${folderName}...`);
     
-    const images = [];
-    const formats = ['webp', 'jpg', 'jpeg', 'png'];
+    // Wait for all checks to complete
+    const results = await Promise.all(checkPromises);
     
-    // Check for your exact pattern: image1.webp, image2.webp, etc.
-    for (let i = 1; i <= 50; i++) {
-      for (const format of formats) {
-        const imagePath = `${folderName}/image${i}.${format}`;
-        
-        try {
-          const exists = await checkImage(imagePath);
-          if (exists) {
-            images.push({
-              src: imagePath,
-              title: `${folderName} Image ${i}`,
-              index: i
-            });
-            console.log(`✅ Found: ${imagePath}`);
-          }
-        } catch (error) {
-          // Silent continue
-        }
-      }
-    }
+    // Filter successful results and sort
+    const validImages = results
+      .filter(result => result !== null)
+      .sort((a, b) => a.index - b.index);
     
-    // Also check simple numbers: 1.webp, 2.webp, etc.
-    if (images.length === 0) {
-      for (let i = 1; i <= 20; i++) {
-        for (const format of formats) {
-          const imagePath = `${folderName}/${i}.${format}`;
-          
-          try {
-            const exists = await checkImage(imagePath);
-            if (exists) {
-              images.push({
-                src: imagePath,
-                title: `${folderName} Image ${i}`,
-                index: i
-              });
-              console.log(`✅ Found: ${imagePath}`);
-            }
-          } catch (error) {
-            // Silent continue
-          }
-        }
-      }
-    }
+    console.log(`✅ INSTANT FOUND: ${validImages.length} .webp files in ${folderName}`);
+    console.log('📁 Files:', validImages.map(img => img.src.split('/').pop()));
     
-    // Sort by index
-    images.sort((a, b) => a.index - b.index);
-    
-    console.log(`Total images found in ${folderName}: ${images.length}`);
-    return images;
+    return validImages;
   };
 
   // Image viewer functions
-  const showImage = () => {
+  const showCurrentImage = () => {
     if (currentImages.length === 0) return;
     
     const image = currentImages[currentImageIndex];
     if (viewerImage) viewerImage.src = image.src;
     if (viewerTitle) viewerTitle.textContent = image.title;
     if (viewerCounter) viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-    
-    console.log(`Showing: ${image.src} (${currentImageIndex + 1}/${currentImages.length})`);
   };
 
-  const closeViewer = () => {
+  const closeImageViewer = () => {
     if (modal) modal.classList.remove('active');
     document.body.style.overflow = 'auto';
   };
 
-  const nextImage = () => {
-    if (currentImages.length === 0) return;
+  const showNextImage = () => {
+    if (currentImages.length <= 1) return;
     currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    showImage();
+    console.log(`Next: ${currentImageIndex + 1}/${currentImages.length}`);
+    showCurrentImage();
   };
 
-  const prevImage = () => {
-    if (currentImages.length === 0) return;
+  const showPrevImage = () => {
+    if (currentImages.length <= 1) return;
     currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    showImage();
+    console.log(`Prev: ${currentImageIndex + 1}/${currentImages.length}`);
+    showCurrentImage();
   };
 
-  // Menu item click handlers
+  // INSTANT menu click handlers
   menuItems.forEach((item) => {
     item.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       
       const folderName = item.dataset.folder;
-      currentFolder = folderName;
+      console.log(`🔄 INSTANT loading ${folderName}...`);
       
       // Show modal immediately
       if (modal) {
@@ -1304,82 +1278,85 @@ setupFABFunctionality() {
         document.body.style.overflow = 'hidden';
       }
 
-      // Check cache first
-      if (imageCache.has(folderName)) {
-        const cached = imageCache.get(folderName);
-        console.log(`Cache hit: ${cached.length} images for ${folderName}`);
-        currentImages = cached;
-        currentImageIndex = 0;
-        showImage();
-        if (threeDotMenu) threeDotMenu.classList.remove('expanded');
-        return;
-      }
-
-      // Show loading
+      // Show loading state
       if (viewerImage) {
         viewerImage.src = 'data:image/svg+xml,' + encodeURIComponent(`
           <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
             <rect width="100%" height="100%" fill="#f8f9fa"/>
-            <circle cx="200" cy="120" r="20" fill="none" stroke="#6366f1" stroke-width="3">
-              <animateTransform attributeName="transform" type="rotate" values="0 200 120;360 200 120" dur="1s" repeatCount="indefinite"/>
+            <circle cx="200" cy="150" r="25" fill="none" stroke="#6366f1" stroke-width="4">
+              <animateTransform attributeName="transform" type="rotate" values="0 200 150;360 200 150" dur="0.8s" repeatCount="indefinite"/>
             </circle>
-            <text x="50%" y="65%" font-family="Arial" font-size="16" fill="#6366f1" text-anchor="middle" font-weight="600">Loading ${folderName}...</text>
+            <text x="50%" y="75%" font-family="Arial" font-size="16" fill="#6366f1" text-anchor="middle" font-weight="600">Scanning ${folderName}...</text>
           </svg>
         `);
       }
-      if (viewerTitle) viewerTitle.textContent = `Loading ${folderName}...`;
-      if (viewerCounter) viewerCounter.textContent = 'Please wait...';
+      if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
+      if (viewerCounter) viewerCounter.textContent = 'Finding .webp files...';
       
       try {
-        const images = await loadFolderImages(folderName);
+        // INSTANT discovery
+        const images = await discoverWebPFiles(folderName);
         
         if (images.length === 0) {
+          console.log(`❌ No .webp files found in ${folderName}`);
           currentImages = [{
             src: 'data:image/svg+xml,' + encodeURIComponent(`
               <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
                 <rect width="100%" height="100%" fill="#fff5f5"/>
-                <text x="50%" y="45%" font-family="Arial" font-size="24" fill="#ff6666" text-anchor="middle">📂</text>
-                <text x="50%" y="60%" font-family="Arial" font-size="16" fill="#666666" text-anchor="middle">No images in ${folderName}</text>
-                <text x="50%" y="75%" font-family="Arial" font-size="12" fill="#999999" text-anchor="middle">Looking for: image1.webp, image2.webp...</text>
+                <text x="50%" y="40%" font-family="Arial" font-size="48" text-anchor="middle">📂</text>
+                <text x="50%" y="60%" font-family="Arial" font-size="18" fill="#666666" text-anchor="middle" font-weight="600">No .webp files in ${folderName}</text>
+                <text x="50%" y="75%" font-family="Arial" font-size="14" fill="#999999" text-anchor="middle">Add .webp images to public/${folderName}/</text>
               </svg>
             `),
             title: `No images in ${folderName}`
           }];
         } else {
           currentImages = images;
-          imageCache.set(folderName, images);
-          console.log(`SUCCESS: ${images.length} images loaded for ${folderName}`);
+          console.log(`🎉 INSTANT SUCCESS: ${images.length} .webp files found in ${folderName}!`);
         }
         
         currentImageIndex = 0;
-        showImage();
+        showCurrentImage();
         
       } catch (error) {
-        console.error(`Error loading ${folderName}:`, error);
+        console.error(`💥 Error with ${folderName}:`, error);
         currentImages = [{
           src: 'data:image/svg+xml,' + encodeURIComponent(`
             <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
               <rect width="100%" height="100%" fill="#fff0f0"/>
-              <text x="50%" y="45%" font-family="Arial" font-size="24" fill="#ff4444" text-anchor="middle">⚠️</text>
-              <text x="50%" y="60%" font-family="Arial" font-size="16" fill="#999999" text-anchor="middle">Error loading ${folderName}</text>
+              <text x="50%" y="50%" font-family="Arial" font-size="18" fill="#ff4444" text-anchor="middle">Error loading ${folderName}</text>
             </svg>
           `),
           title: `Error: ${folderName}`
         }];
         currentImageIndex = 0;
-        showImage();
+        showCurrentImage();
       }
       
       if (threeDotMenu) threeDotMenu.classList.remove('expanded');
     });
   });
 
-  // Event listeners
-  if (viewerClose) viewerClose.addEventListener('click', closeViewer);
-  if (viewerOverlay) viewerOverlay.addEventListener('click', closeViewer);
-  if (viewerNext) viewerNext.addEventListener('click', nextImage);
-  if (viewerPrev) viewerPrev.addEventListener('click', prevImage);
-  if (viewerImage) viewerImage.addEventListener('click', nextImage);
+  // Event listeners - Simple and reliable
+  if (viewerClose) {
+    viewerClose.addEventListener('click', closeImageViewer);
+  }
+  
+  if (viewerOverlay) {
+    viewerOverlay.addEventListener('click', closeImageViewer);
+  }
+  
+  if (viewerNext) {
+    viewerNext.addEventListener('click', showNextImage);
+  }
+  
+  if (viewerPrev) {
+    viewerPrev.addEventListener('click', showPrevImage);
+  }
+  
+  if (viewerImage) {
+    viewerImage.addEventListener('click', showNextImage);
+  }
 
   // Keyboard navigation
   document.addEventListener('keydown', (e) => {
@@ -1387,19 +1364,21 @@ setupFABFunctionality() {
     
     switch(e.key) {
       case 'Escape':
-        closeViewer();
+        closeImageViewer();
         break;
       case 'ArrowRight':
-        nextImage();
+      case ' ':
+        showNextImage();
         break;
       case 'ArrowLeft':
-        prevImage();
+        showPrevImage();
         break;
     }
   });
 
-  // Touch support
+  // Touch/swipe support
   let touchStartX = 0;
+  
   if (modal) {
     modal.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
@@ -1411,15 +1390,15 @@ setupFABFunctionality() {
       
       if (Math.abs(swipeDistance) > 50) {
         if (swipeDistance > 0) {
-          nextImage();
+          showNextImage(); // Swipe left = next
         } else {
-          prevImage();
+          showPrevImage(); // Swipe right = previous  
         }
       }
     }, { passive: true });
   }
 
-  console.log('✅ Simple FAB functionality ready!');
+  console.log('🚀 INSTANT WebP scanner ready!');
 }
 
 
