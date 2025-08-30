@@ -1143,39 +1143,42 @@ class CSVCatalogApp {
   }
 
   // Enhanced 3-Dot Menu and Image Viewer with Batch Loading
+// Complete Optimized setupFABFunctionality() method
+// Replace this entire method in your public/script.js file
+
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
-  // Image cache for batch loading
+  // Enhanced image cache with preloading and optimization
   const imageCache = new Map();
-  const BATCH_SIZE = 5;
+  const BATCH_SIZE = 10; // Increased batch size
+  const MAX_CONCURRENT_LOADS = 6; // Control concurrent requests
   let imagesPreloaded = false;
+  let loadQueue = [];
+  let currentlyLoading = 0;
 
- // 3-dot menu toggle - FORCE INITIALLY COLLAPSED
-if (threeDotToggle && threeDotMenu) {
   // Force menu to start collapsed
-  threeDotMenu.classList.remove('expanded');
-  
-  // Double-check after a short delay
-  setTimeout(() => {
+  if (threeDotToggle && threeDotMenu) {
     threeDotMenu.classList.remove('expanded');
-  }, 100);
+    
+    setTimeout(() => {
+      threeDotMenu.classList.remove('expanded');
+    }, 100);
     
     threeDotToggle.addEventListener('click', (e) => {
       e.stopPropagation();
       const isExpanding = !threeDotMenu.classList.contains('expanded');
       threeDotMenu.classList.toggle('expanded');
       
-      // Start loading images when menu is first opened
+      // Start aggressive preloading when menu is first opened
       if (isExpanding && !imagesPreloaded) {
-        this.preloadImagesForAllFolders();
+        this.preloadImagesForAllFoldersOptimized();
         imagesPreloaded = true;
       }
     });
 
-    // Close menu when clicking outside
     document.addEventListener('click', (e) => {
       if (!threeDotMenu.contains(e.target)) {
         threeDotMenu.classList.remove('expanded');
@@ -1183,69 +1186,88 @@ if (threeDotToggle && threeDotMenu) {
     });
   }
 
-  // Enhanced image loading with batching
-  const loadImagesFromFolder = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
+  // Optimized image loading with parallel processing and immediate feedback
+  const loadImagesFromFolderOptimized = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
     const cacheKey = `${folderName}_${startIndex}`;
     if (imageCache.has(cacheKey)) {
       return imageCache.get(cacheKey);
     }
 
     const images = [];
+    const formats = ['jpg', 'jpeg', 'png', 'webp'];
+    const loadPromises = [];
     let consecutiveFailures = 0;
-    const maxConsecutiveFailures = 3;
-    
+    const maxConsecutiveFailures = 5; // Increased tolerance
+
+    // Create load promises for parallel processing
     for (let i = startIndex; i < startIndex + batchSize && consecutiveFailures < maxConsecutiveFailures; i++) {
-      const formats = ['jpg', 'jpeg', 'png', 'webp'];
-      let imageFound = false;
-      
-      for (const format of formats) {
+      const imagePromises = formats.map(async (format) => {
         const imagePath = `${folderName}/${i}.${format}`;
         
         try {
-          const imageExists = await this.checkImageExists(imagePath);
-          if (imageExists) {
-            images.push({
+          const exists = await this.checkImageExistsOptimized(imagePath);
+          if (exists) {
+            return {
               src: imagePath,
               title: `${folderName} ${i}`,
-              index: i
-            });
-            consecutiveFailures = 0;
-            imageFound = true;
-            break;
+              index: i,
+              format
+            };
           }
+          return null;
         } catch (error) {
-          // Continue to next format
+          return null;
         }
-      }
-      
-      if (!imageFound) {
-        consecutiveFailures++;
-      }
+      });
+
+      // Wait for the first successful format
+      const imageLoadPromise = Promise.race(imagePromises.filter(p => p !== null))
+        .then(result => {
+          if (result) {
+            consecutiveFailures = 0;
+            return result;
+          }
+          consecutiveFailures++;
+          return null;
+        })
+        .catch(() => {
+          consecutiveFailures++;
+          return null;
+        });
+
+      loadPromises.push(imageLoadPromise);
     }
+
+    // Process all promises and filter out nulls
+    const results = await Promise.all(loadPromises);
+    const validImages = results.filter(img => img !== null);
     
-    imageCache.set(cacheKey, images);
-    return images;
+    imageCache.set(cacheKey, validImages);
+    return validImages;
   };
 
-  // Preload first batch for all folders when menu opens
-  const preloadImagesForAllFolders = async () => {
+  // Aggressive preloading for all folders with progress feedback
+  const preloadImagesForAllFoldersOptimized = async () => {
     const folders = ['Reviews', 'Payment', 'Delivered'];
+    console.log('🚀 Starting optimized image preloading...');
     
-    // Preload all folders simultaneously
-    const preloadPromises = folders.map(async (folder) => {
-      try {
-        const images = await loadImagesFromFolder(folder, 1, BATCH_SIZE);
-        return { folder, images };
-      } catch (error) {
-        return { folder, images: [] };
-      }
-    });
+    // Preload multiple batches for each folder concurrently
+    const preloadPromises = folders.flatMap(folder => [
+      loadImagesFromFolderOptimized(folder, 1, BATCH_SIZE),
+      loadImagesFromFolderOptimized(folder, BATCH_SIZE + 1, BATCH_SIZE),
+      loadImagesFromFolderOptimized(folder, (BATCH_SIZE * 2) + 1, BATCH_SIZE)
+    ]);
     
-    // Wait for all folders to preload
-    await Promise.all(preloadPromises);
+    try {
+      const results = await Promise.allSettled(preloadPromises);
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      console.log(`✅ Preloaded ${successCount}/${preloadPromises.length} image batches`);
+    } catch (error) {
+      console.warn('⚠️ Some images failed to preload, but continuing...');
+    }
   };
 
-  // Image viewer variables
+  // Image viewer variables with optimized state management
   let currentImages = [];
   let currentImageIndex = 0;
   let currentFolder = '';
@@ -1259,29 +1281,29 @@ if (threeDotToggle && threeDotMenu) {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // Load more images when approaching end of current batch
-  const loadMoreIfNeeded = async (currentIndex) => {
+  // Optimized progressive loading
+  const loadMoreIfNeededOptimized = async (currentIndex) => {
     const currentBatch = Math.floor(currentIndex / BATCH_SIZE);
     const nextBatch = currentBatch + 1;
     const nextBatchStart = nextBatch * BATCH_SIZE + 1;
     
-    if (!loadedBatches.has(nextBatch) && (currentIndex + 2) >= (currentBatch + 1) * BATCH_SIZE) {
+    if (!loadedBatches.has(nextBatch) && (currentIndex + 3) >= (currentBatch + 1) * BATCH_SIZE) {
       try {
-        const moreImages = await loadImagesFromFolder(currentFolder, nextBatchStart, BATCH_SIZE);
+        const moreImages = await loadImagesFromFolderOptimized(currentFolder, nextBatchStart, BATCH_SIZE);
         if (moreImages.length > 0) {
           currentImages = [...currentImages, ...moreImages];
           loadedBatches.add(nextBatch);
           updateViewerCounter();
+          console.log(`📸 Loaded batch ${nextBatch}: ${moreImages.length} more images`);
         }
       } catch (error) {
-        // Silent fail
+        console.warn(`⚠️ Failed to load batch ${nextBatch}`);
       }
     }
   };
 
-  // Menu item click handlers - NOW PROPERLY CLICKABLE
+  // Enhanced menu item click handlers with immediate feedback
   menuItems.forEach((item) => {
-    // Make sure menu items are clickable
     item.style.pointerEvents = 'all';
     item.style.cursor = 'pointer';
     
@@ -1294,34 +1316,61 @@ if (threeDotToggle && threeDotMenu) {
       loadedBatches.clear();
       loadedBatches.add(0);
       
-      // Show loading state
+      // Show modal immediately with loading state
       if (modal) {
         modal.classList.add('active');
-        if (viewerImage) {
-          viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
-        }
-        if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
-        if (viewerCounter) viewerCounter.textContent = 'Loading...';
         document.body.style.overflow = 'hidden';
       }
+
+      // Show optimized loading placeholder
+      if (viewerImage) {
+        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjBmMGYwIi8+PHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiNlMGUwZTAiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmMGYwZjAiLz48L2xpbmVhckdyYWRpZW50PjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgYXR0cmlidXRlVHlwZT0iWE1MIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTEwMCAwOzEwMCAwOy0xMDAgMCIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Mb2FkaW5nIGltYWdlcy4uLjwvdGV4dD48L3N2Zz4=';
+      }
+      if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
+      if (viewerCounter) viewerCounter.textContent = 'Loading...';
       
       try {
-        // Load first batch
-        const images = await loadImagesFromFolder(folderName, 1, BATCH_SIZE);
-        
-        if (images.length === 0) {
-          currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAuICsgZm9sZGVyTmFtZSArIC4gZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
-            title: `No images found in ${folderName} folder`
-          }];
+        // Try cache first for instant loading
+        const cachedImages = imageCache.get(`${folderName}_1`);
+        if (cachedImages && cachedImages.length > 0) {
+          console.log(`⚡ Using cached images for ${folderName}`);
+          currentImages = cachedImages;
+          currentImageIndex = 0;
+          showImage();
+          
+          // Load more in background
+          loadImagesFromFolderOptimized(folderName, BATCH_SIZE + 1, BATCH_SIZE)
+            .then(moreImages => {
+              if (moreImages.length > 0) {
+                currentImages = [...currentImages, ...moreImages];
+                updateViewerCounter();
+              }
+            });
         } else {
-          currentImages = images;
+          // Load first batch with timeout for faster perceived performance
+          const loadPromise = loadImagesFromFolderOptimized(folderName, 1, BATCH_SIZE);
+          const timeoutPromise = new Promise(resolve => 
+            setTimeout(() => resolve([]), 3000) // 3 second timeout
+          );
+          
+          const images = await Promise.race([loadPromise, timeoutPromise]);
+          
+          if (images.length === 0) {
+            currentImages = [{
+              src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAke2ZvbGRlck5hbWV9IGZvbGRlcjwvdGV4dD48L3N2Zz4=',
+              title: `No images found in ${folderName} folder`
+            }];
+          } else {
+            currentImages = images;
+            console.log(`📸 Loaded ${images.length} images for ${folderName}`);
+          }
         }
         
         currentImageIndex = 0;
         showImage();
         
       } catch (error) {
+        console.error(`❌ Error loading ${folderName} images:`, error);
         currentImages = [{
           src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
           title: `Error loading ${folderName} images`
@@ -1336,7 +1385,6 @@ if (threeDotToggle && threeDotMenu) {
       }
     });
     
-    // Also add click handler to button inside menu item
     const menuButton = item.querySelector('.menu-button');
     if (menuButton) {
       menuButton.style.pointerEvents = 'all';
@@ -1349,7 +1397,19 @@ if (threeDotToggle && threeDotMenu) {
     if (currentImages.length === 0) return;
     
     const image = currentImages[currentImageIndex];
-    if (viewerImage) viewerImage.src = image.src;
+    if (viewerImage) {
+      // Preload next and previous images for smoother navigation
+      if (currentImageIndex + 1 < currentImages.length) {
+        const nextImg = new Image();
+        nextImg.src = currentImages[currentImageIndex + 1].src;
+      }
+      if (currentImageIndex - 1 >= 0) {
+        const prevImg = new Image();
+        prevImg.src = currentImages[currentImageIndex - 1].src;
+      }
+      
+      viewerImage.src = image.src;
+    }
     if (viewerTitle) viewerTitle.textContent = image.title;
     updateViewerCounter();
   };
@@ -1368,7 +1428,7 @@ if (threeDotToggle && threeDotMenu) {
   const showNextImage = async () => {
     if (currentImages.length === 0) return;
     currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    await loadMoreIfNeeded(currentImageIndex);
+    await loadMoreIfNeededOptimized(currentImageIndex);
     showImage();
   };
 
@@ -1390,7 +1450,7 @@ if (threeDotToggle && threeDotMenu) {
     });
   }
 
-  // Keyboard navigation
+  // Enhanced Keyboard navigation
   document.addEventListener('keydown', (e) => {
     if (!modal || !modal.classList.contains('active')) return;
     
@@ -1399,42 +1459,86 @@ if (threeDotToggle && threeDotMenu) {
         closeImageViewer();
         break;
       case 'ArrowRight':
+      case 'Space':
+        e.preventDefault();
         showNextImage();
         break;
       case 'ArrowLeft':
+        e.preventDefault();
         showPrevImage();
+        break;
+      case 'Home':
+        e.preventDefault();
+        currentImageIndex = 0;
+        showImage();
+        break;
+      case 'End':
+        e.preventDefault();
+        currentImageIndex = currentImages.length - 1;
+        showImage();
         break;
     }
   });
 
-  // Touch support for mobile
+  // Enhanced Touch support for mobile
   let touchStartX = 0;
   let touchEndX = 0;
+  let touchStartY = 0;
+  let touchEndY = 0;
 
   if (modal) {
     modal.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
     }, { passive: true });
 
     modal.addEventListener('touchend', (e) => {
       touchEndX = e.changedTouches[0].screenX;
-      const swipeDistance = touchStartX - touchEndX;
+      touchEndY = e.changedTouches[0].screenY;
+      
+      const swipeDistanceX = touchStartX - touchEndX;
+      const swipeDistanceY = touchStartY - touchEndY;
       const minSwipeDistance = 50;
 
-      if (Math.abs(swipeDistance) > minSwipeDistance) {
-        if (swipeDistance > 0) {
-          showNextImage();
-        } else {
-          showPrevImage();
+      // Prioritize horizontal swipes over vertical
+      if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY)) {
+        if (Math.abs(swipeDistanceX) > minSwipeDistance) {
+          if (swipeDistanceX > 0) {
+            showNextImage(); // Swipe left = next image
+          } else {
+            showPrevImage(); // Swipe right = previous image
+          }
+        }
+      } else {
+        // Vertical swipe to close
+        if (Math.abs(swipeDistanceY) > minSwipeDistance * 1.5) {
+          closeImageViewer();
         }
       }
     }, { passive: true });
+
+    // Prevent zoom on double tap
+    modal.addEventListener('touchend', (e) => {
+      e.preventDefault();
+    });
+
+    // Handle pinch zoom prevention
+    modal.addEventListener('gesturestart', (e) => {
+      e.preventDefault();
+    });
+
+    modal.addEventListener('gesturechange', (e) => {
+      e.preventDefault();
+    });
+
+    modal.addEventListener('gestureend', (e) => {
+      e.preventDefault();
+    });
   }
 
-  // Store preload function for external use
-  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
+  // Store optimized preload function
+  this.preloadImagesForAllFoldersOptimized = preloadImagesForAllFoldersOptimized;
 }
-
   // Enhanced image checking with multiple format support
   checkImageExists(imageSrc) {
     return new Promise((resolve) => {
