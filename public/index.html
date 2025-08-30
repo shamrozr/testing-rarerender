@@ -128,11 +128,15 @@
 </a>
 
 <!-- 3-Dot Menu Container -->
-<!-- Main 3-Dot Toggle Button -->
-<button class="three-dot-toggle" id="threeDotToggle">
-  <span class="three-dots">⋯</span>
-  <span class="three-close">×</span>
-</button>
+<div class="three-dot-menu" id="threeDotMenu">
+  <!-- Main 3-Dot Toggle Button with Icon -->
+  <div class="three-dot-toggle" id="threeDotToggle">
+    <div class="toggle-content">
+      <img src="/icons/proof-payment.svg" alt="Proof & Payment" class="toggle-icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <div class="toggle-icon-placeholder" style="display:none;">📋</div>
+      <span class="toggle-label">Proof & Payment</span>
+    </div>
+  </div>
   
   <!-- Menu Items -->
   <div class="three-dot-items" id="threeDotItems">
