@@ -160,11 +160,14 @@ body {
   cursor: pointer;
   transition: all var(--transition-smooth);
   box-shadow: var(--shadow-md);
+  /* Force higher contrast */
+  filter: contrast(1.2) saturate(1.3);
 }
 
 .brand-logo:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
+  filter: contrast(1.3) saturate(1.4);
 }
 
 .brand-info {
@@ -803,25 +806,29 @@ body[data-page-type="category"] .section-header {
 }
 
 .menu-button {
- width: 50px;
- height: 50px;
- border-radius: 50%;
- border: 2px solid white;
- background: var(--color-primary);
- cursor: pointer;
- display: flex;
- align-items: center;
- justify-content: center;
- box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
- transition: all var(--transition-base);
- position: relative;
- padding: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background: var(--color-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-base);
+  position: relative;
+  padding: 0;
+  /* Add this line: */
+  filter: contrast(1.2) saturate(1.3) brightness(0.9);
 }
 
 .menu-button:hover {
- transform: scale(1.1);
- box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
- background: var(--color-accent);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: var(--color-accent);
+  /* Add this line: */
+  filter: contrast(1.3) saturate(1.4) brightness(0.85);
 }
 
 .menu-icon {
