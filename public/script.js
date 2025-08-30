@@ -1146,18 +1146,16 @@ class CSVCatalogApp {
 // Complete Optimized setupFABFunctionality() method
 // Replace this entire method in your public/script.js file
 
+// Fixed setupFABFunctionality() method - Replace in your public/script.js
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
-  // Enhanced image cache with preloading and optimization
+  // Image cache for batch loading
   const imageCache = new Map();
-  const BATCH_SIZE = 10; // Increased batch size
-  const MAX_CONCURRENT_LOADS = 6; // Control concurrent requests
+  const BATCH_SIZE = 10;
   let imagesPreloaded = false;
-  let loadQueue = [];
-  let currentlyLoading = 0;
 
   // Force menu to start collapsed
   if (threeDotToggle && threeDotMenu) {
@@ -1172,9 +1170,9 @@ setupFABFunctionality() {
       const isExpanding = !threeDotMenu.classList.contains('expanded');
       threeDotMenu.classList.toggle('expanded');
       
-      // Start aggressive preloading when menu is first opened
+      // Start loading images when menu is first opened
       if (isExpanding && !imagesPreloaded) {
-        this.preloadImagesForAllFoldersOptimized();
+        this.preloadImagesForAllFolders();
         imagesPreloaded = true;
       }
     });
@@ -1186,88 +1184,69 @@ setupFABFunctionality() {
     });
   }
 
-  // Optimized image loading with parallel processing and immediate feedback
-  const loadImagesFromFolderOptimized = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
+  // Enhanced image loading with batching
+  const loadImagesFromFolder = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
     const cacheKey = `${folderName}_${startIndex}`;
     if (imageCache.has(cacheKey)) {
       return imageCache.get(cacheKey);
     }
 
     const images = [];
-    const formats = ['jpg', 'jpeg', 'png', 'webp'];
-    const loadPromises = [];
     let consecutiveFailures = 0;
-    const maxConsecutiveFailures = 5; // Increased tolerance
-
-    // Create load promises for parallel processing
+    const maxConsecutiveFailures = 3;
+    
     for (let i = startIndex; i < startIndex + batchSize && consecutiveFailures < maxConsecutiveFailures; i++) {
-      const imagePromises = formats.map(async (format) => {
+      const formats = ['jpg', 'jpeg', 'png', 'webp'];
+      let imageFound = false;
+      
+      for (const format of formats) {
         const imagePath = `${folderName}/${i}.${format}`;
         
         try {
-          const exists = await this.checkImageExistsOptimized(imagePath);
-          if (exists) {
-            return {
+          const imageExists = await this.checkImageExists(imagePath);
+          if (imageExists) {
+            images.push({
               src: imagePath,
               title: `${folderName} ${i}`,
-              index: i,
-              format
-            };
-          }
-          return null;
-        } catch (error) {
-          return null;
-        }
-      });
-
-      // Wait for the first successful format
-      const imageLoadPromise = Promise.race(imagePromises.filter(p => p !== null))
-        .then(result => {
-          if (result) {
+              index: i
+            });
             consecutiveFailures = 0;
-            return result;
+            imageFound = true;
+            break;
           }
-          consecutiveFailures++;
-          return null;
-        })
-        .catch(() => {
-          consecutiveFailures++;
-          return null;
-        });
-
-      loadPromises.push(imageLoadPromise);
+        } catch (error) {
+          // Continue to next format
+        }
+      }
+      
+      if (!imageFound) {
+        consecutiveFailures++;
+      }
     }
-
-    // Process all promises and filter out nulls
-    const results = await Promise.all(loadPromises);
-    const validImages = results.filter(img => img !== null);
     
-    imageCache.set(cacheKey, validImages);
-    return validImages;
+    imageCache.set(cacheKey, images);
+    return images;
   };
 
-  // Aggressive preloading for all folders with progress feedback
-  const preloadImagesForAllFoldersOptimized = async () => {
+  // Preload first batch for all folders when menu opens
+  const preloadImagesForAllFolders = async () => {
     const folders = ['Reviews', 'Payment', 'Delivered'];
-    console.log('🚀 Starting optimized image preloading...');
     
-    // Preload multiple batches for each folder concurrently
-    const preloadPromises = folders.flatMap(folder => [
-      loadImagesFromFolderOptimized(folder, 1, BATCH_SIZE),
-      loadImagesFromFolderOptimized(folder, BATCH_SIZE + 1, BATCH_SIZE),
-      loadImagesFromFolderOptimized(folder, (BATCH_SIZE * 2) + 1, BATCH_SIZE)
-    ]);
+    // Preload all folders simultaneously
+    const preloadPromises = folders.map(async (folder) => {
+      try {
+        const images = await loadImagesFromFolder(folder, 1, BATCH_SIZE);
+        return { folder, images };
+      } catch (error) {
+        return { folder, images: [] };
+      }
+    });
     
-    try {
-      const results = await Promise.allSettled(preloadPromises);
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      console.log(`✅ Preloaded ${successCount}/${preloadPromises.length} image batches`);
-    } catch (error) {
-      console.warn('⚠️ Some images failed to preload, but continuing...');
-    }
+    // Wait for all folders to preload
+    await Promise.all(preloadPromises);
   };
 
-  // Image viewer variables with optimized state management
+  // Image viewer variables
   let currentImages = [];
   let currentImageIndex = 0;
   let currentFolder = '';
@@ -1281,29 +1260,29 @@ setupFABFunctionality() {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // Optimized progressive loading
-  const loadMoreIfNeededOptimized = async (currentIndex) => {
+  // Load more images when approaching end of current batch
+  const loadMoreIfNeeded = async (currentIndex) => {
     const currentBatch = Math.floor(currentIndex / BATCH_SIZE);
     const nextBatch = currentBatch + 1;
     const nextBatchStart = nextBatch * BATCH_SIZE + 1;
     
-    if (!loadedBatches.has(nextBatch) && (currentIndex + 3) >= (currentBatch + 1) * BATCH_SIZE) {
+    if (!loadedBatches.has(nextBatch) && (currentIndex + 2) >= (currentBatch + 1) * BATCH_SIZE) {
       try {
-        const moreImages = await loadImagesFromFolderOptimized(currentFolder, nextBatchStart, BATCH_SIZE);
+        const moreImages = await loadImagesFromFolder(currentFolder, nextBatchStart, BATCH_SIZE);
         if (moreImages.length > 0) {
           currentImages = [...currentImages, ...moreImages];
           loadedBatches.add(nextBatch);
           updateViewerCounter();
-          console.log(`📸 Loaded batch ${nextBatch}: ${moreImages.length} more images`);
         }
       } catch (error) {
-        console.warn(`⚠️ Failed to load batch ${nextBatch}`);
+        // Silent fail
       }
     }
   };
 
-  // Enhanced menu item click handlers with immediate feedback
+  // Menu item click handlers
   menuItems.forEach((item) => {
+    // Make sure menu items are clickable
     item.style.pointerEvents = 'all';
     item.style.cursor = 'pointer';
     
@@ -1316,61 +1295,34 @@ setupFABFunctionality() {
       loadedBatches.clear();
       loadedBatches.add(0);
       
-      // Show modal immediately with loading state
+      // Show loading state
       if (modal) {
         modal.classList.add('active');
+        if (viewerImage) {
+          viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
+        }
+        if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
+        if (viewerCounter) viewerCounter.textContent = 'Loading...';
         document.body.style.overflow = 'hidden';
       }
-
-      // Show optimized loading placeholder
-      if (viewerImage) {
-        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZjBmMGYwIi8+PHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiNlMGUwZTAiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmMGYwZjAiLz48L2xpbmVhckdyYWRpZW50PjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgYXR0cmlidXRlVHlwZT0iWE1MIiB0eXBlPSJ0cmFuc2xhdGUiIHZhbHVlcz0iLTEwMCAwOzEwMCAwOy0xMDAgMCIgZHVyPSIycyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNnKSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Mb2FkaW5nIGltYWdlcy4uLjwvdGV4dD48L3N2Zz4=';
-      }
-      if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
-      if (viewerCounter) viewerCounter.textContent = 'Loading...';
       
       try {
-        // Try cache first for instant loading
-        const cachedImages = imageCache.get(`${folderName}_1`);
-        if (cachedImages && cachedImages.length > 0) {
-          console.log(`⚡ Using cached images for ${folderName}`);
-          currentImages = cachedImages;
-          currentImageIndex = 0;
-          showImage();
-          
-          // Load more in background
-          loadImagesFromFolderOptimized(folderName, BATCH_SIZE + 1, BATCH_SIZE)
-            .then(moreImages => {
-              if (moreImages.length > 0) {
-                currentImages = [...currentImages, ...moreImages];
-                updateViewerCounter();
-              }
-            });
+        // Load first batch
+        const images = await loadImagesFromFolder(folderName, 1, BATCH_SIZE);
+        
+        if (images.length === 0) {
+          currentImages = [{
+            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAuICsgZm9sZGVyTmFtZSArIC4gZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
+            title: `No images found in ${folderName} folder`
+          }];
         } else {
-          // Load first batch with timeout for faster perceived performance
-          const loadPromise = loadImagesFromFolderOptimized(folderName, 1, BATCH_SIZE);
-          const timeoutPromise = new Promise(resolve => 
-            setTimeout(() => resolve([]), 3000) // 3 second timeout
-          );
-          
-          const images = await Promise.race([loadPromise, timeoutPromise]);
-          
-          if (images.length === 0) {
-            currentImages = [{
-              src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAke2ZvbGRlck5hbWV9IGZvbGRlcjwvdGV4dD48L3N2Zz4=',
-              title: `No images found in ${folderName} folder`
-            }];
-          } else {
-            currentImages = images;
-            console.log(`📸 Loaded ${images.length} images for ${folderName}`);
-          }
+          currentImages = images;
         }
         
         currentImageIndex = 0;
         showImage();
         
       } catch (error) {
-        console.error(`❌ Error loading ${folderName} images:`, error);
         currentImages = [{
           src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
           title: `Error loading ${folderName} images`
@@ -1385,6 +1337,7 @@ setupFABFunctionality() {
       }
     });
     
+    // Also add click handler to button inside menu item
     const menuButton = item.querySelector('.menu-button');
     if (menuButton) {
       menuButton.style.pointerEvents = 'all';
@@ -1397,19 +1350,7 @@ setupFABFunctionality() {
     if (currentImages.length === 0) return;
     
     const image = currentImages[currentImageIndex];
-    if (viewerImage) {
-      // Preload next and previous images for smoother navigation
-      if (currentImageIndex + 1 < currentImages.length) {
-        const nextImg = new Image();
-        nextImg.src = currentImages[currentImageIndex + 1].src;
-      }
-      if (currentImageIndex - 1 >= 0) {
-        const prevImg = new Image();
-        prevImg.src = currentImages[currentImageIndex - 1].src;
-      }
-      
-      viewerImage.src = image.src;
-    }
+    if (viewerImage) viewerImage.src = image.src;
     if (viewerTitle) viewerTitle.textContent = image.title;
     updateViewerCounter();
   };
@@ -1428,7 +1369,7 @@ setupFABFunctionality() {
   const showNextImage = async () => {
     if (currentImages.length === 0) return;
     currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    await loadMoreIfNeededOptimized(currentImageIndex);
+    await loadMoreIfNeeded(currentImageIndex);
     showImage();
   };
 
@@ -1450,7 +1391,7 @@ setupFABFunctionality() {
     });
   }
 
-  // Enhanced Keyboard navigation
+  // Keyboard navigation
   document.addEventListener('keydown', (e) => {
     if (!modal || !modal.classList.contains('active')) return;
     
@@ -1480,7 +1421,7 @@ setupFABFunctionality() {
     }
   });
 
-  // Enhanced Touch support for mobile
+  // Touch support for mobile
   let touchStartX = 0;
   let touchEndX = 0;
   let touchStartY = 0;
@@ -1521,51 +1462,38 @@ setupFABFunctionality() {
     modal.addEventListener('touchend', (e) => {
       e.preventDefault();
     });
-
-    // Handle pinch zoom prevention
-    modal.addEventListener('gesturestart', (e) => {
-      e.preventDefault();
-    });
-
-    modal.addEventListener('gesturechange', (e) => {
-      e.preventDefault();
-    });
-
-    modal.addEventListener('gestureend', (e) => {
-      e.preventDefault();
-    });
   }
 
-  // Store optimized preload function
-  this.preloadImagesForAllFoldersOptimized = preloadImagesForAllFoldersOptimized;
+  // Store preload function for external use
+  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
 }
-  // Enhanced image checking with multiple format support
-  checkImageExists(imageSrc) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      const timeout = setTimeout(() => {
-        resolve(false);
-      }, 5000); // 5 second timeout
-      
-      img.onload = () => {
-        clearTimeout(timeout);
-        resolve(true);
-      };
-      
-      img.onerror = () => {
-        clearTimeout(timeout);
-        resolve(false);
-      };
-      
-      // Add cache busting and try to load
-      const cacheBuster = Date.now();
-      img.src = imageSrc.includes('?') ? 
-        `${imageSrc}&v=${cacheBuster}` : 
-        `${imageSrc}?v=${cacheBuster}`;
-    });
-  }
+// Add this optimized method to your CSVCatalogApp class in script.js
+// Replace the existing checkImageExists method with this one
+
+checkImageExists(imageSrc) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    // Reduced timeout for faster performance
+    const timeout = setTimeout(() => {
+      resolve(false);
+    }, 2000); // Reduced from 5 seconds to 2 seconds
+    
+    img.onload = () => {
+      clearTimeout(timeout);
+      resolve(true);
+    };
+    
+    img.onerror = () => {
+      clearTimeout(timeout);
+      resolve(false);
+    };
+    
+    // Load image without cache busting for better performance
+    img.src = imageSrc;
+  });
+}
 
   showNotification(message) {
     const notification = document.createElement('div');
