@@ -1144,16 +1144,15 @@ class CSVCatalogApp {
 
 // REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
 
+// COMPLETE REPLACEMENT - Replace entire setupFABFunctionality() method with this WORKING version:
+
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
-  // Global image management
+  // Global state
   const imageCache = new Map();
-  let imagesPreloaded = false;
-
-  // Image viewer state - MOVED TO TOP LEVEL
   let currentImages = [];
   let currentImageIndex = 0;
   let currentFolder = '';
@@ -1167,23 +1166,13 @@ setupFABFunctionality() {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // Force menu to start collapsed
+  // Menu toggle functionality
   if (threeDotToggle && threeDotMenu) {
     threeDotMenu.classList.remove('expanded');
     
-    setTimeout(() => {
-      threeDotMenu.classList.remove('expanded');
-    }, 100);
-    
     threeDotToggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      const isExpanding = !threeDotMenu.classList.contains('expanded');
       threeDotMenu.classList.toggle('expanded');
-      
-      if (isExpanding && !imagesPreloaded) {
-        preloadImagesForAllFolders();
-        imagesPreloaded = true;
-      }
     });
 
     document.addEventListener('click', (e) => {
@@ -1193,15 +1182,11 @@ setupFABFunctionality() {
     });
   }
 
-  // ULTRA FAST image check with aggressive cache busting
-  const checkImageExistsFast = (imageSrc) => {
+  // Simple, fast image check
+  const checkImage = (url) => {
     return new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      const timeout = setTimeout(() => {
-        resolve(false);
-      }, 300); // Super fast timeout
+      const timeout = setTimeout(() => resolve(false), 500);
       
       img.onload = () => {
         clearTimeout(timeout);
@@ -1213,92 +1198,105 @@ setupFABFunctionality() {
         resolve(false);
       };
       
-      // AGGRESSIVE cache busting - force fresh check every time
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substr(2, 9);
-      img.src = `${imageSrc}?t=${timestamp}&r=${random}`;
+      img.src = url + '?t=' + Date.now();
     });
   };
 
-  // OPTIMIZED: Direct pattern scanning for your exact file structure
-  // Removed duplicate declaration of loadImagesFromFolder to avoid redeclaration error.
-
-  // Preload function
-  const preloadImagesForAllFolders = async () => {
-    const folders = ['Reviews', 'Payment', 'Delivered'];
-    console.log('🔄 Preloading all folders...');
+  // Simple image loading for your exact file structure
+  const loadFolderImages = async (folderName) => {
+    console.log(`Loading images from ${folderName}...`);
     
-    for (const folder of folders) {
-      try {
-        const images = await loadImagesFromFolder(folder);
-        console.log(`✅ Preloaded ${folder}: ${images.length} images`);
-      } catch (error) {
-        console.warn(`⚠️ Failed to preload ${folder}:`, error);
+    const images = [];
+    const formats = ['webp', 'jpg', 'jpeg', 'png'];
+    
+    // Check for your exact pattern: image1.webp, image2.webp, etc.
+    for (let i = 1; i <= 50; i++) {
+      for (const format of formats) {
+        const imagePath = `${folderName}/image${i}.${format}`;
+        
+        try {
+          const exists = await checkImage(imagePath);
+          if (exists) {
+            images.push({
+              src: imagePath,
+              title: `${folderName} Image ${i}`,
+              index: i
+            });
+            console.log(`✅ Found: ${imagePath}`);
+          }
+        } catch (error) {
+          // Silent continue
+        }
       }
     }
+    
+    // Also check simple numbers: 1.webp, 2.webp, etc.
+    if (images.length === 0) {
+      for (let i = 1; i <= 20; i++) {
+        for (const format of formats) {
+          const imagePath = `${folderName}/${i}.${format}`;
+          
+          try {
+            const exists = await checkImage(imagePath);
+            if (exists) {
+              images.push({
+                src: imagePath,
+                title: `${folderName} Image ${i}`,
+                index: i
+              });
+              console.log(`✅ Found: ${imagePath}`);
+            }
+          } catch (error) {
+            // Silent continue
+          }
+        }
+      }
+    }
+    
+    // Sort by index
+    images.sort((a, b) => a.index - b.index);
+    
+    console.log(`Total images found in ${folderName}: ${images.length}`);
+    return images;
   };
 
-  // FIXED IMAGE VIEWER FUNCTIONS - Proper scope and event handling
+  // Image viewer functions
   const showImage = () => {
-    if (!currentImages || currentImages.length === 0) {
-      console.warn('❌ No images to show');
-      return;
-    }
+    if (currentImages.length === 0) return;
     
     const image = currentImages[currentImageIndex];
-    if (viewerImage && image) {
-      viewerImage.src = image.src;
-      console.log(`📷 Showing image ${currentImageIndex + 1}/${currentImages.length}: ${image.src.split('/').pop()}`);
-    }
-    if (viewerTitle && image) {
-      viewerTitle.textContent = image.title || `${currentFolder} Image ${currentImageIndex + 1}`;
-    }
-    updateViewerCounter();
+    if (viewerImage) viewerImage.src = image.src;
+    if (viewerTitle) viewerTitle.textContent = image.title;
+    if (viewerCounter) viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    
+    console.log(`Showing: ${image.src} (${currentImageIndex + 1}/${currentImages.length})`);
   };
 
-  const updateViewerCounter = () => {
-    if (viewerCounter && currentImages.length > 0) {
-      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-    }
-  };
-
-  const closeImageViewer = () => {
+  const closeViewer = () => {
     if (modal) modal.classList.remove('active');
     document.body.style.overflow = 'auto';
-    console.log('🔒 Image viewer closed');
   };
 
-  const showNextImage = () => {
-    if (!currentImages || currentImages.length === 0) return;
-    
-    const oldIndex = currentImageIndex;
+  const nextImage = () => {
+    if (currentImages.length === 0) return;
     currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    console.log(`➡️ Next: ${oldIndex} → ${currentImageIndex} (total: ${currentImages.length})`);
     showImage();
   };
 
-  const showPrevImage = () => {
-    if (!currentImages || currentImages.length === 0) return;
-    
-    const oldIndex = currentImageIndex;
+  const prevImage = () => {
+    if (currentImages.length === 0) return;
     currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    console.log(`⬅️ Prev: ${oldIndex} → ${currentImageIndex} (total: ${currentImages.length})`);
     showImage();
   };
 
-  // MENU ITEM CLICK HANDLERS - Fixed and optimized
+  // Menu item click handlers
   menuItems.forEach((item) => {
-    item.style.pointerEvents = 'all';
-    item.style.cursor = 'pointer';
-    
     item.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       
       const folderName = item.dataset.folder;
       currentFolder = folderName;
-      
-      console.log(`🔄 Loading ${folderName}...`);
       
       // Show modal immediately
       if (modal) {
@@ -1307,259 +1305,121 @@ setupFABFunctionality() {
       }
 
       // Check cache first
-      const cachedImages = imageCache.get(`${folderName}_latest`);
-      if (cachedImages && cachedImages.length > 0) {
-        console.log(`⚡ Cache hit: ${cachedImages.length} images for ${folderName}`);
-        currentImages = cachedImages;
+      if (imageCache.has(folderName)) {
+        const cached = imageCache.get(folderName);
+        console.log(`Cache hit: ${cached.length} images for ${folderName}`);
+        currentImages = cached;
         currentImageIndex = 0;
         showImage();
-        
         if (threeDotMenu) threeDotMenu.classList.remove('expanded');
         return;
       }
 
-      // Show loading state
+      // Show loading
       if (viewerImage) {
-        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMTIwIiByPSIyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjM2NmYxIiBzdHJva2Utd2lkdGg9IjMiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjAgMjAwIDEyMDszNjAgMjAwIDEyMCIgZHVyPSIxcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz48L2NpcmNsZT48dGV4dCB4PSI1MCUiIHk9IjY1JSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNjM2NmYxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNjAwIj5TY2FubmluZyAke2ZvbGRlck5hbWV9Li4uPC90ZXh0Pjwvc3ZnPg==';
+        viewerImage.src = 'data:image/svg+xml,' + encodeURIComponent(`
+          <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#f8f9fa"/>
+            <circle cx="200" cy="120" r="20" fill="none" stroke="#6366f1" stroke-width="3">
+              <animateTransform attributeName="transform" type="rotate" values="0 200 120;360 200 120" dur="1s" repeatCount="indefinite"/>
+            </circle>
+            <text x="50%" y="65%" font-family="Arial" font-size="16" fill="#6366f1" text-anchor="middle" font-weight="600">Loading ${folderName}...</text>
+          </svg>
+        `);
       }
-      if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
+      if (viewerTitle) viewerTitle.textContent = `Loading ${folderName}...`;
       if (viewerCounter) viewerCounter.textContent = 'Please wait...';
       
       try {
-        // FORCE clear cache for this folder
-        for (const [key] of imageCache) {
-          if (key.includes(folderName)) {
-            imageCache.delete(key);
-          }
-        }
-        
-        const images = await loadImagesFromFolder(folderName);
+        const images = await loadFolderImages(folderName);
         
         if (images.length === 0) {
-          console.log(`❌ No images found in ${folderName}`);
           currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNjY2NiI+📂PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIGltYWdlcyBpbiAke2ZvbGRlck5hbWV9PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNzUlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkxvb2tpbmcgZm9yOiBpbWFnZTEud2VicCwgaW1hZ2UyLndlYnAuLi48L3RleHQ+PC9zdmc+',
+            src: 'data:image/svg+xml,' + encodeURIComponent(`
+              <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#fff5f5"/>
+                <text x="50%" y="45%" font-family="Arial" font-size="24" fill="#ff6666" text-anchor="middle">📂</text>
+                <text x="50%" y="60%" font-family="Arial" font-size="16" fill="#666666" text-anchor="middle">No images in ${folderName}</text>
+                <text x="50%" y="75%" font-family="Arial" font-size="12" fill="#999999" text-anchor="middle">Looking for: image1.webp, image2.webp...</text>
+              </svg>
+            `),
             title: `No images in ${folderName}`
           }];
         } else {
           currentImages = images;
-          console.log(`🎉 SUCCESS: ${images.length} images loaded from ${folderName}`);
-          console.log(`📋 Images:`, images.map(img => img.src.split('/').pop()));
+          imageCache.set(folderName, images);
+          console.log(`SUCCESS: ${images.length} images loaded for ${folderName}`);
         }
         
         currentImageIndex = 0;
         showImage();
         
       } catch (error) {
-        console.error(`💥 Error loading ${folderName}:`, error);
+        console.error(`Error loading ${folderName}:`, error);
         currentImages = [{
-          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNDQ0NCI+⚠️PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkVycm9yIGxvYWRpbmcgJHtmb2xkZXJOYW1lfTwvdGV4dD48L3N2Zz4=',
+          src: 'data:image/svg+xml,' + encodeURIComponent(`
+            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100%" height="100%" fill="#fff0f0"/>
+              <text x="50%" y="45%" font-family="Arial" font-size="24" fill="#ff4444" text-anchor="middle">⚠️</text>
+              <text x="50%" y="60%" font-family="Arial" font-size="16" fill="#999999" text-anchor="middle">Error loading ${folderName}</text>
+            </svg>
+          `),
           title: `Error: ${folderName}`
         }];
         currentImageIndex = 0;
         showImage();
       }
       
-      // Close menu
       if (threeDotMenu) threeDotMenu.classList.remove('expanded');
     });
   });
 
-  // CRITICAL: Enhanced image scanning with multiple strategies
-  const loadImagesFromFolder = async (folderName) => {
-    console.log(`🎯 SMART scanning ${folderName}...`);
-    
-    const images = [];
-    const formats = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
-    
-    // STRATEGY 1: Your exact pattern (image1.webp, image2.webp...)
-    console.log(`📋 Strategy 1: Checking image*.${formats[0]} pattern...`);
-    const strategy1Promises = [];
-    
-    for (let i = 1; i <= 50; i++) {
-      for (const format of formats) {
-        const imagePath = `${folderName}/image${i}.${format}`;
-        strategy1Promises.push(
-          checkImageExistsFast(imagePath).then(exists => 
-            exists ? { 
-              src: imagePath, 
-              title: `${folderName} Image ${i}`, 
-              index: i,
-              pattern: `image${i}`,
-              format
-            } : null
-          ).catch(() => null)
-        );
-      }
-    }
-    
-    const strategy1Results = await Promise.all(strategy1Promises);
-    const strategy1Images = strategy1Results.filter(result => result !== null);
-    
-    if (strategy1Images.length > 0) {
-      strategy1Images.sort((a, b) => a.index - b.index);
-      images.push(...strategy1Images);
-      console.log(`✅ Strategy 1 SUCCESS: Found ${strategy1Images.length} image*.* files`);
-    }
-    
-    // STRATEGY 2: Simple numbers (1.webp, 2.webp...)
-    if (images.length === 0) {
-      console.log(`📋 Strategy 2: Checking number.${formats[0]} pattern...`);
-      const strategy2Promises = [];
-      
-      for (let i = 1; i <= 50; i++) {
-        for (const format of formats) {
-          const imagePath = `${folderName}/${i}.${format}`;
-          strategy2Promises.push(
-            checkImageExistsFast(imagePath).then(exists => 
-              exists ? { 
-                src: imagePath, 
-                title: `${folderName} Image ${i}`, 
-                index: i,
-                pattern: `${i}`,
-                format
-              } : null
-            ).catch(() => null)
-          );
-        }
-      }
-      
-      const strategy2Results = await Promise.all(strategy2Promises);
-      const strategy2Images = strategy2Results.filter(result => result !== null);
-      
-      if (strategy2Images.length > 0) {
-        strategy2Images.sort((a, b) => a.index - b.index);
-        images.push(...strategy2Images);
-        console.log(`✅ Strategy 2 SUCCESS: Found ${strategy2Images.length} number.* files`);
-      }
-    }
-    
-    // STRATEGY 3: Descriptive names
-    if (images.length === 0) {
-      console.log(`📋 Strategy 3: Checking descriptive names...`);
-      const descriptivePatterns = ['proof', 'payment', 'review', 'delivered', 'customer', 'receipt', 'photo', 'pic', 'scan'];
-      const strategy3Promises = [];
-      
-      descriptivePatterns.forEach((pattern, index) => {
-        for (const format of formats) {
-          const imagePath = `${folderName}/${pattern}.${format}`;
-          strategy3Promises.push(
-            checkImageExistsFast(imagePath).then(exists => 
-              exists ? { 
-                src: imagePath, 
-                title: `${folderName} - ${pattern}`, 
-                index: index + 1000, // Sort after numbers
-                pattern,
-                format
-              } : null
-            ).catch(() => null)
-          );
-        }
-      });
-      
-      const strategy3Results = await Promise.all(strategy3Promises);
-      const strategy3Images = strategy3Results.filter(result => result !== null);
-      
-      if (strategy3Images.length > 0) {
-        strategy3Images.sort((a, b) => a.index - b.index);
-        images.push(...strategy3Images);
-        console.log(`✅ Strategy 3 SUCCESS: Found ${strategy3Images.length} descriptive files`);
-      }
-    }
-    
-    console.log(`🏁 FINAL RESULT for ${folderName}: ${images.length} total images`);
-    
-    // Cache results
-    imageCache.set(`${folderName}_latest`, images);
-    return images;
-  };
+  // Event listeners
+  if (viewerClose) viewerClose.addEventListener('click', closeViewer);
+  if (viewerOverlay) viewerOverlay.addEventListener('click', closeViewer);
+  if (viewerNext) viewerNext.addEventListener('click', nextImage);
+  if (viewerPrev) viewerPrev.addEventListener('click', prevImage);
+  if (viewerImage) viewerImage.addEventListener('click', nextImage);
 
-  // EVENT LISTENERS - Fixed scope issues
-  if (viewerClose) {
-    viewerClose.addEventListener('click', (e) => {
-      e.preventDefault();
-      closeImageViewer();
-    });
-  }
-  
-  if (viewerOverlay) {
-    viewerOverlay.addEventListener('click', (e) => {
-      e.preventDefault();
-      closeImageViewer();
-    });
-  }
-  
-  if (viewerNext) {
-    viewerNext.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      showNextImage();
-    });
-  }
-  
-  if (viewerPrev) {
-    viewerPrev.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      showPrevImage();
-    });
-  }
-  
-  if (viewerImage) {
-    viewerImage.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showNextImage();
-    });
-  }
-
-  // KEYBOARD NAVIGATION - Enhanced
+  // Keyboard navigation
   document.addEventListener('keydown', (e) => {
     if (!modal || !modal.classList.contains('active')) return;
     
-    e.preventDefault();
     switch(e.key) {
       case 'Escape':
-        closeImageViewer();
+        closeViewer();
         break;
       case 'ArrowRight':
-      case ' ': // Spacebar
-        showNextImage();
+        nextImage();
         break;
       case 'ArrowLeft':
-        showPrevImage();
+        prevImage();
         break;
     }
   });
 
-  // TOUCH/SWIPE SUPPORT - Fixed
+  // Touch support
   let touchStartX = 0;
-  let touchEndX = 0;
-
   if (modal) {
     modal.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
     }, { passive: true });
 
     modal.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
+      const touchEndX = e.changedTouches[0].screenX;
       const swipeDistance = touchStartX - touchEndX;
-      const minSwipeDistance = 50;
-
-      if (Math.abs(swipeDistance) > minSwipeDistance) {
-        e.preventDefault();
+      
+      if (Math.abs(swipeDistance) > 50) {
         if (swipeDistance > 0) {
-          showNextImage();
+          nextImage();
         } else {
-          showPrevImage();
+          prevImage();
         }
       }
-    }, { passive: false });
+    }, { passive: true });
   }
 
-  // Store functions for external access
-  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
-  
-  console.log('🎉 Enhanced FAB functionality initialized!');
+  console.log('✅ Simple FAB functionality ready!');
 }
 
 
