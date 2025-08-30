@@ -84,6 +84,11 @@ class CSVCatalogApp {
       this.setupFooter();
       this.setupEventListeners();
       this.setupFABFunctionality();
+      setTimeout(() => {
+      if (this.preloadImagesForAllFolders) {
+        this.preloadImagesForAllFolders();
+      }
+    }, 1000);
       
     } catch (error) {
       // Silent error handling in production
@@ -1152,16 +1157,14 @@ class CSVCatalogApp {
     const BATCH_SIZE = 5;
 
     // 3-dot menu toggle
-    if (threeDotToggle && threeDotMenu) {
-      threeDotToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        threeDotMenu.classList.toggle('expanded');
-        
-        // Preload first batch of images when menu is opened
-        if (threeDotMenu.classList.contains('expanded')) {
-          this.preloadImagesForAllFolders();
-        }
-      });
+if (threeDotToggle && threeDotMenu) {
+  // Preload images immediately when the app loads (not when menu opens)
+  this.preloadImagesForAllFolders();
+  
+  threeDotToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    threeDotMenu.classList.toggle('expanded');
+  });
 
       // Close menu when clicking outside
       document.addEventListener('click', (e) => {
@@ -1215,17 +1218,23 @@ class CSVCatalogApp {
       return images;
     };
 
-    // Preload first batch for all folders
-    const preloadImagesForAllFolders = async () => {
-      const folders = ['Reviews', 'Payment', 'Delivered'];
-      for (const folder of folders) {
-        try {
-          await loadImagesFromFolder(folder, 1, BATCH_SIZE);
-        } catch (error) {
-          // Silent fail for preloading
-        }
-      }
-    };
+    // Preload first batch for all folders immediately
+const preloadImagesForAllFolders = async () => {
+  const folders = ['Reviews', 'Payment', 'Delivered'];
+  
+  // Preload all folders simultaneously for better performance
+  const preloadPromises = folders.map(async (folder) => {
+    try {
+      const images = await loadImagesFromFolder(folder, 1, BATCH_SIZE);
+      return { folder, images };
+    } catch (error) {
+      return { folder, images: [] };
+    }
+  });
+  
+  // Wait for all folders to preload
+  await Promise.all(preloadPromises);
+};
 
     // Image viewer variables
     let currentImages = [];
