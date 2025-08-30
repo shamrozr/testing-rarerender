@@ -1,9 +1,8 @@
-// Complete Working CSV-Driven Catalog App with All Fixes
-// ========================================================
+// Complete Working CSV-Driven Catalog App with Smart Grid and Enhanced Features
+// ============================================================================
 
 class CSVCatalogApp {
   constructor() {
-    console.log('🏗️ CSVCatalogApp constructor called');
     this.data = null;
     this.currentBrand = null;
     this.currentPath = [];
@@ -15,20 +14,13 @@ class CSVCatalogApp {
   }
 
   initializeFromURL() {
-    console.log('🔍 Initializing from URL...');
-    
     const urlParams = new URLSearchParams(window.location.search);
     const brandFromURL = urlParams.get('brand');
     const pathFromURL = urlParams.get('path');
     
-    console.log('🌐 Current URL:', window.location.href);
-    console.log('🏷️ Brand parameter:', brandFromURL);
-    console.log('📍 Path parameter:', pathFromURL);
-    
     // CRITICAL: Set brand immediately from URL
     if (brandFromURL) {
       this.currentBrand = brandFromURL;
-      console.log('🎯 Set currentBrand from URL:', brandFromURL);
       
       // Force immediate display update
       this.updateBrandDisplay(brandFromURL);
@@ -37,15 +29,12 @@ class CSVCatalogApp {
     // Set path
     if (pathFromURL) {
       this.currentPath = pathFromURL.split('/').filter(Boolean);
-      console.log('📁 Current path:', this.currentPath);
     } else {
       this.currentPath = [];
     }
   }
 
   updateBrandDisplay(brandFromURL) {
-    console.log('🔄 Updating brand display for:', brandFromURL);
-    
     // Update brand name immediately from URL
     const brandNameElement = document.getElementById('brandName');
     const brandLogoElement = document.getElementById('brandLogo');
@@ -53,13 +42,11 @@ class CSVCatalogApp {
     if (brandNameElement) {
       const displayName = this.slugToDisplayName(brandFromURL);
       brandNameElement.textContent = displayName;
-      console.log('📝 Updated brand name element to:', displayName);
     }
     
     if (brandLogoElement) {
       const initials = this.getInitials(this.slugToDisplayName(brandFromURL));
       brandLogoElement.textContent = initials;
-      console.log('🔤 Updated logo element to:', initials);
     }
     
     // Also update page title
@@ -77,31 +64,19 @@ class CSVCatalogApp {
   }
 
   async init() {
-    console.log('🚀 Initializing CSV-driven catalog...');
-    
     try {
       await this.loadData();
       
       if (!this.data) {
-        console.error('❌ No data available, initialization failed');
         return;
       }
-
-      console.log('📊 Starting setup with data:', {
-        brands: Object.keys(this.data.brands || {}),
-        catalogItems: Object.keys(this.data.catalog?.tree || {}),
-        currentBrand: this.currentBrand,
-        currentPath: this.currentPath
-      });
 
       this.setupBrandInfo();
       
       // Check if we need to show category view or homepage
       if (this.currentPath.length > 0) {
-        console.log('📁 Showing category view for path:', this.currentPath);
         this.showCategoryView();
       } else {
-        console.log('🏠 Showing homepage view');
         this.setupDynamicSections();
       }
       
@@ -110,51 +85,38 @@ class CSVCatalogApp {
       this.setupEventListeners();
       this.setupFABFunctionality();
       
-      console.log('✅ CSV catalog initialization complete!');
     } catch (error) {
-      console.error('❌ Error during initialization:', error);
+      // Silent error handling in production
     }
   }
 
   async loadData() {
     try {
       this.showLoading();
-      console.log('📥 Attempting to load data from /data.json...');
       
       const response = await fetch('/data.json?v=' + Date.now());
       if (response.ok) {
         this.data = await response.json();
-        console.log('✅ Data loaded successfully:', this.data);
         
         // CRITICAL: Don't override currentBrand if it's already set from URL
         const urlParams = new URLSearchParams(window.location.search);
         const brandFromURL = urlParams.get('brand');
         
         const availableBrands = Object.keys(this.data.brands || {});
-        console.log('🏷️ Available brands:', availableBrands);
-        console.log('🌐 Brand from URL:', brandFromURL);
-        console.log('📌 Current brand before logic:', this.currentBrand);
         
         // ALWAYS prioritize URL brand
         if (brandFromURL && this.data.brands[brandFromURL]) {
           this.currentBrand = brandFromURL;
-          console.log('✅ FORCED brand from URL:', brandFromURL);
         } else if (!this.currentBrand && availableBrands.length > 0) {
           this.currentBrand = availableBrands[0];
-          console.log('⚠️ Using first available brand:', this.currentBrand);
         } else if (availableBrands.length === 0) {
-          console.error('❌ No brands found in data');
           throw new Error('No brands available');
         }
-        
-        console.log('🎯 Final brand selection:', this.currentBrand);
         
       } else {
         throw new Error(`Failed to load data: ${response.status}`);
       }
     } catch (error) {
-      console.error('❌ Error loading data:', error);
-      console.log('📦 Falling back to mock data...');
       this.loadMockData();
     } finally {
       this.hideLoading();
@@ -162,8 +124,6 @@ class CSVCatalogApp {
   }
 
   loadMockData() {
-    console.log('📦 Loading mock data as fallback...');
-    
     this.data = {
       brands: {
         'LuxuryEmporium': {
@@ -180,12 +140,12 @@ class CSVCatalogApp {
           },
           whatsapp: 'https://wa.me/923001234567'
         },
-        'MilayaBags': {
-          name: 'Milaya Luxury Bags',
+        'MeriyaBags': {
+          name: 'Meriya Bags',
           tagline: 'Luxury Redefined Since 1992',
           heroTitle: 'Elegance Redefined Since 1992',
           heroSubtitle: 'Discover Your Perfect Statement with premium handbags designed for women who appreciate the finer details and exquisite quality',
-          footerText: 'Milaya has been creating bespoke luxury handbags with meticulous attention to detail since 1992.',
+          footerText: 'Meriya has been creating bespoke luxury handbags with meticulous attention to detail since 1992.',
           colors: {
             primary: '#9B59B6',
             accent: '#BB8FCE',
@@ -223,7 +183,7 @@ class CSVCatalogApp {
           'SHOES': { 
             count: 156, 
             thumbnail: '', 
-            section: 'Trending',
+            section: 'Best Sellers',
             children: {
               'Nike': {
                 count: 25,
@@ -234,7 +194,7 @@ class CSVCatalogApp {
               }
             }
           },
-          'JEWELRY': { count: 89, thumbnail: '', section: 'Featured', children: {} },
+          'JEWELRY': { count: 89, thumbnail: '', section: 'Premium', children: {} },
           'WATCHES': { count: 68, thumbnail: '', section: 'Premium', children: {} }
         }
       }
@@ -247,14 +207,10 @@ class CSVCatalogApp {
     if (!this.data.brands[this.currentBrand]) {
       this.currentBrand = Object.keys(this.data.brands)[0];
     }
-    
-    console.log('✅ Mock data loaded, current brand:', this.currentBrand);
   }
 
   // Show category view
   showCategoryView() {
-    console.log('📁 Showing category view for path:', this.currentPath);
-    
     // Add body attribute for CSS targeting
     document.body.setAttribute('data-page-type', 'category');
     
@@ -273,15 +229,11 @@ class CSVCatalogApp {
         });
         currentNode = currentNode[segment].children || {};
       } else {
-        console.error('❌ Path not found:', segment, 'in', Object.keys(currentNode));
         this.showNotification(`Category "${segment}" not found`);
         this.navigateToHome();
         return;
       }
     }
-
-    console.log('🗂️ Current node contents:', Object.keys(currentNode));
-    console.log('🍞 Breadcrumbs:', breadcrumbs);
 
     // Update hero section for category view
     this.updateHeroForCategory(breadcrumbs);
@@ -430,71 +382,69 @@ class CSVCatalogApp {
   }
 
   renderCategoryContents(currentNode, breadcrumbs) {
-  const container = document.getElementById('dynamicSections');
-  if (!container) return;
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
 
-  const items = Object.entries(currentNode).map(([key, item]) => {
-    if (item.isProduct) {
-      return {
-        key,
-        title: key,
-        description: 'Premium product from our luxury collection',
-        count: 1,
-        thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-        isProduct: true,
-        driveLink: item.driveLink
-      };
-    } else {
-      return {
-        key,
-        title: key.replace(/_/g, ' '),
-        description: `Explore ${item.count || 0} items in this collection`,
-        count: item.count || 0,
-        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-        isProduct: false
-      };
+    const items = Object.entries(currentNode).map(([key, item]) => {
+      if (item.isProduct) {
+        return {
+          key,
+          title: key,
+          description: 'Premium product from our luxury collection',
+          count: 1,
+          thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+          isProduct: true,
+          driveLink: item.driveLink
+        };
+      } else {
+        return {
+          key,
+          title: key.replace(/_/g, ' '),
+          description: `Explore ${item.count || 0} items in this collection`,
+          count: item.count || 0,
+          thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+          isProduct: false
+        };
+      }
+    });
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <section class="content-section">
+          <div class="container">
+            <div class="section-header">
+              <h2 class="section-title">No Items Found</h2>
+              <p class="section-description">This category is currently empty.</p>
+            </div>
+          </div>
+        </section>
+      `;
+      return;
     }
-  });
 
-  if (items.length === 0) {
+    const gridClass = this.getGridClass(items.length);
+    const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
+    
     container.innerHTML = `
       <section class="content-section">
         <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">No Items Found</h2>
-            <p class="section-description">This category is currently empty.</p>
+          <div class="cards-grid ${gridClass}" id="${containerId}">
+            ${items.map(item => this.createCardHTML(item)).join('')}
           </div>
         </div>
       </section>
     `;
-    return;
-  }
 
-  const gridClass = this.getGridClass(items.length);
-  const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
-  
-  container.innerHTML = `
-    <section class="content-section">
-      <div class="container">
-        <div class="cards-grid ${gridClass}" id="${containerId}">
-          ${items.map(item => this.createCardHTML(item)).join('')}
-        </div>
-      </div>
-    </section>
-  `;
-
-  // Apply smart centering for category contents
-  if (gridClass === 'grid-smart') {
-    setTimeout(() => {
-      const gridContainer = document.getElementById(containerId);
-      if (gridContainer) this.addSmartCentering(gridContainer, items.length);
-    }, 10);
+    // Apply smart centering for category contents
+    if (gridClass === 'grid-smart') {
+      setTimeout(() => {
+        const gridContainer = document.getElementById(containerId);
+        if (gridContainer) this.addSmartCentering(gridContainer, items.length);
+      }, 10);
+    }
   }
-}
 
   navigateToHome() {
-    console.log('🏠 Navigating to home');
-    
     // Remove category page attribute
     document.body.removeAttribute('data-page-type');
     
@@ -534,32 +484,24 @@ class CSVCatalogApp {
   }
 
   setupBrandInfo() {
-    console.log('🏷️ Setting up brand info...');
-    
     // Get brand from URL first - THIS IS CRITICAL
     const urlParams = new URLSearchParams(window.location.search);
     const urlBrand = urlParams.get('brand');
     
     // ALWAYS use URL brand if available
     if (urlBrand) {
-      console.log('🔄 Forcing brand from URL:', urlBrand);
       this.currentBrand = urlBrand;
     }
     
     if (!this.data || !this.data.brands) {
-      console.error('❌ No brand data available');
       return;
     }
 
     let brand = this.data.brands[this.currentBrand];
     if (!brand) {
-      console.error('❌ Brand not found:', this.currentBrand);
-      console.log('Available brands:', Object.keys(this.data.brands));
-      
       // Use first available brand as fallback
       const firstBrand = Object.keys(this.data.brands)[0];
       if (firstBrand) {
-        console.log('⚠️ Falling back to first brand:', firstBrand);
         this.currentBrand = firstBrand;
         brand = this.data.brands[firstBrand];
       } else {
@@ -567,16 +509,11 @@ class CSVCatalogApp {
       }
     }
 
-    console.log('🏷️ FORCE Setting up brand info for:', this.currentBrand);
-    console.log('🏷️ Brand data:', brand);
-
     // Get brand information with multiple fallback patterns
     const brandName = brand.name || brand.brandName || brand['Brand Name'] || this.slugToDisplayName(this.currentBrand);
     const tagline = brand.tagline || brand.brandTagline || brand['Brand Tagline'] || 'Premium Quality Collection';
     const heroTitle = brand.heroTitle || brand.hero_title || brand['Hero Title'] || 'Discover Luxury Collections';
     const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || brand['Hero Subtitle'] || 'Curated premium products from the world\'s finest brands.';
-
-    console.log('📝 Extracted brand info:', { brandName, tagline, heroTitle, heroSubtitle });
 
     // FORCE immediate DOM updates
     const elements = [
@@ -592,17 +529,13 @@ class CSVCatalogApp {
       if (element) {
         element.textContent = content;
         element.style.display = 'block'; // Ensure it's visible
-        console.log(`✅ FORCED update ${id}:`, content);
         
         // Double-check after a brief delay
         setTimeout(() => {
           if (element.textContent !== content) {
             element.textContent = content;
-            console.log(`🔄 Re-forced update ${id}:`, content);
           }
         }, 50);
-      } else {
-        console.log(`❌ Element not found: ${id}`);
       }
     });
 
@@ -612,7 +545,6 @@ class CSVCatalogApp {
       const initials = this.getInitials(brandName);
       logoEl.textContent = initials;
       logoEl.title = brandName; // Add tooltip
-      console.log('✅ FORCED logo update:', initials);
     }
 
     // FORCE apply brand colors
@@ -623,15 +555,12 @@ class CSVCatalogApp {
       text: colors.text || colors.textColor || colors['Text Color'] || '#202124',
       bg: colors.bg || colors.bgColor || colors['Background Color'] || '#ffffff'
     };
-
-    console.log('🎨 FORCING brand colors:', brandColors);
     
     // Apply colors immediately to root with force
     const root = document.documentElement;
     Object.entries(brandColors).forEach(([key, value]) => {
       const cssVar = `--color-${key === 'text' ? 'text-primary' : key}`;
       root.style.setProperty(cssVar, value);
-      console.log(`🎨 Set ${cssVar}: ${value}`);
     });
     
     // Update theme color meta tag
@@ -653,14 +582,11 @@ class CSVCatalogApp {
       if (whatsappUrl) {
         whatsApp.href = whatsappUrl;
         whatsApp.style.display = 'flex';
-        console.log('📱 WhatsApp link set:', whatsappUrl);
       }
     }
 
     // Update page title
     document.title = `${brandName} - Luxury Collection`;
-
-    console.log('✅ Brand info FORCE setup complete for:', this.currentBrand);
   }
 
   getInitials(name) {
@@ -678,101 +604,94 @@ class CSVCatalogApp {
     }
   }
 
- applyBrandColors(colors) {
-  if (!colors) return;
-  
-  // More aggressive color enhancement for better visibility
-  const enhanceColor = (color, isForText = false) => {
-    if (!color || !color.startsWith('#')) return color;
+  applyBrandColors(colors) {
+    if (!colors) return;
     
-    // Convert hex to RGB
-    const r = parseInt(color.slice(1, 3), 16);
-    const g = parseInt(color.slice(3, 5), 16);
-    const b = parseInt(color.slice(5, 7), 16);
+    // More aggressive color enhancement for better visibility
+    const enhanceColor = (color, isForText = false) => {
+      if (!color || !color.startsWith('#')) return color;
+      
+      // Convert hex to RGB
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      
+      // Calculate perceived lightness (weighted for human perception)
+      const lightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      
+      // If color is too light (common issue), make it much darker
+      if (lightness > 0.7) {
+        const factor = isForText ? 0.3 : 0.4; // Even darker for text
+        const newR = Math.floor(r * factor);
+        const newG = Math.floor(g * factor);
+        const newB = Math.floor(b * factor);
+        const enhancedColor = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+        return enhancedColor;
+      }
+      
+      // If color is too dark, lighten it slightly
+      if (lightness < 0.2) {
+        const factor = 1.8;
+        const newR = Math.min(255, Math.floor(r * factor));
+        const newG = Math.min(255, Math.floor(g * factor));
+        const newB = Math.min(255, Math.floor(b * factor));
+        const enhancedColor = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+        return enhancedColor;
+      }
+      
+      return color;
+    };
     
-    // Calculate perceived lightness (weighted for human perception)
-    const lightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    const root = document.documentElement;
     
-    console.log(`🎨 Color ${color} has lightness: ${lightness.toFixed(2)}`);
-    
-    // If color is too light (common issue), make it much darker
-    if (lightness > 0.7) {
-      const factor = isForText ? 0.3 : 0.4; // Even darker for text
-      const newR = Math.floor(r * factor);
-      const newG = Math.floor(g * factor);
-      const newB = Math.floor(b * factor);
-      const enhancedColor = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
-      console.log(`🔧 Enhanced light color ${color} → ${enhancedColor}`);
-      return enhancedColor;
+    // Apply enhanced colors with much better contrast
+    if (colors.primary) {
+      const enhancedPrimary = enhanceColor(colors.primary, true);
+      root.style.setProperty('--color-primary', enhancedPrimary);
+      
+      // Create a darker variant for text
+      const textVariant = enhanceColor(colors.primary, true);
+      root.style.setProperty('--color-primary-dark', textVariant);
     }
     
-    // If color is too dark, lighten it slightly
-    if (lightness < 0.2) {
-      const factor = 1.8;
-      const newR = Math.min(255, Math.floor(r * factor));
-      const newG = Math.min(255, Math.floor(g * factor));
-      const newB = Math.min(255, Math.floor(b * factor));
-      const enhancedColor = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
-      console.log(`🔧 Enhanced dark color ${color} → ${enhancedColor}`);
-      return enhancedColor;
+    if (colors.accent) {
+      const enhancedAccent = enhanceColor(colors.accent, true);
+      root.style.setProperty('--color-accent', enhancedAccent);
     }
     
-    return color;
-  };
-  
-  const root = document.documentElement;
-  
-  // Apply enhanced colors with much better contrast
-  if (colors.primary) {
-    const enhancedPrimary = enhanceColor(colors.primary, true);
-    root.style.setProperty('--color-primary', enhancedPrimary);
+    // Ensure text colors have good contrast
+    if (colors.text) {
+      const enhancedText = enhanceColor(colors.text, true);
+      root.style.setProperty('--color-text-primary', enhancedText);
+    }
     
-    // Create a darker variant for text
-    const textVariant = enhanceColor(colors.primary, true);
-    root.style.setProperty('--color-primary-dark', textVariant);
+    if (colors.bg) {
+      root.style.setProperty('--color-bg', colors.bg);
+    }
     
-    console.log(`🎨 Applied primary color: ${colors.primary} → ${enhancedPrimary}`);
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme && colors.primary) {
+      metaTheme.setAttribute('content', enhanceColor(colors.primary, true));
+    }
+    
+    // Force a repaint to ensure changes are visible
+    document.body.style.transform = 'translateZ(0)';
+    setTimeout(() => {
+      document.body.style.transform = '';
+    }, 10);
   }
-  
-  if (colors.accent) {
-    const enhancedAccent = enhanceColor(colors.accent, true);
-    root.style.setProperty('--color-accent', enhancedAccent);
-    console.log(`🎨 Applied accent color: ${colors.accent} → ${enhancedAccent}`);
-  }
-  
-  // Ensure text colors have good contrast
-  if (colors.text) {
-    const enhancedText = enhanceColor(colors.text, true);
-    root.style.setProperty('--color-text-primary', enhancedText);
-  }
-  
-  if (colors.bg) {
-    root.style.setProperty('--color-bg', colors.bg);
-  }
-  
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme && colors.primary) {
-    metaTheme.setAttribute('content', enhanceColor(colors.primary, true));
-  }
-  
-  // Force a repaint to ensure changes are visible
-  document.body.style.transform = 'translateZ(0)';
-  setTimeout(() => {
-    document.body.style.transform = '';
-  }, 10);
-}
+
   setupDynamicSections() {
     const container = document.getElementById('dynamicSections');
     if (!container) return;
 
     if (!this.data.catalog || !this.data.catalog.tree) {
-      console.error('❌ No catalog tree data found');
       return;
     }
 
     this.groupItemsBySection();
     
-    const sectionOrder = ['Featured', 'Trending', 'Premium', 'New Arrivals', 'Best Sellers'];
+    const sectionOrder = ['Featured', 'Best Sellers', 'Premium', 'New Arrivals', 'Trending'];
     
     container.innerHTML = '';
     let sectionsCreated = 0;
@@ -832,95 +751,91 @@ class CSVCatalogApp {
   }
 
   createSectionHTML(sectionName, items) {
-  const gridClass = this.getGridClass(items.length);
-  const shouldShowTitle = sectionName && sectionName !== 'Featured' && sectionName !== '';
-  const sectionId = `section-${Math.random().toString(36).substr(2, 9)}`;
-  
-  const sectionHTML = `
-    <section class="content-section">
-      <div class="container">
-        ${shouldShowTitle ? `
-          <div class="section-header">
-            <h2 class="section-title">${sectionName}</h2>
-            <p class="section-description">Explore our ${sectionName.toLowerCase()} collection</p>
+    const gridClass = this.getGridClass(items.length);
+    const shouldShowTitle = sectionName && sectionName !== 'Featured' && sectionName !== '';
+    const sectionId = `section-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const sectionHTML = `
+      <section class="content-section">
+        <div class="container">
+          ${shouldShowTitle ? `
+            <div class="section-header">
+              <h2 class="section-title">${sectionName}</h2>
+              <p class="section-description">Explore our ${sectionName.toLowerCase()} collection</p>
+            </div>
+          ` : ''}
+          <div class="cards-grid ${gridClass}" id="${sectionId}">
+            ${items.map(item => this.createCardHTML(item)).join('')}
           </div>
-        ` : ''}
-        <div class="cards-grid ${gridClass}" id="${sectionId}">
-          ${items.map(item => this.createCardHTML(item)).join('')}
         </div>
-      </div>
-    </section>
-  `;
-  
-  // Apply smart centering after DOM insertion
-  if (gridClass === 'grid-smart') {
-    setTimeout(() => {
-      const container = document.getElementById(sectionId);
-      if (container) this.addSmartCentering(container, items.length);
-    }, 10);
+      </section>
+    `;
+    
+    // Apply smart centering after DOM insertion
+    if (gridClass === 'grid-smart') {
+      setTimeout(() => {
+        const container = document.getElementById(sectionId);
+        if (container) this.addSmartCentering(container, items.length);
+      }, 10);
+    }
+    
+    return sectionHTML;
   }
-  
-  return sectionHTML;
-}
 
   getGridClass(itemCount) {
-  if (itemCount === 1) return 'grid-1';
-  if (itemCount === 2) return 'grid-2';  
-  if (itemCount === 3) return 'grid-3';
-  if (itemCount <= 12) return 'grid-smart';
-  return 'grid-many'; // For 13+ items, use responsive auto-fit
-}
-  
-// Add smart centering classes based on item count and position
-addSmartCentering(containerElement, itemCount) {
-  const cards = containerElement.querySelectorAll('.content-card');
-  const remainder = itemCount % 3;
-  
-  if (remainder === 1) {
-    // Last item should be centered (4,7,10,13... items)
-    const lastCard = cards[cards.length - 1];
-    if (lastCard) lastCard.classList.add('center-item');
-  } else if (remainder === 2) {
-    // Last two items should be spaced (5,8,11,14... items)
-    const secondLast = cards[cards.length - 2];
-    const last = cards[cards.length - 1];
-    if (secondLast) secondLast.classList.add('partial-row-left');
-    if (last) last.classList.add('partial-row-right');
+    if (itemCount === 1) return 'grid-1';
+    if (itemCount === 2) return 'grid-2';  
+    if (itemCount === 3) return 'grid-3';
+    if (itemCount <= 12) return 'grid-smart';
+    return 'grid-many'; // For 13+ items, use responsive auto-fit
   }
-  // remainder === 0 means perfect grid (6,9,12... items) - do nothing
-}
-  
-  createSectionHTML(sectionName, items) {
-  const gridClass = this.getGridClass(items.length);
-  const shouldShowTitle = sectionName && sectionName !== 'Featured' && sectionName !== '';
-  const sectionId = `section-${Math.random().toString(36).substr(2, 9)}`;
-  
-  const sectionHTML = `
-    <section class="content-section">
-      <div class="container">
-        ${shouldShowTitle ? `
-          <div class="section-header">
-            <h2 class="section-title">${sectionName}</h2>
-            <p class="section-description">Explore our ${sectionName.toLowerCase()} collection</p>
+
+  // Add smart centering classes based on item count and position
+  addSmartCentering(containerElement, itemCount) {
+    const cards = containerElement.querySelectorAll('.content-card');
+    const remainder = itemCount % 3;
+    
+    if (remainder === 1) {
+      // Last item should be centered (4,7,10,13... items)
+      const lastCard = cards[cards.length - 1];
+      if (lastCard) lastCard.classList.add('center-item');
+    } else if (remainder === 2) {
+      // Last two items should be spaced (5,8,11,14... items)
+      const secondLast = cards[cards.length - 2];
+      const last = cards[cards.length - 1];
+      if (secondLast) secondLast.classList.add('partial-row-left');
+      if (last) last.classList.add('partial-row-right');
+    }
+    // remainder === 0 means perfect grid (6,9,12... items) - do nothing
+  }
+
+  createCardHTML(item) {
+    const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
+    const imageContent = imageSrc ? 
+      `<img src="${imageSrc}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">` : 
+      this.getEmojiForCategory(item.key);
+
+    const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
+
+    return `
+      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" data-search-path="${item.searchPath || ''}" role="button" tabindex="0">
+        <div class="card-image">
+          ${imageContent}
+          <div class="card-overlay"></div>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">${item.title}</h3>
+          <p class="card-description">${item.description}</p>
+          <div class="card-footer">
+            <span class="card-badge">${badgeText}</span>
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
           </div>
-        ` : ''}
-        <div class="cards-grid ${gridClass}" id="${sectionId}">
-          ${items.map(item => this.createCardHTML(item)).join('')}
         </div>
       </div>
-    </section>
-  `;
-  
-  // Apply smart centering after DOM insertion
-  if (gridClass === 'grid-smart') {
-    setTimeout(() => {
-      const container = document.getElementById(sectionId);
-      if (container) this.addSmartCentering(container, items.length);
-    }, 10);
+    `;
   }
-  
-  return sectionHTML;
-}
 
   getEmojiForCategory(category) {
     const emojiMap = {
@@ -1028,14 +943,11 @@ addSmartCentering(containerElement, itemCount) {
 
     // Browser back/forward navigation
     window.addEventListener('popstate', (e) => {
-      console.log('🔙 Browser navigation detected:', e.state);
       this.handleBrowserNavigation();
     });
   }
 
   navigateToPath(path) {
-    console.log('🔗 Navigate to path:', path);
-    
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
@@ -1061,14 +973,11 @@ addSmartCentering(containerElement, itemCount) {
   }
 
   openProduct(driveLink) {
-    console.log('🔗 Opening product:', driveLink);
     this.showNotification('Opening product...');
     window.open(driveLink, '_blank', 'noopener,noreferrer');
   }
 
   navigateToCategory(category) {
-    console.log('🔗 Navigate to category:', category);
-    
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
@@ -1105,13 +1014,10 @@ addSmartCentering(containerElement, itemCount) {
 
   // Force brand refresh when URL changes
   handleBrandNavigation() {
-    console.log('🔄 Handling brand navigation...');
-    
     const urlParams = new URLSearchParams(window.location.search);
     const urlBrand = urlParams.get('brand');
     
     if (urlBrand && urlBrand !== this.currentBrand) {
-      console.log('🔄 Brand changed in URL, forcing update:', urlBrand);
       this.currentBrand = urlBrand;
       
       // Force immediate brand info setup
@@ -1132,8 +1038,6 @@ addSmartCentering(containerElement, itemCount) {
   }
 
   handleBrowserNavigation() {
-    console.log('🔙 Handling browser navigation');
-    
     // Re-initialize from URL with FORCE
     this.initializeFromURL();
     
@@ -1145,7 +1049,6 @@ addSmartCentering(containerElement, itemCount) {
   handleSearch(query) {
     if (!query.trim()) return;
     
-    console.log('🔍 Searching for:', query);
     this.showNotification(`Searching for "${query}"...`);
     
     // Actual search implementation
@@ -1238,271 +1141,269 @@ addSmartCentering(containerElement, itemCount) {
     }
   }
 
-  // 3-Dot Menu and Image Viewer Functionality with Fixed Photo Loading
+  // Enhanced 3-Dot Menu and Image Viewer with Batch Loading
   setupFABFunctionality() {
-  console.log('🔘 Setting up enhanced 3-dot menu functionality...');
-  
-  const threeDotToggle = document.getElementById('threeDotToggle');
-  const threeDotMenu = document.getElementById('threeDotMenu');
-  const menuItems = document.querySelectorAll('.menu-item');
+    const threeDotToggle = document.getElementById('threeDotToggle');
+    const threeDotMenu = document.getElementById('threeDotMenu');
+    const menuItems = document.querySelectorAll('.menu-item');
 
-  // Image cache for preloading
-  const imageCache = new Map();
-  const BATCH_SIZE = 5;
+    // Image cache for preloading and batch loading
+    const imageCache = new Map();
+    const BATCH_SIZE = 5;
 
-  // 3-dot menu toggle
-  if (threeDotToggle && threeDotMenu) {
-    threeDotToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      threeDotMenu.classList.toggle('expanded');
-      
-      // Preload first batch of images when menu is opened
-      if (threeDotMenu.classList.contains('expanded')) {
-        this.preloadImagesForAllFolders();
-      }
-    });
+    // 3-dot menu toggle
+    if (threeDotToggle && threeDotMenu) {
+      threeDotToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        threeDotMenu.classList.toggle('expanded');
+        
+        // Preload first batch of images when menu is opened
+        if (threeDotMenu.classList.contains('expanded')) {
+          this.preloadImagesForAllFolders();
+        }
+      });
 
-    // Close menu when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!threeDotMenu.contains(e.target)) {
-        threeDotMenu.classList.remove('expanded');
-      }
-    });
-  }
-
-  // Enhanced image loading with batching
-  const loadImagesFromFolder = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
-    const cacheKey = `${folderName}_${startIndex}`;
-    if (imageCache.has(cacheKey)) {
-      return imageCache.get(cacheKey);
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!threeDotMenu.contains(e.target)) {
+          threeDotMenu.classList.remove('expanded');
+        }
+      });
     }
 
-    const images = [];
-    let consecutiveFailures = 0;
-    const maxConsecutiveFailures = 3;
-    
-    for (let i = startIndex; i < startIndex + batchSize && consecutiveFailures < maxConsecutiveFailures; i++) {
-      const formats = ['jpg', 'jpeg', 'png', 'webp'];
-      let imageFound = false;
+    // Enhanced image loading with batching
+    const loadImagesFromFolder = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
+      const cacheKey = `${folderName}_${startIndex}`;
+      if (imageCache.has(cacheKey)) {
+        return imageCache.get(cacheKey);
+      }
+
+      const images = [];
+      let consecutiveFailures = 0;
+      const maxConsecutiveFailures = 3;
       
-      for (const format of formats) {
-        const imagePath = `${folderName}/${i}.${format}`;
+      for (let i = startIndex; i < startIndex + batchSize && consecutiveFailures < maxConsecutiveFailures; i++) {
+        const formats = ['jpg', 'jpeg', 'png', 'webp'];
+        let imageFound = false;
         
+        for (const format of formats) {
+          const imagePath = `${folderName}/${i}.${format}`;
+          
+          try {
+            const imageExists = await this.checkImageExists(imagePath);
+            if (imageExists) {
+              images.push({
+                src: imagePath,
+                title: `${folderName} ${i}`,
+                index: i
+              });
+              consecutiveFailures = 0;
+              imageFound = true;
+              break;
+            }
+          } catch (error) {
+            // Continue to next format
+          }
+        }
+        
+        if (!imageFound) {
+          consecutiveFailures++;
+        }
+      }
+      
+      imageCache.set(cacheKey, images);
+      return images;
+    };
+
+    // Preload first batch for all folders
+    const preloadImagesForAllFolders = async () => {
+      const folders = ['Reviews', 'Payment', 'Delivered'];
+      for (const folder of folders) {
         try {
-          const imageExists = await this.checkImageExists(imagePath);
-          if (imageExists) {
-            images.push({
-              src: imagePath,
-              title: `${folderName} ${i}`,
-              index: i
-            });
-            consecutiveFailures = 0;
-            imageFound = true;
-            break;
+          await loadImagesFromFolder(folder, 1, BATCH_SIZE);
+        } catch (error) {
+          // Silent fail for preloading
+        }
+      }
+    };
+
+    // Image viewer variables
+    let currentImages = [];
+    let currentImageIndex = 0;
+    let currentFolder = '';
+    let loadedBatches = new Set();
+    const modal = document.getElementById('imageViewerModal');
+    const viewerImage = document.getElementById('viewerImage');
+    const viewerCounter = document.getElementById('viewerCounter');
+    const viewerTitle = document.getElementById('viewerTitle');
+    const viewerClose = document.getElementById('viewerClose');
+    const viewerPrev = document.getElementById('viewerPrev');
+    const viewerNext = document.getElementById('viewerNext');
+    const viewerOverlay = document.getElementById('viewerOverlay');
+
+    // Load more images when approaching end of current batch
+    const loadMoreIfNeeded = async (currentIndex) => {
+      const currentBatch = Math.floor(currentIndex / BATCH_SIZE);
+      const nextBatch = currentBatch + 1;
+      const nextBatchStart = nextBatch * BATCH_SIZE + 1;
+      
+      if (!loadedBatches.has(nextBatch) && (currentIndex + 2) >= (currentBatch + 1) * BATCH_SIZE) {
+        try {
+          const moreImages = await loadImagesFromFolder(currentFolder, nextBatchStart, BATCH_SIZE);
+          if (moreImages.length > 0) {
+            currentImages = [...currentImages, ...moreImages];
+            loadedBatches.add(nextBatch);
+            updateViewerCounter();
           }
         } catch (error) {
-          // Continue to next format
+          // Silent fail
         }
       }
-      
-      if (!imageFound) {
-        consecutiveFailures++;
-      }
-    }
-    
-    imageCache.set(cacheKey, images);
-    return images;
-  };
+    };
 
-  // Preload first batch for all folders
-  const preloadImagesForAllFolders = async () => {
-    const folders = ['Reviews', 'Payment', 'Delivered'];
-    for (const folder of folders) {
-      try {
-        await loadImagesFromFolder(folder, 1, BATCH_SIZE);
-      } catch (error) {
-        // Silent fail for preloading
-      }
-    }
-  };
-
-  // Image viewer variables
-  let currentImages = [];
-  let currentImageIndex = 0;
-  let currentFolder = '';
-  let loadedBatches = new Set();
-  const modal = document.getElementById('imageViewerModal');
-  const viewerImage = document.getElementById('viewerImage');
-  const viewerCounter = document.getElementById('viewerCounter');
-  const viewerTitle = document.getElementById('viewerTitle');
-  const viewerClose = document.getElementById('viewerClose');
-  const viewerPrev = document.getElementById('viewerPrev');
-  const viewerNext = document.getElementById('viewerNext');
-  const viewerOverlay = document.getElementById('viewerOverlay');
-
-  // Load more images when approaching end of current batch
-  const loadMoreIfNeeded = async (currentIndex) => {
-    const currentBatch = Math.floor(currentIndex / BATCH_SIZE);
-    const nextBatch = currentBatch + 1;
-    const nextBatchStart = nextBatch * BATCH_SIZE + 1;
-    
-    if (!loadedBatches.has(nextBatch) && (currentIndex + 2) >= (currentBatch + 1) * BATCH_SIZE) {
-      try {
-        const moreImages = await loadImagesFromFolder(currentFolder, nextBatchStart, BATCH_SIZE);
-        if (moreImages.length > 0) {
-          currentImages = [...currentImages, ...moreImages];
-          loadedBatches.add(nextBatch);
-          updateViewerCounter();
-        }
-      } catch (error) {
-        // Silent fail
-      }
-    }
-  };
-
-  // Menu item click handlers
-  menuItems.forEach((item) => {
-    item.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const folderName = item.dataset.folder;
-      currentFolder = folderName;
-      loadedBatches.clear();
-      loadedBatches.add(0);
-      
-      // Show loading state
-      if (modal) {
-        modal.classList.add('active');
-        if (viewerImage) {
-          viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
-        }
-        if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
-        if (viewerCounter) viewerCounter.textContent = 'Loading...';
-        document.body.style.overflow = 'hidden';
-      }
-      
-      try {
-        // Load first batch
-        const images = await loadImagesFromFolder(folderName, 1, BATCH_SIZE);
+    // Menu item click handlers
+    menuItems.forEach((item) => {
+      item.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const folderName = item.dataset.folder;
+        currentFolder = folderName;
+        loadedBatches.clear();
+        loadedBatches.add(0);
         
-        if (images.length === 0) {
+        // Show loading state
+        if (modal) {
+          modal.classList.add('active');
+          if (viewerImage) {
+            viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
+          }
+          if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
+          if (viewerCounter) viewerCounter.textContent = 'Loading...';
+          document.body.style.overflow = 'hidden';
+        }
+        
+        try {
+          // Load first batch
+          const images = await loadImagesFromFolder(folderName, 1, BATCH_SIZE);
+          
+          if (images.length === 0) {
+            currentImages = [{
+              src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAuICsgZm9sZGVyTmFtZSArIC4gZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
+              title: `No images found in ${folderName} folder`
+            }];
+          } else {
+            currentImages = images;
+          }
+          
+          currentImageIndex = 0;
+          showImage();
+          
+        } catch (error) {
           currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAuICsgZm9sZGVyTmFtZSArIC4gZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
-            title: `No images found in ${folderName} folder`
+            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
+            title: `Error loading ${folderName} images`
           }];
-        } else {
-          currentImages = images;
+          currentImageIndex = 0;
+          showImage();
         }
         
-        currentImageIndex = 0;
-        showImage();
-        
-      } catch (error) {
-        currentImages = [{
-          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
-          title: `Error loading ${folderName} images`
-        }];
-        currentImageIndex = 0;
-        showImage();
-      }
+        // Close menu after selection
+        if (threeDotMenu) {
+          threeDotMenu.classList.remove('expanded');
+        }
+      });
+    });
+
+    // Image viewer functions
+    const showImage = () => {
+      if (currentImages.length === 0) return;
       
-      // Close menu after selection
-      if (threeDotMenu) {
-        threeDotMenu.classList.remove('expanded');
+      const image = currentImages[currentImageIndex];
+      if (viewerImage) viewerImage.src = image.src;
+      if (viewerTitle) viewerTitle.textContent = image.title;
+      updateViewerCounter();
+    };
+
+    const updateViewerCounter = () => {
+      if (viewerCounter) {
+        viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
       }
-    });
-  });
+    };
 
-  // Image viewer functions
-  const showImage = () => {
-    if (currentImages.length === 0) return;
-    
-    const image = currentImages[currentImageIndex];
-    if (viewerImage) viewerImage.src = image.src;
-    if (viewerTitle) viewerTitle.textContent = image.title;
-    updateViewerCounter();
-  };
+    const closeImageViewer = () => {
+      if (modal) modal.classList.remove('active');
+      document.body.style.overflow = 'auto';
+    };
 
-  const updateViewerCounter = () => {
-    if (viewerCounter) {
-      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-    }
-  };
+    const showNextImage = async () => {
+      if (currentImages.length === 0) return;
+      currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+      await loadMoreIfNeeded(currentImageIndex);
+      showImage();
+    };
 
-  const closeImageViewer = () => {
-    if (modal) modal.classList.remove('active');
-    document.body.style.overflow = 'auto';
-  };
+    const showPrevImage = () => {
+      if (currentImages.length === 0) return;
+      currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+      showImage();
+    };
 
-  const showNextImage = async () => {
-    if (currentImages.length === 0) return;
-    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    await loadMoreIfNeeded(currentImageIndex);
-    showImage();
-  };
-
-  const showPrevImage = () => {
-    if (currentImages.length === 0) return;
-    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    showImage();
-  };
-
-  // Image viewer event listeners
-  if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
-  if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
-  if (viewerNext) viewerNext.addEventListener('click', showNextImage);
-  if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
-  if (viewerImage) {
-    viewerImage.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showNextImage();
-    });
-  }
-
-  // Keyboard navigation
-  document.addEventListener('keydown', (e) => {
-    if (!modal || !modal.classList.contains('active')) return;
-    
-    switch(e.key) {
-      case 'Escape':
-        closeImageViewer();
-        break;
-      case 'ArrowRight':
+    // Image viewer event listeners
+    if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
+    if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
+    if (viewerNext) viewerNext.addEventListener('click', showNextImage);
+    if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
+    if (viewerImage) {
+      viewerImage.addEventListener('click', (e) => {
+        e.stopPropagation();
         showNextImage();
-        break;
-      case 'ArrowLeft':
-        showPrevImage();
-        break;
+      });
     }
-  });
 
-  // Touch support for mobile
-  let touchStartX = 0;
-  let touchEndX = 0;
-
-  if (modal) {
-    modal.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    modal.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      const swipeDistance = touchStartX - touchEndX;
-      const minSwipeDistance = 50;
-
-      if (Math.abs(swipeDistance) > minSwipeDistance) {
-        if (swipeDistance > 0) {
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (!modal || !modal.classList.contains('active')) return;
+      
+      switch(e.key) {
+        case 'Escape':
+          closeImageViewer();
+          break;
+        case 'ArrowRight':
           showNextImage();
-        } else {
+          break;
+        case 'ArrowLeft':
           showPrevImage();
-        }
+          break;
       }
-    }, { passive: true });
-  }
+    });
 
-  // Store preload function for external use
-  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
-}
+    // Touch support for mobile
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    if (modal) {
+      modal.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      modal.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const swipeDistance = touchStartX - touchEndX;
+        const minSwipeDistance = 50;
+
+        if (Math.abs(swipeDistance) > minSwipeDistance) {
+          if (swipeDistance > 0) {
+            showNextImage();
+          } else {
+            showPrevImage();
+          }
+        }
+      }, { passive: true });
+    }
+
+    // Store preload function for external use
+    this.preloadImagesForAllFolders = preloadImagesForAllFolders;
+  }
 
   // Enhanced image checking with multiple format support
   checkImageExists(imageSrc) {
@@ -1511,19 +1412,16 @@ addSmartCentering(containerElement, itemCount) {
       img.crossOrigin = 'anonymous';
       
       const timeout = setTimeout(() => {
-        console.log(`⏰ Timeout checking: ${imageSrc}`);
         resolve(false);
       }, 5000); // 5 second timeout
       
       img.onload = () => {
         clearTimeout(timeout);
-        console.log(`✅ Image exists: ${imageSrc}`);
         resolve(true);
       };
       
       img.onerror = () => {
         clearTimeout(timeout);
-        console.log(`❌ Image not found: ${imageSrc}`);
         resolve(false);
       };
       
@@ -1573,12 +1471,8 @@ addSmartCentering(containerElement, itemCount) {
   }
 }
 
-// Enhanced initialization with forced brand refresh
-console.log('🔧 Script loaded, starting initialization...');
-
+// Enhanced initialization
 function initializeApp() {
-  console.log('📄 Initializing app...');
-  
   const app = new CSVCatalogApp();
   
   app.init().then(() => {
@@ -1592,15 +1486,13 @@ function initializeApp() {
       }
     }, 100);
   }).catch(error => {
-    console.error('💥 App initialization failed:', error);
+    // Silent error handling
   });
   
   window.catalogApp = app;
-  console.log('🔧 App instance created and available as window.catalogApp');
   
   // Monitor URL changes for brand switching
   window.addEventListener('popstate', () => {
-    console.log('🔄 URL changed, refreshing brand...');
     const urlParams = new URLSearchParams(window.location.search);
     const urlBrand = urlParams.get('brand');
     if (urlBrand && app.data && app.data.brands[urlBrand]) {
@@ -1614,12 +1506,10 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 // Backup initialization
 if (document.readyState === 'loading') {
-  console.log('⏳ Document still loading, waiting for DOMContentLoaded...');
+  // Wait for DOMContentLoaded
 } else {
-  console.log('🚀 Document already loaded, initializing immediately...');
   setTimeout(() => {
     if (!window.catalogApp) {
-      console.log('🔄 Backup initialization starting...');
       initializeApp();
     }
   }, 100);
@@ -1627,11 +1517,10 @@ if (document.readyState === 'loading') {
 
 // Global error handlers
 window.addEventListener('error', (e) => {
-  console.error('💥 Global error:', e.error);
+  // Silent error handling
 });
 
 window.addEventListener('unhandledrejection', (e) => {
-  console.error('💥 Unhandled promise rejection:', e.reason);
+  // Silent error handling
   e.preventDefault();
 });
-      
