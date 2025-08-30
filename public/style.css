@@ -14,11 +14,16 @@
   --color-text-muted: #9aa0a6;
   
   /* Dynamic Brand Colors (updated from CSV) */
-  --color-primary: #6366f1;
-  --color-accent: #8b5cf6;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+--color-primary: #6366f1;
+--color-accent: #8b5cf6;
+--color-success: #10b981;
+--color-warning: #f59e0b;
+--color-error: #ef4444;
+
+/* Ensure minimum contrast ratios for accessibility */
+--color-primary-light: color-mix(in srgb, var(--color-primary) 80%, white);
+--color-primary-dark: color-mix(in srgb, var(--color-primary) 60%, black);
+--color-text-on-primary: white;
   
   /* Semantic Colors */
   --color-bg: var(--color-white);
@@ -456,7 +461,22 @@ body[data-page-type="category"] .section-header {
 }
 
 .content-card[data-is-product="true"] .card-title {
-  color: var(--color-primary);
+  color: var(--color-primary-dark, var(--color-primary));
+  font-weight: 600;
+}
+
+.content-card[data-is-product="true"]:hover {
+  border-color: var(--color-primary);
+  background: linear-gradient(135deg, 
+    rgba(var(--color-primary-rgb, 99, 102, 241), 0.05), 
+    var(--color-surface-elevated)
+  );
+}
+
+.content-card[data-is-product="true"] .card-badge {
+  background: rgba(var(--color-primary-rgb, 99, 102, 241), 0.15);
+  color: var(--color-primary-dark, var(--color-primary));
+  font-weight: 600;
 }
 
 .card-image {
@@ -838,16 +858,48 @@ body[data-page-type="category"] .section-header {
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
- .three-dot-menu {
-   bottom: 95px;
-   right: 25px;
- }
- 
- .three-dot-toggle {
-   min-width: 70px;
-   max-width: 110px;
-   height: 70px;
- }
+  .three-dot-menu {
+    bottom: 95px;
+    right: 25px;
+  }
+  
+  .three-dot-toggle {
+    min-width: 75px;
+    max-width: 85px;
+    height: 70px;
+    padding: 6px;
+  }
+  
+  .toggle-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .toggle-icon-placeholder {
+    font-size: 18px;
+  }
+  
+  .toggle-label {
+    font-size: 8px;
+    line-height: 1.1;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  .menu-button {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .menu-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .menu-label {
+    font-size: 10px;
+  }
+}
  
  .toggle-icon {
    width: 20px;
@@ -1539,11 +1591,13 @@ body[data-page-type="category"] .section-header {
   }
   
   .viewer-close {
-    width: 45px;
-    height: 45px;
-    font-size: 2rem;
-    top: -55px;
-  }
+  width: 50px;
+  height: 50px;
+  font-size: 2rem;
+  top: 10px;
+  right: 10px;
+  z-index: 10001;
+}
   
   .viewer-content {
     max-width: 95vw;
