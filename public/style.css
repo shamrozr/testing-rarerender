@@ -392,15 +392,15 @@ body[data-page-type="category"] .section-header {
     rgba(99, 102, 241, 0.05) 50%,
     var(--color-soft-gray) 100%) !important;
 }
-/* Grid System */
-/* =========== */
+/* Smart Mathematical Grid System */
+/* =============================== */
 
 .cards-grid {
   display: grid;
   gap: var(--space-6);
 }
 
-/* Grid variations based on card count */
+/* Fixed layouts for small counts */
 .cards-grid.grid-1 { 
   grid-template-columns: 1fr; 
   max-width: 400px; 
@@ -412,17 +412,92 @@ body[data-page-type="category"] .section-header {
 }
 
 .cards-grid.grid-3 { 
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  grid-template-columns: repeat(3, 1fr); 
 }
 
-.cards-grid.grid-4 { 
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+/* Smart grid for 4-12 items using mathematical centering */
+.cards-grid.grid-smart {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+  align-items: start;
 }
 
-.cards-grid.grid-many { 
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+/* Smart centering classes applied by JavaScript */
+.cards-grid.grid-smart .content-card.center-item {
+  grid-column: 2 / 3;
+  justify-self: center;
 }
 
+.cards-grid.grid-smart .content-card.partial-row-left {
+  justify-self: end;
+  margin-right: 12%;
+}
+
+.cards-grid.grid-smart .content-card.partial-row-right {
+  justify-self: start;  
+  margin-left: 12%;
+}
+
+/* Responsive auto-fit for many items (13+) */
+.cards-grid.grid-many {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  justify-items: stretch;
+}
+
+/* Mobile: All grids become single column */
+@media (max-width: 768px) {
+  .cards-grid.grid-2,
+  .cards-grid.grid-3,
+  .cards-grid.grid-smart,
+  .cards-grid.grid-many {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .cards-grid .content-card {
+    grid-column: auto !important;
+    justify-self: stretch !important;
+    margin: 0 !important;
+  }
+}
+
+/* Tablet: 2 columns for medium screens */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .cards-grid.grid-smart {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .cards-grid.grid-smart .content-card.center-item {
+    grid-column: 1 / -1;
+    justify-self: center;
+    max-width: 350px;
+  }
+  
+  .cards-grid.grid-smart .content-card.partial-row-left {
+    justify-self: center;
+    margin: 0;
+  }
+  
+  .cards-grid.grid-smart .content-card.partial-row-right {
+    justify-self: center;
+    margin: 0;
+  }
+}
+
+/* Large screens: Enhanced spacing */
+@media (min-width: 1200px) {
+  .cards-grid {
+    gap: var(--space-8);
+  }
+  
+  .cards-grid.grid-smart .content-card.partial-row-left {
+    margin-right: 15%;
+  }
+  
+  .cards-grid.grid-smart .content-card.partial-row-right {
+    margin-left: 15%;
+  }
+}
 /* Card Styles */
 /* =========== */
 
@@ -679,6 +754,24 @@ body[data-page-type="category"] .section-header {
   padding-top: var(--space-8);
   text-align: center;
   color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.footer-bottom p {
+  margin: 0;
+  display: inline;
+  white-space: nowrap;
+}
+
+/* Mobile footer fix */
+@media (max-width: 768px) {
+  .footer-bottom {
+    white-space: normal;
+    overflow: visible;
+    font-size: 0.9rem;
+  }
 }
 
 /* Separated Floating Action Buttons */
@@ -725,11 +818,11 @@ body[data-page-type="category"] .section-header {
   gap: 15px;
 }
 
-/* Enhanced 3-Dot Toggle Button with Icon and Label */
+/* Enhanced 3-Dot Toggle Button with Multi-line Text */
 .three-dot-toggle {
-  min-width: 80px;
-  max-width: 120px;
-  height: 80px;
+  min-width: 90px;
+  max-width: 110px;
+  height: 85px;
   border-radius: 20px;
   border: none;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
@@ -754,47 +847,57 @@ body[data-page-type="category"] .section-header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  text-align: center;}
+  gap: 3px;
+  text-align: center;
+}
 
 .toggle-icon {
- width: 24px;
- height: 24px;
- filter: brightness(0) invert(1);
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
 }
 
 .toggle-icon-placeholder {
- font-size: 24px;
- line-height: 1;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .toggle-label {
- font-size: 10px;
- font-weight: 600;
- line-height: 1.2;
- white-space: nowrap;
- max-width: 100px;
- overflow: hidden;
- text-overflow: ellipsis;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: normal;
+  max-width: 90px;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  hyphens: auto;
 }
 
-/* Menu Items Container */
-.three-dot-items {
- display: flex;
- flex-direction: column;
- gap: 12px;
- opacity: 0;
- transform: translateY(20px);
- transition: all var(--transition-smooth);
- pointer-events: none;
+/* Mobile adjustments for toggle button */
+@media (max-width: 768px) {
+  .three-dot-toggle {
+    min-width: 80px;
+    max-width: 90px;
+    height: 75px;
+    padding: 6px;
+  }
+  
+  .toggle-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .toggle-icon-placeholder {
+    font-size: 18px;
+  }
+  
+  .toggle-label {
+    font-size: 8px;
+    line-height: 1.0;
+    max-width: 75px;
+  }
 }
-
-.three-dot-menu.expanded .three-dot-items {
- opacity: 1;
- transform: translateY(0);
- pointer-events: all;
-}
-
 /* Individual Menu Item */
 .menu-item {
  display: flex;
