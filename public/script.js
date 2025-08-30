@@ -1184,58 +1184,85 @@ setupFABFunctionality() {
 
 // REPLACE the entire discoverWebPFiles function with this FIXED version:
 
+// REPLACE the entire discoverWebPFiles function with this FASTER & MORE RELIABLE version:
+
 const discoverWebPFiles = async (folderName) => {
-  console.log(`🎯 SMART scanning ${folderName} for actual .webp files...`);
+  console.log(`🎯 FAST scanning ${folderName} for actual .webp files...`);
+  
+  // FASTEST METHOD: Try to load actual image data to verify it exists
+  const testImageExists = async (imagePath) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 1000); // 1 second timeout
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      
+      img.src = imagePath;
+    });
+  };
   
   const foundImages = [];
   
   // PRIORITY 1: Your exact pattern (image1.webp, image2.webp...)
-  console.log(`📋 Checking image*.webp pattern...`);
+  console.log(`📋 Testing image*.webp files...`);
   
-  // Check files one by one to avoid false positives
-  for (let i = 1; i <= 50; i++) {
-    const webpPath = `${folderName}/image${i}.webp`;
+  // Create batch promises for parallel checking (batches of 10 for speed)
+  const batchSize = 10;
+  let consecutiveFailures = 0;
+  
+  for (let startIndex = 1; startIndex <= 50; startIndex += batchSize) {
+    const endIndex = Math.min(startIndex + batchSize - 1, 50);
+    const batch = [];
     
-    try {
-      const response = await fetch(webpPath, { method: 'HEAD' });
-      
-      // STRICTER VALIDATION - Check multiple conditions
-      if (response.ok && 
-          response.status === 200 && 
-          response.headers.get('content-type')?.includes('image') &&
-          response.headers.get('content-length') !== '0' &&
-          response.headers.get('content-length') !== null) {
-        
-        console.log(`✅ FOUND: image${i}.webp (${response.headers.get('content-length')} bytes)`);
+    // Create batch of promises
+    for (let i = startIndex; i <= endIndex; i++) {
+      const webpPath = `${folderName}/image${i}.webp`;
+      batch.push(
+        testImageExists(webpPath).then(exists => ({
+          exists,
+          path: webpPath,
+          index: i,
+          name: `image${i}`
+        }))
+      );
+    }
+    
+    // Wait for batch to complete
+    const results = await Promise.all(batch);
+    let batchFoundAny = false;
+    
+    // Process batch results
+    results.forEach(result => {
+      if (result.exists) {
         foundImages.push({
-          src: webpPath,
-          title: `${folderName} Image ${i}`,
-          name: `image${i}`,
-          index: i
+          src: result.path,
+          title: `${folderName} Image ${result.index}`,
+          name: result.name,
+          index: result.index
         });
-      } else {
-        console.log(`❌ SKIP: image${i}.webp (status: ${response.status}, type: ${response.headers.get('content-type')}, size: ${response.headers.get('content-length')})`);
-        
-        // Stop checking if we hit 3 consecutive missing files
-        if (i > 3) {
-          let consecutiveMissing = 0;
-          for (let j = i - 2; j <= i; j++) {
-            if (!foundImages.find(img => img.name === `image${j}`)) {
-              consecutiveMissing++;
-            }
-          }
-          if (consecutiveMissing >= 3) {
-            console.log(`🛑 Stopping at image${i} - found 3 consecutive missing files`);
-            break;
-          }
-        }
+        console.log(`✅ FOUND: ${result.name}.webp`);
+        batchFoundAny = true;
+        consecutiveFailures = 0;
       }
-    } catch (error) {
-      console.log(`❌ ERROR: image${i}.webp - ${error.message}`);
+    });
+    
+    // If no files found in this batch, increment failure count
+    if (!batchFoundAny) {
+      consecutiveFailures++;
       
-      // Stop if we hit network errors on consecutive files
-      if (i > 3) {
-        console.log(`🛑 Stopping due to network errors`);
+      // Stop if we've had 2 consecutive batches with no files (20 files checked)
+      if (consecutiveFailures >= 2 && foundImages.length > 0) {
+        console.log(`🛑 Stopping early - no files found in last ${consecutiveFailures * batchSize} attempts`);
         break;
       }
     }
@@ -1246,73 +1273,57 @@ const discoverWebPFiles = async (folderName) => {
     return foundImages.sort((a, b) => a.index - b.index);
   }
   
-  // PRIORITY 2: Only try simple numbers if NO image*.webp found
-  console.log(`📋 No image*.webp found, trying number.webp pattern...`);
-  for (let i = 1; i <= 30; i++) {
+  // PRIORITY 2: Try simple numbers (1.webp, 2.webp, etc.)
+  console.log(`📋 No image*.webp found, testing number.webp pattern...`);
+  
+  const numberPromises = [];
+  for (let i = 1; i <= 20; i++) {
     const webpPath = `${folderName}/${i}.webp`;
-    
-    try {
-      const response = await fetch(webpPath, { method: 'HEAD' });
-      if (response.ok && 
-          response.status === 200 && 
-          response.headers.get('content-type')?.includes('image') &&
-          response.headers.get('content-length') !== '0' &&
-          response.headers.get('content-length') !== null) {
-        
-        foundImages.push({
+    numberPromises.push(
+      testImageExists(webpPath).then(exists => 
+        exists ? {
           src: webpPath,
           title: `${folderName} File ${i}`,
           name: `${i}`,
           index: i
-        });
-        console.log(`✅ FOUND: ${i}.webp`);
-      }
-    } catch (error) {
-      // File doesn't exist, continue
-    }
+        } : null
+      )
+    );
   }
   
-  if (foundImages.length > 0) {
-    console.log(`🎯 SUCCESS: Found ${foundImages.length} number.webp files`);
-    return foundImages.sort((a, b) => a.index - b.index);
+  const numberResults = await Promise.all(numberPromises);
+  const validNumbers = numberResults.filter(img => img !== null);
+  
+  if (validNumbers.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${validNumbers.length} number.webp files`);
+    return validNumbers.sort((a, b) => a.index - b.index);
   }
   
-  // PRIORITY 3: Only try descriptive names if NOTHING else found
-  console.log(`📋 No numbered files found, trying descriptive names...`);
+  // PRIORITY 3: Try descriptive names
+  console.log(`📋 Trying descriptive names...`);
   const descriptiveNames = [
     'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
-    'photo', 'pic', 'screenshot', 'scan', 'document', 'file',
-    'evidence', 'confirmation', 'invoice', 'transfer'
+    'photo', 'pic', 'screenshot', 'scan', 'document', 'file'
   ];
   
-  for (let i = 0; i < descriptiveNames.length; i++) {
-    const name = descriptiveNames[i];
+  const descriptivePromises = descriptiveNames.map((name, index) => {
     const webpPath = `${folderName}/${name}.webp`;
-    
-    try {
-      const response = await fetch(webpPath, { method: 'HEAD' });
-      if (response.ok && 
-          response.status === 200 && 
-          response.headers.get('content-type')?.includes('image') &&
-          response.headers.get('content-length') !== '0' &&
-          response.headers.get('content-length') !== null) {
-        
-        foundImages.push({
-          src: webpPath,
-          title: `${folderName} - ${name}`,
-          name: name,
-          index: i + 1000
-        });
-        console.log(`✅ FOUND: ${name}.webp`);
-      }
-    } catch (error) {
-      // File doesn't exist, continue
-    }
-  }
+    return testImageExists(webpPath).then(exists =>
+      exists ? {
+        src: webpPath,
+        title: `${folderName} - ${name}`,
+        name: name,
+        index: index + 1000
+      } : null
+    );
+  });
   
-  if (foundImages.length > 0) {
-    console.log(`🎯 SUCCESS: Found ${foundImages.length} descriptive .webp files`);
-    return foundImages.sort((a, b) => a.index - b.index);
+  const descriptiveResults = await Promise.all(descriptivePromises);
+  const validDescriptive = descriptiveResults.filter(img => img !== null);
+  
+  if (validDescriptive.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${validDescriptive.length} descriptive .webp files`);
+    return validDescriptive.sort((a, b) => a.index - b.index);
   }
   
   // Nothing found
