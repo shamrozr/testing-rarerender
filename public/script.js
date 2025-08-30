@@ -1,9 +1,9 @@
-// Complete Working CSV-Driven Catalog App - Fixed Version
-// =======================================================
+// Complete Working CSV-Driven Catalog App with All Fixes
+// ========================================================
 
 class CSVCatalogApp {
   constructor() {
-    console.log('CSVCatalogApp constructor called');
+    console.log('🏗️ CSVCatalogApp constructor called');
     this.data = null;
     this.currentBrand = null;
     this.currentPath = [];
@@ -15,20 +15,20 @@ class CSVCatalogApp {
   }
 
   initializeFromURL() {
-    console.log('Initializing from URL...');
+    console.log('🔍 Initializing from URL...');
     
     const urlParams = new URLSearchParams(window.location.search);
     const brandFromURL = urlParams.get('brand');
     const pathFromURL = urlParams.get('path');
     
-    console.log('Current URL:', window.location.href);
-    console.log('Brand parameter:', brandFromURL);
-    console.log('Path parameter:', pathFromURL);
+    console.log('🌐 Current URL:', window.location.href);
+    console.log('🏷️ Brand parameter:', brandFromURL);
+    console.log('📍 Path parameter:', pathFromURL);
     
-    // Set brand immediately from URL
+    // CRITICAL: Set brand immediately from URL
     if (brandFromURL) {
       this.currentBrand = brandFromURL;
-      console.log('Set currentBrand from URL:', brandFromURL);
+      console.log('🎯 Set currentBrand from URL:', brandFromURL);
       
       // Force immediate display update
       this.updateBrandDisplay(brandFromURL);
@@ -37,14 +37,14 @@ class CSVCatalogApp {
     // Set path
     if (pathFromURL) {
       this.currentPath = pathFromURL.split('/').filter(Boolean);
-      console.log('Current path:', this.currentPath);
+      console.log('📁 Current path:', this.currentPath);
     } else {
       this.currentPath = [];
     }
   }
 
   updateBrandDisplay(brandFromURL) {
-    console.log('Updating brand display for:', brandFromURL);
+    console.log('🔄 Updating brand display for:', brandFromURL);
     
     // Update brand name immediately from URL
     const brandNameElement = document.getElementById('brandName');
@@ -53,13 +53,13 @@ class CSVCatalogApp {
     if (brandNameElement) {
       const displayName = this.slugToDisplayName(brandFromURL);
       brandNameElement.textContent = displayName;
-      console.log('Updated brand name element to:', displayName);
+      console.log('📝 Updated brand name element to:', displayName);
     }
     
     if (brandLogoElement) {
       const initials = this.getInitials(this.slugToDisplayName(brandFromURL));
       brandLogoElement.textContent = initials;
-      console.log('Updated logo element to:', initials);
+      console.log('🔤 Updated logo element to:', initials);
     }
     
     // Also update page title
@@ -77,34 +77,31 @@ class CSVCatalogApp {
   }
 
   async init() {
-    console.log('Initializing CSV-driven catalog...');
+    console.log('🚀 Initializing CSV-driven catalog...');
     
     try {
       await this.loadData();
       
       if (!this.data) {
-        console.error('No data available, initialization failed');
+        console.error('❌ No data available, initialization failed');
         return;
       }
 
-      console.log('Starting setup with data:', {
+      console.log('📊 Starting setup with data:', {
         brands: Object.keys(this.data.brands || {}),
         catalogItems: Object.keys(this.data.catalog?.tree || {}),
         currentBrand: this.currentBrand,
         currentPath: this.currentPath
       });
 
-      // Call debug logging
-
       this.setupBrandInfo();
-      this.generateParticles();
       
       // Check if we need to show category view or homepage
       if (this.currentPath.length > 0) {
-        console.log('Showing category view for path:', this.currentPath);
+        console.log('📁 Showing category view for path:', this.currentPath);
         this.showCategoryView();
       } else {
-        console.log('Showing homepage view');
+        console.log('🏠 Showing homepage view');
         this.setupDynamicSections();
       }
       
@@ -113,15 +110,13 @@ class CSVCatalogApp {
       this.setupEventListeners();
       this.setupFABFunctionality();
       
-      console.log('CSV catalog initialization complete!');
+      console.log('✅ CSV catalog initialization complete!');
     } catch (error) {
-      console.error('Error during initialization:', error);
+      console.error('❌ Error during initialization:', error);
     }
   }
 
-  
-
- async loadData() {
+  async loadData() {
     try {
       this.showLoading();
       console.log('📥 Attempting to load data from /data.json...');
@@ -167,7 +162,7 @@ class CSVCatalogApp {
   }
 
   loadMockData() {
-    console.log('Loading mock data as fallback...');
+    console.log('📦 Loading mock data as fallback...');
     
     this.data = {
       brands: {
@@ -215,6 +210,13 @@ class CSVCatalogApp {
                   'Chanel Bag 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/1', thumbnail: '' },
                   'Chanel Bag 2': { isProduct: true, driveLink: 'https://drive.google.com/file/d/2', thumbnail: '' }
                 }
+              },
+              'Gucci': {
+                count: 38,
+                thumbnail: '',
+                children: {
+                  'Gucci Bag 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/3', thumbnail: '' }
+                }
               }
             }
           },
@@ -222,8 +224,18 @@ class CSVCatalogApp {
             count: 156, 
             thumbnail: '', 
             section: 'Trending',
-            children: {}
-          }
+            children: {
+              'Nike': {
+                count: 25,
+                thumbnail: '',
+                children: {
+                  'Nike Shoe 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/4', thumbnail: '' }
+                }
+              }
+            }
+          },
+          'JEWELRY': { count: 89, thumbnail: '', section: 'Featured', children: {} },
+          'WATCHES': { count: 68, thumbnail: '', section: 'Premium', children: {} }
         }
       }
     };
@@ -236,153 +248,412 @@ class CSVCatalogApp {
       this.currentBrand = Object.keys(this.data.brands)[0];
     }
     
-    console.log('Mock data loaded, current brand:', this.currentBrand);
+    console.log('✅ Mock data loaded, current brand:', this.currentBrand);
+  }
+
+  // Show category view
+  showCategoryView() {
+    console.log('📁 Showing category view for path:', this.currentPath);
+    
+    // Add body attribute for CSS targeting
+    document.body.setAttribute('data-page-type', 'category');
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Navigate to the current path in the data tree
+    let currentNode = this.data.catalog.tree;
+    let breadcrumbs = [];
+    
+    for (const segment of this.currentPath) {
+      if (currentNode[segment]) {
+        breadcrumbs.push({
+          name: segment,
+          path: breadcrumbs.length === 0 ? segment : breadcrumbs[breadcrumbs.length - 1].path + '/' + segment
+        });
+        currentNode = currentNode[segment].children || {};
+      } else {
+        console.error('❌ Path not found:', segment, 'in', Object.keys(currentNode));
+        this.showNotification(`Category "${segment}" not found`);
+        this.navigateToHome();
+        return;
+      }
+    }
+
+    console.log('🗂️ Current node contents:', Object.keys(currentNode));
+    console.log('🍞 Breadcrumbs:', breadcrumbs);
+
+    // Update hero section for category view
+    this.updateHeroForCategory(breadcrumbs);
+
+    // Hide taxonomy section
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'none';
+    }
+
+    // Show category contents
+    this.renderCategoryContents(currentNode, breadcrumbs);
+  }
+
+  updateHeroForCategory(breadcrumbs) {
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    
+    if (heroTitle && breadcrumbs.length > 0) {
+      const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
+      heroTitle.textContent = `${currentCategory} Collection`;
+    }
+    
+    if (heroSubtitle) {
+      heroSubtitle.style.display = 'none'; // Hide subtitle on category pages
+    }
+
+    // Add breadcrumb navigation
+    this.addBreadcrumbNavigation(breadcrumbs);
+  }
+
+  addBreadcrumbNavigation(breadcrumbs) {
+    const hero = document.querySelector('.hero .hero-content');
+    if (!hero) return;
+
+    // Remove existing breadcrumbs
+    const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
+
+    // Create breadcrumb navigation
+    const breadcrumbNav = document.createElement('nav');
+    breadcrumbNav.className = 'breadcrumb-nav';
+    breadcrumbNav.style.cssText = `
+      margin-bottom: var(--space-6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      padding: var(--space-3) var(--space-6);
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: var(--radius-full);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow-sm);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: var(--space-8);
+    `;
+
+    // Home link
+    const homeLink = document.createElement('a');
+    homeLink.href = '#';
+    homeLink.textContent = 'Home';
+    homeLink.style.cssText = `
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 500;
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-base);
+    `;
+    homeLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.navigateToHome();
+    });
+
+    breadcrumbNav.appendChild(homeLink);
+
+    // Add breadcrumb items
+    breadcrumbs.forEach((crumb, index) => {
+      // Add separator
+      const separator = document.createElement('span');
+      separator.textContent = ' / ';
+      separator.style.color = 'var(--color-text-muted)';
+      breadcrumbNav.appendChild(separator);
+
+      if (index === breadcrumbs.length - 1) {
+        // Current page - no link
+        const current = document.createElement('span');
+        current.textContent = crumb.name;
+        current.style.cssText = `
+          font-weight: 600;
+          color: var(--color-text-primary);
+          padding: var(--space-1) var(--space-2);
+          background: rgba(99, 102, 241, 0.1);
+          border-radius: var(--radius-sm);
+        `;
+        breadcrumbNav.appendChild(current);
+      } else {
+        // Clickable breadcrumb
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = crumb.name;
+        link.style.cssText = `
+          color: var(--color-primary);
+          text-decoration: none;
+          font-weight: 500;
+          padding: var(--space-1) var(--space-2);
+          border-radius: var(--radius-sm);
+          transition: all var(--transition-base);
+        `;
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          
+          // Split the path and navigate properly
+          const pathSegments = crumb.path.split('/').filter(Boolean);
+          this.currentPath = pathSegments;
+          
+          // Update URL
+          const params = new URLSearchParams(window.location.search);
+          params.set('path', crumb.path);
+          if (this.currentBrand) {
+            params.set('brand', this.currentBrand);
+          }
+          
+          const newURL = `${window.location.pathname}?${params.toString()}`;
+          window.history.pushState({ 
+            path: pathSegments, 
+            brand: this.currentBrand 
+          }, '', newURL);
+          
+          // Show the category view
+          this.showCategoryView();
+        });
+        breadcrumbNav.appendChild(link);
+      }
+    });
+
+    hero.insertBefore(breadcrumbNav, hero.firstChild);
+  }
+
+  renderCategoryContents(currentNode, breadcrumbs) {
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
+
+    const items = Object.entries(currentNode).map(([key, item]) => {
+      if (item.isProduct) {
+        return {
+          key,
+          title: key,
+          description: 'Premium product from our luxury collection',
+          count: 1,
+          thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+          isProduct: true,
+          driveLink: item.driveLink
+        };
+      } else {
+        return {
+          key,
+          title: key.replace(/_/g, ' '),
+          description: `Explore ${item.count || 0} items in this collection`,
+          count: item.count || 0,
+          thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+          isProduct: false
+        };
+      }
+    });
+
+    console.log('🎯 Rendering category contents:', items);
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <section class="content-section">
+          <div class="container">
+            <div class="section-header">
+              <h2 class="section-title">No Items Found</h2>
+              <p class="section-description">This category is currently empty.</p>
+            </div>
+          </div>
+        </section>
+      `;
+      return;
+    }
+
+    const gridClass = this.getGridClass(items.length);
+    
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="cards-grid ${gridClass}">
+            ${items.map(item => this.createCardHTML(item)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  navigateToHome() {
+    console.log('🏠 Navigating to home');
+    
+    // Remove category page attribute
+    document.body.removeAttribute('data-page-type');
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.delete('path');
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ brand: this.currentBrand }, '', newURL);
+    
+    // Reset state
+    this.currentPath = [];
+    
+    // Re-render homepage
+    this.setupDynamicSections();
+    
+    // Show taxonomy section
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'block';
+    }
+
+    // Reset hero
+    this.setupBrandInfo();
+    
+    // Remove breadcrumbs
+    const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
   }
 
   setupBrandInfo() {
-    console.log('=== BRAND INFO SETUP START ===');
+    console.log('🏷️ Setting up brand info...');
     
     // Get brand from URL first - THIS IS CRITICAL
     const urlParams = new URLSearchParams(window.location.search);
     const urlBrand = urlParams.get('brand');
     
-    console.log('URL brand parameter:', urlBrand);
-    console.log('Current brand before URL check:', this.currentBrand);
-    
-    // ALWAYS use URL brand if available and valid
-    if (urlBrand && this.data && this.data.brands && this.data.brands[urlBrand]) {
-      console.log('Forcing brand from URL:', urlBrand);
+    // ALWAYS use URL brand if available
+    if (urlBrand) {
+      console.log('🔄 Forcing brand from URL:', urlBrand);
       this.currentBrand = urlBrand;
-    } else if (urlBrand) {
-      console.log('URL brand not found in data:', urlBrand);
-      console.log('Available brands:', Object.keys(this.data?.brands || {}));
     }
     
     if (!this.data || !this.data.brands) {
-      console.error('No brand data available for setup');
-      console.log('Data object:', this.data);
+      console.error('❌ No brand data available');
       return;
     }
 
     let brand = this.data.brands[this.currentBrand];
     if (!brand) {
-      console.error('Brand not found in data:', this.currentBrand);
-      console.log('Available brands in data:', Object.keys(this.data.brands));
+      console.error('❌ Brand not found:', this.currentBrand);
+      console.log('Available brands:', Object.keys(this.data.brands));
       
       // Use first available brand as fallback
       const firstBrand = Object.keys(this.data.brands)[0];
       if (firstBrand) {
-        console.log('Falling back to first brand:', firstBrand);
+        console.log('⚠️ Falling back to first brand:', firstBrand);
         this.currentBrand = firstBrand;
         brand = this.data.brands[firstBrand];
       } else {
-        console.error('No brands available at all');
         return;
       }
     }
 
-    console.log('Setting up brand:', this.currentBrand);
-    console.log('Brand object:', brand);
+    console.log('🏷️ FORCE Setting up brand info for:', this.currentBrand);
+    console.log('🏷️ Brand data:', brand);
 
-    // Extract brand information with extensive fallbacks
-    const brandName = brand.name || brand.brandName || brand['Brand Name'] || 
-                     brand.displayName || this.slugToDisplayName(this.currentBrand);
-    const tagline = brand.tagline || brand.brandTagline || brand['Brand Tagline'] || 
-                   brand.subtitle || 'Premium Quality Collection';
-    const heroTitle = brand.heroTitle || brand.hero_title || brand['Hero Title'] || 
-                     brand.mainTitle || 'Discover Luxury Collections';
-    const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || brand['Hero Subtitle'] || 
-                        brand.description || 'Curated premium products from the world\'s finest brands.';
+    // Get brand information with multiple fallback patterns
+    const brandName = brand.name || brand.brandName || brand['Brand Name'] || this.slugToDisplayName(this.currentBrand);
+    const tagline = brand.tagline || brand.brandTagline || brand['Brand Tagline'] || 'Premium Quality Collection';
+    const heroTitle = brand.heroTitle || brand.hero_title || brand['Hero Title'] || 'Discover Luxury Collections';
+    const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || brand['Hero Subtitle'] || 'Curated premium products from the world\'s finest brands.';
 
-    console.log('Extracted info:', { brandName, tagline, heroTitle, heroSubtitle });
+    console.log('📝 Extracted brand info:', { brandName, tagline, heroTitle, heroSubtitle });
 
-    // FORCE DOM updates with error checking
-    const updateElement = (id, content) => {
+    // FORCE immediate DOM updates
+    const elements = [
+      { id: 'brandName', content: brandName },
+      { id: 'brandTagline', content: tagline },
+      { id: 'heroTitle', content: heroTitle },
+      { id: 'heroSubtitle', content: heroSubtitle },
+      { id: 'footerBrandName', content: brandName }
+    ];
+
+    elements.forEach(({ id, content }) => {
       const element = document.getElementById(id);
       if (element) {
         element.textContent = content;
-        element.style.display = 'block';
-        console.log(`Updated ${id}: "${content}"`);
-        return true;
+        element.style.display = 'block'; // Ensure it's visible
+        console.log(`✅ FORCED update ${id}:`, content);
+        
+        // Double-check after a brief delay
+        setTimeout(() => {
+          if (element.textContent !== content) {
+            element.textContent = content;
+            console.log(`🔄 Re-forced update ${id}:`, content);
+          }
+        }, 50);
       } else {
-        console.log(`Element not found: ${id}`);
-        return false;
+        console.log(`❌ Element not found: ${id}`);
       }
-    };
+    });
 
-    // Update all brand elements
-    updateElement('brandName', brandName);
-    updateElement('brandTagline', tagline);
-    updateElement('heroTitle', heroTitle);
-    updateElement('heroSubtitle', heroSubtitle);
-    updateElement('footerBrandName', brandName);
-
-    // Update logo
+    // Update logo with initials
     const logoEl = document.getElementById('brandLogo');
     if (logoEl) {
       const initials = this.getInitials(brandName);
       logoEl.textContent = initials;
-      logoEl.title = brandName;
-      console.log('Updated logo:', initials);
+      logoEl.title = brandName; // Add tooltip
+      console.log('✅ FORCED logo update:', initials);
     }
 
-    // FORCE apply brand colors with extensive fallbacks
-    const colors = brand.colors || brand.brandColors || {};
+    // FORCE apply brand colors
+    const colors = brand.colors || {};
     const brandColors = {
-      primary: colors.primary || colors.primaryColor || colors['Primary Color'] || 
-              colors.main || brand.primaryColor || '#6366f1',
-      accent: colors.accent || colors.accentColor || colors['Accent Color'] || 
-             colors.secondary || brand.accentColor || '#8b5cf6',
-      text: colors.text || colors.textColor || colors['Text Color'] || 
-           colors.foreground || brand.textColor || '#202124',
-      bg: colors.bg || colors.backgroundColor || colors['Background Color'] || 
-         colors.background || brand.bgColor || '#ffffff'
+      primary: colors.primary || colors.primaryColor || colors['Primary Color'] || '#6366f1',
+      accent: colors.accent || colors.accentColor || colors['Accent Color'] || '#8b5cf6',
+      text: colors.text || colors.textColor || colors['Text Color'] || '#202124',
+      bg: colors.bg || colors.bgColor || colors['Background Color'] || '#ffffff'
     };
 
-    console.log('Applying colors:', brandColors);
+    console.log('🎨 FORCING brand colors:', brandColors);
     
-    // Force apply to CSS root
+    // Apply colors immediately to root with force
     const root = document.documentElement;
-    root.style.setProperty('--color-primary', brandColors.primary);
-    root.style.setProperty('--color-accent', brandColors.accent);
-    root.style.setProperty('--color-text-primary', brandColors.text);
-    root.style.setProperty('--color-bg', brandColors.bg);
+    Object.entries(brandColors).forEach(([key, value]) => {
+      const cssVar = `--color-${key === 'text' ? 'text-primary' : key}`;
+      root.style.setProperty(cssVar, value);
+      console.log(`🎨 Set ${cssVar}: ${value}`);
+    });
     
-    // Convert hex to RGB for background animations
-    const hexToRgb = (hex) => {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? 
-        `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` 
-        : '99, 102, 241';
-    };
-
-    // Set RGB values for animations
-    root.style.setProperty('--color-primary-rgb', hexToRgb(brandColors.primary));
-    root.style.setProperty('--color-accent-rgb', hexToRgb(brandColors.accent));
-    
-    console.log('CSS variables set');
-
-    // Update meta theme color
+    // Update theme color meta tag
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme) {
       metaTheme.setAttribute('content', brandColors.primary);
     }
 
-    // Setup WhatsApp
+    // Force repaint by triggering style changes
+    document.body.style.opacity = '0.99';
+    setTimeout(() => {
+      document.body.style.opacity = '1';
+    }, 10);
+
+    // Setup WhatsApp button
     const whatsApp = document.getElementById('whatsappFab');
     if (whatsApp) {
       const whatsappUrl = brand.whatsapp || brand.whatsappUrl || brand['WhatsApp'] || '';
       if (whatsappUrl) {
         whatsApp.href = whatsappUrl;
         whatsApp.style.display = 'flex';
-        console.log('WhatsApp set:', whatsappUrl);
+        console.log('📱 WhatsApp link set:', whatsappUrl);
       }
     }
 
     // Update page title
     document.title = `${brandName} - Luxury Collection`;
 
-    console.log('=== BRAND INFO SETUP COMPLETE ===');
+    console.log('✅ Brand info FORCE setup complete for:', this.currentBrand);
   }
 
   getInitials(name) {
@@ -393,12 +664,31 @@ class CSVCatalogApp {
               .substring(0, 2);
   }
 
+  updateElement(id, content) {
+    const element = document.getElementById(id);
+    if (element && content) {
+      element.textContent = content;
+    }
+  }
+
+  applyBrandColors(colors) {
+    if (!colors) return;
+    const root = document.documentElement;
+    if (colors.primary) root.style.setProperty('--color-primary', colors.primary);
+    if (colors.accent) root.style.setProperty('--color-accent', colors.accent);
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme && colors.primary) {
+      metaTheme.setAttribute('content', colors.primary);
+    }
+  }
+
   setupDynamicSections() {
     const container = document.getElementById('dynamicSections');
     if (!container) return;
 
     if (!this.data.catalog || !this.data.catalog.tree) {
-      console.error('No catalog tree data found');
+      console.error('❌ No catalog tree data found');
       return;
     }
 
@@ -619,13 +909,219 @@ class CSVCatalogApp {
 
     // Browser back/forward navigation
     window.addEventListener('popstate', (e) => {
-      console.log('Browser navigation detected:', e.state);
+      console.log('🔙 Browser navigation detected:', e.state);
       this.handleBrowserNavigation();
     });
   }
 
+  navigateToPath(path) {
+    console.log('🔗 Navigate to path:', path);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Build new path
+    const pathSegments = path.split('/').filter(Boolean);
+    this.currentPath = pathSegments;
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.set('path', path);
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ 
+      path: pathSegments, 
+      brand: this.currentBrand 
+    }, '', newURL);
+    
+    // Show category view
+    this.showCategoryView();
+  }
+
+  openProduct(driveLink) {
+    console.log('🔗 Opening product:', driveLink);
+    this.showNotification('Opening product...');
+    window.open(driveLink, '_blank', 'noopener,noreferrer');
+  }
+
+  navigateToCategory(category) {
+    console.log('🔗 Navigate to category:', category);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Build new path
+    let newPath;
+    if (this.currentPath.length === 0) {
+      // From homepage
+      newPath = [category];
+    } else {
+      // From current path
+      newPath = [...this.currentPath, category];
+    }
+    
+    // Update state
+    this.currentPath = newPath;
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.set('path', newPath.join('/'));
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ 
+      category, 
+      brand: this.currentBrand, 
+      path: newPath 
+    }, '', newURL);
+    
+    // Show category view
+    this.showCategoryView();
+  }
+
+  // Force brand refresh when URL changes
+  handleBrandNavigation() {
+    console.log('🔄 Handling brand navigation...');
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBrand = urlParams.get('brand');
+    
+    if (urlBrand && urlBrand !== this.currentBrand) {
+      console.log('🔄 Brand changed in URL, forcing update:', urlBrand);
+      this.currentBrand = urlBrand;
+      
+      // Force immediate brand info setup
+      if (this.data && this.data.brands) {
+        this.setupBrandInfo();
+      }
+    }
+    
+    // Handle path changes
+    const pathFromURL = urlParams.get('path');
+    if (pathFromURL) {
+      this.currentPath = pathFromURL.split('/').filter(Boolean);
+      this.showCategoryView();
+    } else {
+      this.currentPath = [];
+      this.navigateToHome();
+    }
+  }
+
+  handleBrowserNavigation() {
+    console.log('🔙 Handling browser navigation');
+    
+    // Re-initialize from URL with FORCE
+    this.initializeFromURL();
+    
+    // Force brand refresh
+    this.handleBrandNavigation();
+  }
+
+  // Enhanced search functionality
+  handleSearch(query) {
+    if (!query.trim()) return;
+    
+    console.log('🔍 Searching for:', query);
+    this.showNotification(`Searching for "${query}"...`);
+    
+    // Actual search implementation
+    const results = this.performSearch(query.toLowerCase());
+    this.displaySearchResults(results, query);
+  }
+
+  performSearch(query) {
+    const results = [];
+    
+    function searchNode(node, path = []) {
+      for (const [key, item] of Object.entries(node)) {
+        const currentPath = [...path, key];
+        
+        // Check if current item matches search
+        if (key.toLowerCase().includes(query) || 
+            (item.title && item.title.toLowerCase().includes(query))) {
+          results.push({
+            name: key,
+            path: currentPath.join('/'),
+            isProduct: item.isProduct,
+            count: item.count,
+            thumbnail: item.thumbnail,
+            driveLink: item.driveLink
+          });
+        }
+        
+        // Search in children
+        if (item.children && !item.isProduct) {
+          searchNode(item.children, currentPath);
+        }
+      }
+    }
+    
+    if (this.data && this.data.catalog && this.data.catalog.tree) {
+      searchNode(this.data.catalog.tree);
+    }
+    
+    return results;
+  }
+
+  displaySearchResults(results, query) {
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
+    
+    if (results.length === 0) {
+      container.innerHTML = `
+        <section class="content-section">
+          <div class="container">
+            <div class="section-header">
+              <h2 class="section-title">No Results Found</h2>
+              <p class="section-description">No items found for "${query}". Try different keywords.</p>
+            </div>
+          </div>
+        </section>
+      `;
+      return;
+    }
+    
+    const gridClass = this.getGridClass(results.length);
+    const resultsHTML = results.map(result => ({
+      key: result.name,
+      title: result.name.replace(/_/g, ' '),
+      description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
+      count: result.count || (result.isProduct ? 1 : 0),
+      thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
+      isProduct: result.isProduct,
+      searchPath: result.path,
+      driveLink: result.driveLink
+    }));
+    
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">Search Results</h2>
+            <p class="section-description">Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query}"</p>
+          </div>
+          <div class="cards-grid ${gridClass}">
+            ${resultsHTML.map(item => this.createCardHTML(item)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+    
+    // Hide taxonomy section during search
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'none';
+    }
+  }
+
+  // 3-Dot Menu and Image Viewer Functionality with Fixed Photo Loading
   setupFABFunctionality() {
-    console.log('Setting up enhanced 3-dot menu functionality...');
+    console.log('🔘 Setting up enhanced 3-dot menu functionality...');
     
     const threeDotToggle = document.getElementById('threeDotToggle');
     const threeDotMenu = document.getElementById('threeDotMenu');
@@ -647,16 +1143,17 @@ class CSVCatalogApp {
       });
     }
 
-    // Dynamic image loading function
+    // Dynamic image loading function with better error handling
     const loadImagesFromFolder = async (folderName) => {
-      console.log(`Loading images from ${folderName} folder...`);
+      console.log(`📸 Loading images from ${folderName} folder...`);
       
       const images = [];
       let imageIndex = 1;
       let consecutiveFailures = 0;
-      const maxConsecutiveFailures = 3;
+      const maxConsecutiveFailures = 3; // Stop after 3 consecutive failures
       
-      while (consecutiveFailures < maxConsecutiveFailures && imageIndex <= 50) {
+      while (consecutiveFailures < maxConsecutiveFailures && imageIndex <= 50) { // Max 50 images
+        // Try multiple formats
         const formats = ['jpg', 'jpeg', 'png', 'webp'];
         let imageFound = false;
         
@@ -670,25 +1167,25 @@ class CSVCatalogApp {
                 src: imagePath,
                 title: `${folderName} ${imageIndex}`
               });
-              consecutiveFailures = 0;
+              consecutiveFailures = 0; // Reset failure counter
               imageFound = true;
-              console.log(`Found: ${imagePath}`);
-              break;
+              console.log(`✅ Found: ${imagePath}`);
+              break; // Found image, stop checking other formats
             }
           } catch (error) {
-            console.log(`Error checking: ${imagePath}`);
+            console.log(`❌ Error checking: ${imagePath}`);
           }
         }
         
         if (!imageFound) {
           consecutiveFailures++;
-          console.log(`No image found for index ${imageIndex} (${consecutiveFailures}/${maxConsecutiveFailures})`);
+          console.log(`❌ No image found for index ${imageIndex} (${consecutiveFailures}/${maxConsecutiveFailures})`);
         }
         
         imageIndex++;
       }
       
-      console.log(`Found ${images.length} images in ${folderName}`);
+      console.log(`📊 Found ${images.length} images in ${folderName}`);
       return images;
     };
 
@@ -839,7 +1336,7 @@ class CSVCatalogApp {
       }, { passive: true });
     }
 
-    console.log('Enhanced 3-dot menu setup complete with dynamic image loading');
+    console.log('✅ Enhanced 3-dot menu setup complete with dynamic image loading');
   }
 
   // Enhanced image checking with multiple format support
@@ -849,19 +1346,19 @@ class CSVCatalogApp {
       img.crossOrigin = 'anonymous';
       
       const timeout = setTimeout(() => {
-        console.log(`Timeout checking: ${imageSrc}`);
+        console.log(`⏰ Timeout checking: ${imageSrc}`);
         resolve(false);
       }, 5000); // 5 second timeout
       
       img.onload = () => {
         clearTimeout(timeout);
-        console.log(`Image exists: ${imageSrc}`);
+        console.log(`✅ Image exists: ${imageSrc}`);
         resolve(true);
       };
       
       img.onerror = () => {
         clearTimeout(timeout);
-        console.log(`Image not found: ${imageSrc}`);
+        console.log(`❌ Image not found: ${imageSrc}`);
         resolve(false);
       };
       
@@ -871,341 +1368,6 @@ class CSVCatalogApp {
         `${imageSrc}&v=${cacheBuster}` : 
         `${imageSrc}?v=${cacheBuster}`;
     });
-  }
-
-  // Navigation methods
-  navigateToHome() {
-    console.log('Navigating to home');
-    
-    // Remove category page attribute
-    document.body.removeAttribute('data-page-type');
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.delete('path');
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ brand: this.currentBrand }, '', newURL);
-    
-    // Reset state
-    this.currentPath = [];
-    
-    // Re-render homepage
-    this.setupDynamicSections();
-    
-    // Show taxonomy section
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'block';
-    }
-
-    // Reset hero
-    this.setupBrandInfo();
-  }
-
-  navigateToCategory(category) {
-    console.log('Navigate to category:', category);
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Build new path
-    let newPath;
-    if (this.currentPath.length === 0) {
-      // From homepage
-      newPath = [category];
-    } else {
-      // From current path
-      newPath = [...this.currentPath, category];
-    }
-    
-    // Update state
-    this.currentPath = newPath;
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.set('path', newPath.join('/'));
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ 
-      category, 
-      brand: this.currentBrand, 
-      path: newPath 
-    }, '', newURL);
-    
-    // Show category view
-    this.showCategoryView();
-  }
-
-  navigateToPath(path) {
-    console.log('Navigate to path:', path);
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Build new path
-    const pathSegments = path.split('/').filter(Boolean);
-    this.currentPath = pathSegments;
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.set('path', path);
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ 
-      path: pathSegments, 
-      brand: this.currentBrand 
-    }, '', newURL);
-    
-    // Show category view
-    this.showCategoryView();
-  }
-
-  openProduct(driveLink) {
-    console.log('Opening product:', driveLink);
-    this.showNotification('Opening product...');
-    window.open(driveLink, '_blank', 'noopener,noreferrer');
-  }
-
-  showCategoryView() {
-    console.log('Showing category view for path:', this.currentPath);
-    
-    // Add body attribute for CSS targeting
-    document.body.setAttribute('data-page-type', 'category');
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Navigate to the current path in the data tree
-    let currentNode = this.data.catalog.tree;
-    let breadcrumbs = [];
-    
-    for (const segment of this.currentPath) {
-      if (currentNode[segment]) {
-        breadcrumbs.push({
-          name: segment,
-          path: breadcrumbs.length === 0 ? segment : breadcrumbs[breadcrumbs.length - 1].path + '/' + segment
-        });
-        currentNode = currentNode[segment].children || {};
-      } else {
-        console.error('Path not found:', segment, 'in', Object.keys(currentNode));
-        this.showNotification(`Category "${segment}" not found`);
-        this.navigateToHome();
-        return;
-      }
-    }
-
-    console.log('Current node contents:', Object.keys(currentNode));
-    console.log('Breadcrumbs:', breadcrumbs);
-
-    // Update hero section for category view
-    this.updateHeroForCategory(breadcrumbs);
-
-    // Hide taxonomy section
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'none';
-    }
-
-    // Show category contents
-    this.renderCategoryContents(currentNode, breadcrumbs);
-  }
-
-  updateHeroForCategory(breadcrumbs) {
-    const heroTitle = document.getElementById('heroTitle');
-    const heroSubtitle = document.getElementById('heroSubtitle');
-    
-    if (heroTitle && breadcrumbs.length > 0) {
-      const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
-      heroTitle.textContent = `${currentCategory} Collection`;
-    }
-    
-    if (heroSubtitle) {
-      heroSubtitle.style.display = 'none'; // Hide subtitle on category pages
-    }
-  }
-
-  renderCategoryContents(currentNode, breadcrumbs) {
-    const container = document.getElementById('dynamicSections');
-    if (!container) return;
-
-    const items = Object.entries(currentNode).map(([key, item]) => {
-      if (item.isProduct) {
-        return {
-          key,
-          title: key,
-          description: 'Premium product from our luxury collection',
-          count: 1,
-          thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-          isProduct: true,
-          driveLink: item.driveLink
-        };
-      } else {
-        return {
-          key,
-          title: key.replace(/_/g, ' '),
-          description: `Explore ${item.count || 0} items in this collection`,
-          count: item.count || 0,
-          thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-          isProduct: false
-        };
-      }
-    });
-
-    console.log('Rendering category contents:', items);
-
-    if (items.length === 0) {
-      container.innerHTML = `
-        <section class="content-section">
-          <div class="container">
-            <div class="section-header">
-              <h2 class="section-title">No Items Found</h2>
-              <p class="section-description">This category is currently empty.</p>
-            </div>
-          </div>
-        </section>
-      `;
-      return;
-    }
-
-    const gridClass = this.getGridClass(items.length);
-    
-    container.innerHTML = `
-      <section class="content-section">
-        <div class="container">
-          <div class="cards-grid ${gridClass}">
-            ${items.map(item => this.createCardHTML(item)).join('')}
-          </div>
-        </div>
-      </section>
-    `;
-  }
-
-  // Search functionality
-  handleSearch(query) {
-    if (!query.trim()) return;
-    
-    console.log('Searching for:', query);
-    this.showNotification(`Searching for "${query}"...`);
-    
-    // Actual search implementation
-    const results = this.performSearch(query.toLowerCase());
-    this.displaySearchResults(results, query);
-  }
-
-  performSearch(query) {
-    const results = [];
-    
-    function searchNode(node, path = []) {
-      for (const [key, item] of Object.entries(node)) {
-        const currentPath = [...path, key];
-        
-        // Check if current item matches search
-        if (key.toLowerCase().includes(query) || 
-            (item.title && item.title.toLowerCase().includes(query))) {
-          results.push({
-            name: key,
-            path: currentPath.join('/'),
-            isProduct: item.isProduct,
-            count: item.count,
-            thumbnail: item.thumbnail,
-            driveLink: item.driveLink
-          });
-        }
-        
-        // Search in children
-        if (item.children && !item.isProduct) {
-          searchNode(item.children, currentPath);
-        }
-      }
-    }
-    
-    if (this.data && this.data.catalog && this.data.catalog.tree) {
-      searchNode(this.data.catalog.tree);
-    }
-    
-    return results;
-  }
-
-  displaySearchResults(results, query) {
-    const container = document.getElementById('dynamicSections');
-    if (!container) return;
-    
-    if (results.length === 0) {
-      container.innerHTML = `
-        <section class="content-section">
-          <div class="container">
-            <div class="section-header">
-              <h2 class="section-title">No Results Found</h2>
-              <p class="section-description">No items found for "${query}". Try different keywords.</p>
-            </div>
-          </div>
-        </section>
-      `;
-      return;
-    }
-    
-    const gridClass = this.getGridClass(results.length);
-    const resultsHTML = results.map(result => ({
-      key: result.name,
-      title: result.name.replace(/_/g, ' '),
-      description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
-      count: result.count || (result.isProduct ? 1 : 0),
-      thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
-      isProduct: result.isProduct,
-      searchPath: result.path,
-      driveLink: result.driveLink
-    }));
-    
-    container.innerHTML = `
-      <section class="content-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">Search Results</h2>
-            <p class="section-description">Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query}"</p>
-          </div>
-          <div class="cards-grid ${gridClass}">
-            ${resultsHTML.map(item => this.createCardHTML(item)).join('')}
-          </div>
-        </div>
-      </section>
-    `;
-    
-    // Hide taxonomy section during search
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'none';
-    }
-  }
-
-  handleBrowserNavigation() {
-    console.log('Handling browser navigation');
-    
-    // Re-initialize from URL
-    this.initializeFromURL();
-    
-    // Handle path changes
-    const urlParams = new URLSearchParams(window.location.search);
-    const pathFromURL = urlParams.get('path');
-    if (pathFromURL) {
-      this.currentPath = pathFromURL.split('/').filter(Boolean);
-      this.showCategoryView();
-    } else {
-      this.currentPath = [];
-      this.navigateToHome();
-    }
   }
 
   showNotification(message) {
@@ -1246,11 +1408,11 @@ class CSVCatalogApp {
   }
 }
 
-// Enhanced initialization
-console.log('Script loaded, starting initialization...');
+// Enhanced initialization with forced brand refresh
+console.log('🔧 Script loaded, starting initialization...');
 
 function initializeApp() {
-  console.log('Initializing app...');
+  console.log('📄 Initializing app...');
   
   const app = new CSVCatalogApp();
   
@@ -1265,15 +1427,15 @@ function initializeApp() {
       }
     }, 100);
   }).catch(error => {
-    console.error('App initialization failed:', error);
+    console.error('💥 App initialization failed:', error);
   });
   
   window.catalogApp = app;
-  console.log('App instance created and available as window.catalogApp');
+  console.log('🔧 App instance created and available as window.catalogApp');
   
   // Monitor URL changes for brand switching
   window.addEventListener('popstate', () => {
-    console.log('URL changed, refreshing brand...');
+    console.log('🔄 URL changed, refreshing brand...');
     const urlParams = new URLSearchParams(window.location.search);
     const urlBrand = urlParams.get('brand');
     if (urlBrand && app.data && app.data.brands[urlBrand]) {
@@ -1287,12 +1449,12 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 // Backup initialization
 if (document.readyState === 'loading') {
-  console.log('Document still loading, waiting for DOMContentLoaded...');
+  console.log('⏳ Document still loading, waiting for DOMContentLoaded...');
 } else {
-  console.log('Document already loaded, initializing immediately...');
+  console.log('🚀 Document already loaded, initializing immediately...');
   setTimeout(() => {
     if (!window.catalogApp) {
-      console.log('Backup initialization starting...');
+      console.log('🔄 Backup initialization starting...');
       initializeApp();
     }
   }, 100);
@@ -1300,10 +1462,11 @@ if (document.readyState === 'loading') {
 
 // Global error handlers
 window.addEventListener('error', (e) => {
-  console.error('Global error:', e.error);
+  console.error('💥 Global error:', e.error);
 });
 
 window.addEventListener('unhandledrejection', (e) => {
-  console.error('Unhandled promise rejection:', e.reason);
+  console.error('💥 Unhandled promise rejection:', e.reason);
   e.preventDefault();
 });
+      
