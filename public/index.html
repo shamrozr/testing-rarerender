@@ -179,6 +179,86 @@
   </div>
 </div>
 
+  <!-- JavaScript -->
+  <script src="/script.js" type="module"></script>
+ <!-- Enhanced Debug Console -->
+<div id="debugConsole" style="position:fixed;top:10px;left:10px;z-index:9999;background:rgba(0,0,0,0.8);color:white;padding:10px;border-radius:5px;font-family:monospace;font-size:12px;max-width:320px;">
+  <div id="debugInfo"></div>
+  <button onclick="testBrandUpdate()" style="margin:2px;padding:5px;background:blue;color:white;border:none;border-radius:3px;font-size:10px;">
+    Force Brand
+  </button>
+  <button onclick="testThreeDotMenu()" style="margin:2px;padding:5px;background:green;color:white;border:none;border-radius:3px;font-size:10px;">
+    Test Menu
+  </button>
+  <button onclick="testImagePaths()" style="margin:2px;padding:5px;background:orange;color:white;border:none;border-radius:3px;font-size:10px;">
+    Test Images
+  </button>
+  <button onclick="toggleDebug()" style="margin:2px;padding:5px;background:red;color:white;border:none;border-radius:3px;font-size:10px;">
+    Hide
+  </button>
+</div>
 
+<script>
+function updateDebugInfo() {
+  const debugDiv = document.getElementById('debugInfo');
+  if (debugDiv && window.catalogApp) {
+    const urlParams = new URLSearchParams(window.location.search);
+    debugDiv.innerHTML = `
+      <div><strong>Debug Info:</strong></div>
+      <div>URL Brand: ${urlParams.get('brand') || 'none'}</div>
+      <div>Current Brand: ${window.catalogApp.currentBrand || 'none'}</div>
+      <div>Display Name: ${document.getElementById('brandName')?.textContent || 'none'}</div>
+      <div>Available: ${window.catalogApp.data ? Object.keys(window.catalogApp.data.brands).slice(0,2).join(', ') + '...' : 'loading...'}</div>
+    `;
+  }
+}
+
+function testBrandUpdate() {
+  console.log('🧪 Testing brand update...');
+  if (window.catalogApp) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedBrand = urlParams.get('brand') || 'LiyanaBags';
+    
+    console.log('Forcing brand to:', requestedBrand);
+    window.catalogApp.currentBrand = requestedBrand;
+    window.catalogApp.setupBrandInfo();
+    updateDebugInfo();
+  }
+}
+
+function testThreeDotMenu() {
+  console.log('🧪 Testing 3-dot menu...');
+  const menu = document.getElementById('threeDotMenu');
+  if (menu) {
+    menu.classList.toggle('expanded');
+    console.log('Menu expanded:', menu.classList.contains('expanded'));
+  }
+}
+
+function testImagePaths() {
+  console.log('🧪 Testing image paths...');
+  const testPaths = [
+    'Reviews/1.jpg',
+    '/Reviews/1.jpg', 
+    'Delivered/1.jpg',
+    'Payment/1.jpg'
+  ];
+  
+  testPaths.forEach(path => {
+    const img = new Image();
+    img.onload = () => console.log('✅ Found:', path);
+    img.onerror = () => console.log('❌ Missing:', path);
+    img.src = path;
+  });
+}
+
+function toggleDebug() {
+  const debug = document.getElementById('debugConsole');
+  debug.style.display = debug.style.display === 'none' ? 'block' : 'none';
+}
+
+// Update debug info every 3 seconds
+setInterval(updateDebugInfo, 3000);
+</script>
 </body>
 </html>
