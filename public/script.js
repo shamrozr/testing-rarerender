@@ -1182,57 +1182,75 @@ setupFABFunctionality() {
     });
   }
 
-  // INSTANT WebP file discovery - Try known common names FIRST
-  const discoverWebPFiles = async (folderName) => {
-    console.log(`🚀 INSTANT scanning ${folderName} for .webp files...`);
+ // FIND this section in your setupFABFunctionality method:
+// Look for the discoverWebPFiles function and REPLACE it with this DEDUPLICATED version:
+
+const discoverWebPFiles = async (folderName) => {
+  console.log(`🚀 INSTANT scanning ${folderName} for .webp files...`);
+  
+  // Use Set equivalent for JavaScript - Map with filename as key
+  const uniqueImages = new Map(); // This acts like Python's set()
+  
+  // STRATEGY: Try most common webp naming patterns FAST
+  const quickPatterns = [
+    // Your current pattern
+    ...Array.from({length: 25}, (_, i) => `image${i + 1}`),
+    // Common alternatives  
+    ...Array.from({length: 25}, (_, i) => `${i + 1}`),
+    ...Array.from({length: 10}, (_, i) => `img${i + 1}`),
+    // Descriptive names
+    'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
+    'photo', 'pic', 'screenshot', 'scan', 'document', 'file'
+  ];
+  
+  // PARALLEL checking for MAXIMUM SPEED
+  const checkPromises = quickPatterns.map(async (pattern) => {
+    const webpPath = `${folderName}/${pattern}.webp`;
     
-    const foundImages = [];
-    
-    // STRATEGY: Try most common webp naming patterns FAST
-    const quickPatterns = [
-      // Your current pattern
-      ...Array.from({length: 25}, (_, i) => `image${i + 1}`),
-      // Common alternatives  
-      ...Array.from({length: 25}, (_, i) => `${i + 1}`),
-      ...Array.from({length: 10}, (_, i) => `img${i + 1}`),
-      // Descriptive names
-      'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
-      'photo', 'pic', 'screenshot', 'scan', 'document', 'file'
-    ];
-    
-    // PARALLEL checking for MAXIMUM SPEED
-    const checkPromises = quickPatterns.map(async (pattern) => {
-      const webpPath = `${folderName}/${pattern}.webp`;
-      
-      try {
-        const response = await fetch(webpPath, { method: 'HEAD' });
-        if (response.ok) {
-          return {
+    try {
+      const response = await fetch(webpPath, { method: 'HEAD' });
+      if (response.ok) {
+        // Extract filename for deduplication key
+        const filename = webpPath.split('/').pop(); // Gets "image1.webp"
+        
+        // Only add if not already found (Python set() equivalent)
+        if (!uniqueImages.has(filename)) {
+          const imageData = {
             src: webpPath,
             title: `${folderName} - ${pattern}`,
             name: pattern,
+            filename: filename, // Store original filename
             index: parseInt(pattern.replace(/\D/g, '')) || 999
           };
+          
+          uniqueImages.set(filename, imageData); // Use filename as unique key
+          console.log(`✅ UNIQUE: ${filename}`);
+          return imageData;
+        } else {
+          console.log(`🔄 SKIP: ${filename} (duplicate)`);
+          return null;
         }
-      } catch (error) {
-        // Silent fail - continue checking other files
       }
-      return null;
-    });
-    
-    // Wait for all checks to complete
-    const results = await Promise.all(checkPromises);
-    
-    // Filter successful results and sort
-    const validImages = results
-      .filter(result => result !== null)
-      .sort((a, b) => a.index - b.index);
-    
-    console.log(`✅ INSTANT FOUND: ${validImages.length} .webp files in ${folderName}`);
-    console.log('📁 Files:', validImages.map(img => img.src.split('/').pop()));
-    
-    return validImages;
-  };
+    } catch (error) {
+      // Silent fail - continue checking other files
+    }
+    return null;
+  });
+  
+  // Wait for all checks and filter results
+  const results = await Promise.all(checkPromises);
+  
+  // Convert Map values to Array (Python set → list equivalent)
+  const uniqueImagesArray = Array.from(uniqueImages.values());
+  
+  // Sort by index for proper order
+  uniqueImagesArray.sort((a, b) => a.index - b.index);
+  
+  console.log(`✅ DEDUPLICATED: ${uniqueImagesArray.length} unique .webp files in ${folderName}`);
+  console.log('📁 Unique files:', uniqueImagesArray.map(img => img.filename));
+  
+  return uniqueImagesArray;
+};
 
   // Image viewer functions
   const showCurrentImage = () => {
