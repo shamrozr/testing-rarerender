@@ -1142,115 +1142,21 @@ class CSVCatalogApp {
     }
   }
 
-  // Enhanced 3-Dot Menu and Image Viewer with Batch Loading
-// Replace ONLY the setupFABFunctionality() method in script.js
-// Keep your current CSS - don't change it!
+// REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
 
-// Replace setupFABFunctionality() method for BLAZING FAST loading
+// COMPLETE REPLACEMENT - Replace entire setupFABFunctionality() method with this WORKING version:
+
+// SUPER FAST REPLACEMENT - Replace entire setupFABFunctionality() method:
 
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
-  // Ultra-fast image cache
-  const imageCache = new Map();
-  const BATCH_SIZE = 20; // Load more images at once
-  let imagesPreloaded = false;
-
-  // Force menu to start collapsed
-  if (threeDotToggle && threeDotMenu) {
-    threeDotMenu.classList.remove('expanded');
-    
-    setTimeout(() => {
-      threeDotMenu.classList.remove('expanded');
-    }, 100);
-    
-    threeDotToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isExpanding = !threeDotMenu.classList.contains('expanded');
-      threeDotMenu.classList.toggle('expanded');
-      
-      // Start blazing fast preloading
-      if (isExpanding && !imagesPreloaded) {
-        this.preloadImagesForAllFolders();
-        imagesPreloaded = true;
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!threeDotMenu.contains(e.target)) {
-        threeDotMenu.classList.remove('expanded');
-      }
-    });
-  }
-
-  // BLAZING FAST parallel image loading
-  const loadImagesFromFolder = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
-    const cacheKey = `${folderName}_${startIndex}`;
-    if (imageCache.has(cacheKey)) {
-      return imageCache.get(cacheKey);
-    }
-
-    const images = [];
-    const formats = ['jpg', 'jpeg', 'png', 'webp'];
-    
-    // Create ALL possible image URLs upfront
-    const imagePromises = [];
-    for (let i = startIndex; i < startIndex + batchSize; i++) {
-      for (const format of formats) {
-        const imagePath = `${folderName}/${i}.${format}`;
-        imagePromises.push(
-          this.checkImageExistsFast(imagePath).then(exists => 
-            exists ? { src: imagePath, title: `${folderName} ${i}`, index: i, format } : null
-          )
-        );
-      }
-    }
-    
-    // Load ALL images in parallel - BLAZING FAST!
-    const results = await Promise.all(imagePromises);
-    
-    // Process results and keep only valid images (first format found per index)
-    const indexMap = new Map();
-    results.forEach(result => {
-      if (result) {
-        if (!indexMap.has(result.index)) {
-          indexMap.set(result.index, result);
-        }
-      }
-    });
-    
-    // Sort by index and add to images array
-    const validImages = Array.from(indexMap.values()).sort((a, b) => a.index - b.index);
-    images.push(...validImages);
-    
-    imageCache.set(cacheKey, images);
-    return images;
-  };
-
-  // BLAZING FAST preloading for all folders
-  const preloadImagesForAllFolders = async () => {
-    const folders = ['Reviews', 'Payment', 'Delivered'];
-    
-    // Load ALL folders in parallel - MAXIMUM SPEED!
-    const preloadPromises = folders.map(folder => 
-      loadImagesFromFolder(folder, 1, BATCH_SIZE)
-    );
-    
-    try {
-      await Promise.all(preloadPromises);
-      console.log('🚀 BLAZING FAST preload complete!');
-    } catch (error) {
-      console.warn('Some images failed to preload, but continuing...');
-    }
-  };
-
-  // Image viewer variables
+  // Simple state management
   let currentImages = [];
   let currentImageIndex = 0;
-  let currentFolder = '';
-  let loadedBatches = new Set();
+  
   const modal = document.getElementById('imageViewerModal');
   const viewerImage = document.getElementById('viewerImage');
   const viewerCounter = document.getElementById('viewerCounter');
@@ -1260,151 +1166,320 @@ setupFABFunctionality() {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // SUPER FAST load more
-  const loadMoreIfNeeded = async (currentIndex) => {
-    const currentBatch = Math.floor(currentIndex / BATCH_SIZE);
-    const nextBatch = currentBatch + 1;
-    const nextBatchStart = nextBatch * BATCH_SIZE + 1;
+  // Menu functionality
+  if (threeDotToggle && threeDotMenu) {
+    threeDotMenu.classList.remove('expanded');
     
-    if (!loadedBatches.has(nextBatch) && (currentIndex + 5) >= (currentBatch + 1) * BATCH_SIZE) {
-      try {
-        const moreImages = await loadImagesFromFolder(currentFolder, nextBatchStart, BATCH_SIZE);
-        if (moreImages.length > 0) {
-          currentImages = [...currentImages, ...moreImages];
-          loadedBatches.add(nextBatch);
-          updateViewerCounter();
-        }
-      } catch (error) {
-        // Silent fail
-      }
-    }
-  };
-
-  // INSTANT menu item click handlers
-  menuItems.forEach((item) => {
-    item.style.pointerEvents = 'all';
-    item.style.cursor = 'pointer';
-    
-    item.addEventListener('click', async (e) => {
-      e.preventDefault();
+    threeDotToggle.addEventListener('click', (e) => {
       e.stopPropagation();
-      
-      const folderName = item.dataset.folder;
-      currentFolder = folderName;
-      loadedBatches.clear();
-      loadedBatches.add(0);
-      
-      // Show modal INSTANTLY
-      if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
+      threeDotMenu.classList.toggle('expanded');
+    });
 
-      // Check cache first for INSTANT loading
-      const cachedImages = imageCache.get(`${folderName}_1`);
-      if (cachedImages && cachedImages.length > 0) {
-        console.log(`⚡ INSTANT load from cache: ${folderName}`);
-        currentImages = cachedImages;
-        currentImageIndex = 0;
-        showImage();
-        
-        // Close menu immediately
-        if (threeDotMenu) {
-          threeDotMenu.classList.remove('expanded');
-        }
-        return;
-      }
-
-      // Show minimal loading state
-      if (viewerImage) {
-        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+';
-      }
-      if (viewerTitle) viewerTitle.textContent = `Loading ${folderName}...`;
-      if (viewerCounter) viewerCounter.textContent = 'Loading...';
-      
-      try {
-        // BLAZING FAST load
-        const images = await loadImagesFromFolder(folderName, 1, BATCH_SIZE);
-        
-        if (images.length === 0) {
-          currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZDwvdGV4dD48L3N2Zz4=',
-            title: `No images in ${folderName}`
-          }];
-        } else {
-          currentImages = images;
-          console.log(`🚀 BLAZING FAST load: ${images.length} images for ${folderName}`);
-        }
-        
-        currentImageIndex = 0;
-        showImage();
-        
-      } catch (error) {
-        currentImages = [{
-          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmc8L3RleHQ+PC9zdmc+',
-          title: `Error loading ${folderName}`
-        }];
-        currentImageIndex = 0;
-        showImage();
-      }
-      
-      // Close menu
-      if (threeDotMenu) {
+    document.addEventListener('click', (e) => {
+      if (!threeDotMenu.contains(e.target)) {
         threeDotMenu.classList.remove('expanded');
       }
     });
-    
-    const menuButton = item.querySelector('.menu-button');
-    if (menuButton) {
-      menuButton.style.pointerEvents = 'all';
-      menuButton.style.cursor = 'pointer';
-    }
-  });
+  }
 
-  // Image viewer functions (same as before)
-  const showImage = () => {
+// REPLACE the entire discoverWebPFiles function with this FIXED version:
+
+// REPLACE the entire discoverWebPFiles function with this FASTER & MORE RELIABLE version:
+
+const discoverWebPFiles = async (folderName) => {
+  console.log(`🎯 FAST scanning ${folderName} for actual .webp files...`);
+  
+  // FASTEST METHOD: Try to load actual image data to verify it exists
+  const testImageExists = async (imagePath) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 1000); // 1 second timeout
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      
+      img.src = imagePath;
+    });
+  };
+  
+  const foundImages = [];
+  
+  // PRIORITY 1: Your exact pattern (image1.webp, image2.webp...)
+  console.log(`📋 Testing image*.webp files...`);
+  
+  // Create batch promises for parallel checking (batches of 10 for speed)
+  const batchSize = 10;
+  let consecutiveFailures = 0;
+  
+  for (let startIndex = 1; startIndex <= 50; startIndex += batchSize) {
+    const endIndex = Math.min(startIndex + batchSize - 1, 50);
+    const batch = [];
+    
+    // Create batch of promises
+    for (let i = startIndex; i <= endIndex; i++) {
+      const webpPath = `${folderName}/image${i}.webp`;
+      batch.push(
+        testImageExists(webpPath).then(exists => ({
+          exists,
+          path: webpPath,
+          index: i,
+          name: `image${i}`
+        }))
+      );
+    }
+    
+    // Wait for batch to complete
+    const results = await Promise.all(batch);
+    let batchFoundAny = false;
+    
+    // Process batch results
+    results.forEach(result => {
+      if (result.exists) {
+        foundImages.push({
+          src: result.path,
+          title: `${folderName} Image ${result.index}`,
+          name: result.name,
+          index: result.index
+        });
+        console.log(`✅ FOUND: ${result.name}.webp`);
+        batchFoundAny = true;
+        consecutiveFailures = 0;
+      }
+    });
+    
+    // If no files found in this batch, increment failure count
+    if (!batchFoundAny) {
+      consecutiveFailures++;
+      
+      // Stop if we've had 2 consecutive batches with no files (20 files checked)
+      if (consecutiveFailures >= 2 && foundImages.length > 0) {
+        console.log(`🛑 Stopping early - no files found in last ${consecutiveFailures * batchSize} attempts`);
+        break;
+      }
+    }
+  }
+  
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} valid image*.webp files`);
+    return foundImages.sort((a, b) => a.index - b.index);
+  }
+  
+  // PRIORITY 2: Try simple numbers (1.webp, 2.webp, etc.)
+  console.log(`📋 No image*.webp found, testing number.webp pattern...`);
+  
+  const numberPromises = [];
+  for (let i = 1; i <= 20; i++) {
+    const webpPath = `${folderName}/${i}.webp`;
+    numberPromises.push(
+      testImageExists(webpPath).then(exists => 
+        exists ? {
+          src: webpPath,
+          title: `${folderName} File ${i}`,
+          name: `${i}`,
+          index: i
+        } : null
+      )
+    );
+  }
+  
+  const numberResults = await Promise.all(numberPromises);
+  const validNumbers = numberResults.filter(img => img !== null);
+  
+  if (validNumbers.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${validNumbers.length} number.webp files`);
+    return validNumbers.sort((a, b) => a.index - b.index);
+  }
+  
+  // PRIORITY 3: Try descriptive names
+  console.log(`📋 Trying descriptive names...`);
+  const descriptiveNames = [
+    'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
+    'photo', 'pic', 'screenshot', 'scan', 'document', 'file'
+  ];
+  
+  const descriptivePromises = descriptiveNames.map((name, index) => {
+    const webpPath = `${folderName}/${name}.webp`;
+    return testImageExists(webpPath).then(exists =>
+      exists ? {
+        src: webpPath,
+        title: `${folderName} - ${name}`,
+        name: name,
+        index: index + 1000
+      } : null
+    );
+  });
+  
+  const descriptiveResults = await Promise.all(descriptivePromises);
+  const validDescriptive = descriptiveResults.filter(img => img !== null);
+  
+  if (validDescriptive.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${validDescriptive.length} descriptive .webp files`);
+    return validDescriptive.sort((a, b) => a.index - b.index);
+  }
+  
+  // Nothing found
+  console.log(`❌ No .webp files found in ${folderName}`);
+  return [];
+};
+  // Image viewer functions
+  const showCurrentImage = () => {
     if (currentImages.length === 0) return;
     
     const image = currentImages[currentImageIndex];
     if (viewerImage) viewerImage.src = image.src;
     if (viewerTitle) viewerTitle.textContent = image.title;
-    updateViewerCounter();
-  };
+    if (viewerCounter) viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    preloadImages();
 
-  const updateViewerCounter = () => {
-    if (viewerCounter) {
-      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-    }
   };
-
+    // Preload next/previous images for instant display
+const preloadImages = () => {
+  if (currentImages.length <= 1) return;
+  
+  const nextIndex = (currentImageIndex + 1) % currentImages.length;
+  const prevIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+  
+  // Preload next image
+  const nextImg = new Image();
+  nextImg.src = currentImages[nextIndex].src;
+  
+  // Preload previous image  
+  const prevImg = new Image();
+  prevImg.src = currentImages[prevIndex].src;
+};
+  
   const closeImageViewer = () => {
     if (modal) modal.classList.remove('active');
     document.body.style.overflow = 'auto';
   };
 
-  const showNextImage = async () => {
-    if (currentImages.length === 0) return;
+  const showNextImage = () => {
+    if (currentImages.length <= 1) return;
     currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    await loadMoreIfNeeded(currentImageIndex);
-    showImage();
+    console.log(`Next: ${currentImageIndex + 1}/${currentImages.length}`);
+    showCurrentImage();
   };
 
   const showPrevImage = () => {
-    if (currentImages.length === 0) return;
+    if (currentImages.length <= 1) return;
     currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    showImage();
+    console.log(`Prev: ${currentImageIndex + 1}/${currentImages.length}`);
+    showCurrentImage();
   };
 
-  // Event listeners (same as before)
-  if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
-  if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
-  if (viewerNext) viewerNext.addEventListener('click', showNextImage);
-  if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
-  if (viewerImage) {
-    viewerImage.addEventListener('click', (e) => {
+  // INSTANT menu click handlers
+  const folderCache = new Map();
+  menuItems.forEach((item) => {
+    item.addEventListener('click', async (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      showNextImage();
+      
+      const folderName = item.dataset.folder;
+      console.log(`🔄 INSTANT loading ${folderName}...`);
+      
+      // Show modal immediately
+      if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      // Add caching for faster subsequent loads
+      if (folderCache.has(folderName)) {
+        const cachedImages = folderCache.get(folderName);
+        console.log(`📦 Using cached images for ${folderName}`);
+        currentImages = cachedImages;
+        currentImageIndex = 0;
+        showCurrentImage();
+        if (threeDotMenu) threeDotMenu.classList.remove('expanded');
+        return;
+      }
+      }
+    
+      // Show loading state
+      if (viewerImage) {
+        viewerImage.src = 'data:image/svg+xml,' + encodeURIComponent(`
+          <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#f8f9fa"/>
+            <circle cx="200" cy="150" r="25" fill="none" stroke="#6366f1" stroke-width="4">
+              <animateTransform attributeName="transform" type="rotate" values="0 200 150;360 200 150" dur="0.8s" repeatCount="indefinite"/>
+            </circle>
+            <text x="50%" y="75%" font-family="Arial" font-size="16" fill="#6366f1" text-anchor="middle" font-weight="600">Scanning ${folderName}...</text>
+          </svg>
+        `);
+      }
+      if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
+      if (viewerCounter) viewerCounter.textContent = 'Finding .webp files...';
+      
+      try {
+        // INSTANT discovery
+        const images = await discoverWebPFiles(folderName);
+        
+        if (images.length === 0) {
+          console.log(`❌ No .webp files found in ${folderName}`);
+          currentImages = [{
+            src: 'data:image/svg+xml,' + encodeURIComponent(`
+              <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#fff5f5"/>
+                <text x="50%" y="40%" font-family="Arial" font-size="48" text-anchor="middle">📂</text>
+                <text x="50%" y="60%" font-family="Arial" font-size="18" fill="#666666" text-anchor="middle" font-weight="600">No .webp files in ${folderName}</text>
+                <text x="50%" y="75%" font-family="Arial" font-size="14" fill="#999999" text-anchor="middle">Add .webp images to public/${folderName}/</text>
+              </svg>
+            `),
+            title: `No images in ${folderName}`
+          }];
+        } else {
+          currentImages = images;
+          console.log(`🎉 INSTANT SUCCESS: ${images.length} .webp files found in ${folderName}!`);
+        }
+        
+        currentImageIndex = 0;
+        showCurrentImage();
+        
+      } catch (error) {
+        console.error(`💥 Error with ${folderName}:`, error);
+        currentImages = [{
+          src: 'data:image/svg+xml,' + encodeURIComponent(`
+            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100%" height="100%" fill="#fff0f0"/>
+              <text x="50%" y="50%" font-family="Arial" font-size="18" fill="#ff4444" text-anchor="middle">Error loading ${folderName}</text>
+            </svg>
+          `),
+          title: `Error: ${folderName}`
+        }];
+        currentImageIndex = 0;
+        showCurrentImage();
+      }
+      
+      if (threeDotMenu) threeDotMenu.classList.remove('expanded');
     });
+  });
+
+  // Event listeners - Simple and reliable
+  if (viewerClose) {
+    viewerClose.addEventListener('click', closeImageViewer);
+  }
+  
+  if (viewerOverlay) {
+    viewerOverlay.addEventListener('click', closeImageViewer);
+  }
+  
+  if (viewerNext) {
+    viewerNext.addEventListener('click', showNextImage);
+  }
+  
+  if (viewerPrev) {
+    viewerPrev.addEventListener('click', showPrevImage);
+  }
+  
+  if (viewerImage) {
+    viewerImage.addEventListener('click', showNextImage);
   }
 
   // Keyboard navigation
@@ -1416,6 +1491,7 @@ setupFABFunctionality() {
         closeImageViewer();
         break;
       case 'ArrowRight':
+      case ' ':
         showNextImage();
         break;
       case 'ArrowLeft':
@@ -1424,85 +1500,31 @@ setupFABFunctionality() {
     }
   });
 
-  // Touch support
+  // Touch/swipe support
   let touchStartX = 0;
-  let touchEndX = 0;
-
+  
   if (modal) {
     modal.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
     }, { passive: true });
 
     modal.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
+      const touchEndX = e.changedTouches[0].screenX;
       const swipeDistance = touchStartX - touchEndX;
-      const minSwipeDistance = 50;
-
-      if (Math.abs(swipeDistance) > minSwipeDistance) {
+      
+      if (Math.abs(swipeDistance) > 50) {
         if (swipeDistance > 0) {
-          showNextImage();
+          showNextImage(); // Swipe left = next
         } else {
-          showPrevImage();
+          showPrevImage(); // Swipe right = previous  
         }
       }
     }, { passive: true });
   }
 
-  // Store function
-  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
+  console.log('🚀 INSTANT WebP scanner ready!');
 }
 
-checkImageExistsFast(imageSrc) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    // SUPER FAST timeout - only 800ms!
-    const timeout = setTimeout(() => {
-      resolve(false);
-    }, 800);
-    
-    img.onload = () => {
-      clearTimeout(timeout);
-      resolve(true);
-    };
-    
-    img.onerror = () => {
-      clearTimeout(timeout);
-      resolve(false);
-    };
-    
-    // Load without cache busting for MAXIMUM SPEED
-    img.src = imageSrc;
-  });
-}
-
-// Keep the original method as backup
-checkImageExists(imageSrc) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    const timeout = setTimeout(() => {
-      resolve(false);
-    }, 5000);
-    
-    img.onload = () => {
-      clearTimeout(timeout);
-      resolve(true);
-    };
-    
-    img.onerror = () => {
-      clearTimeout(timeout);
-      resolve(false);
-    };
-    
-    const cacheBuster = Date.now();
-    img.src = imageSrc.includes('?') ? 
-      `${imageSrc}&v=${cacheBuster}` : 
-      `${imageSrc}?v=${cacheBuster}`;
-  });
-}
 
   showNotification(message) {
     const notification = document.createElement('div');
