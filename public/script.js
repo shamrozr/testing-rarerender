@@ -1143,18 +1143,17 @@ class CSVCatalogApp {
   }
 
   // Enhanced 3-Dot Menu and Image Viewer with Batch Loading
-// Complete Optimized setupFABFunctionality() method
-// Replace this entire method in your public/script.js file
+// Replace ONLY the setupFABFunctionality() method in script.js
+// Keep your current CSS - don't change it!
 
-// Fixed setupFABFunctionality() method - Replace in your public/script.js
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
-  // Image cache for batch loading
+  // Simple image cache
   const imageCache = new Map();
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 5; // Back to original size for reliability
   let imagesPreloaded = false;
 
   // Force menu to start collapsed
@@ -1170,7 +1169,7 @@ setupFABFunctionality() {
       const isExpanding = !threeDotMenu.classList.contains('expanded');
       threeDotMenu.classList.toggle('expanded');
       
-      // Start loading images when menu is first opened
+      // Simple preloading when menu opens
       if (isExpanding && !imagesPreloaded) {
         this.preloadImagesForAllFolders();
         imagesPreloaded = true;
@@ -1184,7 +1183,7 @@ setupFABFunctionality() {
     });
   }
 
-  // Enhanced image loading with batching
+  // Simplified image loading
   const loadImagesFromFolder = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
     const cacheKey = `${folderName}_${startIndex}`;
     if (imageCache.has(cacheKey)) {
@@ -1228,22 +1227,18 @@ setupFABFunctionality() {
     return images;
   };
 
-  // Preload first batch for all folders when menu opens
+  // Simple preloading
   const preloadImagesForAllFolders = async () => {
     const folders = ['Reviews', 'Payment', 'Delivered'];
     
-    // Preload all folders simultaneously
-    const preloadPromises = folders.map(async (folder) => {
+    // Load one folder at a time to avoid overwhelming
+    for (const folder of folders) {
       try {
-        const images = await loadImagesFromFolder(folder, 1, BATCH_SIZE);
-        return { folder, images };
+        await loadImagesFromFolder(folder, 1, BATCH_SIZE);
       } catch (error) {
-        return { folder, images: [] };
+        // Continue with next folder
       }
-    });
-    
-    // Wait for all folders to preload
-    await Promise.all(preloadPromises);
+    }
   };
 
   // Image viewer variables
@@ -1260,7 +1255,7 @@ setupFABFunctionality() {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // Load more images when approaching end of current batch
+  // Simple load more
   const loadMoreIfNeeded = async (currentIndex) => {
     const currentBatch = Math.floor(currentIndex / BATCH_SIZE);
     const nextBatch = currentBatch + 1;
@@ -1280,9 +1275,8 @@ setupFABFunctionality() {
     }
   };
 
-  // Menu item click handlers
+  // Menu item click handlers - SIMPLIFIED
   menuItems.forEach((item) => {
-    // Make sure menu items are clickable
     item.style.pointerEvents = 'all';
     item.style.cursor = 'pointer';
     
@@ -1295,16 +1289,18 @@ setupFABFunctionality() {
       loadedBatches.clear();
       loadedBatches.add(0);
       
-      // Show loading state
+      // Show modal immediately
       if (modal) {
         modal.classList.add('active');
-        if (viewerImage) {
-          viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
-        }
-        if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
-        if (viewerCounter) viewerCounter.textContent = 'Loading...';
         document.body.style.overflow = 'hidden';
       }
+
+      // Simple loading state
+      if (viewerImage) {
+        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+';
+      }
+      if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
+      if (viewerCounter) viewerCounter.textContent = 'Loading...';
       
       try {
         // Load first batch
@@ -1312,7 +1308,7 @@ setupFABFunctionality() {
         
         if (images.length === 0) {
           currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAuICsgZm9sZGVyTmFtZSArIC4gZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
+            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZDwvdGV4dD48L3N2Zz4=',
             title: `No images found in ${folderName} folder`
           }];
         } else {
@@ -1324,20 +1320,19 @@ setupFABFunctionality() {
         
       } catch (error) {
         currentImages = [{
-          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
+          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmc8L3RleHQ+PC9zdmc+',
           title: `Error loading ${folderName} images`
         }];
         currentImageIndex = 0;
         showImage();
       }
       
-      // Close menu after selection
+      // Close menu
       if (threeDotMenu) {
         threeDotMenu.classList.remove('expanded');
       }
     });
     
-    // Also add click handler to button inside menu item
     const menuButton = item.querySelector('.menu-button');
     if (menuButton) {
       menuButton.style.pointerEvents = 'all';
@@ -1379,7 +1374,7 @@ setupFABFunctionality() {
     showImage();
   };
 
-  // Image viewer event listeners
+  // Event listeners
   if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
   if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
   if (viewerNext) viewerNext.addEventListener('click', showNextImage);
@@ -1400,85 +1395,53 @@ setupFABFunctionality() {
         closeImageViewer();
         break;
       case 'ArrowRight':
-      case 'Space':
-        e.preventDefault();
         showNextImage();
         break;
       case 'ArrowLeft':
-        e.preventDefault();
         showPrevImage();
-        break;
-      case 'Home':
-        e.preventDefault();
-        currentImageIndex = 0;
-        showImage();
-        break;
-      case 'End':
-        e.preventDefault();
-        currentImageIndex = currentImages.length - 1;
-        showImage();
         break;
     }
   });
 
-  // Touch support for mobile
+  // Touch support
   let touchStartX = 0;
   let touchEndX = 0;
-  let touchStartY = 0;
-  let touchEndY = 0;
 
   if (modal) {
     modal.addEventListener('touchstart', (e) => {
       touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
     }, { passive: true });
 
     modal.addEventListener('touchend', (e) => {
       touchEndX = e.changedTouches[0].screenX;
-      touchEndY = e.changedTouches[0].screenY;
-      
-      const swipeDistanceX = touchStartX - touchEndX;
-      const swipeDistanceY = touchStartY - touchEndY;
+      const swipeDistance = touchStartX - touchEndX;
       const minSwipeDistance = 50;
 
-      // Prioritize horizontal swipes over vertical
-      if (Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY)) {
-        if (Math.abs(swipeDistanceX) > minSwipeDistance) {
-          if (swipeDistanceX > 0) {
-            showNextImage(); // Swipe left = next image
-          } else {
-            showPrevImage(); // Swipe right = previous image
-          }
-        }
-      } else {
-        // Vertical swipe to close
-        if (Math.abs(swipeDistanceY) > minSwipeDistance * 1.5) {
-          closeImageViewer();
+      if (Math.abs(swipeDistance) > minSwipeDistance) {
+        if (swipeDistance > 0) {
+          showNextImage();
+        } else {
+          showPrevImage();
         }
       }
     }, { passive: true });
-
-    // Prevent zoom on double tap
-    modal.addEventListener('touchend', (e) => {
-      e.preventDefault();
-    });
   }
 
-  // Store preload function for external use
+  // Store function
   this.preloadImagesForAllFolders = preloadImagesForAllFolders;
 }
-// Add this optimized method to your CSVCatalogApp class in script.js
-// Replace the existing checkImageExists method with this one
+
+// Also replace the checkImageExists method with this simpler version
+// This keeps the original 5-second timeout for reliability
 
 checkImageExists(imageSrc) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
-    // Reduced timeout for faster performance
     const timeout = setTimeout(() => {
       resolve(false);
-    }, 2000); // Reduced from 5 seconds to 2 seconds
+    }, 5000); // Back to original 5 seconds for reliability
     
     img.onload = () => {
       clearTimeout(timeout);
@@ -1490,8 +1453,11 @@ checkImageExists(imageSrc) {
       resolve(false);
     };
     
-    // Load image without cache busting for better performance
-    img.src = imageSrc;
+    // Add cache busting and try to load
+    const cacheBuster = Date.now();
+    img.src = imageSrc.includes('?') ? 
+      `${imageSrc}&v=${cacheBuster}` : 
+      `${imageSrc}?v=${cacheBuster}`;
   });
 }
 
