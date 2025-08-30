@@ -1227,29 +1227,46 @@ setupFABFunctionality() {
     const images = [];
     const formats = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'];
     
-    // Comprehensive filename patterns
-    const commonPatterns = [
-      // Numbers 1-50
-      ...Array.from({length: 50}, (_, i) => `${i + 1}`),
-      // Common descriptive names
-      'proof', 'payment', 'review', 'delivered', 'customer', 'receipt', 
-      'invoice', 'transfer', 'screenshot', 'evidence', 'confirmation',
-      'feedback', 'rating', 'testimonial', 'package', 'delivery',
-      'thumb', 'image', 'photo', 'pic', 'img', 'scan', 'doc',
-      // Date patterns
-      '2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06',
-      '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12',
-      '2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06',
-      'jan', 'feb', 'mar', 'apr', 'may', 'jun', 
-      'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
-      // Common business terms
-      'order', 'client', 'sample', 'example', 'demo', 'test',
-      'item', 'product', 'goods', 'service', 'work',
-      // Letter combinations
-      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-      // Additional patterns
-      'whatsapp', 'wa', 'chat', 'message', 'bank', 'card', 'cash'
-    ];
+    // FIND this section in your setupFABFunctionality method:
+// Look for: "// Comprehensive filename patterns"
+
+// REPLACE the commonPatterns array with this ENHANCED version:
+
+const commonPatterns = [
+  // Numbers 1-50
+  ...Array.from({length: 50}, (_, i) => `${i + 1}`),
+  
+  // CRITICAL: Add image + number patterns (your current naming)
+  ...Array.from({length: 50}, (_, i) => `image${i + 1}`),
+  ...Array.from({length: 50}, (_, i) => `img${i + 1}`),
+  
+  // Common descriptive names
+  'proof', 'payment', 'review', 'delivered', 'customer', 'receipt', 
+  'invoice', 'transfer', 'screenshot', 'evidence', 'confirmation',
+  'feedback', 'rating', 'testimonial', 'package', 'delivery',
+  'thumb', 'image', 'photo', 'pic', 'img', 'scan', 'doc',
+  
+  // ENHANCED: More image variations
+  'image', 'picture', 'photograph', 'snap', 'capture',
+  
+  // Date patterns
+  '2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06',
+  '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12',
+  '2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06',
+  'jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+  'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+  
+  // Common business terms
+  'order', 'client', 'sample', 'example', 'demo', 'test',
+  'item', 'product', 'goods', 'service', 'work',
+  
+  // Letter combinations
+  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+  
+  // Additional patterns that might be in your folders
+  'whatsapp', 'wa', 'chat', 'message', 'bank', 'card', 'cash',
+  'file', 'document', 'paper', 'form', 'slip', 'ticket'
+];
     
     // Create batched promises for better performance
     const batchSize = 20; // Process in smaller batches
