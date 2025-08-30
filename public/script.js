@@ -95,7 +95,8 @@ class CSVCatalogApp {
       });
 
       this.setupBrandInfo();
-      
+      // Add this line after setupBrandInfo()
+      this.generateParticles();
       // Check if we need to show category view or homepage
       if (this.currentPath.length > 0) {
         console.log('📁 Showing category view for path:', this.currentPath);
@@ -115,7 +116,40 @@ class CSVCatalogApp {
       console.error('❌ Error during initialization:', error);
     }
   }
-
+  
+// Generate floating particles
+generateParticles() {
+  const container = document.getElementById('floatingParticles');
+  if (!container) return;
+  
+  // Clear existing particles
+  container.innerHTML = '';
+  
+  // Create 20 particles
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    
+    // Random size between 2px and 8px
+    const size = Math.random() * 6 + 2;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    
+    // Random horizontal position
+    particle.style.left = Math.random() * 100 + '%';
+    
+    // Random animation delay
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    
+    // Random animation duration
+    const duration = Math.random() * 15 + 10;
+    particle.style.animationDuration = duration + 's';
+    
+    container.appendChild(particle);
+  }
+  
+  console.log('✨ Generated animated background particles');
+}
   async loadData() {
     try {
       this.showLoading();
@@ -529,6 +563,7 @@ class CSVCatalogApp {
   setupBrandInfo() {
     console.log('🏷️ Setting up brand info...');
     
+    
     // Get brand from URL first - THIS IS CRITICAL
     const urlParams = new URLSearchParams(window.location.search);
     const urlBrand = urlParams.get('brand');
@@ -638,7 +673,17 @@ class CSVCatalogApp {
     setTimeout(() => {
       document.body.style.opacity = '1';
     }, 10);
+    // Convert hex to RGB for background animations
+const hexToRgb = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? 
+    `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` 
+    : '99, 102, 241';
+};
 
+// Set RGB values for animations
+root.style.setProperty('--color-primary-rgb', hexToRgb(brandColors.primary));
+root.style.setProperty('--color-accent-rgb', hexToRgb(brandColors.accent));
     // Setup WhatsApp button
     const whatsApp = document.getElementById('whatsappFab');
     if (whatsApp) {
