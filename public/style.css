@@ -869,6 +869,8 @@ body[data-page-type="category"] .section-header {
   height: 30px;
 }
 
+/* Updated FAB CSS - Replace the existing FAB section in your style.css */
+
 /* 3-Dot Menu Container */
 .three-dot-menu {
   position: fixed;
@@ -880,6 +882,7 @@ body[data-page-type="category"] .section-header {
   align-items: center;
   gap: 15px;
 }
+
 .three-dot-items {
   display: none;
   flex-direction: column;
@@ -897,12 +900,12 @@ body[data-page-type="category"] .section-header {
   transform: translateY(0);
   pointer-events: all;
 }
-/* Enhanced 3-Dot Toggle Button with Multi-line Text */
+
+/* Circular Toggle Button Like WhatsApp */
 .three-dot-toggle {
-  min-width: 90px;
-  max-width: 110px;
-  height: 85px;
-  border-radius: 20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%; /* Perfect circle */
   border: none;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
   color: white;
@@ -926,71 +929,46 @@ body[data-page-type="category"] .section-header {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 4px;
   text-align: center;
 }
 
 .toggle-icon {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   filter: brightness(0) invert(1);
 }
 
 .toggle-icon-placeholder {
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
 }
 
 .toggle-label {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 600;
-  line-height: 1.0;
+  line-height: 1.1;
   white-space: pre-line;
-  max-width: 90px;
-  overflow: visible;
-  text-overflow: clip;
+  max-width: 60px;
   text-align: center;
-  word-spacing: normal;
+  word-spacing: -1px;
+  letter-spacing: -0.2px;
 }
 
-/* Mobile adjustments for toggle button */
-@media (max-width: 768px) {
-  .three-dot-toggle {
-    min-width: 80px;
-    max-width: 90px;
-    height: 75px;
-    padding: 6px;
-  }
-  
-  .toggle-icon {
-    width: 18px;
-    height: 18px;
-  }
-  
-  .toggle-icon-placeholder {
-    font-size: 18px;
-  }
-  
-  .toggle-label {
-    font-size: 8px;
-    line-height: 1.0;
-    max-width: 75px;
-  }
-}
-/* Individual Menu Item */
+/* Individual Menu Items - Also Circular */
 .menu-item {
- display: flex;
- flex-direction: column;
- align-items: center;
- gap: 6px;
- cursor: pointer;
- transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all var(--transition-base);
 }
 
 .menu-button {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%; /* Perfect circle */
   border: 2px solid white;
   background: var(--color-primary);
   cursor: pointer;
@@ -1001,7 +979,7 @@ body[data-page-type="category"] .section-header {
   transition: all var(--transition-base);
   position: relative;
   padding: 0;
-  /* Add this line: */
+  /* Enhanced contrast for better visibility */
   filter: contrast(1.2) saturate(1.3) brightness(0.9);
 }
 
@@ -1009,40 +987,41 @@ body[data-page-type="category"] .section-header {
   transform: scale(1.1);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   background: var(--color-accent);
-  /* Add this line: */
   filter: contrast(1.3) saturate(1.4) brightness(0.85);
 }
 
 .menu-icon {
- width: 24px;
- height: 24px;
- object-fit: contain;
- filter: brightness(0) invert(1);
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
 .icon-placeholder {
- font-size: 20px;
- color: white;
- line-height: 1;
+  font-size: 20px;
+  color: white;
+  line-height: 1;
 }
 
 .menu-label {
- font-size: 11px;
- font-weight: 600;
- color: var(--color-text-primary);
- text-align: center;
- white-space: nowrap;
- background: rgba(255, 255, 255, 0.9);
- padding: 4px 8px;
- border-radius: 12px;
- box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
- backdrop-filter: blur(10px);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: center;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 /* Menu Item Hover Effects */
 .menu-item:hover .menu-label {
- background: rgba(255, 255, 255, 1);
- transform: scale(1.05);
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Mobile Responsiveness */
@@ -1053,9 +1032,8 @@ body[data-page-type="category"] .section-header {
   }
   
   .three-dot-toggle {
-    min-width: 75px;
-    max-width: 85px;
-    height: 70px;
+    width: 60px;
+    height: 60px;
     padding: 6px;
   }
   
@@ -1069,15 +1047,16 @@ body[data-page-type="category"] .section-header {
   }
   
   .toggle-label {
-    font-size: 8px;
-    line-height: 1.1;
-    word-break: break-word;
-    hyphens: auto;
+    font-size: 7px;
+    line-height: 1.0;
+    max-width: 50px;
+    word-spacing: -1px;
+    letter-spacing: -0.3px;
   }
   
   .menu-button {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
   }
   
   .menu-icon {
@@ -1086,36 +1065,57 @@ body[data-page-type="category"] .section-header {
   }
   
   .menu-label {
-    font-size: 10px;
+    font-size: 9px;
   }
 }
- 
- .toggle-icon {
-   width: 20px;
-   height: 20px;
- }
- 
- .toggle-icon-placeholder {
-   font-size: 20px;
- }
- 
- .toggle-label {
-   font-size: 9px;
- }
- 
- .menu-button {
-   width: 45px;
-   height: 45px;
- }
- 
- .menu-icon {
-   width: 20px;
-   height: 20px;
- }
- 
- .menu-label {
-   font-size: 10px;
- }
+
+@media (max-width: 480px) {
+  .three-dot-toggle {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .toggle-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .toggle-icon-placeholder {
+    font-size: 16px;
+  }
+  
+  .toggle-label {
+    font-size: 6px;
+    line-height: 1.0;
+    max-width: 45px;
+  }
+  
+  .menu-button {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .menu-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .menu-label {
+    font-size: 8px;
+  }
+}
+
+/* Force 3-dot menu to start collapsed */
+.three-dot-menu:not(.expanded) .three-dot-items {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.three-dot-menu.expanded .three-dot-items {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: all !important;
 }
 
 /* Individual Menu Item */
