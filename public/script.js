@@ -1142,23 +1142,16 @@ class CSVCatalogApp {
     }
   }
 
-  // Enhanced 3-Dot Menu and Image Viewer with Batch Loading
-// Replace ONLY the setupFABFunctionality() method in script.js
-// Keep your current CSS - don't change it!
-
-// Replace setupFABFunctionality() method for BLAZING FAST loading
-
-// PATCH: Replace the setupFABFunctionality method in public/script.js
-// This enables loading any images in folders with any naming
+// COMPLETE FIXED PATCH - Replace setupFABFunctionality method entirely
+// This fixes all scope, caching, and method binding issues
 
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
-  // Enhanced image cache for flexible naming
+  // CLEAR ALL OLD CACHES - Force fresh start
   const imageCache = new Map();
-  const BATCH_SIZE = 50; // Increased from 20 to handle more images
   let imagesPreloaded = false;
 
   // Force menu to start collapsed
@@ -1175,7 +1168,7 @@ setupFABFunctionality() {
       threeDotMenu.classList.toggle('expanded');
       
       if (isExpanding && !imagesPreloaded) {
-        this.preloadImagesForAllFolders();
+        preloadImagesForAllFolders();
         imagesPreloaded = true;
       }
     });
@@ -1187,118 +1180,37 @@ setupFABFunctionality() {
     });
   }
 
-  // NEW: Flexible image loading - any files in folder
-  const loadImagesFromFolder = async (folderName) => {
-    const cacheKey = `${folderName}_flexible`;
-    if (imageCache.has(cacheKey)) {
-      return imageCache.get(cacheKey);
-    }
-
-    console.log(`🔍 Scanning ${folderName} for any images...`);
-    
-    const images = [];
-    const formats = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'];
-    
-    // Try common patterns: numbers, names, descriptive filenames
-    const commonPatterns = [
-      // Numbers 1-50 (increased range)
-      ...Array.from({length: 50}, (_, i) => `${i + 1}`),
-      // Common descriptive names
-      'proof', 'payment', 'review', 'delivered', 'customer', 'receipt', 
-      'invoice', 'transfer', 'screenshot', 'evidence', 'confirmation',
-      'feedback', 'rating', 'testimonial', 'package', 'delivery',
-      'thumb', 'image', 'photo', 'pic', 'img',
-      // Date patterns
-      '2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06',
-      '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12',
-      'jan', 'feb', 'mar', 'apr', 'may', 'jun', 
-      'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
-      // Letter combinations
-      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-      // Common file naming patterns
-      'item1', 'item2', 'item3', 'sample', 'example', 'demo',
-      'client1', 'client2', 'order1', 'order2'
-    ];
-    
-    // Create all possible combinations
-    const imagePromises = [];
-    
-    for (const pattern of commonPatterns) {
-      for (const format of formats) {
-        // Try exact pattern
-        const imagePath = `${folderName}/${pattern}.${format}`;
-        imagePromises.push(
-          this.checkImageExistsFast(imagePath).then(exists => 
-            exists ? { 
-              src: imagePath, 
-              title: `${folderName} - ${pattern}`, 
-              pattern, 
-              format,
-              sortKey: this.getSortKey(pattern)
-            } : null
-          )
-        );
-        
-        // Try uppercase format
-        const imagePathUpper = `${folderName}/${pattern}.${format.toUpperCase()}`;
-        imagePromises.push(
-          this.checkImageExistsFast(imagePathUpper).then(exists => 
-            exists ? { 
-              src: imagePathUpper, 
-              title: `${folderName} - ${pattern}`, 
-              pattern, 
-              format: format.toUpperCase(),
-              sortKey: this.getSortKey(pattern)
-            } : null
-          )
-        );
-      }
-    }
-    
-    // Load ALL possible images in parallel - MAXIMUM FLEXIBILITY!
-    console.log(`🚀 Checking ${imagePromises.length} possible image combinations...`);
-    const results = await Promise.all(imagePromises);
-    
-    // Process results and remove duplicates (prefer first format found per pattern)
-    const patternMap = new Map();
-    results.forEach(result => {
-      if (result) {
-        const key = `${result.pattern}`;
-        if (!patternMap.has(key)) {
-          patternMap.set(key, result);
-        }
-      }
+  // FIXED: Fast image existence check with cache busting
+  const checkImageExistsFast = (imageSrc) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      // Faster timeout
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 600);
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      
+      // Add cache buster to force fresh check
+      const cacheBuster = Date.now();
+      img.src = imageSrc.includes('?') ? 
+        `${imageSrc}&cb=${cacheBuster}` : 
+        `${imageSrc}?cb=${cacheBuster}`;
     });
-    
-    // Sort images naturally (numbers first, then alphabetical)
-    const validImages = Array.from(patternMap.values())
-      .sort((a, b) => {
-        // Custom sorting: numbers first, then alphabetical
-        const aNum = parseInt(a.pattern);
-        const bNum = parseInt(b.pattern);
-        
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return aNum - bNum; // Both numbers
-        } else if (!isNaN(aNum)) {
-          return -1; // a is number, b is not
-        } else if (!isNaN(bNum)) {
-          return 1; // b is number, a is not  
-        } else {
-          return a.pattern.localeCompare(b.pattern); // Both strings
-        }
-      });
-    
-    images.push(...validImages);
-    
-    console.log(`✅ Found ${images.length} images in ${folderName}:`, 
-                images.map(img => img.src.split('/').pop()).slice(0, 10));
-    
-    imageCache.set(cacheKey, images);
-    return images;
   };
 
-  // Helper function for sorting
-  this.getSortKey = (pattern) => {
+  // FIXED: Helper function for natural sorting
+  const getSortKey = (pattern) => {
     const num = parseInt(pattern);
     if (!isNaN(num)) {
       return String(num).padStart(4, '0'); // Numbers with leading zeros
@@ -1306,22 +1218,151 @@ setupFABFunctionality() {
     return pattern.toLowerCase();
   };
 
-  // Preload all folders with flexible naming
+  // FIXED: Flexible image loading with proper error handling
+  const loadImagesFromFolder = async (folderName) => {
+    const cacheKey = `${folderName}_v2_${Date.now()}`; // Unique cache key
+    
+    console.log(`🔍 Scanning ${folderName} for any images...`);
+    
+    const images = [];
+    const formats = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'];
+    
+    // Comprehensive filename patterns
+    const commonPatterns = [
+      // Numbers 1-50
+      ...Array.from({length: 50}, (_, i) => `${i + 1}`),
+      // Common descriptive names
+      'proof', 'payment', 'review', 'delivered', 'customer', 'receipt', 
+      'invoice', 'transfer', 'screenshot', 'evidence', 'confirmation',
+      'feedback', 'rating', 'testimonial', 'package', 'delivery',
+      'thumb', 'image', 'photo', 'pic', 'img', 'scan', 'doc',
+      // Date patterns
+      '2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06',
+      '2024-07', '2024-08', '2024-09', '2024-10', '2024-11', '2024-12',
+      '2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06',
+      'jan', 'feb', 'mar', 'apr', 'may', 'jun', 
+      'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
+      // Common business terms
+      'order', 'client', 'sample', 'example', 'demo', 'test',
+      'item', 'product', 'goods', 'service', 'work',
+      // Letter combinations
+      'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+      // Additional patterns
+      'whatsapp', 'wa', 'chat', 'message', 'bank', 'card', 'cash'
+    ];
+    
+    // Create batched promises for better performance
+    const batchSize = 20; // Process in smaller batches
+    const imagePromises = [];
+    
+    for (let i = 0; i < commonPatterns.length; i += batchSize) {
+      const batch = commonPatterns.slice(i, i + batchSize);
+      
+      for (const pattern of batch) {
+        for (const format of formats) {
+          // Try lowercase
+          const imagePath = `${folderName}/${pattern}.${format}`;
+          imagePromises.push(
+            checkImageExistsFast(imagePath).then(exists => 
+              exists ? { 
+                src: imagePath, 
+                title: `${folderName} - ${pattern}`, 
+                pattern, 
+                format,
+                sortKey: getSortKey(pattern)
+              } : null
+            ).catch(() => null) // Handle errors gracefully
+          );
+          
+          // Try uppercase format
+          const imagePathUpper = `${folderName}/${pattern}.${format.toUpperCase()}`;
+          imagePromises.push(
+            checkImageExistsFast(imagePathUpper).then(exists => 
+              exists ? { 
+                src: imagePathUpper, 
+                title: `${folderName} - ${pattern}`, 
+                pattern, 
+                format: format.toUpperCase(),
+                sortKey: getSortKey(pattern)
+              } : null
+            ).catch(() => null) // Handle errors gracefully
+          );
+        }
+      }
+      
+      // Small delay between batches to prevent overwhelming the browser
+      if (i + batchSize < commonPatterns.length) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+    
+    console.log(`🚀 Checking ${imagePromises.length} possible image combinations for ${folderName}...`);
+    
+    try {
+      const results = await Promise.all(imagePromises);
+      
+      // Process results and remove duplicates
+      const patternMap = new Map();
+      results.forEach(result => {
+        if (result) {
+          const key = `${result.pattern}`;
+          if (!patternMap.has(key)) {
+            patternMap.set(key, result);
+          }
+        }
+      });
+      
+      // Sort images naturally
+      const validImages = Array.from(patternMap.values())
+        .sort((a, b) => {
+          const aNum = parseInt(a.pattern);
+          const bNum = parseInt(b.pattern);
+          
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            return aNum - bNum; // Both numbers
+          } else if (!isNaN(aNum)) {
+            return -1; // a is number, b is not
+          } else if (!isNaN(bNum)) {
+            return 1; // b is number, a is not  
+          } else {
+            return a.pattern.localeCompare(b.pattern); // Both strings
+          }
+        });
+      
+      images.push(...validImages);
+      
+      console.log(`✅ Found ${images.length} images in ${folderName}:`, 
+                  images.map(img => img.src.split('/').pop()).slice(0, 15));
+      
+      imageCache.set(cacheKey, images);
+      imageCache.set(`${folderName}_latest`, images); // Also store with simple key
+      return images;
+      
+    } catch (error) {
+      console.error(`❌ Error loading images from ${folderName}:`, error);
+      return [];
+    }
+  };
+
+  // FIXED: Preload function
   const preloadImagesForAllFolders = async () => {
     const folders = ['Reviews', 'Payment', 'Delivered'];
     
     console.log('🔄 Preloading images with flexible naming...');
-    const preloadPromises = folders.map(folder => loadImagesFromFolder(folder));
     
-    try {
-      await Promise.all(preloadPromises);
-      console.log('🎉 Flexible image preload complete!');
-    } catch (error) {
-      console.warn('⚠️ Some images failed to preload, continuing...');
+    for (const folder of folders) {
+      try {
+        await loadImagesFromFolder(folder);
+        console.log(`✅ Preloaded ${folder}`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to preload ${folder}:`, error);
+      }
     }
+    
+    console.log('🎉 Flexible image preload complete!');
   };
 
-  // Image viewer variables (same as before)
+  // Image viewer variables
   let currentImages = [];
   let currentImageIndex = 0;
   let currentFolder = '';
@@ -1334,7 +1375,7 @@ setupFABFunctionality() {
   const viewerNext = document.getElementById('viewerNext');
   const viewerOverlay = document.getElementById('viewerOverlay');
 
-  // INSTANT menu item click handlers - now with flexible loading
+  // FIXED: Menu item click handlers
   menuItems.forEach((item) => {
     item.style.pointerEvents = 'all';
     item.style.cursor = 'pointer';
@@ -1346,14 +1387,16 @@ setupFABFunctionality() {
       const folderName = item.dataset.folder;
       currentFolder = folderName;
       
+      console.log(`🔄 Loading images from ${folderName}...`);
+      
       // Show modal INSTANTLY
       if (modal) {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
       }
 
-      // Check cache first for INSTANT loading
-      const cachedImages = imageCache.get(`${folderName}_flexible`);
+      // Check for latest cached images first
+      const cachedImages = imageCache.get(`${folderName}_latest`);
       if (cachedImages && cachedImages.length > 0) {
         console.log(`⚡ INSTANT load from cache: ${folderName} (${cachedImages.length} images)`);
         currentImages = cachedImages;
@@ -1367,35 +1410,39 @@ setupFABFunctionality() {
         return;
       }
 
-      // Show loading state
+      // Show loading state with better UX
       if (viewerImage) {
-        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+';
+        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVmNWY1Ii8+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMTUwIiByPSIzMCIgZmlsbD0iIzY2NjY2NiIgb3BhY2l0eT0iMC42Ij48YW5pbWF0ZSBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiB2YWx1ZXM9IjAuNjswLjI7MC42IiBkdXI9IjEuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9jaXJjbGU+PHRleHQgeD0iNTAlIiB5PSI2NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzY2NjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U2Nhbm5pbmcgZm9yIGltYWdlcy4uLjwvdGV4dD48L3N2Zz4=';
       }
       if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
-      if (viewerCounter) viewerCounter.textContent = 'Finding images...';
+      if (viewerCounter) viewerCounter.textContent = 'Please wait...';
       
       try {
-        // FLEXIBLE load - any images in folder
+        // FORCE fresh load - ignore any old cache
+        imageCache.delete(`${folderName}_latest`);
         const images = await loadImagesFromFolder(folderName);
         
         if (images.length === 0) {
           currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZDwvdGV4dD48L3N2Zz4=',
-            title: `No images in ${folderName}`
+            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNjY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+📂</L3RleHQ+PHRleHQgeD0iNTAlIiB5PSI2MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gaW1hZ2VzIGZvdW5kIGluICR7Zm9sZGVyTmFtZX08L3RleHQ+PHRleHQgeD0iNTAlIiB5PSI3NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjY2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QWRkIGltYWdlcyB0byBwdWJsaWMvJHtmb2xkZXJOYW1lfS8gZGlyZWN0b3J5PC90ZXh0Pjwvc3ZnPg==',
+            title: `No images in ${folderName}`,
+            pattern: 'empty'
           }];
+          console.log(`❌ No images found in ${folderName}`);
         } else {
           currentImages = images;
-          console.log(`🎉 FLEXIBLE load: ${images.length} images for ${folderName}`);
+          console.log(`🎉 Successfully loaded ${images.length} images from ${folderName}`);
         }
         
         currentImageIndex = 0;
         showImage();
         
       } catch (error) {
-        console.error('Error loading images:', error);
+        console.error(`💥 Error loading images from ${folderName}:`, error);
         currentImages = [{
-          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmc8L3RleHQ+PC9zdmc+',
-          title: `Error loading ${folderName}`
+          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNDQ0NCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+⚠️PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkVycm9yIGxvYWRpbmcgJHtmb2xkZXJOYW1lfTwvdGV4dD48dGV4dCB4PSI1MCUiIHk9Ijc1JSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSIjY2NjY2NjIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5DaGVjayBjb25zb2xlIGZvciBkZXRhaWxzPC90ZXh0Pjwvc3ZnPg==',
+          title: `Error loading ${folderName}`,
+          pattern: 'error'
         }];
         currentImageIndex = 0;
         showImage();
@@ -1408,18 +1455,22 @@ setupFABFunctionality() {
     });
   });
 
-  // Image viewer functions (same as before but simplified)
+  // Image viewer functions
   const showImage = () => {
     if (currentImages.length === 0) return;
     
     const image = currentImages[currentImageIndex];
-    if (viewerImage) viewerImage.src = image.src;
-    if (viewerTitle) viewerTitle.textContent = image.title;
+    if (viewerImage) {
+      // Clear any loading states
+      viewerImage.style.filter = 'none';
+      viewerImage.src = image.src;
+    }
+    if (viewerTitle) viewerTitle.textContent = image.title || `${currentFolder} Image ${currentImageIndex + 1}`;
     updateViewerCounter();
   };
 
   const updateViewerCounter = () => {
-    if (viewerCounter) {
+    if (viewerCounter && currentImages.length > 0) {
       viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
     }
   };
@@ -1427,6 +1478,8 @@ setupFABFunctionality() {
   const closeImageViewer = () => {
     if (modal) modal.classList.remove('active');
     document.body.style.overflow = 'auto';
+    currentImages = [];
+    currentImageIndex = 0;
   };
 
   const showNextImage = () => {
@@ -1441,10 +1494,10 @@ setupFABFunctionality() {
     showImage();
   };
 
-  // Event listeners (same as before)
+  // Event listeners
   if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
   if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
-  if (viewerNext) viewerNext.addEventListener('click', showNextImage);
+  if (viewerNext) viewerNext.addEventListener('click', showNextImage);  
   if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
   if (viewerImage) {
     viewerImage.addEventListener('click', (e) => {
@@ -1470,7 +1523,7 @@ setupFABFunctionality() {
     }
   });
 
-  // Touch support (same as before)
+  // Touch support
   let touchStartX = 0;
   let touchEndX = 0;
 
@@ -1494,61 +1547,13 @@ setupFABFunctionality() {
     }, { passive: true });
   }
 
-  // Store function
+  // Store preload function for external access
   this.preloadImagesForAllFolders = preloadImagesForAllFolders;
+  
+  console.log('🎉 FAB functionality initialized with flexible image loading!');
 }
 
-checkImageExistsFast(imageSrc) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    // SUPER FAST timeout - only 800ms!
-    const timeout = setTimeout(() => {
-      resolve(false);
-    }, 800);
-    
-    img.onload = () => {
-      clearTimeout(timeout);
-      resolve(true);
-    };
-    
-    img.onerror = () => {
-      clearTimeout(timeout);
-      resolve(false);
-    };
-    
-    // Load without cache busting for MAXIMUM SPEED
-    img.src = imageSrc;
-  });
-}
 
-// Keep the original method as backup
-checkImageExists(imageSrc) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    const timeout = setTimeout(() => {
-      resolve(false);
-    }, 5000);
-    
-    img.onload = () => {
-      clearTimeout(timeout);
-      resolve(true);
-    };
-    
-    img.onerror = () => {
-      clearTimeout(timeout);
-      resolve(false);
-    };
-    
-    const cacheBuster = Date.now();
-    img.src = imageSrc.includes('?') ? 
-      `${imageSrc}&v=${cacheBuster}` : 
-      `${imageSrc}?v=${cacheBuster}`;
-  });
-}
 
   showNotification(message) {
     const notification = document.createElement('div');
