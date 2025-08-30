@@ -671,17 +671,70 @@ class CSVCatalogApp {
     }
   }
 
-  applyBrandColors(colors) {
-    if (!colors) return;
-    const root = document.documentElement;
-    if (colors.primary) root.style.setProperty('--color-primary', colors.primary);
-    if (colors.accent) root.style.setProperty('--color-accent', colors.accent);
+ applyBrandColors(colors) {
+  if (!colors) return;
+  
+  // Enhance color contrast and visibility
+  const enhanceColor = (color, minLightness = 0.4) => {
+    if (!color || !color.startsWith('#')) return color;
     
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme && colors.primary) {
-      metaTheme.setAttribute('content', colors.primary);
+    // Convert hex to HSL for better manipulation
+    const r = parseInt(color.slice(1, 3), 16) / 255;
+    const g = parseInt(color.slice(3, 5), 16) / 255;
+    const b = parseInt(color.slice(5, 7), 16) / 255;
+    
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const lightness = (max + min) / 2;
+    
+    // If color is too light, darken it
+    if (lightness > 0.85) {
+      const factor = 0.6; // Darken by 40%
+      const newR = Math.floor(r * 255 * factor);
+      const newG = Math.floor(g * 255 * factor);
+      const newB = Math.floor(b * 255 * factor);
+      return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
     }
+    
+    // If color is too dark for text, lighten it
+    if (lightness < minLightness) {
+      const factor = 1.5; // Lighten
+      const newR = Math.min(255, Math.floor(r * 255 * factor));
+      const newG = Math.min(255, Math.floor(g * 255 * factor));
+      const newB = Math.min(255, Math.floor(b * 255 * factor));
+      return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+    }
+    
+    return color;
+  };
+  
+  const root = document.documentElement;
+  
+  // Apply enhanced colors with better contrast
+  if (colors.primary) {
+    const enhancedPrimary = enhanceColor(colors.primary);
+    root.style.setProperty('--color-primary', enhancedPrimary);
   }
+  
+  if (colors.accent) {
+    const enhancedAccent = enhanceColor(colors.accent);
+    root.style.setProperty('--color-accent', enhancedAccent);
+  }
+  
+  // Ensure text colors have good contrast
+  if (colors.text) {
+    root.style.setProperty('--color-text-primary', colors.text);
+  }
+  
+  if (colors.bg) {
+    root.style.setProperty('--color-bg', colors.bg);
+  }
+  
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme && colors.primary) {
+    metaTheme.setAttribute('content', enhanceColor(colors.primary));
+  }
+}
 
   setupDynamicSections() {
     const container = document.getElementById('dynamicSections');
