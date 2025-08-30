@@ -776,6 +776,9 @@ body[data-page-type="category"] .section-header {
   color: white;
 }
 
+/* Fix for Footer Copyright Single Line */
+/* ================================== */
+
 .footer-bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: var(--space-8);
@@ -783,32 +786,55 @@ body[data-page-type="category"] .section-header {
   text-align: center;
   color: rgba(255, 255, 255, 0.6);
   font-size: 0.9rem;
-
-  white-space: nowrap;     /* keep text in one line */
-  overflow: hidden;        /* prevent weird wrapping */
-  text-overflow: ellipsis; /* optional: cut off if too long */
+  
+  /* FORCE single line on all devices */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .footer-bottom p {
-  display: inline-block; /* inline-block is safer than inline */
-  margin: 0;
-  padding: 0;
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
 }
 
+.footer-bottom * {
+  display: inline !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
 
-
-/* Ensure single line on all devices */
+/* Ensure single line on all screen sizes */
 @media (max-width: 768px) {
   .footer-bottom {
-    font-size: 0.8rem;
+    font-size: 0.8rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 }
 
 @media (max-width: 480px) {
   .footer-bottom {
-    font-size: 0.75rem;
-    padding-left: 10px;
-    padding-right: 10px;
+    font-size: 0.75rem !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .footer-bottom {
+    font-size: 0.7rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 }
 /* Separated Floating Action Buttons */
