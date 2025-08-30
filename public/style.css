@@ -777,20 +777,24 @@ body[data-page-type="category"] .section-header {
 }
 
 .footer-bottom {
+  display: block !important;     /* override the global inline */
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: var(--space-8);
   padding-top: var(--space-8);
   text-align: center;
   color: rgba(255, 255, 255, 0.6);
   font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .footer-bottom p {
+  display: inline-block !important;  /* keep the text itself inline */
   margin: 0;
   padding: 0;
-  display: inline;
-  white-space: nowrap;
+  line-height: 1.5;
 }
+
 
 /* Ensure single line on all devices */
 @media (max-width: 768px) {
