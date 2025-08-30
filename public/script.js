@@ -15,30 +15,33 @@ class CSVCatalogApp {
   }
 
   initializeFromURL() {
-    console.log('🔍 Initializing from URL...');
+  console.log('🔍 Initializing from URL...');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const brandFromURL = urlParams.get('brand');
+  const pathFromURL = urlParams.get('path');
+  
+  console.log('🌐 Current URL:', window.location.href);
+  console.log('🏷️ Brand parameter:', brandFromURL);
+  console.log('📍 Path parameter:', pathFromURL);
+  
+  // CRITICAL: Set brand immediately from URL
+  if (brandFromURL) {
+    this.currentBrand = brandFromURL;
+    console.log('🎯 Set currentBrand from URL:', brandFromURL);
     
-    const urlParams = new URLSearchParams(window.location.search);
-    const brandFromURL = urlParams.get('brand');
-    const pathFromURL = urlParams.get('path');
-    
-    console.log('🌐 Current URL:', window.location.href);
-    console.log('🏷️ Brand parameter:', brandFromURL);
-    console.log('📍 Path parameter:', pathFromURL);
-    
-    // Set brand
-    if (brandFromURL) {
-      this.currentBrand = brandFromURL;
-      this.updateBrandDisplay(brandFromURL);
-    }
-    
-    // Set path
-    if (pathFromURL) {
-      this.currentPath = pathFromURL.split('/').filter(Boolean);
-      console.log('📁 Current path:', this.currentPath);
-    } else {
-      this.currentPath = [];
-    }
+    // Force immediate display update
+    this.updateBrandDisplay(brandFromURL);
   }
+  
+  // Set path
+  if (pathFromURL) {
+    this.currentPath = pathFromURL.split('/').filter(Boolean);
+    console.log('📁 Current path:', this.currentPath);
+  } else {
+    this.currentPath = [];
+  }
+}
 
   updateBrandDisplay(brandFromURL) {
     console.log('🔄 Updating brand display for:', brandFromURL);
@@ -77,7 +80,7 @@ class CSVCatalogApp {
     console.log('🚀 Initializing CSV-driven catalog...');
     
     try {
-      await this.loadData();
+      await this.();
       
       if (!this.data) {
         console.error('❌ No data available, initialization failed');
@@ -113,49 +116,53 @@ class CSVCatalogApp {
     }
   }
 
-  async loadData() {
-    try {
-      this.showLoading();
-      console.log('📥 Attempting to load data from /data.json...');
+ async loadData() {
+  try {
+    this.showLoading();
+    console.log('📥 Attempting to load data from /data.json...');
+    
+    const response = await fetch('/data.json?v=' + Date.now());
+    if (response.ok) {
+      this.data = await response.json();
+      console.log('✅ Data loaded successfully:', this.data);
       
-      const response = await fetch('/data.json?v=' + Date.now());
-      if (response.ok) {
-        this.data = await response.json();
-        console.log('✅ Data loaded successfully:', this.data);
-        
-        // Get brand from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const brandFromURL = urlParams.get('brand');
-        
-        const availableBrands = Object.keys(this.data.brands || {});
-        console.log('🏷️ Available brands:', availableBrands);
-        console.log('🌐 Brand from URL:', brandFromURL);
-        
-        // Set current brand based on URL or use first available
-        if (brandFromURL && this.data.brands[brandFromURL]) {
-          this.currentBrand = brandFromURL;
-          console.log('✅ Using brand from URL:', brandFromURL);
-        } else if (availableBrands.length > 0) {
-          this.currentBrand = availableBrands[0];
-          console.log('⚠️ Brand from URL not found, using first available:', this.currentBrand);
-        } else {
-          console.error('❌ No brands found in data');
-          throw new Error('No brands available');
-        }
-        
-        console.log('🎯 Final brand selection:', this.currentBrand);
-        
-      } else {
-        throw new Error(`Failed to load data: ${response.status}`);
+      // CRITICAL: Don't override currentBrand if it's already set from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const brandFromURL = urlParams.get('brand');
+      
+      const availableBrands = Object.keys(this.data.brands || {});
+      console.log('🏷️ Available brands:', availableBrands);
+      console.log('🌐 Brand from URL:', brandFromURL);
+      console.log('📌 Current brand before logic:', this.currentBrand);
+      
+      // ONLY set currentBrand if not already set from URL
+      if (!this.currentBrand && brandFromURL && this.data.brands[brandFromURL]) {
+        this.currentBrand = brandFromURL;
+        console.log('✅ Set brand from URL:', brandFromURL);
+      } else if (!this.currentBrand && availableBrands.length > 0) {
+        this.currentBrand = availableBrands[0];
+        console.log('⚠️ Using first available brand:', this.currentBrand);
       }
-    } catch (error) {
-      console.error('❌ Error loading data:', error);
-      console.log('📦 Falling back to mock data...');
-      this.loadMockData();
-    } finally {
-      this.hideLoading();
+      
+      // If currentBrand is set but brand from URL is different, update it
+      if (brandFromURL && this.data.brands[brandFromURL] && brandFromURL !== this.currentBrand) {
+        console.log('🔄 Updating brand from URL:', brandFromURL);
+        this.currentBrand = brandFromURL;
+      }
+      
+      console.log('🎯 Final brand selection:', this.currentBrand);
+      
+    } else {
+      throw new Error(`Failed to load data: ${response.status}`);
     }
+  } catch (error) {
+    console.error('❌ Error loading data:', error);
+    console.log('📦 Falling back to mock data...');
+    this.loadMockData();
+  } finally {
+    this.hideLoading();
   }
+}
 
   loadMockData() {
     console.log('📦 Loading mock data as fallback...');
@@ -525,12 +532,13 @@ class CSVCatalogApp {
   setupBrandInfo() {
   console.log('🏷️ Setting up brand info...');
   
-  // Get brand from URL first
+  // Get brand from URL first - THIS IS CRITICAL
   const urlParams = new URLSearchParams(window.location.search);
   const urlBrand = urlParams.get('brand');
   
-  if (urlBrand && (!this.currentBrand || this.currentBrand !== urlBrand)) {
-    console.log('🔄 URL brand differs from current, updating:', urlBrand);
+  // ALWAYS use URL brand if available
+  if (urlBrand) {
+    console.log('🔄 Forcing brand from URL:', urlBrand);
     this.currentBrand = urlBrand;
   }
   
@@ -555,68 +563,82 @@ class CSVCatalogApp {
     }
   }
 
-  console.log('🏷️ Setting up brand info for:', this.currentBrand, brand);
+  console.log('🏷️ FORCE Setting up brand info for:', this.currentBrand);
+  console.log('🏷️ Brand data:', brand);
 
-  // FORCE update brand elements with proper fallbacks
-  const brandName = brand.name || brand.brandName || this.slugToDisplayName(this.currentBrand);
-  const tagline = brand.tagline || brand.brandTagline || 'Premium Quality Collection';
-  const heroTitle = brand.heroTitle || brand.hero_title || 'Discover Luxury Collections';
-  const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || 'Curated premium products from the world\'s finest brands.';
-  const footerText = brand.footerText || brand.footer_text || 'Your premier destination for luxury goods.';
+  // Get brand information with multiple fallback patterns
+  const brandName = brand.name || brand.brandName || brand['Brand Name'] || this.slugToDisplayName(this.currentBrand);
+  const tagline = brand.tagline || brand.brandTagline || brand['Brand Tagline'] || 'Premium Quality Collection';
+  const heroTitle = brand.heroTitle || brand.hero_title || brand['Hero Title'] || 'Discover Luxury Collections';
+  const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || brand['Hero Subtitle'] || 'Curated premium products from the world\'s finest brands.';
 
-  // Force DOM updates with retry mechanism
-  const updateElement = (id, content, retries = 3) => {
+  console.log('📝 Extracted brand info:', { brandName, tagline, heroTitle, heroSubtitle });
+
+  // FORCE immediate DOM updates
+  const elements = [
+    { id: 'brandName', content: brandName },
+    { id: 'brandTagline', content: tagline },
+    { id: 'heroTitle', content: heroTitle },
+    { id: 'heroSubtitle', content: heroSubtitle },
+    { id: 'footerBrandName', content: brandName }
+  ];
+
+  elements.forEach(({ id, content }) => {
     const element = document.getElementById(id);
-    if (element && content) {
+    if (element) {
       element.textContent = content;
-      console.log(`✅ Updated ${id}:`, content);
+      element.style.display = 'block'; // Ensure it's visible
+      console.log(`✅ FORCED update ${id}:`, content);
       
-      // Verify the update worked
+      // Double-check after a brief delay
       setTimeout(() => {
-        if (element.textContent !== content && retries > 0) {
-          console.log(`🔄 Retrying update for ${id}`);
-          updateElement(id, content, retries - 1);
+        if (element.textContent !== content) {
+          element.textContent = content;
+          console.log(`🔄 Re-forced update ${id}:`, content);
         }
-      }, 100);
+      }, 50);
+    } else {
+      console.log(`❌ Element not found: ${id}`);
     }
-  };
+  });
 
-  updateElement('brandName', brandName);
-  updateElement('brandTagline', tagline);
-  updateElement('heroTitle', heroTitle);
-  updateElement('heroSubtitle', heroSubtitle);
-  updateElement('footerBrandName', brandName);
-
-  // Show hero subtitle
-  const heroSubtitleEl = document.getElementById('heroSubtitle');
-  if (heroSubtitleEl) {
-    heroSubtitleEl.style.display = 'block';
-  }
-
-  // Update logo
+  // Update logo with initials
   const logoEl = document.getElementById('brandLogo');
   if (logoEl) {
     const initials = this.getInitials(brandName);
     logoEl.textContent = initials;
-    console.log('✅ Updated logo:', initials);
+    logoEl.title = brandName; // Add tooltip
+    console.log('✅ FORCED logo update:', initials);
   }
 
-  // FORCE apply brand colors with proper validation
+  // FORCE apply brand colors
   const colors = brand.colors || {};
-  const appliedColors = {
-    primary: colors.primary || colors.primaryColor || '#6366f1',
-    accent: colors.accent || colors.accentColor || '#8b5cf6',
-    text: colors.text || colors.textColor || '#202124',
-    bg: colors.bg || colors.bgColor || '#ffffff'
+  const brandColors = {
+    primary: colors.primary || colors.primaryColor || colors['Primary Color'] || '#6366f1',
+    accent: colors.accent || colors.accentColor || colors['Accent Color'] || '#8b5cf6',
+    text: colors.text || colors.textColor || colors['Text Color'] || '#202124',
+    bg: colors.bg || colors.bgColor || colors['Background Color'] || '#ffffff'
   };
 
-  console.log('🎨 Applying brand colors:', appliedColors);
-  this.applyBrandColors(appliedColors);
+  console.log('🎨 FORCING brand colors:', brandColors);
+  
+  // Apply colors immediately to root
+  const root = document.documentElement;
+  root.style.setProperty('--color-primary', brandColors.primary);
+  root.style.setProperty('--color-accent', brandColors.accent);
+  root.style.setProperty('--color-text-primary', brandColors.text);
+  root.style.setProperty('--color-bg', brandColors.bg);
+  
+  // Update theme color meta tag
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', brandColors.primary);
+  }
 
   // Setup WhatsApp button
   const whatsApp = document.getElementById('whatsappFab');
   if (whatsApp) {
-    const whatsappUrl = brand.whatsapp || brand.whatsappUrl || '';
+    const whatsappUrl = brand.whatsapp || brand.whatsappUrl || brand['WhatsApp'] || '';
     if (whatsappUrl) {
       whatsApp.href = whatsappUrl;
       whatsApp.style.display = 'flex';
@@ -626,6 +648,14 @@ class CSVCatalogApp {
 
   // Update page title
   document.title = `${brandName} - Luxury Collection`;
+
+  console.log('✅ Brand info FORCE setup complete for:', this.currentBrand);
+  
+  // Force a repaint to ensure changes are visible
+  document.body.style.display = 'none';
+  document.body.offsetHeight; // Trigger reflow
+  document.body.style.display = '';
+}
 
   // Update footer content
   const footerContent = document.getElementById('footerContent');
@@ -649,6 +679,33 @@ class CSVCatalogApp {
   }
 
   console.log('✅ Brand info setup complete for:', this.currentBrand);
+}
+// Force brand refresh when URL changes
+handleBrandNavigation() {
+  console.log('🔄 Handling brand navigation...');
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlBrand = urlParams.get('brand');
+  
+  if (urlBrand && urlBrand !== this.currentBrand) {
+    console.log('🔄 Brand changed in URL, forcing update:', urlBrand);
+    this.currentBrand = urlBrand;
+    
+    // Force immediate brand info setup
+    if (this.data && this.data.brands) {
+      this.setupBrandInfo();
+    }
+  }
+  
+  // Handle path changes
+  const pathFromURL = urlParams.get('path');
+  if (pathFromURL) {
+    this.currentPath = pathFromURL.split('/').filter(Boolean);
+    this.showCategoryView();
+  } else {
+    this.currentPath = [];
+    this.navigateToHome();
+  }
 }
 
   getInitials(name) {
@@ -984,7 +1041,8 @@ class CSVCatalogApp {
     
     // Re-initialize from URL
     this.initializeFromURL();
-    
+    this.handleBrandNavigation();
+
     // Re-render based on new state
     if (this.currentPath.length > 0) {
       this.showCategoryView();
