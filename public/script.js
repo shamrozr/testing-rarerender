@@ -1153,10 +1153,15 @@ setupFABFunctionality() {
   const BATCH_SIZE = 5;
   let imagesPreloaded = false;
 
-  // 3-dot menu toggle - INITIALLY COLLAPSED
-  if (threeDotToggle && threeDotMenu) {
-    // Ensure menu starts collapsed
+ // 3-dot menu toggle - FORCE INITIALLY COLLAPSED
+if (threeDotToggle && threeDotMenu) {
+  // Force menu to start collapsed
+  threeDotMenu.classList.remove('expanded');
+  
+  // Double-check after a short delay
+  setTimeout(() => {
     threeDotMenu.classList.remove('expanded');
+  }, 100);
     
     threeDotToggle.addEventListener('click', (e) => {
       e.stopPropagation();
