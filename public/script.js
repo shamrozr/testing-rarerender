@@ -1182,76 +1182,106 @@ setupFABFunctionality() {
     });
   }
 
- // FIND this section in your setupFABFunctionality method:
-// Look for the discoverWebPFiles function and REPLACE it with this DEDUPLICATED version:
+ // REPLACE the entire discoverWebPFiles function with this SMART version:
 
 const discoverWebPFiles = async (folderName) => {
-  console.log(`🚀 INSTANT scanning ${folderName} for .webp files...`);
+  console.log(`🎯 SMART scanning ${folderName} for actual .webp files...`);
   
-  // Use Set equivalent for JavaScript - Map with filename as key
-  const uniqueImages = new Map(); // This acts like Python's set()
+  const foundImages = [];
   
-  // STRATEGY: Try most common webp naming patterns FAST
-  const quickPatterns = [
-    // Your current pattern
-    ...Array.from({length: 25}, (_, i) => `image${i + 1}`),
-    // Common alternatives  
-    ...Array.from({length: 25}, (_, i) => `${i + 1}`),
-    ...Array.from({length: 10}, (_, i) => `img${i + 1}`),
-    // Descriptive names
-    'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
-    'photo', 'pic', 'screenshot', 'scan', 'document', 'file'
-  ];
+  // SMART STRATEGY: Check only ONE pattern at a time, in priority order
   
-  // PARALLEL checking for MAXIMUM SPEED
-  const checkPromises = quickPatterns.map(async (pattern) => {
-    const webpPath = `${folderName}/${pattern}.webp`;
+  // PRIORITY 1: Your exact pattern (image1.webp, image2.webp...)
+  console.log(`📋 Checking image*.webp pattern...`);
+  for (let i = 1; i <= 50; i++) {
+    const webpPath = `${folderName}/image${i}.webp`;
     
     try {
       const response = await fetch(webpPath, { method: 'HEAD' });
       if (response.ok) {
-        // Extract filename for deduplication key
-        const filename = webpPath.split('/').pop(); // Gets "image1.webp"
-        
-        // Only add if not already found (Python set() equivalent)
-        if (!uniqueImages.has(filename)) {
-          const imageData = {
-            src: webpPath,
-            title: `${folderName} - ${pattern}`,
-            name: pattern,
-            filename: filename, // Store original filename
-            index: parseInt(pattern.replace(/\D/g, '')) || 999
-          };
-          
-          uniqueImages.set(filename, imageData); // Use filename as unique key
-          console.log(`✅ UNIQUE: ${filename}`);
-          return imageData;
-        } else {
-          console.log(`🔄 SKIP: ${filename} (duplicate)`);
-          return null;
-        }
+        foundImages.push({
+          src: webpPath,
+          title: `${folderName} Image ${i}`,
+          name: `image${i}`,
+          index: i
+        });
+        console.log(`✅ FOUND: image${i}.webp`);
       }
     } catch (error) {
-      // Silent fail - continue checking other files
+      // File doesn't exist, continue
     }
-    return null;
-  });
+  }
   
-  // Wait for all checks and filter results
-  const results = await Promise.all(checkPromises);
+  // If we found images with image*.webp pattern, USE ONLY THOSE
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} image*.webp files - STOPPING here`);
+    return foundImages.sort((a, b) => a.index - b.index);
+  }
   
-  // Convert Map values to Array (Python set → list equivalent)
-  const uniqueImagesArray = Array.from(uniqueImages.values());
+  // PRIORITY 2: Only try simple numbers if NO image*.webp found
+  console.log(`📋 No image*.webp found, trying number.webp pattern...`);
+  for (let i = 1; i <= 30; i++) {
+    const webpPath = `${folderName}/${i}.webp`;
+    
+    try {
+      const response = await fetch(webpPath, { method: 'HEAD' });
+      if (response.ok) {
+        foundImages.push({
+          src: webpPath,
+          title: `${folderName} File ${i}`,
+          name: `${i}`,
+          index: i
+        });
+        console.log(`✅ FOUND: ${i}.webp`);
+      }
+    } catch (error) {
+      // File doesn't exist, continue
+    }
+  }
   
-  // Sort by index for proper order
-  uniqueImagesArray.sort((a, b) => a.index - b.index);
+  // If we found numbered files, USE ONLY THOSE
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} number.webp files - STOPPING here`);
+    return foundImages.sort((a, b) => a.index - b.index);
+  }
   
-  console.log(`✅ DEDUPLICATED: ${uniqueImagesArray.length} unique .webp files in ${folderName}`);
-  console.log('📁 Unique files:', uniqueImagesArray.map(img => img.filename));
+  // PRIORITY 3: Only try descriptive names if NOTHING else found
+  console.log(`📋 No numbered files found, trying descriptive names...`);
+  const descriptiveNames = [
+    'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
+    'photo', 'pic', 'screenshot', 'scan', 'document', 'file',
+    'evidence', 'confirmation', 'invoice', 'transfer'
+  ];
   
-  return uniqueImagesArray;
+  for (let i = 0; i < descriptiveNames.length; i++) {
+    const name = descriptiveNames[i];
+    const webpPath = `${folderName}/${name}.webp`;
+    
+    try {
+      const response = await fetch(webpPath, { method: 'HEAD' });
+      if (response.ok) {
+        foundImages.push({
+          src: webpPath,
+          title: `${folderName} - ${name}`,
+          name: name,
+          index: i + 1000 // Sort after numbers
+        });
+        console.log(`✅ FOUND: ${name}.webp`);
+      }
+    } catch (error) {
+      // File doesn't exist, continue
+    }
+  }
+  
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} descriptive .webp files`);
+    return foundImages.sort((a, b) => a.index - b.index);
+  }
+  
+  // Nothing found
+  console.log(`❌ No .webp files found in ${folderName}`);
+  return [];
 };
-
   // Image viewer functions
   const showCurrentImage = () => {
     if (currentImages.length === 0) return;
