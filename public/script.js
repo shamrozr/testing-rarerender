@@ -1192,66 +1192,89 @@ const discoverWebPFiles = async (folderName) => {
   // PRIORITY 1: Your exact pattern (image1.webp, image2.webp...)
   console.log(`📋 Checking image*.webp pattern...`);
   
-  // Use Promise.all for faster parallel checking
-  const imagePromises = [];
+  // Check files one by one to avoid false positives
   for (let i = 1; i <= 50; i++) {
     const webpPath = `${folderName}/image${i}.webp`;
-    imagePromises.push(
-      fetch(webpPath, { method: 'HEAD' })
-        .then(response => {
-          if (response.ok && response.status === 200) {
-            console.log(`✅ FOUND: image${i}.webp`);
-            return {
-              src: webpPath,
-              title: `${folderName} Image ${i}`,
-              name: `image${i}`,
-              index: i
-            };
+    
+    try {
+      const response = await fetch(webpPath, { method: 'HEAD' });
+      
+      // STRICTER VALIDATION - Check multiple conditions
+      if (response.ok && 
+          response.status === 200 && 
+          response.headers.get('content-type')?.includes('image') &&
+          response.headers.get('content-length') !== '0' &&
+          response.headers.get('content-length') !== null) {
+        
+        console.log(`✅ FOUND: image${i}.webp (${response.headers.get('content-length')} bytes)`);
+        foundImages.push({
+          src: webpPath,
+          title: `${folderName} Image ${i}`,
+          name: `image${i}`,
+          index: i
+        });
+      } else {
+        console.log(`❌ SKIP: image${i}.webp (status: ${response.status}, type: ${response.headers.get('content-type')}, size: ${response.headers.get('content-length')})`);
+        
+        // Stop checking if we hit 3 consecutive missing files
+        if (i > 3) {
+          let consecutiveMissing = 0;
+          for (let j = i - 2; j <= i; j++) {
+            if (!foundImages.find(img => img.name === `image${j}`)) {
+              consecutiveMissing++;
+            }
           }
-          return null;
-        })
-        .catch(() => null) // File doesn't exist
-    );
+          if (consecutiveMissing >= 3) {
+            console.log(`🛑 Stopping at image${i} - found 3 consecutive missing files`);
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.log(`❌ ERROR: image${i}.webp - ${error.message}`);
+      
+      // Stop if we hit network errors on consecutive files
+      if (i > 3) {
+        console.log(`🛑 Stopping due to network errors`);
+        break;
+      }
+    }
   }
   
-  const imageResults = await Promise.all(imagePromises);
-  const validImages = imageResults.filter(img => img !== null);
-  
-  if (validImages.length > 0) {
-    console.log(`🎯 SUCCESS: Found ${validImages.length} image*.webp files - STOPPING here`);
-    return validImages.sort((a, b) => a.index - b.index);
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} valid image*.webp files`);
+    return foundImages.sort((a, b) => a.index - b.index);
   }
   
   // PRIORITY 2: Only try simple numbers if NO image*.webp found
   console.log(`📋 No image*.webp found, trying number.webp pattern...`);
-  
-  const numberPromises = [];
   for (let i = 1; i <= 30; i++) {
     const webpPath = `${folderName}/${i}.webp`;
-    numberPromises.push(
-      fetch(webpPath, { method: 'HEAD' })
-        .then(response => {
-          if (response.ok && response.status === 200) {
-            console.log(`✅ FOUND: ${i}.webp`);
-            return {
-              src: webpPath,
-              title: `${folderName} File ${i}`,
-              name: `${i}`,
-              index: i
-            };
-          }
-          return null;
-        })
-        .catch(() => null)
-    );
+    
+    try {
+      const response = await fetch(webpPath, { method: 'HEAD' });
+      if (response.ok && 
+          response.status === 200 && 
+          response.headers.get('content-type')?.includes('image') &&
+          response.headers.get('content-length') !== '0' &&
+          response.headers.get('content-length') !== null) {
+        
+        foundImages.push({
+          src: webpPath,
+          title: `${folderName} File ${i}`,
+          name: `${i}`,
+          index: i
+        });
+        console.log(`✅ FOUND: ${i}.webp`);
+      }
+    } catch (error) {
+      // File doesn't exist, continue
+    }
   }
   
-  const numberResults = await Promise.all(numberPromises);
-  const validNumbers = numberResults.filter(img => img !== null);
-  
-  if (validNumbers.length > 0) {
-    console.log(`🎯 SUCCESS: Found ${validNumbers.length} number.webp files - STOPPING here`);
-    return validNumbers.sort((a, b) => a.index - b.index);
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} number.webp files`);
+    return foundImages.sort((a, b) => a.index - b.index);
   }
   
   // PRIORITY 3: Only try descriptive names if NOTHING else found
@@ -1262,30 +1285,34 @@ const discoverWebPFiles = async (folderName) => {
     'evidence', 'confirmation', 'invoice', 'transfer'
   ];
   
-  const descriptivePromises = descriptiveNames.map((name, index) => {
+  for (let i = 0; i < descriptiveNames.length; i++) {
+    const name = descriptiveNames[i];
     const webpPath = `${folderName}/${name}.webp`;
-    return fetch(webpPath, { method: 'HEAD' })
-      .then(response => {
-        if (response.ok && response.status === 200) {
-          console.log(`✅ FOUND: ${name}.webp`);
-          return {
-            src: webpPath,
-            title: `${folderName} - ${name}`,
-            name: name,
-            index: index + 1000
-          };
-        }
-        return null;
-      })
-      .catch(() => null);
-  });
+    
+    try {
+      const response = await fetch(webpPath, { method: 'HEAD' });
+      if (response.ok && 
+          response.status === 200 && 
+          response.headers.get('content-type')?.includes('image') &&
+          response.headers.get('content-length') !== '0' &&
+          response.headers.get('content-length') !== null) {
+        
+        foundImages.push({
+          src: webpPath,
+          title: `${folderName} - ${name}`,
+          name: name,
+          index: i + 1000
+        });
+        console.log(`✅ FOUND: ${name}.webp`);
+      }
+    } catch (error) {
+      // File doesn't exist, continue
+    }
+  }
   
-  const descriptiveResults = await Promise.all(descriptivePromises);
-  const validDescriptive = descriptiveResults.filter(img => img !== null);
-  
-  if (validDescriptive.length > 0) {
-    console.log(`🎯 SUCCESS: Found ${validDescriptive.length} descriptive .webp files`);
-    return validDescriptive.sort((a, b) => a.index - b.index);
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} descriptive .webp files`);
+    return foundImages.sort((a, b) => a.index - b.index);
   }
   
   // Nothing found
