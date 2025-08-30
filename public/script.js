@@ -523,113 +523,133 @@ class CSVCatalogApp {
   }
 
   setupBrandInfo() {
-    console.log('🏷️ Setting up brand info...');
+  console.log('🏷️ Setting up brand info...');
+  
+  // Get brand from URL first
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlBrand = urlParams.get('brand');
+  
+  if (urlBrand && (!this.currentBrand || this.currentBrand !== urlBrand)) {
+    console.log('🔄 URL brand differs from current, updating:', urlBrand);
+    this.currentBrand = urlBrand;
+  }
+  
+  if (!this.data || !this.data.brands) {
+    console.error('❌ No brand data available');
+    return;
+  }
+
+  let brand = this.data.brands[this.currentBrand];
+  if (!brand) {
+    console.error('❌ Brand not found:', this.currentBrand);
+    console.log('Available brands:', Object.keys(this.data.brands));
     
-    // Get brand from URL first
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlBrand = urlParams.get('brand');
-    
-    if (urlBrand && (!this.currentBrand || this.currentBrand !== urlBrand)) {
-      console.log('🔄 URL brand differs from current, updating:', urlBrand);
-      this.currentBrand = urlBrand;
-    }
-    
-    if (!this.data || !this.data.brands) {
-      console.error('❌ No brand data available');
+    // Use first available brand as fallback
+    const firstBrand = Object.keys(this.data.brands)[0];
+    if (firstBrand) {
+      console.log('⚠️ Falling back to first brand:', firstBrand);
+      this.currentBrand = firstBrand;
+      brand = this.data.brands[firstBrand];
+    } else {
       return;
     }
-
-    const brand = this.data.brands[this.currentBrand];
-    if (!brand) {
-      console.error('❌ Brand not found:', this.currentBrand);
-      console.log('Available brands:', Object.keys(this.data.brands));
-      
-      // Use first available brand as fallback
-      const firstBrand = Object.keys(this.data.brands)[0];
-      if (firstBrand) {
-        console.log('⚠️ Falling back to first brand:', firstBrand);
-        this.currentBrand = firstBrand;
-      } else {
-        return;
-      }
-    }
-
-    console.log('🏷️ Setting up brand info for:', this.currentBrand, brand);
-
-    // FORCE update brand elements
-    const brandName = brand.name || this.slugToDisplayName(this.currentBrand);
-    const tagline = brand.tagline || 'Premium Quality Collection';
-    const heroTitle = brand.heroTitle || 'Discover Luxury Collections';
-    const heroSubtitle = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
-
-    // Force DOM updates
-    const brandNameEl = document.getElementById('brandName');
-    const brandTaglineEl = document.getElementById('brandTagline');
-    const heroTitleEl = document.getElementById('heroTitle');
-    const heroSubtitleEl = document.getElementById('heroSubtitle');
-    const footerBrandEl = document.getElementById('footerBrandName');
-    const logoEl = document.getElementById('brandLogo');
-
-    if (brandNameEl) {
-      brandNameEl.textContent = brandName;
-      console.log('✅ Updated brandName:', brandName);
-    }
-    
-    if (brandTaglineEl) {
-      brandTaglineEl.textContent = tagline;
-      console.log('✅ Updated tagline:', tagline);
-    }
-    
-    if (heroTitleEl) {
-      heroTitleEl.textContent = heroTitle;
-      console.log('✅ Updated heroTitle:', heroTitle);
-    }
-    
-    if (heroSubtitleEl) {
-      heroSubtitleEl.textContent = heroSubtitle;
-      heroSubtitleEl.style.display = 'block';
-      console.log('✅ Updated heroSubtitle:', heroSubtitle);
-    }
-    
-    if (footerBrandEl) {
-      footerBrandEl.textContent = brandName;
-      console.log('✅ Updated footerBrand:', brandName);
-    }
-    
-    if (logoEl) {
-      const initials = this.getInitials(brandName);
-      logoEl.textContent = initials;
-      console.log('✅ Updated logo:', initials);
-    }
-
-    // FORCE apply brand colors
-    if (brand.colors) {
-      console.log('🎨 Applying brand colors:', brand.colors);
-      this.applyBrandColors(brand.colors);
-    } else {
-      console.log('⚠️ No colors found for brand, using defaults');
-      const defaultColors = {
-        primary: '#6366f1',
-        accent: '#8b5cf6',
-        text: '#202124',
-        bg: '#ffffff'
-      };
-      this.applyBrandColors(defaultColors);
-    }
-
-    // Setup WhatsApp button
-    const whatsApp = document.getElementById('whatsappFab');
-    if (whatsApp && brand.whatsapp) {
-      whatsApp.href = brand.whatsapp;
-      whatsApp.style.display = 'flex';
-      console.log('📱 WhatsApp link set:', brand.whatsapp);
-    }
-
-    // Update page title
-    document.title = `${brandName} - Luxury Collection`;
-
-    console.log('✅ Brand info setup complete for:', this.currentBrand);
   }
+
+  console.log('🏷️ Setting up brand info for:', this.currentBrand, brand);
+
+  // FORCE update brand elements with proper fallbacks
+  const brandName = brand.name || brand.brandName || this.slugToDisplayName(this.currentBrand);
+  const tagline = brand.tagline || brand.brandTagline || 'Premium Quality Collection';
+  const heroTitle = brand.heroTitle || brand.hero_title || 'Discover Luxury Collections';
+  const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || 'Curated premium products from the world\'s finest brands.';
+  const footerText = brand.footerText || brand.footer_text || 'Your premier destination for luxury goods.';
+
+  // Force DOM updates with retry mechanism
+  const updateElement = (id, content, retries = 3) => {
+    const element = document.getElementById(id);
+    if (element && content) {
+      element.textContent = content;
+      console.log(`✅ Updated ${id}:`, content);
+      
+      // Verify the update worked
+      setTimeout(() => {
+        if (element.textContent !== content && retries > 0) {
+          console.log(`🔄 Retrying update for ${id}`);
+          updateElement(id, content, retries - 1);
+        }
+      }, 100);
+    }
+  };
+
+  updateElement('brandName', brandName);
+  updateElement('brandTagline', tagline);
+  updateElement('heroTitle', heroTitle);
+  updateElement('heroSubtitle', heroSubtitle);
+  updateElement('footerBrandName', brandName);
+
+  // Show hero subtitle
+  const heroSubtitleEl = document.getElementById('heroSubtitle');
+  if (heroSubtitleEl) {
+    heroSubtitleEl.style.display = 'block';
+  }
+
+  // Update logo
+  const logoEl = document.getElementById('brandLogo');
+  if (logoEl) {
+    const initials = this.getInitials(brandName);
+    logoEl.textContent = initials;
+    console.log('✅ Updated logo:', initials);
+  }
+
+  // FORCE apply brand colors with proper validation
+  const colors = brand.colors || {};
+  const appliedColors = {
+    primary: colors.primary || colors.primaryColor || '#6366f1',
+    accent: colors.accent || colors.accentColor || '#8b5cf6',
+    text: colors.text || colors.textColor || '#202124',
+    bg: colors.bg || colors.bgColor || '#ffffff'
+  };
+
+  console.log('🎨 Applying brand colors:', appliedColors);
+  this.applyBrandColors(appliedColors);
+
+  // Setup WhatsApp button
+  const whatsApp = document.getElementById('whatsappFab');
+  if (whatsApp) {
+    const whatsappUrl = brand.whatsapp || brand.whatsappUrl || '';
+    if (whatsappUrl) {
+      whatsApp.href = whatsappUrl;
+      whatsApp.style.display = 'flex';
+      console.log('📱 WhatsApp link set:', whatsappUrl);
+    }
+  }
+
+  // Update page title
+  document.title = `${brandName} - Luxury Collection`;
+
+  // Update footer content
+  const footerContent = document.getElementById('footerContent');
+  if (footerContent) {
+    footerContent.innerHTML = `
+      <div class="footer-section">
+        <h3>${brandName}</h3>
+        <p>${footerText}</p>
+      </div>
+      <div class="footer-section">
+        <h3>Customer Service</h3>
+        <p>24/7 Support Available</p>
+        <p>Premium Customer Care</p>
+        <p>Worldwide Shipping</p>
+      </div>
+      <div class="footer-section">
+        <h3>Connect With Us</h3>
+        <p>Follow us for the latest luxury collections and exclusive offers.</p>
+      </div>
+    `;
+  }
+
+  console.log('✅ Brand info setup complete for:', this.currentBrand);
+}
 
   getInitials(name) {
     return name.split(' ')
@@ -1070,188 +1090,219 @@ class CSVCatalogApp {
     }
   }
 
-  // 3-Dot Menu and Image Viewer Functionality
   setupFABFunctionality() {
-    console.log('🔘 Setting up 3-dot menu functionality...');
+  console.log('🔘 Setting up 3-dot menu functionality...');
+  
+  const threeDotToggle = document.getElementById('threeDotToggle');
+  const threeDotMenu = document.getElementById('threeDotMenu');
+  const menuItems = document.querySelectorAll('.menu-item');
+
+  // 3-dot menu toggle
+  if (threeDotToggle && threeDotMenu) {
+    threeDotToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      threeDotMenu.classList.toggle('expanded');
+      console.log('3-dot menu toggled:', threeDotMenu.classList.contains('expanded'));
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!threeDotMenu.contains(e.target)) {
+        threeDotMenu.classList.remove('expanded');
+      }
+    });
+  }
+
+  // Dynamic image loading function
+  const loadImagesFromFolder = async (folderName) => {
+    console.log(`📸 Loading images from ${folderName} folder...`);
     
-    const threeDotToggle = document.getElementById('threeDotToggle');
-    const threeDotMenu = document.getElementById('threeDotMenu');
-    const menuItems = document.querySelectorAll('.menu-item');
-
-    // Image files configuration - ready for /icons/ folder
-    const imageFiles = {
-      'Reviews': [
-        'Reviews/1.jpg',
-        'Reviews/2.jpg', 
-        'Reviews/3.jpg',
-        'Reviews/4.jpg',
-        'Reviews/5.jpg'
-      ],
-      'Delivered': [
-        'Delivered/1.jpg',
-        'Delivered/2.jpg',
-        'Delivered/3.jpg',
-        'Delivered/4.jpg',
-        'Delivered/5.jpg'
-      ],
-      'Payment': [
-        'Payment/1.jpg',
-        'Payment/2.jpg',
-        'Payment/3.jpg',
-        'Payment/4.jpg',
-        'Payment/5.jpg'
-      ]
-    };
-
-    // 3-dot menu toggle
-    if (threeDotToggle && threeDotMenu) {
-      threeDotToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        threeDotMenu.classList.toggle('expanded');
-        console.log('3-dot menu toggled:', threeDotMenu.classList.contains('expanded'));
-      });
-
-      // Close menu when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!threeDotMenu.contains(e.target)) {
-          threeDotMenu.classList.remove('expanded');
+    const images = [];
+    let imageIndex = 1;
+    let consecutiveFailures = 0;
+    const maxConsecutiveFailures = 3; // Stop after 3 consecutive failures
+    
+    while (consecutiveFailures < maxConsecutiveFailures) {
+      const imagePath = `${folderName}/${imageIndex}.jpg`;
+      
+      try {
+        const imageExists = await this.checkImageExists(imagePath);
+        if (imageExists) {
+          images.push({
+            src: imagePath,
+            title: `${folderName} ${imageIndex}`
+          });
+          consecutiveFailures = 0; // Reset failure counter
+          console.log(`✅ Found: ${imagePath}`);
+        } else {
+          consecutiveFailures++;
+          console.log(`❌ Not found: ${imagePath} (${consecutiveFailures}/${maxConsecutiveFailures})`);
         }
-      });
+      } catch (error) {
+        consecutiveFailures++;
+        console.log(`❌ Error checking: ${imagePath} (${consecutiveFailures}/${maxConsecutiveFailures})`);
+      }
+      
+      imageIndex++;
+      
+      // Safety limit to prevent infinite loops
+      if (imageIndex > 100) {
+        console.log('🛑 Safety limit reached (100 images)');
+        break;
+      }
     }
+    
+    console.log(`📊 Found ${images.length} images in ${folderName}`);
+    return images;
+  };
 
-    // Image viewer variables
-    let currentImages = [];
-    let currentImageIndex = 0;
-    const modal = document.getElementById('imageViewerModal');
-    const viewerImage = document.getElementById('viewerImage');
-    const viewerCounter = document.getElementById('viewerCounter');
-    const viewerTitle = document.getElementById('viewerTitle');
-    const viewerClose = document.getElementById('viewerClose');
-    const viewerPrev = document.getElementById('viewerPrev');
-    const viewerNext = document.getElementById('viewerNext');
-    const viewerOverlay = document.getElementById('viewerOverlay');
+  // Image viewer variables
+  let currentImages = [];
+  let currentImageIndex = 0;
+  const modal = document.getElementById('imageViewerModal');
+  const viewerImage = document.getElementById('viewerImage');
+  const viewerCounter = document.getElementById('viewerCounter');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const viewerClose = document.getElementById('viewerClose');
+  const viewerPrev = document.getElementById('viewerPrev');
+  const viewerNext = document.getElementById('viewerNext');
+  const viewerOverlay = document.getElementById('viewerOverlay');
 
-    // Menu item click handlers
-    menuItems.forEach((item) => {
-      item.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const folderName = item.dataset.folder;
-        console.log('Menu item clicked:', folderName);
-        
-        const images = imageFiles[folderName] || [];
-        console.log('Images for', folderName, ':', images);
+  // Menu item click handlers with dynamic loading
+  menuItems.forEach((item) => {
+    item.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const folderName = item.dataset.folder;
+      console.log('Menu item clicked:', folderName);
+      
+      // Show loading state
+      if (modal) {
+        modal.classList.add('active');
+        if (viewerImage) viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
+        if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
+        if (viewerCounter) viewerCounter.textContent = 'Loading...';
+        document.body.style.overflow = 'hidden';
+      }
+      
+      try {
+        // Dynamically load images from folder
+        const images = await loadImagesFromFolder(folderName);
         
         if (images.length === 0) {
-          console.error('No images configured for folder:', folderName);
-          // Show fallback message
+          console.log(`No images found in ${folderName} folder`);
           currentImages = [{
             src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAnICsgZm9sZGVyTmFtZSArICcgZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
             title: `No images found in ${folderName} folder`
           }];
         } else {
-          currentImages = images.map((src, index) => ({
-            src: src,
-            title: `${folderName} ${index + 1}`
-          }));
+          currentImages = images;
         }
         
         currentImageIndex = 0;
         showImage();
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
         
-        // Close menu after selection
-        if (threeDotMenu) {
-          threeDotMenu.classList.remove('expanded');
-        }
-      });
-    });
-
-    // Image viewer functions
-    const showImage = () => {
-      if (currentImages.length === 0) return;
+      } catch (error) {
+        console.error('Error loading images:', error);
+        currentImages = [{
+          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
+          title: `Error loading ${folderName} images`
+        }];
+        currentImageIndex = 0;
+        showImage();
+      }
       
-      const image = currentImages[currentImageIndex];
-      viewerImage.src = image.src;
-      viewerTitle.textContent = image.title;
-      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-      
-      console.log('Showing image:', image.src);
-    };
-
-    const closeImageViewer = () => {
-      modal.classList.remove('active');
-      document.body.style.overflow = 'auto';
-    };
-
-    const showNextImage = () => {
-      if (currentImages.length === 0) return;
-      currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-      showImage();
-    };
-
-    const showPrevImage = () => {
-      if (currentImages.length === 0) return;
-      currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-      showImage();
-    };
-
-    // Image viewer event listeners
-    if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
-    if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
-    if (viewerNext) viewerNext.addEventListener('click', showNextImage);
-    if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
-    if (viewerImage) {
-      viewerImage.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showNextImage();
-      });
-    }
-
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (!modal.classList.contains('active')) return;
-      
-      switch(e.key) {
-        case 'Escape':
-          closeImageViewer();
-          break;
-        case 'ArrowRight':
-          showNextImage();
-          break;
-        case 'ArrowLeft':
-          showPrevImage();
-          break;
+      // Close menu after selection
+      if (threeDotMenu) {
+        threeDotMenu.classList.remove('expanded');
       }
     });
+  });
 
-    // Touch support
-    let touchStartX = 0;
-    let touchEndX = 0;
+  // Image viewer functions
+  const showImage = () => {
+    if (currentImages.length === 0) return;
+    
+    const image = currentImages[currentImageIndex];
+    if (viewerImage) viewerImage.src = image.src;
+    if (viewerTitle) viewerTitle.textContent = image.title;
+    if (viewerCounter) viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    
+    console.log('Showing image:', image.src);
+  };
 
-    if (modal) {
-      modal.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-      }, { passive: true });
+  const closeImageViewer = () => {
+    if (modal) modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+  };
 
-      modal.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        const swipeDistance = touchStartX - touchEndX;
-        const minSwipeDistance = 50;
+  const showNextImage = () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    showImage();
+  };
 
-        if (Math.abs(swipeDistance) > minSwipeDistance) {
-          if (swipeDistance > 0) {
-            showNextImage();
-          } else {
-            showPrevImage();
-          }
-        }
-      }, { passive: true });
-    }
+  const showPrevImage = () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+    showImage();
+  };
 
-    console.log('✅ 3-dot menu setup complete');
+  // Image viewer event listeners
+  if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
+  if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
+  if (viewerNext) viewerNext.addEventListener('click', showNextImage);
+  if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
+  if (viewerImage) {
+    viewerImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showNextImage();
+    });
   }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!modal || !modal.classList.contains('active')) return;
+    
+    switch(e.key) {
+      case 'Escape':
+        closeImageViewer();
+        break;
+      case 'ArrowRight':
+        showNextImage();
+        break;
+      case 'ArrowLeft':
+        showPrevImage();
+        break;
+    }
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (modal) {
+    modal.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      const minSwipeDistance = 50;
+
+      if (Math.abs(swipeDistance) > minSwipeDistance) {
+        if (swipeDistance > 0) {
+          showNextImage();
+        } else {
+          showPrevImage();
+        }
+      }
+    }, { passive: true });
+  }
+
+  console.log('✅ 3-dot menu setup complete with dynamic image loading');
+}
 
   // Force brand refresh method
   forceBrandRefresh() {
@@ -1274,31 +1325,33 @@ class CSVCatalogApp {
     }
   }
 
-  checkImageExists(imageSrc) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous'; // Handle CORS if needed
-      
-      const timeout = setTimeout(() => {
-        console.log(`⏰ Timeout checking: ${imageSrc}`);
-        resolve(false);
-      }, 2000); // Reduced timeout
-      
-      img.onload = () => {
-        clearTimeout(timeout);
-        console.log(`✅ Image exists: ${imageSrc}`);
-        resolve(true);
-      };
-      
-      img.onerror = () => {
-        clearTimeout(timeout);
-        console.log(`❌ Image not found: ${imageSrc}`);
-        resolve(false);
-      };
-      
-      img.src = imageSrc;
-    });
-  }
+checkImageExists(imageSrc) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    const timeout = setTimeout(() => {
+      console.log(`⏰ Timeout checking: ${imageSrc}`);
+      resolve(false);
+    }, 5000); // Increased timeout for better reliability
+    
+    img.onload = () => {
+      clearTimeout(timeout);
+      console.log(`✅ Image exists: ${imageSrc}`);
+      resolve(true);
+    };
+    
+    img.onerror = () => {
+      clearTimeout(timeout);
+      console.log(`❌ Image not found: ${imageSrc}`);
+      resolve(false);
+    };
+    
+    // Add cache busting for better reliability
+    const cacheBuster = Date.now();
+    img.src = imageSrc + (imageSrc.includes('?') ? '&' : '?') + 'v=' + cacheBuster;
+  });
+}
 
   showNotification(message) {
     const notification = document.createElement('div');
