@@ -1142,7 +1142,447 @@ class CSVCatalogApp {
     }
   }
 
+// COMPLETE FIXED PATCH - Replace setupFABFunctionality method entirely
+// This fixes all scope, caching, and method binding issues
+
 setupFABFunctionality() {
+  const threeDotToggle = document.getElementById('threeDotToggle');
+  const threeDotMenu = document.getElementById('threeDotMenu');
+  const menuItems = document.querySelectorAll('.menu-item');
+
+  // CLEAR ALL OLD CACHES - Force fresh start
+  const imageCache = new Map();
+  let imagesPreloaded = false;
+
+  // Force menu to start collapsed
+  if (threeDotToggle && threeDotMenu) {
+    threeDotMenu.classList.remove('expanded');
+    
+    setTimeout(() => {
+      threeDotMenu.classList.remove('expanded');
+    }, 100);
+    
+    threeDotToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isExpanding = !threeDotMenu.classList.contains('expanded');
+      threeDotMenu.classList.toggle('expanded');
+      
+      if (isExpanding && !imagesPreloaded) {
+        preloadImagesForAllFolders();
+        imagesPreloaded = true;
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!threeDotMenu.contains(e.target)) {
+        threeDotMenu.classList.remove('expanded');
+      }
+    });
+  }
+
+  // FIXED: Fast image existence check with cache busting
+  // REPLACE the checkImageExistsFast function with this:
+
+const checkImageExistsFast = (imageSrc) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    // ULTRA FAST timeout for quick detection
+    const timeout = setTimeout(() => {
+      resolve(false);
+    }, 400); // Reduced from 600ms
+    
+    img.onload = () => {
+      clearTimeout(timeout);
+      resolve(true);
+    };
+    
+    img.onerror = () => {
+      clearTimeout(timeout);
+      resolve(false);
+    };
+    
+    // FORCE fresh check - no cache
+    const cacheBuster = Math.random().toString(36).substr(2, 9);
+    img.src = imageSrc.includes('?') ? 
+      `${imageSrc}&nocache=${cacheBuster}` : 
+      `${imageSrc}?nocache=${cacheBuster}`;
+  });
+};
+
+  // FIXED: Helper function for natural sorting
+  const getSortKey = (pattern) => {
+    const num = parseInt(pattern);
+    if (!isNaN(num)) {
+      return String(num).padStart(4, '0'); // Numbers with leading zeros
+    }
+    return pattern.toLowerCase();
+  };
+
+  // REPLACE the entire loadImagesFromFolder function with this:
+
+const loadImagesFromFolder = async (folderName) => {
+  const cacheKey = `${folderName}_smart_${Date.now()}`;
+  
+  console.log(`🔍 Smart scanning ${folderName} for images...`);
+  
+  const images = [];
+  const formats = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
+  
+  // SMART DETECTION: Check your exact naming patterns first
+  const smartPatterns = [
+    // Your exact pattern: image1, image2, etc.
+    ...Array.from({length: 100}, (_, i) => `image${i + 1}`),
+    // Backup patterns  
+    ...Array.from({length: 100}, (_, i) => `${i + 1}`),
+    ...Array.from({length: 50}, (_, i) => `img${i + 1}`),
+    // Common names
+    'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
+    'screenshot', 'evidence', 'confirmation', 'feedback', 'package'
+  ];
+  
+  // FAST INITIAL BATCH: Load first 10 immediately
+  const fastPromises = [];
+  for (let i = 1; i <= 15; i++) {
+    for (const format of formats) {
+      const imagePath = `${folderName}/image${i}.${format}`;
+      fastPromises.push(
+        checkImageExistsFast(imagePath).then(exists => 
+          exists ? { 
+            src: imagePath, 
+            title: `${folderName} Image ${i}`, 
+            pattern: `image${i}`,
+            index: i,
+            format
+          } : null
+        ).catch(() => null)
+      );
+    }
+  }
+  
+  console.log(`⚡ Fast-checking first 15 images in ${folderName}...`);
+  
+  try {
+    // Get fast results first
+    const fastResults = await Promise.all(fastPromises);
+    const fastImages = fastResults.filter(result => result !== null);
+    
+    if (fastImages.length > 0) {
+      // Sort by index
+      fastImages.sort((a, b) => a.index - b.index);
+      images.push(...fastImages);
+      
+      console.log(`🚀 FAST LOAD: Found ${fastImages.length} images immediately in ${folderName}`);
+      
+      // Cache immediately for instant access
+      imageCache.set(`${folderName}_latest`, images);
+      
+      // Continue scanning in background for more images
+      setTimeout(async () => {
+        try {
+          const moreImages = await scanForMoreImages(folderName, smartPatterns, formats, 16, 100);
+          if (moreImages.length > 0) {
+            const allImages = [...images, ...moreImages].sort((a, b) => a.index - b.index);
+            imageCache.set(`${folderName}_latest`, allImages);
+            console.log(`📦 Background scan: Found ${moreImages.length} additional images in ${folderName}`);
+          }
+        } catch (error) {
+          console.warn(`⚠️ Background scan failed for ${folderName}:`, error);
+        }
+      }, 100);
+      
+      return images;
+    }
+    
+    // If no fast images found, do full scan
+    console.log(`🔍 No images in fast scan, doing full scan of ${folderName}...`);
+    
+    const fullScanPromises = [];
+    for (const pattern of smartPatterns) {
+      for (const format of formats) {
+        const imagePath = `${folderName}/${pattern}.${format}`;
+        fullScanPromises.push(
+          checkImageExistsFast(imagePath).then(exists => 
+            exists ? { 
+              src: imagePath, 
+              title: `${folderName} - ${pattern}`, 
+              pattern,
+              index: parseInt(pattern.replace(/\D/g, '')) || 999,
+              format
+            } : null
+          ).catch(() => null)
+        );
+      }
+    }
+    
+    const fullResults = await Promise.all(fullScanPromises);
+    const allValidImages = fullResults.filter(result => result !== null);
+    
+    // Remove duplicates and sort
+    const patternMap = new Map();
+    allValidImages.forEach(result => {
+      if (!patternMap.has(result.pattern)) {
+        patternMap.set(result.pattern, result);
+      }
+    });
+    
+    const finalImages = Array.from(patternMap.values())
+      .sort((a, b) => a.index - b.index);
+    
+    images.push(...finalImages);
+    
+    console.log(`✅ Full scan complete: Found ${images.length} images in ${folderName}`);
+    
+    imageCache.set(cacheKey, images);
+    imageCache.set(`${folderName}_latest`, images);
+    return images;
+    
+  } catch (error) {
+    console.error(`❌ Error scanning ${folderName}:`, error);
+    return [];
+  }
+};
+
+// Helper function for background scanning
+const scanForMoreImages = async (folderName, patterns, formats, startIndex, endIndex) => {
+  const moreImages = [];
+  const promises = [];
+  
+  for (let i = startIndex; i <= endIndex; i++) {
+    for (const format of formats) {
+      const imagePath = `${folderName}/image${i}.${format}`;
+      promises.push(
+        checkImageExistsFast(imagePath).then(exists => 
+          exists ? { 
+            src: imagePath, 
+            title: `${folderName} Image ${i}`, 
+            pattern: `image${i}`,
+            index: i,
+            format
+          } : null
+        ).catch(() => null)
+      );
+    }
+  }
+  
+  const results = await Promise.all(promises);
+  return results.filter(result => result !== null);
+};
+
+  // FIXED: Preload function
+  const preloadImagesForAllFolders = async () => {
+    const folders = ['Reviews', 'Payment', 'Delivered'];
+    
+    console.log('🔄 Preloading images with flexible naming...');
+    
+    for (const folder of folders) {
+      try {
+        await loadImagesFromFolder(folder);
+        console.log(`✅ Preloaded ${folder}`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to preload ${folder}:`, error);
+      }
+    }
+    
+    console.log('🎉 Flexible image preload complete!');
+  };
+
+  // Image viewer variables
+  let currentImages = [];
+  let currentImageIndex = 0;
+  let currentFolder = '';
+  const modal = document.getElementById('imageViewerModal');
+  const viewerImage = document.getElementById('viewerImage');
+  const viewerCounter = document.getElementById('viewerCounter');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const viewerClose = document.getElementById('viewerClose');
+  const viewerPrev = document.getElementById('viewerPrev');
+  const viewerNext = document.getElementById('viewerNext');
+  const viewerOverlay = document.getElementById('viewerOverlay');
+
+  // REPLACE the menuItems.forEach block with this:
+
+menuItems.forEach((item) => {
+  item.style.pointerEvents = 'all';
+  item.style.cursor = 'pointer';
+  
+  item.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const folderName = item.dataset.folder;
+    currentFolder = folderName;
+    
+    console.log(`🔄 Smart loading images from ${folderName}...`);
+    
+    // Show modal INSTANTLY
+    if (modal) {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // PRIORITY: Check for immediate cache hit
+    const latestCache = imageCache.get(`${folderName}_latest`);
+    if (latestCache && latestCache.length > 0) {
+      console.log(`⚡ INSTANT: Using cached ${latestCache.length} images for ${folderName}`);
+      currentImages = latestCache;
+      currentImageIndex = 0;
+      showImage();
+      
+      if (threeDotMenu) threeDotMenu.classList.remove('expanded');
+      return;
+    }
+
+    // Show enhanced loading state
+    if (viewerImage) {
+      viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMTIwIiByPSIyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjM2NmYxIiBzdHJva2Utd2lkdGg9IjMiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjAgMjAwIDEyMDszNjAgMjAwIDEyMCIgZHVyPSIxcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz48L2NpcmNsZT48dGV4dCB4PSI1MCUiIHk9IjY1JSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNjM2NmYxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNjAwIj5TY2FubmluZyAke2ZvbGRlck5hbWV9Li4uPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iODAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkZpbmRpbmcgaW1hZ2UxLndlYnAsIGltYWdlMi53ZWJwLi4uPC90ZXh0Pjwvc3ZnPg==';
+    }
+    if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
+    if (viewerCounter) viewerCounter.textContent = 'Detecting images...';
+    
+    try {
+      // FORCE clear any old cache
+      for (const [key] of imageCache) {
+        if (key.includes(folderName)) {
+          imageCache.delete(key);
+        }
+      }
+      
+      // SMART load with your exact naming pattern
+      const images = await loadImagesFromFolder(folderName);
+      
+      if (images.length === 0) {
+        console.log(`❌ No images detected in ${folderName} folder`);
+        currentImages = [{
+          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI0MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNjY2NiI+📂PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtd2VpZ2h0PSI2MDAiPk5vIGltYWdlcyBpbiAke2ZvbGRlck5hbWV9PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNzAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkxvb2tpbmcgZm9yOiBpbWFnZTEud2VicCwgaW1hZ2UyLndlYnAuLi48L3RleHQ+PHRleHQgeD0iNTAlIiB5PSI4NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0iI2NjY2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QWRkIGZpbGVzIHRvIHB1YmxpYy8ke2ZvbGRlck5hbWV9LzwvdGV4dD48L3N2Zz4=',
+          title: `No images in ${folderName}`,
+          pattern: 'empty'
+        }];
+      } else {
+        currentImages = images;
+        console.log(`🎉 SUCCESS: Loaded ${images.length} images from ${folderName}`);
+        console.log(`📋 Images found:`, images.map(img => img.src.split('/').pop()));
+      }
+      
+      currentImageIndex = 0;
+      showImage();
+      
+    } catch (error) {
+      console.error(`💥 Critical error loading ${folderName}:`, error);
+      currentImages = [{
+        src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNDQ0NCI+⚠️PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNyaXRpY2FsIGVycm9yPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNzUlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiNjY2NjY2MiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNoZWNrIGNvbnNvbGUgZm9yIGRldGFpbHM8L3RleHQ+PC9zdmc+',
+        title: `Error: ${folderName}`,
+        pattern: 'error'
+      }];
+      currentImageIndex = 0;
+      showImage();
+    }
+    
+    // Close menu
+    if (threeDotMenu) {
+      threeDotMenu.classList.remove('expanded');
+    }
+  });
+});
+
+  // Image viewer functions
+  const showImage = () => {
+    if (currentImages.length === 0) return;
+    
+    const image = currentImages[currentImageIndex];
+    if (viewerImage) {
+      // Clear any loading states
+      viewerImage.style.filter = 'none';
+      viewerImage.src = image.src;
+    }
+    if (viewerTitle) viewerTitle.textContent = image.title || `${currentFolder} Image ${currentImageIndex + 1}`;
+    updateViewerCounter();
+  };
+
+  const updateViewerCounter = () => {
+    if (viewerCounter && currentImages.length > 0) {
+      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    }
+  };
+
+  const closeImageViewer = () => {
+    if (modal) modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    currentImages = [];
+    currentImageIndex = 0;
+  };
+
+  const showNextImage = () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    showImage();
+  };
+
+  const showPrevImage = () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+    showImage();
+  };
+
+  // Event listeners
+  if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
+  if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
+  if (viewerNext) viewerNext.addEventListener('click', showNextImage);  
+  if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
+  if (viewerImage) {
+    viewerImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showNextImage();
+    });
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!modal || !modal.classList.contains('active')) return;
+    
+    switch(e.key) {
+      case 'Escape':
+        closeImageViewer();
+        break;
+      case 'ArrowRight':
+        showNextImage();
+        break;
+      case 'ArrowLeft':
+        showPrevImage();
+        break;
+    }
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (modal) {
+    modal.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      const minSwipeDistance = 50;
+
+      if (Math.abs(swipeDistance) > minSwipeDistance) {
+        if (swipeDistance > 0) {
+          showNextImage();
+        } else {
+          showPrevImage();
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Store preload function for external access
+  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
+  
+  console.log('🎉 FAB functionality initialized with flexible image loading!');
+}
 
 
 
