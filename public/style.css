@@ -782,28 +782,28 @@ body[data-page-type="category"] .section-header {
   padding-top: var(--space-8);
   text-align: center;
   color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
 }
 
 .footer-bottom p {
   margin: 0;
   padding: 0;
-  font-size: 0.9rem;
+  display: inline;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 
-/* Mobile adjustments */
+/* Ensure single line on all devices */
 @media (max-width: 768px) {
-  .footer-bottom p {
+  .footer-bottom {
     font-size: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
-  .footer-bottom p {
+  .footer-bottom {
     font-size: 0.75rem;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 /* Separated Floating Action Buttons */
@@ -2012,5 +2012,19 @@ body[data-page-type="category"] .section-header {
   display: flex !important;
   opacity: 1 !important;
   pointer-events: all !important;
+}
+  /* Force footer copyright to single line */
+.footer-bottom * {
+  display: inline !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+.footer-bottom {
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
 }
 }
