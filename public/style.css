@@ -1580,15 +1580,15 @@ body[data-page-type="category"] .section-header {
 }
 
 .viewer-close {
-  position: absolute;
-  top: -60px;
-  right: 0;
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
   font-size: 2.5rem;
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -1597,10 +1597,13 @@ body[data-page-type="category"] .section-header {
   transition: all var(--transition-base);
   backdrop-filter: blur(10px);
   font-weight: 300;
+  z-index: 10001;
+  line-height: 1;
 }
 
 .viewer-close:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: scale(1.1);
 }
 
@@ -1608,12 +1611,23 @@ body[data-page-type="category"] .section-header {
   transform: scale(0.95);
 }
 
+/* Mobile close button */
+@media (max-width: 768px) {
+  .viewer-close {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+    top: 15px;
+    right: 15px;
+  }
+}
+
 .viewer-nav {
-  position: absolute;
+  position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
   font-size: 3rem;
   width: 60px;
@@ -1626,10 +1640,13 @@ body[data-page-type="category"] .section-header {
   transition: all var(--transition-base);
   backdrop-filter: blur(10px);
   font-weight: 300;
+  z-index: 10001;
+  line-height: 1;
 }
 
 .viewer-nav:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.9);
+  border-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -1638,11 +1655,28 @@ body[data-page-type="category"] .section-header {
 }
 
 .viewer-nav.prev {
-  left: -80px;
+  left: 20px;
 }
 
 .viewer-nav.next {
-  right: -80px;
+  right: 20px;
+}
+
+/* Mobile navigation */
+@media (max-width: 768px) {
+  .viewer-nav.prev {
+    left: 15px;
+  }
+  
+  .viewer-nav.next {
+    right: 15px;
+  }
+  
+  .viewer-nav {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+  }
 }
 
 .viewer-counter {
