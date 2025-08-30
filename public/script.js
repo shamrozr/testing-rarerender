@@ -1142,25 +1142,48 @@ class CSVCatalogApp {
     }
   }
 
-// COMPLETE FIXED PATCH - Replace setupFABFunctionality method entirely
-// This fixes all scope, caching, and method binding issues
-
-// EMERGENCY FIX - Replace the broken setupFABFunctionality method
+// REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
 
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
   const menuItems = document.querySelectorAll('.menu-item');
 
+  // Global image management
   const imageCache = new Map();
+  let imagesPreloaded = false;
 
-  // Force menu collapsed
+  // Image viewer state - MOVED TO TOP LEVEL
+  let currentImages = [];
+  let currentImageIndex = 0;
+  let currentFolder = '';
+  
+  const modal = document.getElementById('imageViewerModal');
+  const viewerImage = document.getElementById('viewerImage');
+  const viewerCounter = document.getElementById('viewerCounter');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const viewerClose = document.getElementById('viewerClose');
+  const viewerPrev = document.getElementById('viewerPrev');
+  const viewerNext = document.getElementById('viewerNext');
+  const viewerOverlay = document.getElementById('viewerOverlay');
+
+  // Force menu to start collapsed
   if (threeDotToggle && threeDotMenu) {
     threeDotMenu.classList.remove('expanded');
     
+    setTimeout(() => {
+      threeDotMenu.classList.remove('expanded');
+    }, 100);
+    
     threeDotToggle.addEventListener('click', (e) => {
       e.stopPropagation();
+      const isExpanding = !threeDotMenu.classList.contains('expanded');
       threeDotMenu.classList.toggle('expanded');
+      
+      if (isExpanding && !imagesPreloaded) {
+        preloadImagesForAllFolders();
+        imagesPreloaded = true;
+      }
     });
 
     document.addEventListener('click', (e) => {
@@ -1170,11 +1193,15 @@ setupFABFunctionality() {
     });
   }
 
-  // FAST: Check if image exists
-  const imageExists = (url) => {
+  // ULTRA FAST image check with aggressive cache busting
+  const checkImageExistsFast = (imageSrc) => {
     return new Promise((resolve) => {
       const img = new Image();
-      const timeout = setTimeout(() => resolve(false), 500);
+      img.crossOrigin = 'anonymous';
+      
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 300); // Super fast timeout
       
       img.onload = () => {
         clearTimeout(timeout);
@@ -1186,177 +1213,356 @@ setupFABFunctionality() {
         resolve(false);
       };
       
-      img.src = url;
+      // AGGRESSIVE cache busting - force fresh check every time
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substr(2, 9);
+      img.src = `${imageSrc}?t=${timestamp}&r=${random}`;
     });
   };
 
-  // SMART: Target your exact file patterns
-  const scanFolder = async (folderName) => {
-    console.log(`🎯 Scanning ${folderName}...`);
-    
-    const foundImages = [];
-    const formats = ['webp', 'jpg', 'jpeg', 'png'];
-    
-    // Check your exact patterns: image1, image2, image3...
-    const patterns = [
-      ...Array.from({length: 50}, (_, i) => `image${i + 1}`),
-      ...Array.from({length: 50}, (_, i) => `${i + 1}`)
-    ];
+  // OPTIMIZED: Direct pattern scanning for your exact file structure
+  // Removed duplicate declaration of loadImagesFromFolder to avoid redeclaration error.
 
-    // Check in small fast batches
-    for (let i = 0; i < patterns.length; i += 10) {
-      const batch = patterns.slice(i, i + 10);
-      
-      const promises = [];
-      for (const pattern of batch) {
-        for (const format of formats) {
-          const url = `/${folderName}/${pattern}.${format}`;
-          promises.push(
-            imageExists(url).then(exists => 
-              exists ? {
-                src: url,
-                title: `${folderName} - ${pattern}`,
-                name: `${pattern}.${format}`
-              } : null
-            )
-          );
-        }
+  // Preload function
+  const preloadImagesForAllFolders = async () => {
+    const folders = ['Reviews', 'Payment', 'Delivered'];
+    console.log('🔄 Preloading all folders...');
+    
+    for (const folder of folders) {
+      try {
+        const images = await loadImagesFromFolder(folder);
+        console.log(`✅ Preloaded ${folder}: ${images.length} images`);
+      } catch (error) {
+        console.warn(`⚠️ Failed to preload ${folder}:`, error);
       }
-      
-      const results = await Promise.all(promises);
-      const valid = results.filter(Boolean);
-      foundImages.push(...valid);
-      
-      // Stop if we found some and checked first few batches
-      if (valid.length > 0 && i > 20) break;
     }
-
-    // Sort naturally
-    foundImages.sort((a, b) => {
-      const aNum = parseInt(a.name.match(/\d+/)?.[0]);
-      const bNum = parseInt(b.name.match(/\d+/)?.[0]);
-      
-      if (!isNaN(aNum) && !isNaN(bNum)) {
-        return aNum - bNum;
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-    console.log(`✅ Found ${foundImages.length} images in ${folderName}`);
-    imageCache.set(folderName, foundImages);
-    return foundImages;
   };
 
-  // Image viewer variables
-  let currentImages = [];
-  let currentImageIndex = 0;
-  const modal = document.getElementById('imageViewerModal');
-  const viewerImage = document.getElementById('viewerImage');
-  const viewerCounter = document.getElementById('viewerCounter');
-  const viewerTitle = document.getElementById('viewerTitle');
-  const viewerClose = document.getElementById('viewerClose');
-  const viewerPrev = document.getElementById('viewerPrev');
-  const viewerNext = document.getElementById('viewerNext');
-  const viewerOverlay = document.getElementById('viewerOverlay');
+  // FIXED IMAGE VIEWER FUNCTIONS - Proper scope and event handling
+  const showImage = () => {
+    if (!currentImages || currentImages.length === 0) {
+      console.warn('❌ No images to show');
+      return;
+    }
+    
+    const image = currentImages[currentImageIndex];
+    if (viewerImage && image) {
+      viewerImage.src = image.src;
+      console.log(`📷 Showing image ${currentImageIndex + 1}/${currentImages.length}: ${image.src.split('/').pop()}`);
+    }
+    if (viewerTitle && image) {
+      viewerTitle.textContent = image.title || `${currentFolder} Image ${currentImageIndex + 1}`;
+    }
+    updateViewerCounter();
+  };
 
-  // Menu click handlers
+  const updateViewerCounter = () => {
+    if (viewerCounter && currentImages.length > 0) {
+      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    }
+  };
+
+  const closeImageViewer = () => {
+    if (modal) modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    console.log('🔒 Image viewer closed');
+  };
+
+  const showNextImage = () => {
+    if (!currentImages || currentImages.length === 0) return;
+    
+    const oldIndex = currentImageIndex;
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    console.log(`➡️ Next: ${oldIndex} → ${currentImageIndex} (total: ${currentImages.length})`);
+    showImage();
+  };
+
+  const showPrevImage = () => {
+    if (!currentImages || currentImages.length === 0) return;
+    
+    const oldIndex = currentImageIndex;
+    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+    console.log(`⬅️ Prev: ${oldIndex} → ${currentImageIndex} (total: ${currentImages.length})`);
+    showImage();
+  };
+
+  // MENU ITEM CLICK HANDLERS - Fixed and optimized
   menuItems.forEach((item) => {
+    item.style.pointerEvents = 'all';
+    item.style.cursor = 'pointer';
+    
     item.addEventListener('click', async (e) => {
       e.preventDefault();
       e.stopPropagation();
       
       const folderName = item.dataset.folder;
+      currentFolder = folderName;
       
-      // Show modal
+      console.log(`🔄 Loading ${folderName}...`);
+      
+      // Show modal immediately
       if (modal) {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
       }
 
-      // Check cache
-      let images = imageCache.get(folderName);
-      
-      if (!images) {
-        // Show loading
-        if (viewerImage) {
-          viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzY2NiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U2Nhbm5pbmcuLi48L3RleHQ+PC9zdmc+';
-        }
-        if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
+      // Check cache first
+      const cachedImages = imageCache.get(`${folderName}_latest`);
+      if (cachedImages && cachedImages.length > 0) {
+        console.log(`⚡ Cache hit: ${cachedImages.length} images for ${folderName}`);
+        currentImages = cachedImages;
+        currentImageIndex = 0;
+        showImage();
         
-        images = await scanFolder(folderName);
+        if (threeDotMenu) threeDotMenu.classList.remove('expanded');
+        return;
       }
 
-      if (images.length === 0) {
-        currentImages = [{
-          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIyMCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Tm8gaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
-          title: `No images in ${folderName}`
-        }];
-      } else {
-        currentImages = images;
+      // Show loading state
+      if (viewerImage) {
+        viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMTIwIiByPSIyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjM2NmYxIiBzdHJva2Utd2lkdGg9IjMiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjAgMjAwIDEyMDszNjAgMjAwIDEyMCIgZHVyPSIxcyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz48L2NpcmNsZT48dGV4dCB4PSI1MCUiIHk9IjY1JSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNjM2NmYxIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNjAwIj5TY2FubmluZyAke2ZvbGRlck5hbWV9Li4uPC90ZXh0Pjwvc3ZnPg==';
       }
+      if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
+      if (viewerCounter) viewerCounter.textContent = 'Please wait...';
       
-      currentImageIndex = 0;
-      showImage();
+      try {
+        // FORCE clear cache for this folder
+        for (const [key] of imageCache) {
+          if (key.includes(folderName)) {
+            imageCache.delete(key);
+          }
+        }
+        
+        const images = await loadImagesFromFolder(folderName);
+        
+        if (images.length === 0) {
+          console.log(`❌ No images found in ${folderName}`);
+          currentImages = [{
+            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNjY2NiI+📂PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM2NjY2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk5vIGltYWdlcyBpbiAke2ZvbGRlck5hbWV9PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNzUlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkxvb2tpbmcgZm9yOiBpbWFnZTEud2VicCwgaW1hZ2UyLndlYnAuLi48L3RleHQ+PC9zdmc+',
+            title: `No images in ${folderName}`
+          }];
+        } else {
+          currentImages = images;
+          console.log(`🎉 SUCCESS: ${images.length} images loaded from ${folderName}`);
+          console.log(`📋 Images:`, images.map(img => img.src.split('/').pop()));
+        }
+        
+        currentImageIndex = 0;
+        showImage();
+        
+      } catch (error) {
+        console.error(`💥 Error loading ${folderName}:`, error);
+        currentImages = [{
+          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iI2ZmNDQ0NCI+⚠️PC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkVycm9yIGxvYWRpbmcgJHtmb2xkZXJOYW1lfTwvdGV4dD48L3N2Zz4=',
+          title: `Error: ${folderName}`
+        }];
+        currentImageIndex = 0;
+        showImage();
+      }
       
       // Close menu
-      if (threeDotMenu) {
-        threeDotMenu.classList.remove('expanded');
-      }
+      if (threeDotMenu) threeDotMenu.classList.remove('expanded');
     });
   });
 
-  // Image viewer functions
-  const showImage = () => {
-    if (currentImages.length === 0) return;
+  // CRITICAL: Enhanced image scanning with multiple strategies
+  const loadImagesFromFolder = async (folderName) => {
+    console.log(`🎯 SMART scanning ${folderName}...`);
     
-    const image = currentImages[currentImageIndex];
-    if (viewerImage) viewerImage.src = image.src;
-    if (viewerTitle) viewerTitle.textContent = image.title;
-    if (viewerCounter) viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    const images = [];
+    const formats = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
+    
+    // STRATEGY 1: Your exact pattern (image1.webp, image2.webp...)
+    console.log(`📋 Strategy 1: Checking image*.${formats[0]} pattern...`);
+    const strategy1Promises = [];
+    
+    for (let i = 1; i <= 50; i++) {
+      for (const format of formats) {
+        const imagePath = `${folderName}/image${i}.${format}`;
+        strategy1Promises.push(
+          checkImageExistsFast(imagePath).then(exists => 
+            exists ? { 
+              src: imagePath, 
+              title: `${folderName} Image ${i}`, 
+              index: i,
+              pattern: `image${i}`,
+              format
+            } : null
+          ).catch(() => null)
+        );
+      }
+    }
+    
+    const strategy1Results = await Promise.all(strategy1Promises);
+    const strategy1Images = strategy1Results.filter(result => result !== null);
+    
+    if (strategy1Images.length > 0) {
+      strategy1Images.sort((a, b) => a.index - b.index);
+      images.push(...strategy1Images);
+      console.log(`✅ Strategy 1 SUCCESS: Found ${strategy1Images.length} image*.* files`);
+    }
+    
+    // STRATEGY 2: Simple numbers (1.webp, 2.webp...)
+    if (images.length === 0) {
+      console.log(`📋 Strategy 2: Checking number.${formats[0]} pattern...`);
+      const strategy2Promises = [];
+      
+      for (let i = 1; i <= 50; i++) {
+        for (const format of formats) {
+          const imagePath = `${folderName}/${i}.${format}`;
+          strategy2Promises.push(
+            checkImageExistsFast(imagePath).then(exists => 
+              exists ? { 
+                src: imagePath, 
+                title: `${folderName} Image ${i}`, 
+                index: i,
+                pattern: `${i}`,
+                format
+              } : null
+            ).catch(() => null)
+          );
+        }
+      }
+      
+      const strategy2Results = await Promise.all(strategy2Promises);
+      const strategy2Images = strategy2Results.filter(result => result !== null);
+      
+      if (strategy2Images.length > 0) {
+        strategy2Images.sort((a, b) => a.index - b.index);
+        images.push(...strategy2Images);
+        console.log(`✅ Strategy 2 SUCCESS: Found ${strategy2Images.length} number.* files`);
+      }
+    }
+    
+    // STRATEGY 3: Descriptive names
+    if (images.length === 0) {
+      console.log(`📋 Strategy 3: Checking descriptive names...`);
+      const descriptivePatterns = ['proof', 'payment', 'review', 'delivered', 'customer', 'receipt', 'photo', 'pic', 'scan'];
+      const strategy3Promises = [];
+      
+      descriptivePatterns.forEach((pattern, index) => {
+        for (const format of formats) {
+          const imagePath = `${folderName}/${pattern}.${format}`;
+          strategy3Promises.push(
+            checkImageExistsFast(imagePath).then(exists => 
+              exists ? { 
+                src: imagePath, 
+                title: `${folderName} - ${pattern}`, 
+                index: index + 1000, // Sort after numbers
+                pattern,
+                format
+              } : null
+            ).catch(() => null)
+          );
+        }
+      });
+      
+      const strategy3Results = await Promise.all(strategy3Promises);
+      const strategy3Images = strategy3Results.filter(result => result !== null);
+      
+      if (strategy3Images.length > 0) {
+        strategy3Images.sort((a, b) => a.index - b.index);
+        images.push(...strategy3Images);
+        console.log(`✅ Strategy 3 SUCCESS: Found ${strategy3Images.length} descriptive files`);
+      }
+    }
+    
+    console.log(`🏁 FINAL RESULT for ${folderName}: ${images.length} total images`);
+    
+    // Cache results
+    imageCache.set(`${folderName}_latest`, images);
+    return images;
   };
 
-  const closeViewer = () => {
-    if (modal) modal.classList.remove('active');
-    document.body.style.overflow = 'auto';
-  };
-
-  const nextImage = () => {
-    if (currentImages.length === 0) return;
-    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    showImage();
-  };
-
-  const prevImage = () => {
-    if (currentImages.length === 0) return;
-    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    showImage();
-  };
-
-  // Event listeners
-  if (viewerClose) viewerClose.addEventListener('click', closeViewer);
-  if (viewerOverlay) viewerOverlay.addEventListener('click', closeViewer);
-  if (viewerNext) viewerNext.addEventListener('click', nextImage);  
-  if (viewerPrev) viewerPrev.addEventListener('click', prevImage);
+  // EVENT LISTENERS - Fixed scope issues
+  if (viewerClose) {
+    viewerClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeImageViewer();
+    });
+  }
+  
+  if (viewerOverlay) {
+    viewerOverlay.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeImageViewer();
+    });
+  }
+  
+  if (viewerNext) {
+    viewerNext.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showNextImage();
+    });
+  }
+  
+  if (viewerPrev) {
+    viewerPrev.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      showPrevImage();
+    });
+  }
+  
   if (viewerImage) {
     viewerImage.addEventListener('click', (e) => {
       e.stopPropagation();
-      nextImage();
+      showNextImage();
     });
   }
 
-  // Keyboard
+  // KEYBOARD NAVIGATION - Enhanced
   document.addEventListener('keydown', (e) => {
     if (!modal || !modal.classList.contains('active')) return;
     
+    e.preventDefault();
     switch(e.key) {
-      case 'Escape': closeViewer(); break;
-      case 'ArrowRight': nextImage(); break;
-      case 'ArrowLeft': prevImage(); break;
+      case 'Escape':
+        closeImageViewer();
+        break;
+      case 'ArrowRight':
+      case ' ': // Spacebar
+        showNextImage();
+        break;
+      case 'ArrowLeft':
+        showPrevImage();
+        break;
     }
   });
 
-  console.log('✅ FAB functionality working!');
+  // TOUCH/SWIPE SUPPORT - Fixed
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (modal) {
+    modal.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      const minSwipeDistance = 50;
+
+      if (Math.abs(swipeDistance) > minSwipeDistance) {
+        e.preventDefault();
+        if (swipeDistance > 0) {
+          showNextImage();
+        } else {
+          showPrevImage();
+        }
+      }
+    }, { passive: false });
+  }
+
+  // Store functions for external access
+  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
+  
+  console.log('🎉 Enhanced FAB functionality initialized!');
 }
+
+
   showNotification(message) {
     const notification = document.createElement('div');
     notification.style.cssText = `
