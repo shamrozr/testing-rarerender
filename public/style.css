@@ -762,20 +762,35 @@ body[data-page-type="category"] .section-header {
   padding-top: var(--space-8);
   text-align: center;
   color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  line-height: 1.2;
 }
 
 .footer-bottom p {
-  margin: 0;
-  white-space: nowrap;
-  display: inline-block;
-  font-size: 0.9rem;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
 }
 
-/* Mobile footer fix */
+/* Force single line on all screen sizes */
 @media (max-width: 768px) {
+  .footer-bottom {
+    font-size: 0.8rem;
+  }
+  
   .footer-bottom p {
-    white-space: normal;
-    font-size: 0.85rem;
+    white-space: nowrap !important;
+    display: inline !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-bottom {
+    font-size: 0.75rem;
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
   }
 }
 
@@ -870,13 +885,13 @@ body[data-page-type="category"] .section-header {
 .toggle-label {
   font-size: 9px;
   font-weight: 600;
-  line-height: 1.1;
-  white-space: normal;
+  line-height: 1.0;
+  white-space: pre-line;
   max-width: 90px;
   overflow: visible;
   text-overflow: clip;
-  word-break: break-word;
-  hyphens: auto;
+  text-align: center;
+  word-spacing: normal;
 }
 
 /* Mobile adjustments for toggle button */
