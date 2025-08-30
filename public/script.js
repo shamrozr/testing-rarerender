@@ -430,60 +430,67 @@ class CSVCatalogApp {
   }
 
   renderCategoryContents(currentNode, breadcrumbs) {
-    const container = document.getElementById('dynamicSections');
-    if (!container) return;
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
 
-    const items = Object.entries(currentNode).map(([key, item]) => {
-      if (item.isProduct) {
-        return {
-          key,
-          title: key,
-          description: 'Premium product from our luxury collection',
-          count: 1,
-          thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-          isProduct: true,
-          driveLink: item.driveLink
-        };
-      } else {
-        return {
-          key,
-          title: key.replace(/_/g, ' '),
-          description: `Explore ${item.count || 0} items in this collection`,
-          count: item.count || 0,
-          thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-          isProduct: false
-        };
-      }
-    });
-
-    console.log('🎯 Rendering category contents:', items);
-
-    if (items.length === 0) {
-      container.innerHTML = `
-        <section class="content-section">
-          <div class="container">
-            <div class="section-header">
-              <h2 class="section-title">No Items Found</h2>
-              <p class="section-description">This category is currently empty.</p>
-            </div>
-          </div>
-        </section>
-      `;
-      return;
+  const items = Object.entries(currentNode).map(([key, item]) => {
+    if (item.isProduct) {
+      return {
+        key,
+        title: key,
+        description: 'Premium product from our luxury collection',
+        count: 1,
+        thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+        isProduct: true,
+        driveLink: item.driveLink
+      };
+    } else {
+      return {
+        key,
+        title: key.replace(/_/g, ' '),
+        description: `Explore ${item.count || 0} items in this collection`,
+        count: item.count || 0,
+        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+        isProduct: false
+      };
     }
+  });
 
-    const gridClass = this.getGridClass(items.length);
-    
+  if (items.length === 0) {
     container.innerHTML = `
       <section class="content-section">
         <div class="container">
-          <div class="cards-grid ${gridClass}">
-            ${items.map(item => this.createCardHTML(item)).join('')}
+          <div class="section-header">
+            <h2 class="section-title">No Items Found</h2>
+            <p class="section-description">This category is currently empty.</p>
           </div>
         </div>
       </section>
     `;
+    return;
   }
+
+  const gridClass = this.getGridClass(items.length);
+  const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
+  
+  container.innerHTML = `
+    <section class="content-section">
+      <div class="container">
+        <div class="cards-grid ${gridClass}" id="${containerId}">
+          ${items.map(item => this.createCardHTML(item)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+
+  // Apply smart centering for category contents
+  if (gridClass === 'grid-smart') {
+    setTimeout(() => {
+      const gridContainer = document.getElementById(containerId);
+      if (gridContainer) this.addSmartCentering(gridContainer, items.length);
+    }, 10);
+  }
+}
 
   navigateToHome() {
     console.log('🏠 Navigating to home');
@@ -825,54 +832,95 @@ class CSVCatalogApp {
   }
 
   createSectionHTML(sectionName, items) {
-    const gridClass = this.getGridClass(items.length);
-    
-    return `
-      <section class="content-section">
-        <div class="container">
-          <div class="cards-grid ${gridClass}">
-            ${items.map(item => this.createCardHTML(item)).join('')}
+  const gridClass = this.getGridClass(items.length);
+  const shouldShowTitle = sectionName && sectionName !== 'Featured' && sectionName !== '';
+  const sectionId = `section-${Math.random().toString(36).substr(2, 9)}`;
+  
+  const sectionHTML = `
+    <section class="content-section">
+      <div class="container">
+        ${shouldShowTitle ? `
+          <div class="section-header">
+            <h2 class="section-title">${sectionName}</h2>
+            <p class="section-description">Explore our ${sectionName.toLowerCase()} collection</p>
           </div>
-        </div>
-      </section>
-    `;
-  }
-
-  getGridClass(itemCount) {
-    if (itemCount === 1) return 'grid-1';
-    if (itemCount === 2) return 'grid-2';
-    if (itemCount === 3) return 'grid-3';
-    if (itemCount === 4) return 'grid-4';
-    return 'grid-many';
-  }
-
-  createCardHTML(item) {
-    const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
-    const imageContent = imageSrc ? 
-      `<img src="${imageSrc}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">` : 
-      this.getEmojiForCategory(item.key);
-
-    const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
-
-    return `
-      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" data-search-path="${item.searchPath || ''}" role="button" tabindex="0">
-        <div class="card-image">
-          ${imageContent}
-          <div class="card-overlay"></div>
-        </div>
-        <div class="card-content">
-          <h3 class="card-title">${item.title}</h3>
-          <p class="card-description">${item.description}</p>
-          <div class="card-footer">
-            <span class="card-badge">${badgeText}</span>
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </div>
+        ` : ''}
+        <div class="cards-grid ${gridClass}" id="${sectionId}">
+          ${items.map(item => this.createCardHTML(item)).join('')}
         </div>
       </div>
-    `;
+    </section>
+  `;
+  
+  // Apply smart centering after DOM insertion
+  if (gridClass === 'grid-smart') {
+    setTimeout(() => {
+      const container = document.getElementById(sectionId);
+      if (container) this.addSmartCentering(container, items.length);
+    }, 10);
   }
+  
+  return sectionHTML;
+}
+
+  getGridClass(itemCount) {
+  if (itemCount === 1) return 'grid-1';
+  if (itemCount === 2) return 'grid-2';  
+  if (itemCount === 3) return 'grid-3';
+  if (itemCount <= 12) return 'grid-smart';
+  return 'grid-many'; // For 13+ items, use responsive auto-fit
+}
+  
+// Add smart centering classes based on item count and position
+addSmartCentering(containerElement, itemCount) {
+  const cards = containerElement.querySelectorAll('.content-card');
+  const remainder = itemCount % 3;
+  
+  if (remainder === 1) {
+    // Last item should be centered (4,7,10,13... items)
+    const lastCard = cards[cards.length - 1];
+    if (lastCard) lastCard.classList.add('center-item');
+  } else if (remainder === 2) {
+    // Last two items should be spaced (5,8,11,14... items)
+    const secondLast = cards[cards.length - 2];
+    const last = cards[cards.length - 1];
+    if (secondLast) secondLast.classList.add('partial-row-left');
+    if (last) last.classList.add('partial-row-right');
+  }
+  // remainder === 0 means perfect grid (6,9,12... items) - do nothing
+}
+  
+  createSectionHTML(sectionName, items) {
+  const gridClass = this.getGridClass(items.length);
+  const shouldShowTitle = sectionName && sectionName !== 'Featured' && sectionName !== '';
+  const sectionId = `section-${Math.random().toString(36).substr(2, 9)}`;
+  
+  const sectionHTML = `
+    <section class="content-section">
+      <div class="container">
+        ${shouldShowTitle ? `
+          <div class="section-header">
+            <h2 class="section-title">${sectionName}</h2>
+            <p class="section-description">Explore our ${sectionName.toLowerCase()} collection</p>
+          </div>
+        ` : ''}
+        <div class="cards-grid ${gridClass}" id="${sectionId}">
+          ${items.map(item => this.createCardHTML(item)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+  
+  // Apply smart centering after DOM insertion
+  if (gridClass === 'grid-smart') {
+    setTimeout(() => {
+      const container = document.getElementById(sectionId);
+      if (container) this.addSmartCentering(container, items.length);
+    }, 10);
+  }
+  
+  return sectionHTML;
+}
 
   getEmojiForCategory(category) {
     const emojiMap = {
@@ -1192,223 +1240,269 @@ class CSVCatalogApp {
 
   // 3-Dot Menu and Image Viewer Functionality with Fixed Photo Loading
   setupFABFunctionality() {
-    console.log('🔘 Setting up enhanced 3-dot menu functionality...');
-    
-    const threeDotToggle = document.getElementById('threeDotToggle');
-    const threeDotMenu = document.getElementById('threeDotMenu');
-    const menuItems = document.querySelectorAll('.menu-item');
+  console.log('🔘 Setting up enhanced 3-dot menu functionality...');
+  
+  const threeDotToggle = document.getElementById('threeDotToggle');
+  const threeDotMenu = document.getElementById('threeDotMenu');
+  const menuItems = document.querySelectorAll('.menu-item');
 
-    // 3-dot menu toggle
-    if (threeDotToggle && threeDotMenu) {
-      threeDotToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        threeDotMenu.classList.toggle('expanded');
-        console.log('3-dot menu toggled:', threeDotMenu.classList.contains('expanded'));
-      });
+  // Image cache for preloading
+  const imageCache = new Map();
+  const BATCH_SIZE = 5;
 
-      // Close menu when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!threeDotMenu.contains(e.target)) {
-          threeDotMenu.classList.remove('expanded');
-        }
-      });
+  // 3-dot menu toggle
+  if (threeDotToggle && threeDotMenu) {
+    threeDotToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      threeDotMenu.classList.toggle('expanded');
+      
+      // Preload first batch of images when menu is opened
+      if (threeDotMenu.classList.contains('expanded')) {
+        this.preloadImagesForAllFolders();
+      }
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!threeDotMenu.contains(e.target)) {
+        threeDotMenu.classList.remove('expanded');
+      }
+    });
+  }
+
+  // Enhanced image loading with batching
+  const loadImagesFromFolder = async (folderName, startIndex = 1, batchSize = BATCH_SIZE) => {
+    const cacheKey = `${folderName}_${startIndex}`;
+    if (imageCache.has(cacheKey)) {
+      return imageCache.get(cacheKey);
     }
 
-    // Dynamic image loading function with better error handling
-    const loadImagesFromFolder = async (folderName) => {
-      console.log(`📸 Loading images from ${folderName} folder...`);
+    const images = [];
+    let consecutiveFailures = 0;
+    const maxConsecutiveFailures = 3;
+    
+    for (let i = startIndex; i < startIndex + batchSize && consecutiveFailures < maxConsecutiveFailures; i++) {
+      const formats = ['jpg', 'jpeg', 'png', 'webp'];
+      let imageFound = false;
       
-      const images = [];
-      let imageIndex = 1;
-      let consecutiveFailures = 0;
-      const maxConsecutiveFailures = 3; // Stop after 3 consecutive failures
-      
-      while (consecutiveFailures < maxConsecutiveFailures && imageIndex <= 50) { // Max 50 images
-        // Try multiple formats
-        const formats = ['jpg', 'jpeg', 'png', 'webp'];
-        let imageFound = false;
-        
-        for (const format of formats) {
-          const imagePath = `${folderName}/${imageIndex}.${format}`;
-          
-          try {
-            const imageExists = await this.checkImageExists(imagePath);
-            if (imageExists) {
-              images.push({
-                src: imagePath,
-                title: `${folderName} ${imageIndex}`
-              });
-              consecutiveFailures = 0; // Reset failure counter
-              imageFound = true;
-              console.log(`✅ Found: ${imagePath}`);
-              break; // Found image, stop checking other formats
-            }
-          } catch (error) {
-            console.log(`❌ Error checking: ${imagePath}`);
-          }
-        }
-        
-        if (!imageFound) {
-          consecutiveFailures++;
-          console.log(`❌ No image found for index ${imageIndex} (${consecutiveFailures}/${maxConsecutiveFailures})`);
-        }
-        
-        imageIndex++;
-      }
-      
-      console.log(`📊 Found ${images.length} images in ${folderName}`);
-      return images;
-    };
-
-    // Image viewer variables
-    let currentImages = [];
-    let currentImageIndex = 0;
-    const modal = document.getElementById('imageViewerModal');
-    const viewerImage = document.getElementById('viewerImage');
-    const viewerCounter = document.getElementById('viewerCounter');
-    const viewerTitle = document.getElementById('viewerTitle');
-    const viewerClose = document.getElementById('viewerClose');
-    const viewerPrev = document.getElementById('viewerPrev');
-    const viewerNext = document.getElementById('viewerNext');
-    const viewerOverlay = document.getElementById('viewerOverlay');
-
-    // Menu item click handlers with dynamic loading
-    menuItems.forEach((item) => {
-      item.addEventListener('click', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const folderName = item.dataset.folder;
-        console.log('Menu item clicked:', folderName);
-        
-        // Show loading state
-        if (modal) {
-          modal.classList.add('active');
-          if (viewerImage) {
-            viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
-          }
-          if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
-          if (viewerCounter) viewerCounter.textContent = 'Loading...';
-          document.body.style.overflow = 'hidden';
-        }
+      for (const format of formats) {
+        const imagePath = `${folderName}/${i}.${format}`;
         
         try {
-          // Dynamically load images from folder
-          const images = await loadImagesFromFolder(folderName);
-          
-          if (images.length === 0) {
-            console.log(`No images found in ${folderName} folder`);
-            currentImages = [{
-              src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAuICsgZm9sZGVyTmFtZSArIC4gZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
-              title: `No images found in ${folderName} folder`
-            }];
-          } else {
-            currentImages = images;
+          const imageExists = await this.checkImageExists(imagePath);
+          if (imageExists) {
+            images.push({
+              src: imagePath,
+              title: `${folderName} ${i}`,
+              index: i
+            });
+            consecutiveFailures = 0;
+            imageFound = true;
+            break;
           }
-          
-          currentImageIndex = 0;
-          showImage();
-          
         } catch (error) {
-          console.error('Error loading images:', error);
+          // Continue to next format
+        }
+      }
+      
+      if (!imageFound) {
+        consecutiveFailures++;
+      }
+    }
+    
+    imageCache.set(cacheKey, images);
+    return images;
+  };
+
+  // Preload first batch for all folders
+  const preloadImagesForAllFolders = async () => {
+    const folders = ['Reviews', 'Payment', 'Delivered'];
+    for (const folder of folders) {
+      try {
+        await loadImagesFromFolder(folder, 1, BATCH_SIZE);
+      } catch (error) {
+        // Silent fail for preloading
+      }
+    }
+  };
+
+  // Image viewer variables
+  let currentImages = [];
+  let currentImageIndex = 0;
+  let currentFolder = '';
+  let loadedBatches = new Set();
+  const modal = document.getElementById('imageViewerModal');
+  const viewerImage = document.getElementById('viewerImage');
+  const viewerCounter = document.getElementById('viewerCounter');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const viewerClose = document.getElementById('viewerClose');
+  const viewerPrev = document.getElementById('viewerPrev');
+  const viewerNext = document.getElementById('viewerNext');
+  const viewerOverlay = document.getElementById('viewerOverlay');
+
+  // Load more images when approaching end of current batch
+  const loadMoreIfNeeded = async (currentIndex) => {
+    const currentBatch = Math.floor(currentIndex / BATCH_SIZE);
+    const nextBatch = currentBatch + 1;
+    const nextBatchStart = nextBatch * BATCH_SIZE + 1;
+    
+    if (!loadedBatches.has(nextBatch) && (currentIndex + 2) >= (currentBatch + 1) * BATCH_SIZE) {
+      try {
+        const moreImages = await loadImagesFromFolder(currentFolder, nextBatchStart, BATCH_SIZE);
+        if (moreImages.length > 0) {
+          currentImages = [...currentImages, ...moreImages];
+          loadedBatches.add(nextBatch);
+          updateViewerCounter();
+        }
+      } catch (error) {
+        // Silent fail
+      }
+    }
+  };
+
+  // Menu item click handlers
+  menuItems.forEach((item) => {
+    item.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const folderName = item.dataset.folder;
+      currentFolder = folderName;
+      loadedBatches.clear();
+      loadedBatches.add(0);
+      
+      // Show loading state
+      if (modal) {
+        modal.classList.add('active');
+        if (viewerImage) {
+          viewerImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcgaW1hZ2VzLi4uPC90ZXh0Pjwvc3ZnPg==';
+        }
+        if (viewerTitle) viewerTitle.textContent = `Loading ${folderName} images...`;
+        if (viewerCounter) viewerCounter.textContent = 'Loading...';
+        document.body.style.overflow = 'hidden';
+      }
+      
+      try {
+        // Load first batch
+        const images = await loadImagesFromFolder(folderName, 1, BATCH_SIZE);
+        
+        if (images.length === 0) {
           currentImages = [{
-            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
-            title: `Error loading ${folderName} images`
+            src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIGltYWdlcyBmb3VuZCBpbiAuICsgZm9sZGVyTmFtZSArIC4gZm9sZGVyPC90ZXh0Pjwvc3ZnPg==',
+            title: `No images found in ${folderName} folder`
           }];
-          currentImageIndex = 0;
-          showImage();
+        } else {
+          currentImages = images;
         }
         
-        // Close menu after selection
-        if (threeDotMenu) {
-          threeDotMenu.classList.remove('expanded');
-        }
-      });
-    });
-
-    // Image viewer functions
-    const showImage = () => {
-      if (currentImages.length === 0) return;
+        currentImageIndex = 0;
+        showImage();
+        
+      } catch (error) {
+        currentImages = [{
+          src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yIGxvYWRpbmcgaW1hZ2VzPC90ZXh0Pjwvc3ZnPg==',
+          title: `Error loading ${folderName} images`
+        }];
+        currentImageIndex = 0;
+        showImage();
+      }
       
-      const image = currentImages[currentImageIndex];
-      if (viewerImage) viewerImage.src = image.src;
-      if (viewerTitle) viewerTitle.textContent = image.title;
-      if (viewerCounter) viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
-      
-      console.log('Showing image:', image.src);
-    };
-
-    const closeImageViewer = () => {
-      if (modal) modal.classList.remove('active');
-      document.body.style.overflow = 'auto';
-    };
-
-    const showNextImage = () => {
-      if (currentImages.length === 0) return;
-      currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-      showImage();
-    };
-
-    const showPrevImage = () => {
-      if (currentImages.length === 0) return;
-      currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-      showImage();
-    };
-
-    // Image viewer event listeners
-    if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
-    if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
-    if (viewerNext) viewerNext.addEventListener('click', showNextImage);
-    if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
-    if (viewerImage) {
-      viewerImage.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showNextImage();
-      });
-    }
-
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (!modal || !modal.classList.contains('active')) return;
-      
-      switch(e.key) {
-        case 'Escape':
-          closeImageViewer();
-          break;
-        case 'ArrowRight':
-          showNextImage();
-          break;
-        case 'ArrowLeft':
-          showPrevImage();
-          break;
+      // Close menu after selection
+      if (threeDotMenu) {
+        threeDotMenu.classList.remove('expanded');
       }
     });
+  });
 
-    // Touch support for mobile
-    let touchStartX = 0;
-    let touchEndX = 0;
+  // Image viewer functions
+  const showImage = () => {
+    if (currentImages.length === 0) return;
+    
+    const image = currentImages[currentImageIndex];
+    if (viewerImage) viewerImage.src = image.src;
+    if (viewerTitle) viewerTitle.textContent = image.title;
+    updateViewerCounter();
+  };
 
-    if (modal) {
-      modal.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-      }, { passive: true });
-
-      modal.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        const swipeDistance = touchStartX - touchEndX;
-        const minSwipeDistance = 50;
-
-        if (Math.abs(swipeDistance) > minSwipeDistance) {
-          if (swipeDistance > 0) {
-            showNextImage();
-          } else {
-            showPrevImage();
-          }
-        }
-      }, { passive: true });
+  const updateViewerCounter = () => {
+    if (viewerCounter) {
+      viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
     }
+  };
 
-    console.log('✅ Enhanced 3-dot menu setup complete with dynamic image loading');
+  const closeImageViewer = () => {
+    if (modal) modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+  };
+
+  const showNextImage = async () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    await loadMoreIfNeeded(currentImageIndex);
+    showImage();
+  };
+
+  const showPrevImage = () => {
+    if (currentImages.length === 0) return;
+    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+    showImage();
+  };
+
+  // Image viewer event listeners
+  if (viewerClose) viewerClose.addEventListener('click', closeImageViewer);
+  if (viewerOverlay) viewerOverlay.addEventListener('click', closeImageViewer);
+  if (viewerNext) viewerNext.addEventListener('click', showNextImage);
+  if (viewerPrev) viewerPrev.addEventListener('click', showPrevImage);
+  if (viewerImage) {
+    viewerImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showNextImage();
+    });
   }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!modal || !modal.classList.contains('active')) return;
+    
+    switch(e.key) {
+      case 'Escape':
+        closeImageViewer();
+        break;
+      case 'ArrowRight':
+        showNextImage();
+        break;
+      case 'ArrowLeft':
+        showPrevImage();
+        break;
+    }
+  });
+
+  // Touch support for mobile
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (modal) {
+    modal.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      const minSwipeDistance = 50;
+
+      if (Math.abs(swipeDistance) > minSwipeDistance) {
+        if (swipeDistance > 0) {
+          showNextImage();
+        } else {
+          showPrevImage();
+        }
+      }
+    }, { passive: true });
+  }
+
+  // Store preload function for external use
+  this.preloadImagesForAllFolders = preloadImagesForAllFolders;
+}
 
   // Enhanced image checking with multiple format support
   checkImageExists(imageSrc) {
