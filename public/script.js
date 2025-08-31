@@ -383,9 +383,10 @@ class CSVCatalogApp {
   }
 
   renderCategoryContents(currentNode, breadcrumbs) {
-  // ... existing code ...
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
 
-  const items = Object.entries(currentNode).map(([key, item]) => {
+    const items = Object.entries(currentNode).map(([key, item]) => {
     if (item.isProduct) {
       return {
         key,
@@ -415,7 +416,6 @@ class CSVCatalogApp {
       };
     }
   });
-
 
     if (items.length === 0) {
       container.innerHTML = `
@@ -452,7 +452,6 @@ class CSVCatalogApp {
       }, 10);
     }
   }
-
   navigateToHome() {
     // Remove category page attribute
     document.body.removeAttribute('data-page-type');
