@@ -810,34 +810,163 @@ class CSVCatalogApp {
     // remainder === 0 means perfect grid (6,9,12... items) - do nothing
   }
 
-  createCardHTML(item) {
-    const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
-    const imageContent = imageSrc ? 
-      `<img src="${imageSrc}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">` : 
-      this.getEmojiForCategory(item.key);
+  // 1. REPLACE the existing createCardHTML method in script.js (around line 450)
+createCardHTML(item) {
+  const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
+  
+  // Extract image rendering configuration
+  const imageConfig = this.extractImageConfig(item);
+  const imageStyles = this.generateImageStyles(imageConfig);
+  
+  const imageContent = imageSrc ? 
+    `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
+         style="${imageStyles}" 
+         class="card-image-enhanced"
+         onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">` : 
+    this.getEmojiForCategory(item.key);
 
-    const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
+  const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
 
-    return `
-      <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" data-search-path="${item.searchPath || ''}" role="button" tabindex="0">
-        <div class="card-image">
-          ${imageContent}
-          <div class="card-overlay"></div>
-        </div>
-        <div class="card-content">
-          <h3 class="card-title">${item.title}</h3>
-          <p class="card-description">${item.description}</p>
-          <div class="card-footer">
-            <span class="card-badge">${badgeText}</span>
-            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </div>
+  return `
+    <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" data-search-path="${item.searchPath || ''}" role="button" tabindex="0">
+      <div class="card-image card-image-container">
+        ${imageContent}
+        <div class="card-overlay"></div>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">${item.title}</h3>
+        <p class="card-description">${item.description}</p>
+        <div class="card-footer">
+          <span class="card-badge">${badgeText}</span>
+          <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
         </div>
       </div>
-    `;
-  }
+    </div>
+  `;
+}
+/**
+ * Extract image configuration from catalog item
+ */
+extractImageConfig(item) {
+  return {
+    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 'center',
+    fitting: item.fitting || item.Fitting || item.FITTING || 'cover',
+    scaling: item.scaling || item.Scaling || item.SCALING || null
+  };
+}
 
+/**
+ * Generate CSS styles for image based on configuration
+ */
+generateImageStyles(config) {
+  const styles = [];
+  
+  // 1. Object-fit handling (how image fits in container)
+  const fitMethod = this.normalizeFitMethod(config.fitting);
+  styles.push(`object-fit: ${fitMethod}`);
+  
+  // 2. Object-position handling (alignment/focal point)
+  const objectPosition = this.getObjectPosition(config.alignment);
+  styles.push(`object-position: ${objectPosition}`);
+  
+  // 3. Scaling handling (resize image)
+  const scaleTransform = this.getScaleTransform(config.scaling);
+  if (scaleTransform) {
+    styles.push(`transform: ${scaleTransform}`);
+    styles.push(`transform-origin: center`);
+  }
+  
+  // 4. Base styles for smooth rendering
+  styles.push(`width: 100%`);
+  styles.push(`height: 100%`);
+  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
+  
+  return styles.join('; ');
+}
+
+/**
+ * Normalize fit method values
+ */
+normalizeFitMethod(fitting) {
+  const fitMap = {
+    'fit': 'contain',
+    'fill': 'fill', 
+    'contain': 'contain',
+    'cover': 'cover',
+    'scale-down': 'scale-down',
+    'scale_down': 'scale-down'
+  };
+  
+  const normalized = (fitting || '').toLowerCase().replace(/[_-]/g, '-');
+  return fitMap[normalized] || 'cover';
+}
+
+/**
+ * Convert alignment to CSS object-position
+ */
+getObjectPosition(alignment) {
+  const positionMap = {
+    'center': 'center center',
+    'top': 'center top',
+    'bottom': 'center bottom', 
+    'left': 'left center',
+    'right': 'right center',
+    'top-left': 'left top',
+    'top_left': 'left top',
+    'topleft': 'left top',
+    'top-right': 'right top', 
+    'top_right': 'right top',
+    'topright': 'right top',
+    'bottom-left': 'left bottom',
+    'bottom_left': 'left bottom', 
+    'bottomleft': 'left bottom',
+    'bottom-right': 'right bottom',
+    'bottom_right': 'right bottom',
+    'bottomright': 'right bottom'
+  };
+  
+  const normalized = (alignment || '').toLowerCase().replace(/[_-]/g, '-');
+  return positionMap[normalized] || 'center center';
+}
+
+/**
+ * Generate CSS transform for scaling
+ */
+getScaleTransform(scaling) {
+  if (!scaling) return null;
+  
+  const scalingStr = String(scaling).trim();
+  
+  // Handle percentage scaling (e.g., "120%", "80%")
+  if (scalingStr.includes('%')) {
+    const percentage = parseFloat(scalingStr);
+    if (!isNaN(percentage) && percentage > 0) {
+      const scaleValue = percentage / 100;
+      return `scale(${scaleValue})`;
+    }
+  }
+  
+  // Handle pixel-based scaling (e.g., "300px", "150px")
+  if (scalingStr.includes('px')) {
+    const pixels = parseFloat(scalingStr);
+    if (!isNaN(pixels) && pixels > 0) {
+      // For pixel scaling, we'll use a base reference of 200px (typical card image size)
+      const baseSize = 200;
+      const scaleValue = pixels / baseSize;
+      return `scale(${scaleValue})`;
+    }
+  }
+  
+  // Handle direct scale values (e.g., "1.2", "0.8")
+  const directScale = parseFloat(scalingStr);
+  if (!isNaN(directScale) && directScale > 0) {
+    return `scale(${directScale})`;
+  }
+  
+  return null;
+}
   getEmojiForCategory(category) {
     const emojiMap = {
       'BAGS': '👜',
