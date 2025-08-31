@@ -387,35 +387,35 @@ class CSVCatalogApp {
     if (!container) return;
 
     const items = Object.entries(currentNode).map(([key, item]) => {
-    if (item.isProduct) {
-      return {
-        key,
-        title: key,
-        description: 'Premium product from our luxury collection',
-        count: 1,
-        thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-        isProduct: true,
-        driveLink: item.driveLink,
-        // ADD THESE LINES - Pass through CSV image configuration
-        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
-        fitting: item.fitting || item.Fitting || item.FITTING,
-        scaling: item.scaling || item.Scaling || item.SCALING
-      };
-    } else {
-      return {
-        key,
-        title: key.replace(/_/g, ' '),
-        description: `Explore ${item.count || 0} items in this collection`,
-        count: item.count || 0,
-        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-        isProduct: false,
-        // ADD THESE LINES - Pass through CSV image configuration
-        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
-        fitting: item.fitting || item.Fitting || item.FITTING,
-        scaling: item.scaling || item.Scaling || item.SCALING
-      };
-    }
-  });
+  if (item.isProduct) {
+    return {
+      key,
+      title: key,
+      description: 'Premium product from our luxury collection',
+      count: 1,
+      thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+      isProduct: true,
+      driveLink: item.driveLink,
+      // FIXED: Pass through CSV image configuration for products
+      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+      fitting: item.fitting || item.Fitting || item.FITTING,
+      scaling: item.scaling || item.Scaling || item.SCALING
+    };
+  } else {
+    return {
+      key,
+      title: key.replace(/_/g, ' '),
+      description: `Explore ${item.count || 0} items in this collection`,
+      count: item.count || 0,
+      thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+      isProduct: false,
+      // FIXED: Pass through CSV image configuration for categories
+      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+      fitting: item.fitting || item.Fitting || item.FITTING,
+      scaling: item.scaling || item.Scales || item.SCALING
+    };
+  }
+});
     if (items.length === 0) {
       container.innerHTML = `
         <section class="content-section">
@@ -712,24 +712,28 @@ class CSVCatalogApp {
     });
 
     if (sectionsCreated === 0) {
-      const allItems = [];
-      
-      Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
-        allItems.push({
-          key,
-          title: key.replace(/_/g, ' '),
-          description: `Explore our premium ${key.toLowerCase().replace('_', ' ')} collection`,
-          count: item.count || 0,
-          thumbnail: item.thumbnail || '',
-          topOrder: item.topOrder || 999
-        });
-      });
+  const allItems = [];
+  
+  Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+    allItems.push({
+      key,
+      title: key.replace(/_/g, ' '),
+      description: `Explore our premium ${key.toLowerCase().replace('_', ' ')} collection`,
+      count: item.count || 0,
+      thumbnail: item.thumbnail || '',
+      topOrder: item.topOrder || 999,
+      // FIXED: Pass through CSV image configuration for fallback items
+      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+      fitting: item.fitting || item.Fitting || item.FITTING,
+      scaling: item.scaling || item.Scaling || item.SCALING
+    });
+  });
 
-      if (allItems.length > 0) {
-        const sectionHTML = this.createSectionHTML('', allItems);
-        container.insertAdjacentHTML('beforeend', sectionHTML);
-      }
-    }
+  if (allItems.length > 0) {
+    const sectionHTML = this.createSectionHTML('', allItems);
+    container.insertAdjacentHTML('beforeend', sectionHTML);
+  }
+}
   }
 
   groupItemsBySection() {
@@ -749,7 +753,7 @@ class CSVCatalogApp {
       count: item.count || 0,
       thumbnail: item.thumbnail || this.getEmojiForCategory(key),
       topOrder: item.topOrder || 999,
-      // ADD THESE LINES - Pass through CSV image configuration
+      // FIXED: Pass through CSV image configuration from tree data
       alignment: item.alignment || item.Alignment || item.ALIGNMENT,
       fitting: item.fitting || item.Fitting || item.FITTING,
       scaling: item.scaling || item.Scaling || item.SCALING
