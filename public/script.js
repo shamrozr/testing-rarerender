@@ -813,13 +813,13 @@ class CSVCatalogApp {
   createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
-  // Check if any custom image configuration exists
+  // FIXED: Check if any custom image configuration exists
   const hasCustomImageConfig = this.hasImageCustomization(item);
   
   let imageContent;
   if (imageSrc) {
     if (hasCustomImageConfig) {
-      // Apply custom image rendering when configuration is provided
+      // FIXED: Apply custom image rendering when configuration is provided
       const imageConfig = this.extractImageConfig(item);
       const imageStyles = this.generateImageStyles(imageConfig);
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
@@ -827,6 +827,15 @@ class CSVCatalogApp {
                            class="card-image-enhanced"
                            data-has-config="true"
                            onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
+      
+      // FIXED: Debug logging
+      const debugMode = new URLSearchParams(window.location.search).has('debug');
+      if (debugMode) {
+        console.log(`🎨 Enhanced image created for ${item.title}:`, {
+          config: imageConfig,
+          styles: imageStyles
+        });
+      }
     } else {
       // Use standard implementation when no custom config
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
@@ -867,17 +876,17 @@ class CSVCatalogApp {
 hasImageCustomization(item) {
   if (!item || typeof item !== 'object') return false;
   
-  // Check all possible spelling variations with better logic
+  // FIXED: Use the getConfigValue method for consistency
   const alignment = this.getConfigValue(item, 'alignment');
   const fitting = this.getConfigValue(item, 'fitting'); 
   const scaling = this.getConfigValue(item, 'scaling');
   
   const hasConfig = !!(alignment || fitting || scaling);
   
-  // Debug logging
+  // FIXED: Debug logging
   const debugMode = new URLSearchParams(window.location.search).has('debug');
   if (debugMode && hasConfig) {
-    console.log(`🎨 Config found for ${item.title || item.name}:`, {
+    console.log(`🎨 Config detected for ${item.title || item.name || 'unknown'}:`, {
       alignment, fitting, scaling
     });
   }
@@ -922,32 +931,29 @@ getConfigValue(item, property) {
   styles.push('transition: all var(--transition-smooth, 0.3s ease)');
   
   // Object-fit configuration
-  const fitting = this.getConfigValue(config, 'fitting');
-  if (fitting) {
-    const objectFit = this.normalizeFitMethod(fitting);
+  if (config.fitting) {
+    const objectFit = this.normalizeFitMethod(config.fitting);
     styles.push(`object-fit: ${objectFit} !important`);
   } else {
     styles.push('object-fit: cover'); // Default
   }
   
   // Object-position configuration  
-  const alignment = this.getConfigValue(config, 'alignment');
-  if (alignment) {
-    const objectPosition = this.getObjectPosition(alignment);
+  if (config.alignment) {
+    const objectPosition = this.getObjectPosition(config.alignment);
     styles.push(`object-position: ${objectPosition} !important`);
   }
   
   // Transform scaling
-  const scaling = this.getConfigValue(config, 'scaling');
-  if (scaling) {
-    const scaleValue = this.normalizeScaling(scaling);
+  if (config.scaling) {
+    const scaleValue = this.normalizeScaling(config.scaling);
     if (scaleValue !== null) {
       styles.push(`transform: scale(${scaleValue}) !important`);
       styles.push('transform-origin: center center');
     }
   }
   
-  // Debug indicator
+  // FIXED: Debug indicator
   const debugMode = new URLSearchParams(window.location.search).has('debug');
   if (debugMode) {
     styles.push('outline: 2px solid #00ff00');
@@ -957,7 +963,7 @@ getConfigValue(item, property) {
   const styleString = styles.join('; ');
   
   if (debugMode) {
-    console.log(`🎨 Generated styles for item:`, styleString);
+    console.log(`🎨 Generated styles:`, styleString);
   }
   
   return styleString;
@@ -1081,7 +1087,61 @@ normalizeScaling(scaling) {
     };
     return emojiMap[category?.toUpperCase()] || '🎁';
   }
+// FIXED: Add all missing image configuration methods
+getConfigValue(item, property) {
+  const variations = {
+    'alignment': ['alignment', 'Alignment', 'ALIGNMENT', 'allignment', 'Allignment', 'ALLIGNMENT'],
+    'fitting': ['fitting', 'Fitting', 'FITTING'],
+    'scaling': ['scaling', 'Scaling', 'SCALING']
+  };
+  
+  const props = variations[property] || [property];
+  for (const prop of props) {
+    const value = item[prop];
+    if (value && typeof value === 'string' && value.trim() !== '') {
+      return value.trim();
+    }
+  }
+  return '';
+}
 
+extractImageConfig(item) {
+  return {
+    alignment: this.getConfigValue(item, 'alignment'),
+    fitting: this.getConfigValue(item, 'fitting'),
+    scaling: this.getConfigValue(item, 'scaling')
+  };
+}
+
+normalizeScaling(scaling) {
+  if (!scaling) return null;
+  
+  const scalingStr = String(scaling).trim();
+  
+  // Handle percentage (120%, 80%)
+  if (scalingStr.includes('%')) {
+    const percentage = parseFloat(scalingStr);
+    if (!isNaN(percentage) && percentage > 0) {
+      return percentage / 100;
+    }
+  }
+  
+  // Handle pixels (300px, 150px) 
+  if (scalingStr.includes('px')) {
+    const pixels = parseFloat(scalingStr);
+    if (!isNaN(pixels) && pixels > 0) {
+      return pixels / 200; // 200px base reference
+    }
+  }
+  
+  // Handle direct scale (1.2, 0.8)
+  const directScale = parseFloat(scalingStr);
+  if (!isNaN(directScale) && directScale > 0) {
+    return directScale;
+  }
+  
+  return null;
+}
   setupTaxonomy() {
     const taxonomyGrid = document.getElementById('taxonomyGrid');
     if (!taxonomyGrid || !this.data.catalog?.tree) return;
