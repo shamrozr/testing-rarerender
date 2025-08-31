@@ -250,6 +250,11 @@ for (const r of masterRows) {
   const alignment = (r["Alignment"] || r["alignment"] || "").trim();
   const fitting = (r["Fitting"] || r["fitting"] || "").trim();
   const scaling = (r["Scaling"] || r["scaling"] || "").trim();
+  
+  // NEW: Image rendering configuration
+  const alignment = (r["Alignment"] || r["alignment"] || "").trim();
+  const fitting = (r["Fitting"] || r["fitting"] || "").trim();
+  const scaling = (r["Scaling"] || r["scaling"] || "").trim();
 
   if (!rel || !name) continue;
     
@@ -329,6 +334,11 @@ for (const r of masterRows) {
         if (meta?.section) n.section = meta.section;
         if (meta?.category) n.category = meta.category;
         if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
+        // NEW: Attach image rendering config
+        if (meta?.alignment) n.alignment = meta.alignment;
+        if (meta?.fitting) n.fitting = meta.fitting;
+        if (meta?.scaling) n.scaling = meta.scaling;
+        
         if (n.children) attachFolderMeta(n.children, [...prefix, k]);
       }
     }
