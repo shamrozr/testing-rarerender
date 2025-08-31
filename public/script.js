@@ -861,16 +861,46 @@ class CSVCatalogApp {
   // Image Rendering Helper Methods
   // ===============================
 
-  hasImageCustomization(item) {
-    // Support both spellings of alignment
-    const alignment = item.alignment || item.Alignment || item.ALIGNMENT || 
-                     item.allignment || item.Allignment || item.ALLIGNMENT || '';
-    const fitting = item.fitting || item.Fitting || item.FITTING || '';
-    const scaling = item.scaling || item.Scaling || item.SCALING || '';
-    
-    // Return true only if at least one custom value is provided
-    return alignment.trim() !== '' || fitting.trim() !== '' || scaling.trim() !== '';
+  // Enhanced Image Rendering Helper Methods
+// =======================================
+
+hasImageCustomization(item) {
+  if (!item || typeof item !== 'object') return false;
+  
+  // Check all possible spelling variations with better logic
+  const alignment = this.getConfigValue(item, 'alignment');
+  const fitting = this.getConfigValue(item, 'fitting'); 
+  const scaling = this.getConfigValue(item, 'scaling');
+  
+  const hasConfig = !!(alignment || fitting || scaling);
+  
+  // Debug logging
+  const debugMode = new URLSearchParams(window.location.search).has('debug');
+  if (debugMode && hasConfig) {
+    console.log(`🎨 Config found for ${item.title || item.name}:`, {
+      alignment, fitting, scaling
+    });
   }
+  
+  return hasConfig;
+}
+
+getConfigValue(item, property) {
+  const variations = {
+    'alignment': ['alignment', 'Alignment', 'ALIGNMENT', 'allignment', 'Allignment', 'ALLIGNMENT'],
+    'fitting': ['fitting', 'Fitting', 'FITTING'],
+    'scaling': ['scaling', 'Scaling', 'SCALING']
+  };
+  
+  const props = variations[property] || [property];
+  for (const prop of props) {
+    const value = item[prop];
+    if (value && typeof value === 'string' && value.trim() !== '') {
+      return value.trim();
+    }
+  }
+  return '';
+}
 
   extractImageConfig(item) {
     return {
@@ -883,41 +913,86 @@ class CSVCatalogApp {
   }
 
   generateImageStyles(config) {
-    const styles = [];
-    
-    // CRITICAL: Images MUST have width and height for object-fit/object-position to work
-    styles.push(`width: 100% !important`);
-    styles.push(`height: 100% !important`);
-    styles.push(`display: block`);
-    styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
-    
-    // 1. Object-fit handling - ONLY if fitting is specified
-    if (config.fitting && config.fitting.trim() !== '') {
-      const fitMethod = this.normalizeFitMethod(config.fitting);
-      styles.push(`object-fit: ${fitMethod} !important`);
-    } else {
-      // Default for enhanced images
-      styles.push(`object-fit: cover`);
-    }
-    
-    // 2. Object-position handling - ONLY if alignment is specified
-    if (config.alignment && config.alignment.trim() !== '') {
-      const objectPosition = this.getObjectPosition(config.alignment);
-      styles.push(`object-position: ${objectPosition} !important`);
-    }
-    
-    // 3. Scaling handling - ONLY if scaling is specified
-    if (config.scaling && config.scaling.trim() !== '') {
-      const scaleTransform = this.getScaleTransform(config.scaling);
-      if (scaleTransform) {
-        styles.push(`transform: ${scaleTransform} !important`);
-        styles.push(`transform-origin: center center`);
-      }
-    }
-    
-    return styles.join('; ');
+  const styles = [];
+  
+  // Essential dimensions for object-fit
+  styles.push('width: 100% !important');
+  styles.push('height: 100% !important'); 
+  styles.push('display: block');
+  styles.push('transition: all var(--transition-smooth, 0.3s ease)');
+  
+  // Object-fit configuration
+  const fitting = this.getConfigValue(config, 'fitting');
+  if (fitting) {
+    const objectFit = this.normalizeFitMethod(fitting);
+    styles.push(`object-fit: ${objectFit} !important`);
+  } else {
+    styles.push('object-fit: cover'); // Default
   }
+  
+  // Object-position configuration  
+  const alignment = this.getConfigValue(config, 'alignment');
+  if (alignment) {
+    const objectPosition = this.getObjectPosition(alignment);
+    styles.push(`object-position: ${objectPosition} !important`);
+  }
+  
+  // Transform scaling
+  const scaling = this.getConfigValue(config, 'scaling');
+  if (scaling) {
+    const scaleValue = this.normalizeScaling(scaling);
+    if (scaleValue !== null) {
+      styles.push(`transform: scale(${scaleValue}) !important`);
+      styles.push('transform-origin: center center');
+    }
+  }
+  
+  // Debug indicator
+  const debugMode = new URLSearchParams(window.location.search).has('debug');
+  if (debugMode) {
+    styles.push('outline: 2px solid #00ff00');
+    styles.push('outline-offset: -2px');
+  }
+  
+  const styleString = styles.join('; ');
+  
+  if (debugMode) {
+    console.log(`🎨 Generated styles for item:`, styleString);
+  }
+  
+  return styleString;
+}
 
+// Add missing method
+normalizeScaling(scaling) {
+  if (!scaling) return null;
+  
+  const scalingStr = String(scaling).trim();
+  
+  // Handle percentage (120%, 80%)
+  if (scalingStr.includes('%')) {
+    const percentage = parseFloat(scalingStr);
+    if (!isNaN(percentage) && percentage > 0) {
+      return percentage / 100;
+    }
+  }
+  
+  // Handle pixels (300px, 150px) 
+  if (scalingStr.includes('px')) {
+    const pixels = parseFloat(scalingStr);
+    if (!isNaN(pixels) && pixels > 0) {
+      return pixels / 200; // 200px base reference
+    }
+  }
+  
+  // Handle direct scale (1.2, 0.8)
+  const directScale = parseFloat(scalingStr);
+  if (!isNaN(directScale) && directScale > 0) {
+    return directScale;
+  }
+  
+  return null;
+}
   normalizeFitMethod(fitting) {
     const fitMap = {
       'fit': 'contain',
@@ -1297,7 +1372,102 @@ class CSVCatalogApp {
 // REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
 
 // COMPLETE REPLACEMENT - Replace entire setupFABFunctionality() method with this WORKING version:
-
+// COMPLETE DEBUG SYSTEM - Add this method to CSVCatalogApp class
+debugCompleteImageSystem() {
+  console.log('🔍 COMPLETE IMAGE SYSTEM DEBUG');
+  console.log('=====================================');
+  
+  if (!this.data || !this.data.catalog || !this.data.catalog.tree) {
+    console.log('❌ No catalog data found');
+    return;
+  }
+  
+  let stats = {
+    totalItems: 0,
+    itemsWithConfig: 0,
+    configDetails: [],
+    missingConfig: []
+  };
+  
+  // Recursive analysis of all items
+  const analyzeNode = (node, path = []) => {
+    for (const [key, item] of Object.entries(node)) {
+      const currentPath = [...path, key].join('/');
+      stats.totalItems++;
+      
+      // Check for image configuration
+      const hasConfig = this.hasImageCustomization(item);
+      
+      if (hasConfig) {
+        stats.itemsWithConfig++;
+        const config = this.extractImageConfig(item);
+        stats.configDetails.push({
+          path: currentPath,
+          alignment: config.alignment || 'none',
+          fitting: config.fitting || 'none',
+          scaling: config.scaling || 'none',
+          isProduct: item.isProduct || false
+        });
+      } else {
+        stats.missingConfig.push(currentPath);
+      }
+      
+      // Recurse into children
+      if (item.children && !item.isProduct) {
+        analyzeNode(item.children, [...path, key]);
+      }
+    }
+  };
+  
+  analyzeNode(this.data.catalog.tree);
+  
+  console.log(`📊 STATISTICS:`);
+  console.log(`   Total items: ${stats.totalItems}`);
+  console.log(`   Items with config: ${stats.itemsWithConfig}`);
+  console.log(`   Coverage: ${((stats.itemsWithConfig / stats.totalItems) * 100).toFixed(1)}%`);
+  
+  console.log(`\n🎨 ITEMS WITH CONFIGURATION (${stats.configDetails.length}):`);
+  stats.configDetails.forEach((item, index) => {
+    if (index < 10) { // Show first 10
+      console.log(`${index + 1}. ${item.path}`);
+      console.log(`   Alignment: ${item.alignment}`);
+      console.log(`   Fitting: ${item.fitting}`);
+      console.log(`   Scaling: ${item.scaling}`);
+      console.log(`   Type: ${item.isProduct ? 'Product' : 'Category'}`);
+      console.log('   ---');
+    }
+  });
+  
+  if (stats.configDetails.length === 0) {
+    console.log('❌ NO IMAGE CONFIGURATIONS FOUND!');
+    console.log('\n🔧 TROUBLESHOOTING STEPS:');
+    console.log('1. Check your Master CSV has columns: Alignment, Fitting, Scaling');
+    console.log('2. Ensure you have data in those columns');  
+    console.log('3. Verify build ran: node tools/build-data.mjs');
+    console.log('4. Check data.json contains the config properties');
+  }
+  
+  // Test current page images
+  const pageImages = document.querySelectorAll('.card-image img');
+  console.log(`\n🖼️  CURRENT PAGE ANALYSIS (${pageImages.length} images):`);
+  
+  pageImages.forEach((img, index) => {
+    if (index < 5) { // Check first 5 images
+      const hasEnhanced = img.classList.contains('card-image-enhanced');
+      const hasConfig = img.dataset.hasConfig === 'true';
+      const customStyles = img.style.objectFit || img.style.objectPosition || img.style.transform;
+      
+      console.log(`Image ${index + 1}:`);
+      console.log(`   Enhanced class: ${hasEnhanced}`);
+      console.log(`   Config attribute: ${hasConfig}`);
+      console.log(`   Custom styles: ${!!customStyles}`);
+      console.log(`   Applied styles: ${img.getAttribute('style') || 'none'}`);
+      console.log('   ---');
+    }
+  });
+  
+  return stats;
+}
 // SUPER FAST REPLACEMENT - Replace entire setupFABFunctionality() method:
 // Debug method to verify image configuration
   debugImageConfig() {
@@ -1813,6 +1983,15 @@ function initializeApp() {
   });
   
   window.catalogApp = app;
+
+// Auto-run debug if URL parameter present
+if (new URLSearchParams(window.location.search).has('debug')) {
+  setTimeout(() => {
+    if (app.data) {
+      app.debugCompleteImageSystem();
+    }
+  }, 1000);
+}
   
   // Monitor URL changes for brand switching
   window.addEventListener('popstate', () => {
