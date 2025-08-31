@@ -245,12 +245,11 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     const section = (r["Section"] || r["section"] || "").trim() || "Featured";
     const category = (r["Category"] || r["category"] || "").trim();
 
-    // NEW: Image rendering configuration
-    // Enhanced: Image rendering configuration with more variations
-const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || 
-                       r["Allignment"] || r["allignment"] || r["ALLIGNMENT"] || "").trim();
-const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim(); 
-const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
+    // FIXED: Image rendering configuration with proper variable names
+    const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || 
+                           r["Allignment"] || r["allignment"] || r["ALLIGNMENT"] || "").trim();
+    const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim(); 
+    const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
 
     if (!rel || !name) continue;
     
@@ -290,7 +289,7 @@ const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim()
         category: category
       };
       
-      // CRITICAL: Add image rendering config with detailed logging
+      // FIXED: Add image rendering config with detailed logging
       if (imageAlignment) {
         productData.alignment = imageAlignment;
         console.log(`🎨 Product ${name}: alignment = "${imageAlignment}"`);
@@ -336,7 +335,9 @@ const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim()
       }
       folderMeta.set(k, existing);
     }
+  }
 
+  // FIXED: Moved these console.log statements to proper location
   console.log(`📦 Created section-aware catalog with ${totalProducts} products and image rendering support`);
   console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
 
@@ -353,7 +354,7 @@ const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim()
         if (meta?.section) n.section = meta.section;
         if (meta?.category) n.category = meta.category;
         if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
-        // NEW: Attach image rendering config
+        // FIXED: Attach image rendering config
         if (meta?.alignment) n.alignment = meta.alignment;
         if (meta?.fitting) n.fitting = meta.fitting;
         if (meta?.scaling) n.scaling = meta.scaling;
@@ -621,8 +622,7 @@ const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim()
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
-  
-  } // FIXED: Add this missing closing brace
+
 })().catch(err => {
   console.error("💥 Enhanced build failed:", err);
   process.exit(1);
