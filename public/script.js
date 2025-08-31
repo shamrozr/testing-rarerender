@@ -383,31 +383,39 @@ class CSVCatalogApp {
   }
 
   renderCategoryContents(currentNode, breadcrumbs) {
-    const container = document.getElementById('dynamicSections');
-    if (!container) return;
+  // ... existing code ...
 
-    const items = Object.entries(currentNode).map(([key, item]) => {
-      if (item.isProduct) {
-        return {
-          key,
-          title: key,
-          description: 'Premium product from our luxury collection',
-          count: 1,
-          thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-          isProduct: true,
-          driveLink: item.driveLink
-        };
-      } else {
-        return {
-          key,
-          title: key.replace(/_/g, ' '),
-          description: `Explore ${item.count || 0} items in this collection`,
-          count: item.count || 0,
-          thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-          isProduct: false
-        };
-      }
-    });
+  const items = Object.entries(currentNode).map(([key, item]) => {
+    if (item.isProduct) {
+      return {
+        key,
+        title: key,
+        description: 'Premium product from our luxury collection',
+        count: 1,
+        thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+        isProduct: true,
+        driveLink: item.driveLink,
+        // ADD THESE LINES - Pass through CSV image configuration
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
+    } else {
+      return {
+        key,
+        title: key.replace(/_/g, ' '),
+        description: `Explore ${item.count || 0} items in this collection`,
+        count: item.count || 0,
+        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+        isProduct: false,
+        // ADD THESE LINES - Pass through CSV image configuration
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
+    }
+  });
+
 
     if (items.length === 0) {
       container.innerHTML = `
@@ -727,29 +735,33 @@ class CSVCatalogApp {
   }
 
   groupItemsBySection() {
-    this.sections.clear();
+  this.sections.clear();
+  
+  Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+    const section = item.section || 'Featured';
     
-    Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
-      const section = item.section || 'Featured';
-      
-      if (!this.sections.has(section)) {
-        this.sections.set(section, []);
-      }
-      
-      this.sections.get(section).push({
-        key,
-        title: key.replace(/_/g, ' '),
-        description: `Explore our premium ${key.toLowerCase()} collection with ${item.count || 0} items`,
-        count: item.count || 0,
-        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-        topOrder: item.topOrder || 999
-      });
+    if (!this.sections.has(section)) {
+      this.sections.set(section, []);
+    }
+    
+    this.sections.get(section).push({
+      key,
+      title: key.replace(/_/g, ' '),
+      description: `Explore our premium ${key.toLowerCase()} collection with ${item.count || 0} items`,
+      count: item.count || 0,
+      thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+      topOrder: item.topOrder || 999,
+      // ADD THESE LINES - Pass through CSV image configuration
+      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+      fitting: item.fitting || item.Fitting || item.FITTING,
+      scaling: item.scaling || item.Scaling || item.SCALING
     });
+  });
 
-    this.sections.forEach(items => {
-      items.sort((a, b) => a.topOrder - b.topOrder);
-    });
-  }
+  this.sections.forEach(items => {
+    items.sort((a, b) => a.topOrder - b.topOrder);
+  });
+}
 
   createSectionHTML(sectionName, items) {
     const gridClass = this.getGridClass(items.length);
@@ -846,10 +858,18 @@ class CSVCatalogApp {
   `;
 }
 extractImageConfig(item) {
+  // Debug log to see what data we have
+  console.log('Item data for image config:', item);
+  
   return {
-    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 'center',
-    fitting: item.fitting || item.Fitting || item.FITTING || 'cover',
-    scaling: item.scaling || item.Scaling || item.SCALING || null
+    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 
+               item.image_alignment || item.imageAlignment || item['Image Alignment'] || 'center',
+    fitting: item.fitting || item.Fitting || item.FITTING || 
+             item.object_fit || item.objectFit || item['Object Fit'] || 
+             item.image_fit || item.imageFit || item['Image Fit'] || 'cover',
+    scaling: item.scaling || item.Scaling || item.SCALING || 
+             item.image_scale || item.imageScale || item['Image Scale'] || 
+             item.scale || item.Scale || null
   };
 }
 
