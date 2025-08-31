@@ -621,6 +621,8 @@ const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim()
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
+  
+  } // FIXED: Add this missing closing brace
 })().catch(err => {
   console.error("💥 Enhanced build failed:", err);
   process.exit(1);
