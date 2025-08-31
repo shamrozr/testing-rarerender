@@ -234,18 +234,24 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   console.log("📝 Processing enhanced catalog entries...");
   let processedCount = 0;
   
-  for (const r of masterRows) {
-    const name = (r["Name"] || r["Folder/Product"] || "").trim();
-    const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
-    const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
-    const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-    const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
-    
-    // Enhanced section support
-    const section = (r["Section"] || r["section"] || "").trim() || "Featured";
-    const category = (r["Category"] || r["category"] || "").trim();
+  // Enhanced catalog entry processing with image rendering config
+for (const r of masterRows) {
+  const name = (r["Name"] || r["Folder/Product"] || "").trim();
+  const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
+  const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
+  const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+  const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
+  
+  // Enhanced section support
+  const section = (r["Section"] || r["section"] || "").trim() || "Featured";
+  const category = (r["Category"] || r["category"] || "").trim();
+  
+  // NEW: Image rendering configuration
+  const alignment = (r["Alignment"] || r["alignment"] || "").trim();
+  const fitting = (r["Fitting"] || r["fitting"] || "").trim();
+  const scaling = (r["Scaling"] || r["scaling"] || "").trim();
 
-    if (!rel || !name) continue;
+  if (!rel || !name) continue;
     
     processedCount++;
     if (processedCount % 100 === 0) {
@@ -270,34 +276,42 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
 
     const normalizedThumb = toThumbSitePath(thumbRel);
 
-    if (isLeafProduct) {
-      const parentSegs = segs.slice(0, -1);
-      const children = ensureFolderNode(tree, parentSegs);
-      children[name] = { 
-        isProduct: true, 
-        driveLink, 
-        thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
-        section: section,
-        category: category
-      };
-      totalProducts++;
-    } else {
-      ensureFolderNode(tree, segs);
-      const k = segs.join("/");
-      const existing = folderMeta.get(k) || {};
-      if (normalizedThumb) existing.thumbnail = normalizedThumb;
-      if (driveLink) existing.driveLink = driveLink;
-      if (section) existing.section = section;
-      if (category) existing.category = category;
-      
-      // Handle topOrder for categories (first level items)
-      if (segs.length === 1) {
-        const n = parseInt(topOrderRaw, 10);
-        if (!Number.isNaN(n)) existing.topOrder = n;
-      }
-      folderMeta.set(k, existing);
+      if (isLeafProduct) {
+    const parentSegs = segs.slice(0, -1);
+    const children = ensureFolderNode(tree, parentSegs);
+    children[name] = { 
+      isProduct: true, 
+      driveLink, 
+      thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+      section: section,
+      category: category,
+      // NEW: Add image rendering config
+      alignment: alignment,
+      fitting: fitting,
+      scaling: scaling
+    };
+    totalProducts++;
+  } else {
+    ensureFolderNode(tree, segs);
+    const k = segs.join("/");
+    const existing = folderMeta.get(k) || {};
+    if (normalizedThumb) existing.thumbnail = normalizedThumb;
+    if (driveLink) existing.driveLink = driveLink;
+    if (section) existing.section = section;
+    if (category) existing.category = category;
+    // NEW: Add image rendering config for folders too
+    if (alignment) existing.alignment = alignment;
+    if (fitting) existing.fitting = fitting;
+    if (scaling) existing.scaling = scaling;
+    
+    // Handle topOrder for categories (first level items)
+    if (segs.length === 1) {
+      const n = parseInt(topOrderRaw, 10);
+      if (!Number.isNaN(n)) existing.topOrder = n;
     }
+    folderMeta.set(k, existing);
   }
+}
 
   console.log(`📦 Created section-aware catalog with ${totalProducts} products`);
   console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
