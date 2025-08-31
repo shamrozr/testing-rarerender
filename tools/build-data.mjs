@@ -1,4 +1,4 @@
-// Enhanced build-data.mjs - CSV-driven with sections support
+// Enhanced build-data.mjs - CSV-driven with sections support and image rendering
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -120,7 +120,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
 }
 
 (async () => {
-  console.log("🚀 Starting CSV-driven catalog build...");
+  console.log("🚀 Starting CSV-driven catalog build with image rendering...");
   
   // Fetch data
   console.log("📥 Fetching CSV data...");
@@ -213,8 +213,8 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   
   console.log(`✅ Processed ${Object.keys(brands).length} enhanced brands`);
 
-  // Build enhanced catalog tree with sections
-  console.log("🌳 Building section-aware catalog tree...");
+  // Build enhanced catalog tree with sections and image rendering
+  console.log("🌳 Building section-aware catalog tree with image rendering...");
   
   const allFullPaths = masterRows.map(r => normPath(r["RelativePath"] || r["Relative Path"] || r["Relative_Path"] || ""));
   const parentsSet = new Set();
@@ -231,32 +231,26 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   const folderMeta = new Map();
   const sectionStats = new Map();
 
-  console.log("📝 Processing enhanced catalog entries...");
+  console.log("📝 Processing enhanced catalog entries with image rendering...");
   let processedCount = 0;
   
-  // Enhanced catalog entry processing with image rendering config
-for (const r of masterRows) {
-  const name = (r["Name"] || r["Folder/Product"] || "").trim();
-  const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
-  const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
-  const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-  const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
-  
-  // Enhanced section support
-  const section = (r["Section"] || r["section"] || "").trim() || "Featured";
-  const category = (r["Category"] || r["category"] || "").trim();
-  
-  // NEW: Image rendering configuration
-  const alignment = (r["Alignment"] || r["alignment"] || "").trim();
-  const fitting = (r["Fitting"] || r["fitting"] || "").trim();
-  const scaling = (r["Scaling"] || r["scaling"] || "").trim();
-  
-  // NEW: Image rendering configuration
-  const alignment = (r["Alignment"] || r["alignment"] || "").trim();
-  const fitting = (r["Fitting"] || r["fitting"] || "").trim();
-  const scaling = (r["Scaling"] || r["scaling"] || "").trim();
+  for (const r of masterRows) {
+    const name = (r["Name"] || r["Folder/Product"] || "").trim();
+    const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
+    const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
+    const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+    const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
+    
+    // Enhanced section support
+    const section = (r["Section"] || r["section"] || "").trim() || "Featured";
+    const category = (r["Category"] || r["category"] || "").trim();
 
-  if (!rel || !name) continue;
+    // NEW: Image rendering configuration
+    const imageAlignment = (r["Alignment"] || r["alignment"] || "").trim();
+    const imageFitting = (r["Fitting"] || r["fitting"] || "").trim();
+    const imageScaling = (r["Scaling"] || r["scaling"] || "").trim();
+
+    if (!rel || !name) continue;
     
     processedCount++;
     if (processedCount % 100 === 0) {
@@ -281,48 +275,48 @@ for (const r of masterRows) {
 
     const normalizedThumb = toThumbSitePath(thumbRel);
 
-      if (isLeafProduct) {
-    const parentSegs = segs.slice(0, -1);
-    const children = ensureFolderNode(tree, parentSegs);
-    children[name] = { 
-      isProduct: true, 
-      driveLink, 
-      thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
-      section: section,
-      category: category,
-      // NEW: Add image rendering config
-      alignment: alignment,
-      fitting: fitting,
-      scaling: scaling
-    };
-    totalProducts++;
-  } else {
-    ensureFolderNode(tree, segs);
-    const k = segs.join("/");
-    const existing = folderMeta.get(k) || {};
-    if (normalizedThumb) existing.thumbnail = normalizedThumb;
-    if (driveLink) existing.driveLink = driveLink;
-    if (section) existing.section = section;
-    if (category) existing.category = category;
-    // NEW: Add image rendering config for folders too
-    if (alignment) existing.alignment = alignment;
-    if (fitting) existing.fitting = fitting;
-    if (scaling) existing.scaling = scaling;
-    
-    // Handle topOrder for categories (first level items)
-    if (segs.length === 1) {
-      const n = parseInt(topOrderRaw, 10);
-      if (!Number.isNaN(n)) existing.topOrder = n;
+    if (isLeafProduct) {
+      const parentSegs = segs.slice(0, -1);
+      const children = ensureFolderNode(tree, parentSegs);
+      children[name] = { 
+        isProduct: true, 
+        driveLink, 
+        thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+        section: section,
+        category: category,
+        // NEW: Add image rendering config
+        alignment: imageAlignment,
+        fitting: imageFitting,
+        scaling: imageScaling
+      };
+      totalProducts++;
+    } else {
+      ensureFolderNode(tree, segs);
+      const k = segs.join("/");
+      const existing = folderMeta.get(k) || {};
+      if (normalizedThumb) existing.thumbnail = normalizedThumb;
+      if (driveLink) existing.driveLink = driveLink;
+      if (section) existing.section = section;
+      if (category) existing.category = category;
+      // NEW: Add image rendering config for folders too
+      if (imageAlignment) existing.alignment = imageAlignment;
+      if (imageFitting) existing.fitting = imageFitting;
+      if (imageScaling) existing.scaling = imageScaling;
+      
+      // Handle topOrder for categories (first level items)
+      if (segs.length === 1) {
+        const n = parseInt(topOrderRaw, 10);
+        if (!Number.isNaN(n)) existing.topOrder = n;
+      }
+      folderMeta.set(k, existing);
     }
-    folderMeta.set(k, existing);
   }
-}
 
-  console.log(`📦 Created section-aware catalog with ${totalProducts} products`);
+  console.log(`📦 Created section-aware catalog with ${totalProducts} products and image rendering support`);
   console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
 
-  // Attach enhanced folder metadata
-  console.log("🔗 Enhancing catalog with sections...");
+  // Attach enhanced folder metadata including image rendering
+  console.log("🔗 Enhancing catalog with sections and image rendering...");
   function attachFolderMeta(node, prefix = []) {
     for (const k of Object.keys(node)) {
       const n = node[k];
@@ -338,7 +332,6 @@ for (const r of masterRows) {
         if (meta?.alignment) n.alignment = meta.alignment;
         if (meta?.fitting) n.fitting = meta.fitting;
         if (meta?.scaling) n.scaling = meta.scaling;
-        
         if (n.children) attachFolderMeta(n.children, [...prefix, k]);
       }
     }
@@ -374,12 +367,13 @@ for (const r of masterRows) {
     setCounts(tree[top]);
   }
 
-  // Enhanced health checks
-  console.log("🔍 Running enhanced quality assurance...");
+  // Enhanced health checks including image rendering
+  console.log("🔍 Running enhanced quality assurance with image rendering checks...");
   const missingThumbFiles = [];
   const sectionAnalysis = {};
+  const imageRenderingStats = { withConfig: 0, total: 0 };
   
-  // Analyze sections
+  // Analyze sections and image rendering config
   Object.entries(tree).forEach(([key, item]) => {
     const section = item.section || 'Featured';
     if (!sectionAnalysis[section]) {
@@ -392,13 +386,21 @@ for (const r of masterRows) {
   async function scanMissingThumbs(node, pfx = []) {
     for (const k of Object.keys(node)) {
       const n = node[k];
+      imageRenderingStats.total++;
+      
+      // Check if item has image rendering config
+      if (n.alignment || n.fitting || n.scaling) {
+        imageRenderingStats.withConfig++;
+      }
+      
       if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
         const exists = await fileExists(n.thumbnail);
         if (!exists) {
           missingThumbFiles.push({ 
             path: [...pfx, k].join("/"), 
             thumbnail: n.thumbnail,
-            section: n.section || 'Unknown'
+            section: n.section || 'Unknown',
+            hasImageConfig: !!(n.alignment || n.fitting || n.scaling)
           });
         }
       }
@@ -409,16 +411,21 @@ for (const r of masterRows) {
   }
   await scanMissingThumbs(tree);
 
-  // Generate enhanced report
+  // Generate enhanced report with image rendering stats
   const report = {
     timestamp: new Date().toISOString(),
-    build_version: "2.0.0-sections",
+    build_version: "2.1.0-image-rendering",
     performance: {
       totalBrands: Object.keys(brands).length,
       totalProducts: totalProducts,
       totalCategories: Object.keys(tree).length,
       catalogEntries: masterRows.length,
       sectionsFound: Object.keys(sectionAnalysis).length,
+    },
+    imageRendering: {
+      itemsWithConfig: imageRenderingStats.withConfig,
+      totalItems: imageRenderingStats.total,
+      configCoverage: `${((imageRenderingStats.withConfig / imageRenderingStats.total) * 100).toFixed(1)}%`
     },
     sections: sectionAnalysis,
     quality: {
@@ -440,16 +447,17 @@ for (const r of masterRows) {
         name: cat,
         items: tree[cat].count || 0,
         section: tree[cat].section || 'Featured',
-        topOrder: tree[cat].topOrder || 999
+        topOrder: tree[cat].topOrder || 999,
+        hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling)
       }))
     }
   };
 
   // Save enhanced files
-  console.log("💾 Saving enhanced CSV-driven catalog...");
+  console.log("💾 Saving enhanced CSV-driven catalog with image rendering...");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   
-  // Create enhanced data.json with sections support
+  // Create enhanced data.json with sections and image rendering support
   const enhancedData = {
     brands,
     catalog: {
@@ -461,13 +469,14 @@ for (const r of masterRows) {
       )
     },
     meta: {
-      buildVersion: "2.0.0-sections",
+      buildVersion: "2.1.0-image-rendering",
       buildTime: new Date().toISOString(),
       features: [
         "csv_driven_homepage",
         "dynamic_sections", 
         "enhanced_branding",
-        "section_based_organization"
+        "section_based_organization",
+        "image_rendering_system"
       ]
     }
   };
@@ -485,9 +494,9 @@ for (const r of masterRows) {
     "utf8"
   );
 
-  // Generate enhanced summary with sections
+  // Generate enhanced summary with sections and image rendering
   const summary = [
-    "## 🏆 Enhanced CSV-Driven Catalog Build Summary",
+    "## 🏆 Enhanced CSV-Driven Catalog Build Summary with Image Rendering",
     "",
     "### 📊 **Performance Metrics**",
     `- **Enhanced Brands:** ${Object.keys(brands).length}`,
@@ -495,6 +504,12 @@ for (const r of masterRows) {
     `- **Category Collections:** ${Object.keys(tree).length}`,
     `- **Dynamic Sections:** ${Object.keys(sectionAnalysis).length}`,
     `- **Catalog Entries Processed:** ${masterRows.length}`,
+    "",
+    "### 🎨 **Image Rendering System**",
+    `- **Items with Custom Config:** ${imageRenderingStats.withConfig} / ${imageRenderingStats.total}`,
+    `- **Configuration Coverage:** ${((imageRenderingStats.withConfig / imageRenderingStats.total) * 100).toFixed(1)}%`,
+    "- **Supported Features:** Alignment, Fitting, Scaling",
+    "- **Non-Intrusive:** Only applies when config provided",
     "",
     "### 🎨 **Section Organization**",
     ...Object.entries(sectionAnalysis).map(([section, data]) => 
@@ -507,6 +522,7 @@ for (const r of masterRows) {
     "- ✅ Enhanced brand customization",
     "- ✅ TopOrder-based sorting",
     "- ✅ Professional light theme",
+    "- ✅ Advanced image rendering system",
     "",
     "### 🎯 **Quality Assurance**",
     `- **Missing Thumbnails:** ${missingThumbFiles.length}`,
@@ -520,7 +536,8 @@ for (const r of masterRows) {
       .map(cat => {
         const section = tree[cat].section || 'Featured';
         const order = tree[cat].topOrder || 'Auto';
-        return `- **${cat}** (${section}): ${tree[cat].count || 0} items [Order: ${order}]`;
+        const hasConfig = !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling);
+        return `- **${cat}** (${section}): ${tree[cat].count || 0} items [Order: ${order}]${hasConfig ? ' 🎨' : ''}`;
       }),
     "",
     "### 📋 **CSV Column Reference**",
@@ -544,13 +561,24 @@ for (const r of masterRows) {
     "- `Category` - Additional categorization",
     "- `Thumbs Path` - Thumbnail image path",
     "- `Drive Link` - Google Drive link for products",
+    "- **`Alignment`** - Image focal point (center/top/bottom/left/right/top-left/etc)",
+    "- **`Fitting`** - Image fit method (fit/fill/contain/cover/scale-down)",
+    "- **`Scaling`** - Image scale (120%/300px/1.2)",
+    "",
+    "### 🎨 **Image Rendering Examples**",
+    "- **Center product photo:** `Alignment: center, Fitting: cover`",
+    "- **Show top of tall image:** `Alignment: top, Fitting: cover`",
+    "- **Make image 20% larger:** `Scaling: 120%`",
+    "- **Crop bottom-right:** `Alignment: bottom-right, Fitting: cover`",
+    "- **Fit entire image:** `Fitting: contain`",
     "",
     "### 🚀 **Next Steps**",
-    "1. Update your CSV files with the new columns",
-    "2. Set `Section` values: Featured, Trending, Premium, New Arrivals, Best Sellers",
-    "3. Use `TopOrder` to control display sequence",
-    "4. Add brand content: tagline, heroTitle, heroSubtitle, footerText",
-    "5. Test the new professional interface"
+    "1. Update your CSV files with the new image rendering columns",
+    "2. Set `Alignment` values: center, top, bottom, left, right, top-left, etc.",
+    "3. Set `Fitting` values: fit, fill, contain, cover, scale-down",
+    "4. Set `Scaling` values: 120%, 80%, 300px, 1.5",
+    "5. Test the enhanced image rendering system",
+    "6. Only fill columns when you want custom behavior - defaults preserved"
   ].filter(Boolean).join("\n");
 
   console.log("\n" + summary);
@@ -564,10 +592,10 @@ for (const r of masterRows) {
     process.exit(1);
   }
   
-  console.log(`\n🎉 Successfully built enhanced CSV-driven catalog!`);
+  console.log(`\n🎉 Successfully built enhanced CSV-driven catalog with image rendering!`);
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
-  console.log("✨ Ready for professional CSV-driven experience!");
+  console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
 })().catch(err => {
   console.error("💥 Enhanced build failed:", err);
   process.exit(1);
