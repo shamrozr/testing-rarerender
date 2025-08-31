@@ -810,9 +810,7 @@ class CSVCatalogApp {
     // remainder === 0 means perfect grid (6,9,12... items) - do nothing
   }
 
-  // STEP 1: REPLACE the existing createCardHTML method (around line 450 in script.js)
-
-createCardHTML(item) {
+  createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
   // Check if any custom image configuration exists
@@ -821,7 +819,7 @@ createCardHTML(item) {
   let imageContent;
   if (imageSrc) {
     if (hasCustomImageConfig) {
-      // Apply custom image rendering ONLY when configuration is provided
+      // Apply custom image rendering
       const imageConfig = this.extractImageConfig(item);
       const imageStyles = this.generateImageStyles(imageConfig);
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
@@ -829,7 +827,7 @@ createCardHTML(item) {
                            class="card-image-enhanced"
                            onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
     } else {
-      // Use original implementation when no custom config
+      // Use original implementation
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
     }
   } else {
@@ -857,6 +855,123 @@ createCardHTML(item) {
     </div>
   `;
 }
+  // ADD these methods right after createCardHTML method
+  
+  hasImageCustomization(item) {
+    const alignment = item.alignment || item.Alignment || item.ALIGNMENT || '';
+    const fitting = item.fitting || item.Fitting || item.FITTING || '';
+    const scaling = item.scaling || item.Scaling || item.SCALING || '';
+    
+    return alignment.trim() !== '' || fitting.trim() !== '' || scaling.trim() !== '';
+  }
+
+  extractImageConfig(item) {
+    return {
+      alignment: item.alignment || item.Alignment || item.ALIGNMENT || '',
+      fitting: item.fitting || item.Fitting || item.FITTING || '',
+      scaling: item.scaling || item.Scaling || item.SCALING || ''
+    };
+  }
+
+  generateImageStyles(config) {
+    const styles = [];
+    
+    styles.push(`width: 100% !important`);
+    styles.push(`height: 100% !important`);
+    styles.push(`display: block`);
+    styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
+    
+    if (config.fitting && config.fitting.trim() !== '') {
+      const fitMethod = this.normalizeFitMethod(config.fitting);
+      styles.push(`object-fit: ${fitMethod} !important`);
+    } else {
+      styles.push(`object-fit: cover`);
+    }
+    
+    if (config.alignment && config.alignment.trim() !== '') {
+      const objectPosition = this.getObjectPosition(config.alignment);
+      styles.push(`object-position: ${objectPosition} !important`);
+    }
+    
+    if (config.scaling && config.scaling.trim() !== '') {
+      const scaleTransform = this.getScaleTransform(config.scaling);
+      if (scaleTransform) {
+        styles.push(`transform: ${scaleTransform} !important`);
+        styles.push(`transform-origin: center center`);
+      }
+    }
+    
+    return styles.join('; ');
+  }
+
+  normalizeFitMethod(fitting) {
+    const fitMap = {
+      'fit': 'contain',
+      'fill': 'fill', 
+      'contain': 'contain',
+      'cover': 'cover',
+      'scale-down': 'scale-down',
+      'scale_down': 'scale-down'
+    };
+    
+    const normalized = (fitting || '').toLowerCase().replace(/[_-]/g, '-');
+    return fitMap[normalized] || 'cover';
+  }
+
+  getObjectPosition(alignment) {
+    const positionMap = {
+      'center': 'center center',
+      'top': 'center top',
+      'bottom': 'center bottom', 
+      'left': 'left center',
+      'right': 'right center',
+      'top-left': 'left top',
+      'top_left': 'left top',
+      'topleft': 'left top',
+      'top-right': 'right top', 
+      'top_right': 'right top',
+      'topright': 'right top',
+      'bottom-left': 'left bottom',
+      'bottom_left': 'left bottom', 
+      'bottomleft': 'left bottom',
+      'bottom-right': 'right bottom',
+      'bottom_right': 'right bottom',
+      'bottomright': 'right bottom'
+    };
+    
+    const normalized = (alignment || '').toLowerCase().replace(/[_-]/g, '-');
+    return positionMap[normalized] || 'center center';
+  }
+
+  getScaleTransform(scaling) {
+    if (!scaling) return null;
+    
+    const scalingStr = String(scaling).trim();
+    
+    if (scalingStr.includes('%')) {
+      const percentage = parseFloat(scalingStr);
+      if (!isNaN(percentage) && percentage > 0) {
+        const scaleValue = percentage / 100;
+        return `scale(${scaleValue})`;
+      }
+    }
+    
+    if (scalingStr.includes('px')) {
+      const pixels = parseFloat(scalingStr);
+      if (!isNaN(pixels) && pixels > 0) {
+        const baseSize = 200;
+        const scaleValue = pixels / baseSize;
+        return `scale(${scaleValue})`;
+      }
+    }
+    
+    const directScale = parseFloat(scalingStr);
+    if (!isNaN(directScale) && directScale > 0) {
+      return `scale(${directScale})`;
+    }
+    
+    return null;
+  }
 // STEP 2: ADD these 5 NEW methods RIGHT AFTER the createCardHTML method
 
 /**
