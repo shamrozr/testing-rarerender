@@ -663,6 +663,104 @@ body[data-page-type="category"] .section-header {
     var(--color-surface-elevated)
   );
 }
+
+/* Enhanced Image Rendering CSS - ADD to style.css */
+/* ================================================= */
+
+/* Enhanced Card Image Container */
+.card-image-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Enhanced Card Image with Advanced Rendering */
+.card-image-enhanced {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  transition: all var(--transition-smooth);
+  
+  /* Ensure image quality */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimizeQuality;
+  
+  /* Prevent image dragging */
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  
+  /* Smooth scaling and positioning */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Hover effects for enhanced images */
+.content-card:hover .card-image-enhanced {
+  transform: scale(1.05) var(--card-image-transform, scale(1));
+}
+
+/* Ensure transformed images don't overflow */
+.card-image-container {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Responsive image scaling adjustments */
+@media (max-width: 768px) {
+  .card-image-enhanced {
+    /* Reduce aggressive scaling on mobile */
+    max-width: none;
+    max-height: none;
+  }
+  
+  .content-card:hover .card-image-enhanced {
+    /* Less dramatic hover effect on mobile */
+    transform: scale(1.02) var(--card-image-transform, scale(1));
+  }
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+  .card-image-enhanced {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Fallback for browsers that don't support modern CSS */
+@supports not (object-fit: cover) {
+  .card-image-enhanced {
+    /* Fallback for older browsers */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}
+
+/* Loading state for images */
+.card-image-enhanced[src=""] {
+  background: linear-gradient(135deg, var(--color-soft-gray), var(--color-medium-gray));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+/* Error state styling */
+.card-image-enhanced:not([src]),
+.card-image-enhanced[src=""]:after {
+  content: '🖼️';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--color-soft-gray);
+  font-size: 3rem;
+}
 /* Taxonomy Section */
 /* ================ */
 
