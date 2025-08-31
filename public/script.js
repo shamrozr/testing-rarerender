@@ -810,26 +810,37 @@ class CSVCatalogApp {
     // remainder === 0 means perfect grid (6,9,12... items) - do nothing
   }
 
-  // 1. REPLACE the existing createCardHTML method in script.js (around line 450)
+  // STEP 1: REPLACE the existing createCardHTML method (around line 450 in script.js)
+
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
-  // Extract image rendering configuration
-  const imageConfig = this.extractImageConfig(item);
-  const imageStyles = this.generateImageStyles(imageConfig);
+  // Check if any custom image configuration exists
+  const hasCustomImageConfig = this.hasImageCustomization(item);
   
-  const imageContent = imageSrc ? 
-    `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
-         style="${imageStyles}" 
-         class="card-image-enhanced"
-         onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">` : 
-    this.getEmojiForCategory(item.key);
+  let imageContent;
+  if (imageSrc) {
+    if (hasCustomImageConfig) {
+      // Apply custom image rendering ONLY when configuration is provided
+      const imageConfig = this.extractImageConfig(item);
+      const imageStyles = this.generateImageStyles(imageConfig);
+      imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
+                           style="${imageStyles}" 
+                           class="card-image-enhanced"
+                           onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
+    } else {
+      // Use original implementation when no custom config
+      imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
+    }
+  } else {
+    imageContent = this.getEmojiForCategory(item.key);
+  }
 
   const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
 
   return `
     <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" data-search-path="${item.searchPath || ''}" role="button" tabindex="0">
-      <div class="card-image card-image-container">
+      <div class="card-image${hasCustomImageConfig ? ' card-image-container' : ''}">
         ${imageContent}
         <div class="card-overlay"></div>
       </div>
@@ -846,42 +857,72 @@ createCardHTML(item) {
     </div>
   `;
 }
+// STEP 2: ADD these 5 NEW methods RIGHT AFTER the createCardHTML method
+
+/**
+ * Check if item has any custom image configuration
+ * ONLY applies custom rendering when explicit values are provided
+ */
+hasImageCustomization(item) {
+  // Support both correct spelling and your current typo
+  const alignment = item.alignment || item.Alignment || item.ALIGNMENT || 
+                   item.allignment || item.Allignment || item.ALLIGNMENT || '';
+  const fitting = item.fitting || item.Fitting || item.FITTING || '';
+  const scaling = item.scaling || item.Scaling || item.SCALING || '';
+  
+  // Return true only if at least one custom value is provided
+  return alignment.trim() !== '' || fitting.trim() !== '' || scaling.trim() !== '';
+}
+
 /**
  * Extract image configuration from catalog item
  */
 extractImageConfig(item) {
   return {
-    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 'center',
-    fitting: item.fitting || item.Fitting || item.FITTING || 'cover',
-    scaling: item.scaling || item.Scaling || item.SCALING || null
+    // Support both spellings temporarily
+    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 
+              item.allignment || item.Allignment || item.ALLIGNMENT || '',
+    fitting: item.fitting || item.Fitting || item.FITTING || '',
+    scaling: item.scaling || item.Scaling || item.SCALING || ''
   };
 }
 
 /**
  * Generate CSS styles for image based on configuration
+ * ONLY applies styles when values are explicitly provided
  */
 generateImageStyles(config) {
   const styles = [];
   
-  // 1. Object-fit handling (how image fits in container)
-  const fitMethod = this.normalizeFitMethod(config.fitting);
-  styles.push(`object-fit: ${fitMethod}`);
+  // CRITICAL: Images MUST have width and height for object-fit/object-position to work
+  styles.push(`width: 100% !important`);
+  styles.push(`height: 100% !important`);
+  styles.push(`display: block`);
+  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
   
-  // 2. Object-position handling (alignment/focal point)
-  const objectPosition = this.getObjectPosition(config.alignment);
-  styles.push(`object-position: ${objectPosition}`);
-  
-  // 3. Scaling handling (resize image)
-  const scaleTransform = this.getScaleTransform(config.scaling);
-  if (scaleTransform) {
-    styles.push(`transform: ${scaleTransform}`);
-    styles.push(`transform-origin: center`);
+  // 1. Object-fit handling - ONLY if fitting is specified
+  if (config.fitting && config.fitting.trim() !== '') {
+    const fitMethod = this.normalizeFitMethod(config.fitting);
+    styles.push(`object-fit: ${fitMethod} !important`);
+  } else {
+    // Default for enhanced images
+    styles.push(`object-fit: cover`);
   }
   
-  // 4. Base styles for smooth rendering
-  styles.push(`width: 100%`);
-  styles.push(`height: 100%`);
-  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
+  // 2. Object-position handling - ONLY if alignment is specified
+  if (config.alignment && config.alignment.trim() !== '') {
+    const objectPosition = this.getObjectPosition(config.alignment);
+    styles.push(`object-position: ${objectPosition} !important`);
+  }
+  
+  // 3. Scaling handling - ONLY if scaling is specified
+  if (config.scaling && config.scaling.trim() !== '') {
+    const scaleTransform = this.getScaleTransform(config.scaling);
+    if (scaleTransform) {
+      styles.push(`transform: ${scaleTransform} !important`);
+      styles.push(`transform-origin: center center`);
+    }
+  }
   
   return styles.join('; ');
 }
