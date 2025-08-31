@@ -812,14 +812,11 @@ class CSVCatalogApp {
 
   createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
-  
-  // FIXED: Check if any custom image configuration exists
   const hasCustomImageConfig = this.hasImageCustomization(item);
   
   let imageContent;
   if (imageSrc) {
     if (hasCustomImageConfig) {
-      // FIXED: Apply custom image rendering when configuration is provided
       const imageConfig = this.extractImageConfig(item);
       const imageStyles = this.generateImageStyles(imageConfig);
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
@@ -827,17 +824,7 @@ class CSVCatalogApp {
                            class="card-image-enhanced"
                            data-has-config="true"
                            onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
-      
-      // FIXED: Debug logging
-      const debugMode = new URLSearchParams(window.location.search).has('debug');
-      if (debugMode) {
-        console.log(`🎨 Enhanced image created for ${item.title}:`, {
-          config: imageConfig,
-          styles: imageStyles
-        });
-      }
     } else {
-      // Use standard implementation when no custom config
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
                           class="card-image-standard"
                           onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
@@ -876,22 +863,13 @@ class CSVCatalogApp {
 hasImageCustomization(item) {
   if (!item || typeof item !== 'object') return false;
   
-  // FIXED: Use the getConfigValue method for consistency
-  const alignment = this.getConfigValue(item, 'alignment');
-  const fitting = this.getConfigValue(item, 'fitting'); 
-  const scaling = this.getConfigValue(item, 'scaling');
+  // Direct property check - NO recursive calls
+  const alignment = item.alignment || item.Alignment || item.ALIGNMENT || 
+                   item.allignment || item.Allignment || item.ALLIGNMENT || '';
+  const fitting = item.fitting || item.Fitting || item.FITTING || '';
+  const scaling = item.scaling || item.Scaling || item.SCALING || '';
   
-  const hasConfig = !!(alignment || fitting || scaling);
-  
-  // FIXED: Debug logging
-  const debugMode = new URLSearchParams(window.location.search).has('debug');
-  if (debugMode && hasConfig) {
-    console.log(`🎨 Config detected for ${item.title || item.name || 'unknown'}:`, {
-      alignment, fitting, scaling
-    });
-  }
-  
-  return hasConfig;
+  return alignment.trim() !== '' || fitting.trim() !== '' || scaling.trim() !== '';
 }
 
 getConfigValue(item, property) {
@@ -910,16 +888,25 @@ getConfigValue(item, property) {
   }
   return '';
 }
+  
+  const props = variations[property] || [property];
+  for (const prop of props) {
+    const value = item[prop];
+    if (value && typeof value === 'string' && value.trim() !== '') {
+      return value.trim();
+    }
+  }
+  return '';
+}
 
   extractImageConfig(item) {
-    return {
-      // Support both spellings temporarily
-      alignment: item.alignment || item.Alignment || item.ALIGNMENT || 
-                item.allignment || item.Allignment || item.ALLIGNMENT || '',
-      fitting: item.fitting || item.Fitting || item.FITTING || '',
-      scaling: item.scaling || item.Scaling || item.SCALING || ''
-    };
-  }
+  return {
+    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 
+               item.allignment || item.Allignment || item.ALLIGNMENT || '',
+    fitting: item.fitting || item.Fitting || item.FITTING || '',
+    scaling: item.scaling || item.Scaling || item.SCALING || ''
+  };
+}
 
   generateImageStyles(config) {
   const styles = [];
@@ -935,7 +922,7 @@ getConfigValue(item, property) {
     const objectFit = this.normalizeFitMethod(config.fitting);
     styles.push(`object-fit: ${objectFit} !important`);
   } else {
-    styles.push('object-fit: cover'); // Default
+    styles.push('object-fit: cover');
   }
   
   // Object-position configuration  
@@ -946,27 +933,14 @@ getConfigValue(item, property) {
   
   // Transform scaling
   if (config.scaling) {
-    const scaleValue = this.normalizeScaling(config.scaling);
-    if (scaleValue !== null) {
-      styles.push(`transform: scale(${scaleValue}) !important`);
+    const scaleValue = this.getScaleTransform(config.scaling);
+    if (scaleValue) {
+      styles.push(`${scaleValue} !important`);
       styles.push('transform-origin: center center');
     }
   }
   
-  // FIXED: Debug indicator
-  const debugMode = new URLSearchParams(window.location.search).has('debug');
-  if (debugMode) {
-    styles.push('outline: 2px solid #00ff00');
-    styles.push('outline-offset: -2px');
-  }
-  
-  const styleString = styles.join('; ');
-  
-  if (debugMode) {
-    console.log(`🎨 Generated styles:`, styleString);
-  }
-  
-  return styleString;
+  return styles.join('; ');
 }
 
 // Add missing method
@@ -1107,9 +1081,10 @@ getConfigValue(item, property) {
 
 extractImageConfig(item) {
   return {
-    alignment: this.getConfigValue(item, 'alignment'),
-    fitting: this.getConfigValue(item, 'fitting'),
-    scaling: this.getConfigValue(item, 'scaling')
+    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 
+               item.allignment || item.Allignment || item.ALLIGNMENT || '',
+    fitting: item.fitting || item.Fitting || item.FITTING || '',
+    scaling: item.scaling || item.Scaling || item.SCALING || ''
   };
 }
 
@@ -2043,15 +2018,6 @@ function initializeApp() {
   });
   
   window.catalogApp = app;
-
-// Auto-run debug if URL parameter present
-if (new URLSearchParams(window.location.search).has('debug')) {
-  setTimeout(() => {
-    if (app.data) {
-      app.debugCompleteImageSystem();
-    }
-  }, 1000);
-}
   
   // Monitor URL changes for brand switching
   window.addEventListener('popstate', () => {
