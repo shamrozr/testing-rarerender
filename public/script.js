@@ -819,7 +819,7 @@ class CSVCatalogApp {
   let imageContent;
   if (imageSrc) {
     if (hasCustomImageConfig) {
-      // Apply custom image rendering
+      // Apply custom image rendering ONLY when configuration is provided
       const imageConfig = this.extractImageConfig(item);
       const imageStyles = this.generateImageStyles(imageConfig);
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
@@ -827,7 +827,7 @@ class CSVCatalogApp {
                            class="card-image-enhanced"
                            onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
     } else {
-      // Use original implementation
+      // Use original implementation when no custom config
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
     }
   } else {
