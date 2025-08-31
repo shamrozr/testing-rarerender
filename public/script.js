@@ -972,6 +972,7 @@ getObjectPosition(alignment) {
   return positionMap[normalized] || 'center center';
 }
 
+
 /**
  * Generate CSS transform for scaling
  */
@@ -1007,6 +1008,81 @@ getScaleTransform(scaling) {
   }
   
   return null;
+}
+  // 4. ADD this new debug method to test if config is being read:
+debugImageConfig() {
+  console.log('🔍 Debugging image configuration...');
+  
+  // Check data.json
+  fetch('/data.json?v=' + Date.now())
+    .then(r => r.json())
+    .then(data => {
+      console.log('📊 Data loaded, searching for image configs...');
+      
+      let foundConfigs = [];
+      
+      function searchConfigs(node, path = []) {
+        for (const [key, item] of Object.entries(node)) {
+          const currentPath = [...path, key].join('/');
+          
+          // Check all possible spelling variations
+          const hasAlignment = item.alignment || item.Alignment || item.ALIGNMENT || 
+                              item.allignment || item.Allignment || item.ALLIGNMENT;
+          const hasFitting = item.fitting || item.Fitting || item.FITTING;
+          const hasScaling = item.scaling || item.Scaling || item.SCALING;
+          
+          if (hasAlignment || hasFitting || hasScaling) {
+            foundConfigs.push({
+              path: currentPath,
+              alignment: hasAlignment || 'none',
+              fitting: hasFitting || 'none', 
+              scaling: hasScaling || 'none',
+              isProduct: item.isProduct || false
+            });
+          }
+          
+          if (item.children && !item.isProduct) {
+            searchConfigs(item.children, [...path, key]);
+          }
+        }
+      }
+      
+      searchConfigs(data.catalog.tree);
+      
+      console.log(`✅ Found ${foundConfigs.length} items with image config:`);
+      foundConfigs.forEach((config, index) => {
+        if (index < 10) { // Show first 10
+          console.log(`${index + 1}. ${config.path}`);
+          console.log(`   Alignment: ${config.alignment}`);
+          console.log(`   Fitting: ${config.fitting}`);
+          console.log(`   Scaling: ${config.scaling}`);
+          console.log(`   Is Product: ${config.isProduct}`);
+        }
+      });
+      
+      if (foundConfigs.length === 0) {
+        console.log('❌ No image configs found! Check:');
+        console.log('1. CSV column names: Alignment, Fitting, Scaling');
+        console.log('2. CSV has data in those columns');
+        console.log('3. Build ran successfully: node tools/build-data.mjs');
+      }
+      
+      // Test current page images
+      const images = document.querySelectorAll('.card-image img');
+      console.log(`\n🖼️ Found ${images.length} images on current page`);
+      
+      images.forEach((img, index) => {
+        if (index < 5) { // Check first 5
+          const hasEnhancedClass = img.classList.contains('card-image-enhanced');
+          const hasCustomStyles = img.style.objectFit || img.style.objectPosition || img.style.transform;
+          console.log(`Image ${index + 1}:`);
+          console.log(`  Enhanced class: ${hasEnhancedClass}`);
+          console.log(`  Custom styles: ${hasCustomStyles}`);
+          console.log(`  Current styles: ${img.getAttribute('style') || 'none'}`);
+        }
+      });
+    })
+    .catch(err => console.error('❌ Error loading data:', err));
 }
   getEmojiForCategory(category) {
     const emojiMap = {
