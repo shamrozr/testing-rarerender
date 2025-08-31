@@ -416,7 +416,6 @@ class CSVCatalogApp {
       };
     }
   });
-
     if (items.length === 0) {
       container.innerHTML = `
         <section class="content-section">
