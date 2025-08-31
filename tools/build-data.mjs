@@ -278,17 +278,31 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     if (isLeafProduct) {
       const parentSegs = segs.slice(0, -1);
       const children = ensureFolderNode(tree, parentSegs);
-      children[name] = { 
+      
+      // ENHANCED: Create product with complete image rendering config
+      const productData = { 
         isProduct: true, 
         driveLink, 
         thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
         section: section,
-        category: category,
-        // NEW: Add image rendering config
-        alignment: imageAlignment,
-        fitting: imageFitting,
-        scaling: imageScaling
+        category: category
       };
+      
+      // CRITICAL: Add image rendering config with detailed logging
+      if (imageAlignment) {
+        productData.alignment = imageAlignment;
+        console.log(`🎨 Product ${name}: alignment = "${imageAlignment}"`);
+      }
+      if (imageFitting) {
+        productData.fitting = imageFitting;
+        console.log(`🎨 Product ${name}: fitting = "${imageFitting}"`);
+      }
+      if (imageScaling) {
+        productData.scaling = imageScaling;
+        console.log(`🎨 Product ${name}: scaling = "${imageScaling}"`);
+      }
+      
+      children[name] = productData;
       totalProducts++;
     } else {
       ensureFolderNode(tree, segs);
@@ -298,10 +312,20 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       if (driveLink) existing.driveLink = driveLink;
       if (section) existing.section = section;
       if (category) existing.category = category;
-      // NEW: Add image rendering config for folders too
-      if (imageAlignment) existing.alignment = imageAlignment;
-      if (imageFitting) existing.fitting = imageFitting;
-      if (imageScaling) existing.scaling = imageScaling;
+      
+      // ENHANCED: Add image rendering config for folders
+      if (imageAlignment) {
+        existing.alignment = imageAlignment;
+        console.log(`🎨 Folder ${k}: alignment = "${imageAlignment}"`);
+      }
+      if (imageFitting) {
+        existing.fitting = imageFitting;
+        console.log(`🎨 Folder ${k}: fitting = "${imageFitting}"`);
+      }
+      if (imageScaling) {
+        existing.scaling = imageScaling;
+        console.log(`🎨 Folder ${k}: scaling = "${imageScaling}"`);
+      }
       
       // Handle topOrder for categories (first level items)
       if (segs.length === 1) {
@@ -310,7 +334,6 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       }
       folderMeta.set(k, existing);
     }
-  }
 
   console.log(`📦 Created section-aware catalog with ${totalProducts} products and image rendering support`);
   console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
