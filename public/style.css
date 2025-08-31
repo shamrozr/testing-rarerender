@@ -570,11 +570,12 @@ body[data-page-type="category"] .section-header {
   overflow: hidden;
 }
 
+/* Fix 3: Ensure ALL images in cards have proper sizing */
 .card-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform var(--transition-smooth);
+  display: block;
+  object-fit: cover; /* Default for all images */
 }
 
 .content-card:hover .card-image img {
@@ -667,39 +668,54 @@ body[data-page-type="category"] .section-header {
 /* Enhanced Image Rendering CSS - ADD to style.css */
 /* ================================================= */
 
-/* Enhanced Card Image Container */
+/* Fix 4: Fix container for enhanced images */
 .card-image-container {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  /* Ensure definite dimensions */
+  width: 100%;
+  height: 200px;
 }
 
 /* Enhanced Card Image with Advanced Rendering */
 .card-image-enhanced {
   width: 100% !important;
   height: 100% !important;
-  display: block;
+  object-fit: cover; /* Default fallback */
+  display: block !important;
+  
+  /* Ensure the image fills the container */
+  min-width: 100%;
+  min-height: 100%;
+  max-width: none;
+  max-height: none;
+  
+  /* Smooth transitions */
   transition: all var(--transition-smooth);
-  
-  /* Ensure image quality */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: optimizeQuality;
-  
-  /* Prevent image dragging */
-  -webkit-user-drag: none;
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
-  
-  /* Smooth scaling and positioning */
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform-style: preserve-3d;
+}
+/* Fix 6: Debug styling to see what's happening */
+.debug-image-config {
+  border: 3px solid red !important;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.5) !important;
 }
 
-/* Hover effects for enhanced images */
+.debug-image-config::after {
+  content: "Image Config Applied";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: red;
+  color: white;
+  padding: 2px 5px;
+  font-size: 10px;
+  z-index: 10;
+}
+
+/* Fix 5: Hover effects should work with transforms */
 .content-card:hover .card-image-enhanced {
-  transform: scale(1.05) var(--card-image-transform, scale(1));
+  /* Combine hover scale with existing transform */
+  transform: scale(1.05) var(--image-custom-transform, scale(1));
 }
 
 /* Ensure transformed images don't overflow */
