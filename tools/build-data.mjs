@@ -246,9 +246,11 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     const category = (r["Category"] || r["category"] || "").trim();
 
     // NEW: Image rendering configuration
-    const imageAlignment = (r["Alignment"] || r["alignment"] || "").trim();
-    const imageFitting = (r["Fitting"] || r["fitting"] || "").trim();
-    const imageScaling = (r["Scaling"] || r["scaling"] || "").trim();
+    // Enhanced: Image rendering configuration with more variations
+const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || 
+                       r["Allignment"] || r["allignment"] || r["ALLIGNMENT"] || "").trim();
+const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim(); 
+const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
 
     if (!rel || !name) continue;
     
