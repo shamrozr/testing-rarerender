@@ -245,11 +245,10 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     const section = (r["Section"] || r["section"] || "").trim() || "Featured";
     const category = (r["Category"] || r["category"] || "").trim();
 
-    // FIXED: Image rendering configuration with proper variable names
-    const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || 
-                           r["Allignment"] || r["allignment"] || r["ALLIGNMENT"] || "").trim();
-    const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim(); 
-    const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
+    // NEW: Image rendering configuration
+    const imageAlignment = (r["Alignment"] || r["alignment"] || "").trim();
+    const imageFitting = (r["Fitting"] || r["fitting"] || "").trim();
+    const imageScaling = (r["Scaling"] || r["scaling"] || "").trim();
 
     if (!rel || !name) continue;
     
@@ -279,31 +278,17 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     if (isLeafProduct) {
       const parentSegs = segs.slice(0, -1);
       const children = ensureFolderNode(tree, parentSegs);
-      
-      // ENHANCED: Create product with complete image rendering config
-      const productData = { 
+      children[name] = { 
         isProduct: true, 
         driveLink, 
         thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
         section: section,
-        category: category
+        category: category,
+        // NEW: Add image rendering config
+        alignment: imageAlignment,
+        fitting: imageFitting,
+        scaling: imageScaling
       };
-      
-      // FIXED: Add image rendering config with detailed logging
-      if (imageAlignment) {
-        productData.alignment = imageAlignment;
-        console.log(`🎨 Product ${name}: alignment = "${imageAlignment}"`);
-      }
-      if (imageFitting) {
-        productData.fitting = imageFitting;
-        console.log(`🎨 Product ${name}: fitting = "${imageFitting}"`);
-      }
-      if (imageScaling) {
-        productData.scaling = imageScaling;
-        console.log(`🎨 Product ${name}: scaling = "${imageScaling}"`);
-      }
-      
-      children[name] = productData;
       totalProducts++;
     } else {
       ensureFolderNode(tree, segs);
@@ -313,20 +298,10 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       if (driveLink) existing.driveLink = driveLink;
       if (section) existing.section = section;
       if (category) existing.category = category;
-      
-      // ENHANCED: Add image rendering config for folders
-      if (imageAlignment) {
-        existing.alignment = imageAlignment;
-        console.log(`🎨 Folder ${k}: alignment = "${imageAlignment}"`);
-      }
-      if (imageFitting) {
-        existing.fitting = imageFitting;
-        console.log(`🎨 Folder ${k}: fitting = "${imageFitting}"`);
-      }
-      if (imageScaling) {
-        existing.scaling = imageScaling;
-        console.log(`🎨 Folder ${k}: scaling = "${imageScaling}"`);
-      }
+      // NEW: Add image rendering config for folders too
+      if (imageAlignment) existing.alignment = imageAlignment;
+      if (imageFitting) existing.fitting = imageFitting;
+      if (imageScaling) existing.scaling = imageScaling;
       
       // Handle topOrder for categories (first level items)
       if (segs.length === 1) {
@@ -337,7 +312,6 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     }
   }
 
-  // FIXED: Moved these console.log statements to proper location
   console.log(`📦 Created section-aware catalog with ${totalProducts} products and image rendering support`);
   console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
 
@@ -354,7 +328,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         if (meta?.section) n.section = meta.section;
         if (meta?.category) n.category = meta.category;
         if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
-        // FIXED: Attach image rendering config
+        // NEW: Attach image rendering config
         if (meta?.alignment) n.alignment = meta.alignment;
         if (meta?.fitting) n.fitting = meta.fitting;
         if (meta?.scaling) n.scaling = meta.scaling;
@@ -622,7 +596,6 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
-
 })().catch(err => {
   console.error("💥 Enhanced build failed:", err);
   process.exit(1);
