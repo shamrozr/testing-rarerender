@@ -1299,7 +1299,85 @@ class CSVCatalogApp {
 // COMPLETE REPLACEMENT - Replace entire setupFABFunctionality() method with this WORKING version:
 
 // SUPER FAST REPLACEMENT - Replace entire setupFABFunctionality() method:
-
+// Debug method to verify image configuration
+  debugImageConfig() {
+    console.log('🔍 DEBUGGING IMAGE CONFIGURATION...');
+    console.log('=====================================');
+    
+    if (!this.data || !this.data.catalog || !this.data.catalog.tree) {
+      console.log('❌ No catalog data found');
+      return;
+    }
+    
+    let foundConfigs = [];
+    
+    function searchConfigs(node, path = []) {
+      for (const [key, item] of Object.entries(node)) {
+        const currentPath = [...path, key].join('/');
+        
+        // Check all possible spelling variations
+        const hasAlignment = item.alignment || item.Alignment || item.ALIGNMENT || 
+                            item.allignment || item.Allignment || item.ALLIGNMENT;
+        const hasFitting = item.fitting || item.Fitting || item.FITTING;
+        const hasScaling = item.scaling || item.Scaling || item.SCALING;
+        
+        if (hasAlignment || hasFitting || hasScaling) {
+          foundConfigs.push({
+            path: currentPath,
+            alignment: hasAlignment || 'none',
+            fitting: hasFitting || 'none', 
+            scaling: hasScaling || 'none',
+            isProduct: item.isProduct || false,
+            thumbnail: item.thumbnail || 'none'
+          });
+        }
+        
+        if (item.children && !item.isProduct) {
+          searchConfigs(item.children, [...path, key]);
+        }
+      }
+    }
+    
+    searchConfigs(this.data.catalog.tree);
+    
+    console.log(`✅ Found ${foundConfigs.length} items with image config:`);
+    foundConfigs.forEach((config, index) => {
+      if (index < 10) { // Show first 10
+        console.log(`${index + 1}. ${config.path}`);
+        console.log(`   Alignment: ${config.alignment}`);
+        console.log(`   Fitting: ${config.fitting}`);
+        console.log(`   Scaling: ${config.scaling}`);
+        console.log(`   Is Product: ${config.isProduct}`);
+        console.log(`   Thumbnail: ${config.thumbnail}`);
+        console.log('---');
+      }
+    });
+    
+    if (foundConfigs.length === 0) {
+      console.log('❌ No image configs found! Check:');
+      console.log('1. CSV column names: Alignment, Fitting, Scaling');
+      console.log('2. CSV has data in those columns');
+      console.log('3. Build ran successfully: node tools/build-data.mjs');
+    }
+    
+    // Test current page images
+    const images = document.querySelectorAll('.card-image img');
+    console.log(`\n🖼️ Found ${images.length} images on current page`);
+    
+    images.forEach((img, index) => {
+      if (index < 5) { // Check first 5
+        const hasEnhancedClass = img.classList.contains('card-image-enhanced');
+        const hasCustomStyles = img.style.objectFit || img.style.objectPosition || img.style.transform;
+        const hasConfigAttr = img.dataset.hasConfig === 'true';
+        console.log(`Image ${index + 1}:`);
+        console.log(`  Enhanced class: ${hasEnhancedClass}`);
+        console.log(`  Config attribute: ${hasConfigAttr}`);
+        console.log(`  Custom styles: ${!!hasCustomStyles}`);
+        console.log(`  Current styles: ${img.getAttribute('style') || 'none'}`);
+        console.log('---');
+      }
+    });
+  }
 setupFABFunctionality() {
   const threeDotToggle = document.getElementById('threeDotToggle');
   const threeDotMenu = document.getElementById('threeDotMenu');
