@@ -249,6 +249,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     const imageAlignment = (r["Alignment"] || r["alignment"] || "").trim();
     const imageFitting = (r["Fitting"] || r["fitting"] || "").trim();
     const imageScaling = (r["Scaling"] || r["scaling"] || "").trim();
+    const imageCustom = (r["Custom"] || r["custom"] || "").trim();
 
     if (!rel || !name) continue;
     
@@ -287,7 +288,8 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         // NEW: Add image rendering config
         alignment: imageAlignment,
         fitting: imageFitting,
-        scaling: imageScaling
+        scaling: imageScaling,
+        custom: imageCustom
       };
       totalProducts++;
     } else {
@@ -302,7 +304,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       if (imageAlignment) existing.alignment = imageAlignment;
       if (imageFitting) existing.fitting = imageFitting;
       if (imageScaling) existing.scaling = imageScaling;
-      
+      if (imageCustom) existing.custom = imageCustom;
       // Handle topOrder for categories (first level items)
       if (segs.length === 1) {
         const n = parseInt(topOrderRaw, 10);
@@ -332,6 +334,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         if (meta?.alignment) n.alignment = meta.alignment;
         if (meta?.fitting) n.fitting = meta.fitting;
         if (meta?.scaling) n.scaling = meta.scaling;
+        if (meta?.custom) n.custom = meta.custom;
         if (n.children) attachFolderMeta(n.children, [...prefix, k]);
       }
     }
@@ -389,7 +392,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
       imageRenderingStats.total++;
       
       // Check if item has image rendering config
-      if (n.alignment || n.fitting || n.scaling) {
+      if (n.alignment || n.fitting || n.scaling || n.custom) {
         imageRenderingStats.withConfig++;
       }
       
@@ -400,7 +403,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
             path: [...pfx, k].join("/"), 
             thumbnail: n.thumbnail,
             section: n.section || 'Unknown',
-            hasImageConfig: !!(n.alignment || n.fitting || n.scaling)
+            hasImageConfig: !!(n.alignment || n.fitting || n.scaling || n.custom)
           });
         }
       }
@@ -448,7 +451,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         items: tree[cat].count || 0,
         section: tree[cat].section || 'Featured',
         topOrder: tree[cat].topOrder || 999,
-        hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling)
+        hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling || tree[cat].custom)
       }))
     }
   };
