@@ -859,6 +859,8 @@ class CSVCatalogApp {
     </div>
   `;
 }
+// REPLACE the extractImageConfig function in public/script.js with this enhanced version:
+
 extractImageConfig(item) {
   // Debug log to see what data we have
   console.log('Item data for image config:', item);
@@ -871,39 +873,130 @@ extractImageConfig(item) {
              item.image_fit || item.imageFit || item['Image Fit'] || 'cover',
     scaling: item.scaling || item.Scaling || item.SCALING || 
              item.image_scale || item.imageScale || item['Image Scale'] || 
-             item.scale || item.Scale || null
+             item.scale || item.Scale || null,
+    // NEW: Custom positioning for pixel-perfect control
+    custom: item.custom || item.Custom || item.CUSTOM || 
+            item.customPosition || item.custom_position || item['Custom Position'] || null
   };
 }
 
-/**
- * Generate CSS styles for image based on configuration
- */
+// REPLACE the generateImageStyles function in public/script.js with this enhanced version:
+
 generateImageStyles(config) {
   const styles = [];
   
-  // 1. Object-fit handling (how image fits in container)
+  // NEW: Check if custom positioning is requested
+  if (config.custom) {
+    return this.generateCustomImageStyles(config);
+  }
+  
+  // Existing logic for standard positioning
   const fitMethod = this.normalizeFitMethod(config.fitting);
   styles.push(`object-fit: ${fitMethod}`);
   
-  // 2. Object-position handling (alignment/focal point)
   const objectPosition = this.getObjectPosition(config.alignment);
   styles.push(`object-position: ${objectPosition}`);
   
-  // 3. Scaling handling (resize image)
   const scaleTransform = this.getScaleTransform(config.scaling);
   if (scaleTransform) {
     styles.push(`transform: ${scaleTransform}`);
     styles.push(`transform-origin: center`);
   }
   
-  // 4. Base styles for smooth rendering
+  // Base styles for smooth rendering with PURE WHITE background
   styles.push(`width: 100%`);
   styles.push(`height: 100%`);
+  styles.push(`background: #ffffff`); // FIXED: Pure white background
   styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
   
   return styles.join('; ');
 }
 
+// ADD this NEW function to public/script.js (after generateImageStyles):
+
+generateCustomImageStyles(config) {
+  const styles = [];
+  
+  // Custom positioning uses 'none' object-fit for pixel-perfect control
+  styles.push(`object-fit: none`);
+  
+  // Parse custom position (e.g., "50px 30px", "-20px 0px", "center top")
+  const customPos = this.parseCustomPosition(config.custom, config.alignment);
+  styles.push(`object-position: ${customPos}`);
+  
+  // Apply scaling if specified
+  const scaleTransform = this.getScaleTransform(config.scaling);
+  if (scaleTransform) {
+    styles.push(`transform: ${scaleTransform}`);
+    styles.push(`transform-origin: center`);
+  }
+  
+  // Base styles with pure white background
+  styles.push(`width: 100%`);
+  styles.push(`height: 100%`);
+  styles.push(`background: #ffffff`); // Pure white background
+  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
+  
+  return styles.join('; ');
+}
+
+// ADD this NEW function to public/script.js (after generateCustomImageStyles):
+
+parseCustomPosition(customValue, fallbackAlignment = 'center') {
+  if (!customValue) {
+    return this.getObjectPosition(fallbackAlignment);
+  }
+  
+  const custom = String(customValue).trim().toLowerCase();
+  
+  // Handle pixel values (e.g., "50px 30px", "-20px 0px")
+  const pixelMatch = custom.match(/^(-?\d+px)\s+(-?\d+px)$/);
+  if (pixelMatch) {
+    return `${pixelMatch[1]} ${pixelMatch[2]}`;
+  }
+  
+  // Handle single pixel value (applies to both x and y)
+  const singlePixelMatch = custom.match(/^(-?\d+px)$/);
+  if (singlePixelMatch) {
+    return `${singlePixelMatch[1]} ${singlePixelMatch[1]}`;
+  }
+  
+  // Handle percentage values (e.g., "30% 70%")
+  const percentMatch = custom.match(/^(-?\d+%)\s+(-?\d+%)$/);
+  if (percentMatch) {
+    return `${percentMatch[1]} ${percentMatch[2]}`;
+  }
+  
+  // Handle mixed values (e.g., "50px 30%", "center 20px")
+  const mixedMatch = custom.match(/^(\S+)\s+(\S+)$/);
+  if (mixedMatch) {
+    return `${mixedMatch[1]} ${mixedMatch[2]}`;
+  }
+  
+  // Handle preset positions with custom syntax
+  const presetMap = {
+    'top-left': 'left top',
+    'top-center': 'center top', 
+    'top-right': 'right top',
+    'center-left': 'left center',
+    'center-center': 'center center',
+    'center-right': 'right center', 
+    'bottom-left': 'left bottom',
+    'bottom-center': 'center bottom',
+    'bottom-right': 'right bottom',
+    'crop-top': 'center 0%',
+    'crop-bottom': 'center 100%',
+    'crop-left': '0% center',
+    'crop-right': '100% center'
+  };
+  
+  if (presetMap[custom]) {
+    return presetMap[custom];
+  }
+  
+  // Fallback to standard alignment
+  return this.getObjectPosition(fallbackAlignment);
+}
 /**
  * Normalize fit method values
  */
