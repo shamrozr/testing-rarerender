@@ -274,121 +274,97 @@ class CSVCatalogApp {
     this.addBreadcrumbNavigation(breadcrumbs);
   }
 
-  addBreadcrumbNavigation(breadcrumbs) {
-    const hero = document.querySelector('.hero .hero-content');
-    if (!hero) return;
+  // REPLACE the addBreadcrumbNavigation function in public/script.js:
 
-    // Remove existing breadcrumbs
-    const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
-    if (existingBreadcrumbs) {
-      existingBreadcrumbs.remove();
-    }
+addBreadcrumbNavigation(breadcrumbs) {
+  const hero = document.querySelector('.hero .hero-content');
+  if (!hero) return;
 
-    // Create breadcrumb navigation
-    const breadcrumbNav = document.createElement('nav');
-    breadcrumbNav.className = 'breadcrumb-nav';
-    breadcrumbNav.style.cssText = `
-      margin-bottom: var(--space-6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-      font-size: 0.9rem;
-      color: var(--color-text-secondary);
-      padding: var(--space-3) var(--space-6);
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: var(--radius-full);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--color-border);
-      box-shadow: var(--shadow-sm);
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      margin-bottom: var(--space-8);
-    `;
-
-    // Home link
-    const homeLink = document.createElement('a');
-    homeLink.href = '#';
-    homeLink.textContent = 'Home';
-    homeLink.style.cssText = `
-      color: var(--color-primary);
-      text-decoration: none;
-      font-weight: 500;
-      padding: var(--space-1) var(--space-2);
-      border-radius: var(--radius-sm);
-      transition: all var(--transition-base);
-    `;
-    homeLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      this.navigateToHome();
-    });
-
-    breadcrumbNav.appendChild(homeLink);
-
-    // Add breadcrumb items
-    breadcrumbs.forEach((crumb, index) => {
-      // Add separator
-      const separator = document.createElement('span');
-      separator.textContent = ' / ';
-      separator.style.color = 'var(--color-text-muted)';
-      breadcrumbNav.appendChild(separator);
-
-      if (index === breadcrumbs.length - 1) {
-        // Current page - no link
-        const current = document.createElement('span');
-        current.textContent = crumb.name;
-        current.style.cssText = `
-          font-weight: 600;
-          color: var(--color-text-primary);
-          padding: var(--space-1) var(--space-2);
-          background: rgba(99, 102, 241, 0.1);
-          border-radius: var(--radius-sm);
-        `;
-        breadcrumbNav.appendChild(current);
-      } else {
-        // Clickable breadcrumb
-        const link = document.createElement('a');
-        link.href = '#';
-        link.textContent = crumb.name;
-        link.style.cssText = `
-          color: var(--color-primary);
-          text-decoration: none;
-          font-weight: 500;
-          padding: var(--space-1) var(--space-2);
-          border-radius: var(--radius-sm);
-          transition: all var(--transition-base);
-        `;
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          
-          // Split the path and navigate properly
-          const pathSegments = crumb.path.split('/').filter(Boolean);
-          this.currentPath = pathSegments;
-          
-          // Update URL
-          const params = new URLSearchParams(window.location.search);
-          params.set('path', crumb.path);
-          if (this.currentBrand) {
-            params.set('brand', this.currentBrand);
-          }
-          
-          const newURL = `${window.location.pathname}?${params.toString()}`;
-          window.history.pushState({ 
-            path: pathSegments, 
-            brand: this.currentBrand 
-          }, '', newURL);
-          
-          // Show the category view
-          this.showCategoryView();
-        });
-        breadcrumbNav.appendChild(link);
-      }
-    });
-
-    hero.insertBefore(breadcrumbNav, hero.firstChild);
+  // Remove existing breadcrumbs
+  const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
+  if (existingBreadcrumbs) {
+    existingBreadcrumbs.remove();
   }
+
+  // Create breadcrumb navigation
+  const breadcrumbNav = document.createElement('nav');
+  breadcrumbNav.className = 'breadcrumb-nav';
+
+  // Home link
+  const homeLink = document.createElement('a');
+  homeLink.href = '#';
+  homeLink.textContent = 'Home';
+  homeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    this.navigateToHome();
+  });
+
+  breadcrumbNav.appendChild(homeLink);
+
+  // Add breadcrumb items
+  breadcrumbs.forEach((crumb, index) => {
+    // Add separator
+    const separator = document.createElement('span');
+    separator.textContent = ' / ';
+    separator.style.color = 'var(--color-text-muted)';
+    breadcrumbNav.appendChild(separator);
+
+    if (index === breadcrumbs.length - 1) {
+      // Current page - no link
+      const current = document.createElement('span');
+      current.textContent = crumb.name;
+      current.style.cssText = `
+        font-weight: 600;
+        color: var(--color-text-primary);
+        padding: var(--space-1) var(--space-2);
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: var(--radius-sm);
+      `;
+      breadcrumbNav.appendChild(current);
+    } else {
+      // Clickable breadcrumb
+      const link = document.createElement('a');
+      link.href = '#';
+      link.textContent = crumb.name;
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        const pathSegments = crumb.path.split('/').filter(Boolean);
+        this.currentPath = pathSegments;
+        
+        const params = new URLSearchParams(window.location.search);
+        params.set('path', crumb.path);
+        if (this.currentBrand) {
+          params.set('brand', this.currentBrand);
+        }
+        
+        const newURL = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({ 
+          path: pathSegments, 
+          brand: this.currentBrand 
+        }, '', newURL);
+        
+        this.showCategoryView();
+      });
+      breadcrumbNav.appendChild(link);
+    }
+  });
+
+  // FIXED: Insert breadcrumbs AFTER hero title and subtitle
+  const heroTitle = hero.querySelector('.hero-title');
+  const heroSubtitle = hero.querySelector('.hero-subtitle');
+  
+  if (heroSubtitle) {
+    // Insert after subtitle
+    heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
+  } else if (heroTitle) {
+    // Insert after title if no subtitle
+    heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
+  } else {
+    // Fallback: append to hero content
+    hero.appendChild(breadcrumbNav);
+  }
+}
 
   renderCategoryContents(currentNode, breadcrumbs) {
     const container = document.getElementById('dynamicSections');
@@ -840,23 +816,51 @@ class CSVCatalogApp {
     // remainder === 0 means perfect grid (6,9,12... items) - do nothing
   }
 
-  createCardHTML(item) {
+  // REPLACE the createCardHTML function in public/script.js:
+
+createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
-  // Smart image config extraction (alignment can now handle custom positioning)
+  // Extract image config
   const imageConfig = this.extractImageConfig(item);
-  
   console.log('🔍 Image config for', item.title, ':', imageConfig);
   
-  const imageStyles = this.generateImageStyles(imageConfig);
+  let imageContent = '';
   
-  // Rest of the function stays the same...
-  const imageContent = imageSrc ? 
-    `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
-         style="${imageStyles}" 
-         class="card-image-enhanced"
-         onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">` : 
-    this.getEmojiForCategory(item.key);
+  if (imageSrc) {
+    // Check if using background-image method
+    const isBackgroundMethod = this.isBackgroundImageMethod(imageConfig.fitting);
+    
+    if (isBackgroundMethod) {
+      console.log('🖼️ Using background-image method for', item.title);
+      
+      // Generate background-image styles
+      const backgroundStyles = this.generateBackgroundImageStyles(imageSrc, imageConfig);
+      
+      // Create div with background-image instead of img tag
+      imageContent = `<div class="card-image-background" style="${backgroundStyles}" data-method="background"></div>`;
+      
+    } else {
+      console.log('📐 Using standard img tag method for', item.title);
+      
+      // Generate standard img styles
+      const imageStyles = this.generateImageStyles(imageConfig);
+      
+      if (imageStyles === 'BACKGROUND_METHOD') {
+        // Fallback: shouldn't happen but just in case
+        imageContent = this.getEmojiForCategory(item.key);
+      } else {
+        imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
+             style="${imageStyles}" 
+             class="card-image-enhanced"
+             data-method="img-tag"
+             onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
+      }
+    }
+  } else {
+    // No image - show emoji placeholder
+    imageContent = this.getEmojiForCategory(item.key);
+  }
 
   const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
 
@@ -895,57 +899,189 @@ extractImageConfig(item) {
     // NOTE: Removed custom - now handled in smart alignment
   };
 }
-
+getBackgroundPosition(alignment) {
+  // Handle custom pixel positioning first
+  if (this.isCustomAlignmentValue(alignment)) {
+    return this.parseSmartAlignment(alignment);
+  }
+  
+  // COMPLETE position mapping
+  const positionMap = {
+    // Basic positions
+    'center': 'center center',
+    'top': 'center top',
+    'bottom': 'center bottom',
+    'left': 'left center', 
+    'right': 'right center',
+    
+    // Corner positions - all variations
+    'top-left': 'left top', 'top_left': 'left top', 'topleft': 'left top',
+    'top-right': 'right top', 'top_right': 'right top', 'topright': 'right top',
+    'bottom-left': 'left bottom', 'bottom_left': 'left bottom', 'bottomleft': 'left bottom',
+    'bottom-right': 'right bottom', 'bottom_right': 'right bottom', 'bottomright': 'right bottom',
+    
+    // Edge centers - the missing ones you asked about
+    'center-top': 'center top', 'center_top': 'center top', 'centertop': 'center top',
+    'top-center': 'center top', 'top_center': 'center top', 'topcenter': 'center top',
+    'center-bottom': 'center bottom', 'center_bottom': 'center bottom', 'centerbottom': 'center bottom',
+    'bottom-center': 'center bottom', 'bottom_center': 'center bottom', 'bottomcenter': 'center bottom',
+    'left-center': 'left center', 'left_center': 'left center', 'leftcenter': 'left center', 
+    'center-left': 'left center', 'center_left': 'left center', 'centerleft': 'left center',
+    'right-center': 'right center', 'right_center': 'right center', 'rightcenter': 'right center',
+    'center-right': 'right center', 'center_right': 'right center', 'centerright': 'right center',
+    
+    // Space-separated alternatives
+    'center center': 'center center', 'center top': 'center top', 'center bottom': 'center bottom',
+    'left center': 'left center', 'right center': 'right center', 'left top': 'left top',
+    'right top': 'right top', 'left bottom': 'left bottom', 'right bottom': 'right bottom'
+  };
+  
+  if (!alignment) return 'center center';
+  
+  const normalized = String(alignment).toLowerCase().replace(/[_-]/g, '-');
+  const result = positionMap[normalized] || 'center center';
+  
+  console.log(`🎯 Alignment '${alignment}' → background-position: '${result}'`);
+  return result;
+}
 // 2. REPLACE the generateImageStyles function in public/script.js:
 generateImageStyles(config) {
   console.log('🎯 Generating styles with config:', config);
   
   const styles = [];
   
-  // SMART ALIGNMENT: Detect if alignment contains pixel/custom values
-  const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
+  // Check if user wants background-image method
+  const isBackgroundMethod = this.isBackgroundImageMethod(config.fitting);
   
-  if (isCustomAlignment) {
-    console.log('🔧 Using CUSTOM positioning from alignment:', config.alignment);
-    
-    // Custom positioning: use object-fit: none for pixel-perfect control
-    styles.push(`object-fit: none`);
-    
-    // Parse and apply custom position from alignment value
-    const customPos = this.parseSmartAlignment(config.alignment);
-    styles.push(`object-position: ${customPos}`);
-    
-    console.log('✨ Applied smart custom position:', customPos);
+  if (isBackgroundMethod) {
+    console.log('🖼️ Using background-image method');
+    return 'BACKGROUND_METHOD'; // Special flag for createCardHTML
   } else {
-    console.log('📐 Using STANDARD positioning');
+    console.log('📐 Using standard img tag method');
     
-    // Standard positioning: use alignment + fitting
+    // Standard img tag method - NEVER use object-fit: none
     const fitMethod = this.normalizeFitMethod(config.fitting);
     styles.push(`object-fit: ${fitMethod}`);
     
-    const objectPosition = this.getObjectPosition(config.alignment);
-    styles.push(`object-position: ${objectPosition}`);
+    // Handle alignment (both standard and custom positioning)
+    const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
+    if (isCustomAlignment) {
+      const customPos = this.parseSmartAlignment(config.alignment);
+      styles.push(`object-position: ${customPos}`);
+    } else {
+      const objectPosition = this.getObjectPosition(config.alignment);
+      styles.push(`object-position: ${objectPosition}`);
+    }
+    
+    // Scaling (if provided)
+    const scaleTransform = this.getScaleTransform(config.scaling);
+    if (scaleTransform) {
+      styles.push(`transform: ${scaleTransform}`);
+      styles.push(`transform-origin: center`);
+    }
   }
   
-  // Scaling ALWAYS works (both standard and custom)
-  const scaleTransform = this.getScaleTransform(config.scaling);
-  if (scaleTransform) {
-    styles.push(`transform: ${scaleTransform}`);
-    styles.push(`transform-origin: center`);
-  }
-  
-  // Base styles with pure white background
+  // Base styles
   styles.push(`width: 100%`);
   styles.push(`height: 100%`);
   styles.push(`background: #ffffff`);
   styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
   
+  return styles.join('; ');
+}
+
+// ADD this new function AFTER generateImageStyles:
+isBackgroundImageMethod(fitting) {
+  if (!fitting) return false;
+  
+  const fittingStr = String(fitting).toLowerCase();
+  
+  // Triggers for background-image method
+  const backgroundTriggers = [
+    'natural',    // Most common
+    'background', // Explicit
+    'bg',        // Shorthand
+    'overflow',  // Descriptive
+    'window'     // Descriptive
+  ];
+  
+  return backgroundTriggers.some(trigger => fittingStr.includes(trigger));
+}
+
+// ADD this new function for complete background-image implementation:
+generateBackgroundImageStyles(imageSrc, config) {
+  console.log('🖼️ Generating COMPLETE background-image styles:', config);
+  
+  const styles = [];
+  
+  // Set the background image
+  styles.push(`background-image: url('${imageSrc}')`);
+  
+  // Support ALL fitting methods via background-size
+  const backgroundSize = this.getBackgroundSize(config.fitting);
+  styles.push(`background-size: ${backgroundSize}`);
+  console.log('📐 Applied background-size:', backgroundSize);
+  
+  // Support ALL positioning methods
+  const backgroundPosition = this.getBackgroundPosition(config.alignment);
+  styles.push(`background-position: ${backgroundPosition}`);
+  console.log('🎯 Applied background-position:', backgroundPosition);
+  
+  // Never repeat
+  styles.push(`background-repeat: no-repeat`);
+  
+  // Base container styles
+  styles.push(`width: 100%`);
+  styles.push(`height: 100%`);
+  styles.push(`background-color: #ffffff`);
+  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
+  
   const finalStyles = styles.join('; ');
-  console.log('🎨 Final styles:', finalStyles);
+  console.log('🎨 Complete background styles:', finalStyles);
   
   return finalStyles;
 }
 
+// ADD this function for fitting to background-size conversion:
+getBackgroundSize(fitting) {
+  const fittingMap = {
+    // Natural methods (no scaling)
+    'natural': 'auto',
+    'background': 'auto', 
+    'bg': 'auto',
+    'overflow': 'auto',
+    'window': 'auto',
+    
+    // Standard methods  
+    'cover': 'cover',
+    'contain': 'contain',
+    'fit': 'contain',
+    'fill': '100% 100%',
+    'scale-down': 'auto',
+    
+    // Direct values
+    'auto': 'auto',
+    '100%': '100% 100%'
+  };
+  
+  if (!fitting) return 'auto';
+  
+  const normalized = String(fitting).toLowerCase().replace(/[_-]/g, '-');
+  
+  // Check for direct matches first
+  if (fittingMap[normalized]) {
+    return fittingMap[normalized];
+  }
+  
+  // Check for partial matches (natural-cover, background-fill, etc.)
+  for (const [key, value] of Object.entries(fittingMap)) {
+    if (normalized.includes(key)) {
+      return value;
+    }
+  }
+  
+  return 'auto'; // Default fallback
+}
 isCustomAlignmentValue(alignment) {
   if (!alignment || alignment.trim() === '') {
     return false;
