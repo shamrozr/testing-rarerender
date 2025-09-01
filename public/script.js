@@ -70,7 +70,7 @@ class CSVCatalogApp {
       if (!this.data) {
         return;
       }
-      this.debugImageConfig();
+
       this.setupBrandInfo();
       
       // Check if we need to show category view or homepage
@@ -412,7 +412,7 @@ class CSVCatalogApp {
       // FIXED: Pass through CSV image configuration for categories
       alignment: item.alignment || item.Alignment || item.ALIGNMENT,
       fitting: item.fitting || item.Fitting || item.FITTING,
-      scaling: item.scaling || item.Scales || item.SCALING
+      scaling: item.scaling || item.Scaling || item.SCALING
     };
   }
 });
@@ -720,7 +720,6 @@ class CSVCatalogApp {
         alignment: item.alignment,
         fitting: item.fitting, 
         scaling: item.scaling,
-        custom: item.custom,
         fullItem: item
       });
       
@@ -735,7 +734,6 @@ class CSVCatalogApp {
         alignment: item.alignment || item.Alignment || item.ALIGNMENT,
         fitting: item.fitting || item.Fitting || item.FITTING,
         scaling: item.scaling || item.Scaling || item.SCALING,
-        custom: item.custom || item.Custom || item.CUSTOM // ← CRITICAL
       });
     });
 
@@ -873,39 +871,7 @@ class CSVCatalogApp {
     </div>
   `;
 }
-// REPLACE the extractImageConfig function in public/script.js with this enhanced version:
-debugImageConfig() {
-  console.log('🐛 DEBUGGING IMAGE CONFIG DATA FLOW');
-  
-  // Check what's in the loaded data
-  if (this.data && this.data.catalog && this.data.catalog.tree) {
-    console.log('📊 Raw catalog tree:', this.data.catalog.tree);
-    
-    // Look for items with custom positioning
-    const findCustomItems = (node, path = []) => {
-      for (const [key, item] of Object.entries(node)) {
-        const currentPath = [...path, key].join('/');
-        
-        if (item.custom || item.Custom || item.CUSTOM) {
-          console.log(`🎯 Found custom item at ${currentPath}:`, {
-            custom: item.custom,
-            Custom: item.Custom,
-            CUSTOM: item.CUSTOM,
-            fullItem: item
-          });
-        }
-        
-        if (item.children && !item.isProduct) {
-          findCustomItems(item.children, [...path, key]);
-        }
-      }
-    };
-    
-    findCustomItems(this.data.catalog.tree);
-  } else {
-    console.log('❌ No catalog data available');
-  }
-}
+
 extractImageConfig(item) {
   console.log('Item data for image config:', item);
   
@@ -988,8 +954,24 @@ isCustomAlignmentValue(alignment) {
   if (alignmentStr.match(/\d+%\s+\d+%/)) {
     return true;
   }
-// ADD this NEW function to public/script.js (after generateImageStyles):
-
+  
+  // Check for custom crop commands
+  if (alignmentStr.startsWith('crop-')) {
+    return true;
+  }
+  
+  // Check for negative values (indicating pixel positioning)
+  if (alignmentStr.includes('-') && alignmentStr.match(/-\d+/)) {
+    return true;
+  }
+  
+  // Check for mixed pixel/keyword values
+  if (alignmentStr.includes('px') && (alignmentStr.includes('center') || alignmentStr.includes('top') || alignmentStr.includes('bottom'))) {
+    return true;
+  }
+  
+  return false;
+}
 
 parseSmartAlignment(alignment) {
   if (!alignment) {
