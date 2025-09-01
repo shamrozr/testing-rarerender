@@ -307,6 +307,7 @@ body {
     var(--color-soft-gray) 100%);
   padding: var(--space-20) 0;
   text-align: center;
+  margin-top: 70px; /* Same height as header */
 }
 
 .hero-content {
@@ -408,28 +409,50 @@ body[data-page-type="category"] .section-header {
   border-radius: var(--radius-sm);
 }
 
-/* FIXED: Mobile breadcrumb spacing */
+/* Mobile responsive adjustments */
 @media (max-width: 768px) {
-  .breadcrumb-nav {
-    font-size: 0.8rem;
-    padding: var(--space-2) var(--space-4);
-    margin-top: var(--space-3);
-    margin-bottom: var(--space-4);
-    max-width: 90%;
-  }
-
-  .breadcrumb-nav a,
-  .breadcrumb-nav span[style*="font-weight"] {
-    padding: var(--space-1);
+  .hero {
+    margin-top: 60px; /* Match mobile header height */
+    padding: var(--space-12) var(--space-4) var(--space-8);
   }
 }
 
 @media (max-width: 480px) {
-  .breadcrumb-nav {
-    font-size: 0.75rem;
-    margin-top: var(--space-2);
-    margin-bottom: var(--space-3);
+  .hero {
+    margin-top: 55px; /* Match smallest mobile header height */
+    padding: var(--space-8) var(--space-3) var(--space-6);
   }
+}
+
+/* ALSO ADD: Ensure search section doesn't overlap */
+.search-section {
+  padding: var(--space-8) var(--space-4);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  /* Add top margin if search is positioned near header */
+  position: relative;
+  z-index: 10;
+}
+
+/* Breadcrumb navigation styling fix */
+.breadcrumb-nav {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+  font-size: 0.9rem;
+  z-index: 5;
+}
+
+.breadcrumb-nav a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.breadcrumb-nav a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 
