@@ -70,7 +70,7 @@ class CSVCatalogApp {
       if (!this.data) {
         return;
       }
-
+      this.debugImageConfig();
       this.setupBrandInfo();
       
       // Check if we need to show category view or homepage
@@ -689,52 +689,62 @@ class CSVCatalogApp {
   }
 
   setupDynamicSections() {
-    const container = document.getElementById('dynamicSections');
-    if (!container) return;
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
 
-    if (!this.data.catalog || !this.data.catalog.tree) {
-      return;
-    }
+  if (!this.data.catalog || !this.data.catalog.tree) {
+    return;
+  }
 
-    this.groupItemsBySection();
-    
-    const sectionOrder = ['Featured', 'Best Sellers', 'Premium', 'New Arrivals', 'Trending'];
-    
-    container.innerHTML = '';
-    let sectionsCreated = 0;
-    
-    sectionOrder.forEach(sectionName => {
-      if (this.sections.has(sectionName) && this.sections.get(sectionName).length > 0) {
-        const sectionHTML = this.createSectionHTML(sectionName, this.sections.get(sectionName));
-        container.insertAdjacentHTML('beforeend', sectionHTML);
-        sectionsCreated++;
-      }
-    });
-
-    if (sectionsCreated === 0) {
-  const allItems = [];
+  this.groupItemsBySection();
   
-  Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
-    allItems.push({
-      key,
-      title: key.replace(/_/g, ' '),
-      description: `Explore our premium ${key.toLowerCase().replace('_', ' ')} collection`,
-      count: item.count || 0,
-      thumbnail: item.thumbnail || '',
-      topOrder: item.topOrder || 999,
-      // FIXED: Pass through CSV image configuration for fallback items
-      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
-      fitting: item.fitting || item.Fitting || item.FITTING,
-      scaling: item.scaling || item.Scaling || item.SCALING
-    });
+  const sectionOrder = ['Featured', 'Best Sellers', 'Premium', 'New Arrivals', 'Trending'];
+  
+  container.innerHTML = '';
+  let sectionsCreated = 0;
+  
+  sectionOrder.forEach(sectionName => {
+    if (this.sections.has(sectionName) && this.sections.get(sectionName).length > 0) {
+      const sectionHTML = this.createSectionHTML(sectionName, this.sections.get(sectionName));
+      container.insertAdjacentHTML('beforeend', sectionHTML);
+      sectionsCreated++;
+    }
   });
 
-  if (allItems.length > 0) {
-    const sectionHTML = this.createSectionHTML('', allItems);
-    container.insertAdjacentHTML('beforeend', sectionHTML);
+  if (sectionsCreated === 0) {
+    const allItems = [];
+    
+    Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+      // DEBUG: Log items as they're processed
+      console.log(`🔍 Processing item ${key}:`, {
+        alignment: item.alignment,
+        fitting: item.fitting, 
+        scaling: item.scaling,
+        custom: item.custom,
+        fullItem: item
+      });
+      
+      allItems.push({
+        key,
+        title: key.replace(/_/g, ' '),
+        description: `Explore our premium ${key.toLowerCase().replace('_', ' ')} collection`,
+        count: item.count || 0,
+        thumbnail: item.thumbnail || '',
+        topOrder: item.topOrder || 999,
+        // ENSURE all image properties are passed through
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING,
+        custom: item.custom || item.Custom || item.CUSTOM // ← CRITICAL
+      });
+    });
+
+    if (allItems.length > 0) {
+      const sectionHTML = this.createSectionHTML('', allItems);
+      container.insertAdjacentHTML('beforeend', sectionHTML);
+    }
   }
 }
-  }
 
   groupItemsBySection() {
   this.sections.clear();
@@ -827,10 +837,15 @@ class CSVCatalogApp {
   createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
-  // Extract image rendering configuration
+  // FIXED: Make sure ALL image config properties are passed through
   const imageConfig = this.extractImageConfig(item);
+  
+  // DEBUG: Log what we extracted
+  console.log('🔍 Image config for', item.title, ':', imageConfig);
+  
   const imageStyles = this.generateImageStyles(imageConfig);
   
+  // Rest of the function stays the same...
   const imageContent = imageSrc ? 
     `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
          style="${imageStyles}" 
@@ -860,7 +875,38 @@ class CSVCatalogApp {
   `;
 }
 // REPLACE the extractImageConfig function in public/script.js with this enhanced version:
-
+debugImageConfig() {
+  console.log('🐛 DEBUGGING IMAGE CONFIG DATA FLOW');
+  
+  // Check what's in the loaded data
+  if (this.data && this.data.catalog && this.data.catalog.tree) {
+    console.log('📊 Raw catalog tree:', this.data.catalog.tree);
+    
+    // Look for items with custom positioning
+    const findCustomItems = (node, path = []) => {
+      for (const [key, item] of Object.entries(node)) {
+        const currentPath = [...path, key].join('/');
+        
+        if (item.custom || item.Custom || item.CUSTOM) {
+          console.log(`🎯 Found custom item at ${currentPath}:`, {
+            custom: item.custom,
+            Custom: item.Custom,
+            CUSTOM: item.CUSTOM,
+            fullItem: item
+          });
+        }
+        
+        if (item.children && !item.isProduct) {
+          findCustomItems(item.children, [...path, key]);
+        }
+      }
+    };
+    
+    findCustomItems(this.data.catalog.tree);
+  } else {
+    console.log('❌ No catalog data available');
+  }
+}
 extractImageConfig(item) {
   // Debug log to see what data we have
   console.log('Item data for image config:', item);
@@ -874,42 +920,61 @@ extractImageConfig(item) {
     scaling: item.scaling || item.Scaling || item.SCALING || 
              item.image_scale || item.imageScale || item['Image Scale'] || 
              item.scale || item.Scale || null,
-    // NEW: Custom positioning for pixel-perfect control
+    // FIXED: Better custom detection with more variations
     custom: item.custom || item.Custom || item.CUSTOM || 
-            item.customPosition || item.custom_position || item['Custom Position'] || null
+            item.customPosition || item.custom_position || item['Custom Position'] ||
+            item.customPos || item.custom_pos || null
   };
 }
 
-// REPLACE the generateImageStyles function in public/script.js with this enhanced version:
-
+// 2. REPLACE the generateImageStyles function in public/script.js:
 generateImageStyles(config) {
+  console.log('🎯 Generating styles with config:', config); // DEBUG LOG
+  
   const styles = [];
   
-  // NEW: Check if custom positioning is requested
-  if (config.custom) {
-    return this.generateCustomImageStyles(config);
+  // FIXED: Check if custom positioning is requested (any non-empty value)
+  const hasCustom = config.custom && config.custom.trim() !== '';
+  
+  if (hasCustom) {
+    console.log('🔧 Using CUSTOM positioning:', config.custom); // DEBUG LOG
+    
+    // Custom positioning: use object-fit: none for pixel-perfect control
+    styles.push(`object-fit: none`);
+    
+    // Parse and apply custom position
+    const customPos = this.parseCustomPosition(config.custom, config.alignment);
+    styles.push(`object-position: ${customPos}`);
+    
+    console.log('✨ Applied custom position:', customPos); // DEBUG LOG
+  } else {
+    console.log('📐 Using STANDARD positioning'); // DEBUG LOG
+    
+    // Standard positioning: use alignment + fitting
+    const fitMethod = this.normalizeFitMethod(config.fitting);
+    styles.push(`object-fit: ${fitMethod}`);
+    
+    const objectPosition = this.getObjectPosition(config.alignment);
+    styles.push(`object-position: ${objectPosition}`);
   }
   
-  // Existing logic for standard positioning
-  const fitMethod = this.normalizeFitMethod(config.fitting);
-  styles.push(`object-fit: ${fitMethod}`);
-  
-  const objectPosition = this.getObjectPosition(config.alignment);
-  styles.push(`object-position: ${objectPosition}`);
-  
+  // Scaling ALWAYS works (both standard and custom)
   const scaleTransform = this.getScaleTransform(config.scaling);
   if (scaleTransform) {
     styles.push(`transform: ${scaleTransform}`);
     styles.push(`transform-origin: center`);
   }
   
-  // Base styles for smooth rendering with PURE WHITE background
+  // Base styles with pure white background
   styles.push(`width: 100%`);
   styles.push(`height: 100%`);
-  styles.push(`background: #ffffff`); // FIXED: Pure white background
+  styles.push(`background: #ffffff`);
   styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
   
-  return styles.join('; ');
+  const finalStyles = styles.join('; ');
+  console.log('🎨 Final styles:', finalStyles); // DEBUG LOG
+  
+  return finalStyles;
 }
 
 // ADD this NEW function to public/script.js (after generateImageStyles):
@@ -943,34 +1008,43 @@ generateCustomImageStyles(config) {
 // ADD this NEW function to public/script.js (after generateCustomImageStyles):
 
 parseCustomPosition(customValue, fallbackAlignment = 'center') {
-  if (!customValue) {
+  if (!customValue || customValue.trim() === '') {
     return this.getObjectPosition(fallbackAlignment);
   }
   
   const custom = String(customValue).trim().toLowerCase();
+  console.log('🔍 Parsing custom position:', custom); // DEBUG LOG
   
   // Handle pixel values (e.g., "50px 30px", "-20px 0px")
   const pixelMatch = custom.match(/^(-?\d+px)\s+(-?\d+px)$/);
   if (pixelMatch) {
-    return `${pixelMatch[1]} ${pixelMatch[2]}`;
+    const result = `${pixelMatch[1]} ${pixelMatch[2]}`;
+    console.log('✅ Matched pixel pattern:', result);
+    return result;
   }
   
   // Handle single pixel value (applies to both x and y)
   const singlePixelMatch = custom.match(/^(-?\d+px)$/);
   if (singlePixelMatch) {
-    return `${singlePixelMatch[1]} ${singlePixelMatch[1]}`;
+    const result = `${singlePixelMatch[1]} ${singlePixelMatch[1]}`;
+    console.log('✅ Matched single pixel pattern:', result);
+    return result;
   }
   
   // Handle percentage values (e.g., "30% 70%")
   const percentMatch = custom.match(/^(-?\d+%)\s+(-?\d+%)$/);
   if (percentMatch) {
-    return `${percentMatch[1]} ${percentMatch[2]}`;
+    const result = `${percentMatch[1]} ${percentMatch[2]}`;
+    console.log('✅ Matched percentage pattern:', result);
+    return result;
   }
   
   // Handle mixed values (e.g., "50px 30%", "center 20px")
   const mixedMatch = custom.match(/^(\S+)\s+(\S+)$/);
   if (mixedMatch) {
-    return `${mixedMatch[1]} ${mixedMatch[2]}`;
+    const result = `${mixedMatch[1]} ${mixedMatch[2]}`;
+    console.log('✅ Matched mixed pattern:', result);
+    return result;
   }
   
   // Handle preset positions with custom syntax
@@ -991,11 +1065,14 @@ parseCustomPosition(customValue, fallbackAlignment = 'center') {
   };
   
   if (presetMap[custom]) {
-    return presetMap[custom];
+    const result = presetMap[custom];
+    console.log('✅ Matched preset pattern:', result);
+    return result;
   }
   
-  // Fallback to standard alignment
-  return this.getObjectPosition(fallbackAlignment);
+  // If no pattern matches, try to use it as-is
+  console.log('⚠️ No pattern matched, using as-is:', custom);
+  return custom;
 }
 /**
  * Normalize fit method values
