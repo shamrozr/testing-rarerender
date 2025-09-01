@@ -366,75 +366,151 @@ addBreadcrumbNavigation(breadcrumbs) {
   }
 }
 
-  renderCategoryContents(currentNode, breadcrumbs) {
-    const container = document.getElementById('dynamicSections');
-    if (!container) return;
+  // REPLACE the entire renderCategoryContents function with this enhanced version:
 
-    const items = Object.entries(currentNode).map(([key, item]) => {
-  if (item.isProduct) {
-    return {
-      key,
-      title: key,
-      description: 'Premium product from our luxury collection',
-      count: 1,
-      thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-      isProduct: true,
-      driveLink: item.driveLink,
-      // FIXED: Pass through CSV image configuration for products
-      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
-      fitting: item.fitting || item.Fitting || item.FITTING,
-      scaling: item.scaling || item.Scaling || item.SCALING
-    };
-  } else {
-    return {
-      key,
-      title: key.replace(/_/g, ' '),
-      description: `Explore ${item.count || 0} items in this collection`,
-      count: item.count || 0,
-      thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-      isProduct: false,
-      // FIXED: Pass through CSV image configuration for categories
-      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
-      fitting: item.fitting || item.Fitting || item.FITTING,
-      scaling: item.scaling || item.Scaling || item.SCALING
-    };
-  }
-});
-    if (items.length === 0) {
-      container.innerHTML = `
-        <section class="content-section">
-          <div class="container">
-            <div class="section-header">
-              <h2 class="section-title">No Items Found</h2>
-              <p class="section-description">This category is currently empty.</p>
-            </div>
-          </div>
-        </section>
-      `;
-      return;
+renderCategoryContents(currentNode, breadcrumbs) {
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
+
+  const items = Object.entries(currentNode).map(([key, item]) => {
+    if (item.isProduct) {
+      return {
+        key,
+        title: key,
+        description: 'Premium product from our luxury collection',
+        count: 1,
+        thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+        isProduct: true,
+        driveLink: item.driveLink,
+        topOrder: item.topOrder || item['Top Order'] || item.top_order || 999, // CSV support
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
+    } else {
+      return {
+        key,
+        title: key.replace(/_/g, ' '),
+        description: `Explore ${item.count || 0} items in this collection`,
+        count: item.count || 0,
+        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+        isProduct: false,
+        topOrder: item.topOrder || item['Top Order'] || item.top_order || 999, // CSV support
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
     }
+  });
 
-    const gridClass = this.getGridClass(items.length);
-    const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
-    
+  if (items.length === 0) {
     container.innerHTML = `
       <section class="content-section">
         <div class="container">
-          <div class="cards-grid ${gridClass}" id="${containerId}">
-            ${items.map(item => this.createCardHTML(item)).join('')}
+          <div class="section-header">
+            <h2 class="section-title">No Items Found</h2>
+            <p class="section-description">This category is currently empty.</p>
           </div>
         </div>
       </section>
     `;
-
-    // Apply smart centering for category contents
-    if (gridClass === 'grid-smart') {
-      setTimeout(() => {
-        const gridContainer = document.getElementById(containerId);
-        if (gridContainer) this.addSmartCentering(gridContainer, items.length);
-      }, 10);
-    }
+    return;
   }
+
+  // ENHANCED SORTING: Separate folders and products
+  const folders = items.filter(item => !item.isProduct);
+  const products = items.filter(item => item.isProduct);
+
+  // Sort folders: topOrder first, then by count (descending), then alphabetically
+  folders.sort((a, b) => {
+    // First by topOrder (ascending - lower numbers first)
+    if (a.topOrder !== b.topOrder) {
+      return a.topOrder - b.topOrder;
+    }
+    // Then by count (descending - higher counts first)
+    if (a.count !== b.count) {
+      return b.count - a.count;
+    }
+    // Finally alphabetically
+    return a.title.localeCompare(b.title);
+  });
+
+  // Sort products: topOrder first, then alphabetically
+  products.sort((a, b) => {
+    // First by topOrder (ascending - lower numbers first)
+    if (a.topOrder !== b.topOrder) {
+      return a.topOrder - b.topOrder;
+    }
+    // Then alphabetically
+    return a.title.localeCompare(b.title);
+  });
+
+  // Combine: folders first, then products
+  const sortedItems = [...folders, ...products];
+
+  const gridClass = this.getGridClass(sortedItems.length);
+  const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
+  
+  container.innerHTML = `
+    <section class="content-section">
+      <div class="container">
+        <div class="cards-grid ${gridClass}" id="${containerId}">
+          ${sortedItems.map(item => this.createCardHTML(item)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+
+  // Apply smart centering for category contents
+  if (gridClass === 'grid-smart') {
+    setTimeout(() => {
+      const gridContainer = document.getElementById(containerId);
+      if (gridContainer) this.addSmartCentering(gridContainer, sortedItems.length);
+    }, 10);
+  }
+}
+
+// ADD this new helper function after renderCategoryContents:
+
+/**
+ * Enhanced sorting for any category items
+ * @param {Array} items - Array of items to sort
+ * @param {boolean} isHomepage - Whether this is for homepage (uses existing logic)
+ * @returns {Array} Sorted items
+ */
+sortItemsEnhanced(items, isHomepage = false) {
+  if (isHomepage) {
+    // Homepage: use existing topOrder logic only
+    return items.sort((a, b) => a.topOrder - b.topOrder);
+  }
+  
+  // Category pages: enhanced sorting
+  const folders = items.filter(item => !item.isProduct);
+  const products = items.filter(item => item.isProduct);
+
+  // Sort folders: topOrder → count → alphabetical
+  folders.sort((a, b) => {
+    if (a.topOrder !== b.topOrder) {
+      return a.topOrder - b.topOrder;
+    }
+    if (a.count !== b.count) {
+      return b.count - a.count; // Higher count first
+    }
+    return a.title.localeCompare(b.title);
+  });
+
+  // Sort products: topOrder → alphabetical  
+  products.sort((a, b) => {
+    if (a.topOrder !== b.topOrder) {
+      return a.topOrder - b.topOrder;
+    }
+    return a.title.localeCompare(b.title);
+  });
+
+  return [...folders, ...products];
+}
+
+  
   navigateToHome() {
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
