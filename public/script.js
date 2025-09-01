@@ -1123,52 +1123,53 @@ generateBackgroundImageStyles(imageSrc, config) {
 }
 
 // ADD this function for fitting to background-size conversion:
+// REPLACE the getBackgroundSize function (around line 380) with this FIXED version:
+
 getBackgroundSize(fitting) {
-  const fittingMap = {
-    // Natural methods (no scaling)
-    'natural': 'auto',
-    'background': 'auto',
-    'bg': 'auto',
-    'overflow': 'auto', 
-    'window': 'auto',
-    
-    // Standard methods
-    'cover': 'cover',
-    'contain': 'contain',
-    'fit': 'contain',
-    'fill': '100% 100%',
-    
-    // FIXED: scale-down needs special handling
-    'scale-down': 'SCALE_DOWN_SPECIAL', // Special flag
-    
-    // Direct values
-    'auto': 'auto',
-    '100%': '100% 100%'
-  };
+
+  const fittingStr = String(fitting).toLowerCase().trim();
+  console.log(`🔍 Processing fitting: "${fittingStr}"`);
   
-  if (!fitting) return 'auto';
-  
-  const normalized = String(fitting).toLowerCase().replace(/[_-]/g, '-');
-  
-  // Handle scale-down specially
-  if (normalized.includes('scale-down')) {
-    return 'SCALE_DOWN_SPECIAL';
-  }
-  
-  // Check for direct matches first
-  if (fittingMap[normalized]) {
-    return fittingMap[normalized];
-  }
-  
-  // Check for partial matches (natural-cover, background-fill, etc.)  
-  for (const [key, value] of Object.entries(fittingMap)) {
-    if (normalized.includes(key)) {
-      return value;
+  // Handle "natural" combinations
+  if (fittingStr.includes('natural')) {
+    if (fittingStr.includes('cover')) {
+      console.log('✅ Natural + Cover detected → cover');
+      return 'cover';
+    } else if (fittingStr.includes('contain')) {
+      console.log('✅ Natural + Contain detected → contain');
+      return 'contain';
+    } else {
+      // Pure "natural" = cover (your default behavior)
+      console.log('✅ Pure Natural detected → cover');
+      return 'cover';
     }
   }
   
-  return 'auto'; // Default fallback
+  // Standard fit methods (unchanged behavior)
+  const fitMap = {
+    'cover': 'cover',
+    'contain': 'contain', 
+    'fit': 'contain',
+    'fill': '100% 100%',
+    'scale-down': 'contain', // Background doesn't have scale-down, use contain
+    'auto': 'auto'
+  };
+  
+  // Direct mapping
+  if (fitMap[fittingStr]) {
+    console.log(`✅ Direct mapping: "${fittingStr}" → "${fitMap[fittingStr]}"`);
+    return fitMap[fittingStr];
+  }
+  
+  // Partial matching for combined keywords
+  for (const [key, value] of Object.entries(fitMap)) {
+    if (fittingStr.includes(key)) {
+      console.log(`✅ Partial match: "${fittingStr}" contains "${key}" → "${value}"`);
+      return value;
+    }
+  }
 }
+
 
 isCustomAlignmentValue(alignment) {
   if (!alignment || alignment.trim() === '') {
