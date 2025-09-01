@@ -899,50 +899,130 @@ extractImageConfig(item) {
     // NOTE: Removed custom - now handled in smart alignment
   };
 }
+
 getBackgroundPosition(alignment) {
-  // Handle custom pixel positioning first
-  if (this.isCustomAlignmentValue(alignment)) {
-    return this.parseSmartAlignment(alignment);
+  if (!alignment) return 'center center';
+  
+  const alignmentStr = String(alignment).trim();
+  console.log(`🔍 Processing alignment: "${alignmentStr}"`);
+  
+  // STEP 1: Check if it's a valid CSS background-position value
+  if (this.isValidCSSPosition(alignmentStr)) {
+    console.log(`✅ Valid CSS position, using as-is: "${alignmentStr}"`);
+    return alignmentStr;
   }
   
-  // COMPLETE position mapping
+  // STEP 2: Handle keyword mappings (center, top-left, etc.)
+  const keywordResult = this.getKeywordPosition(alignmentStr);
+  if (keywordResult) {
+    console.log(`🎯 Keyword mapping: "${alignmentStr}" → "${keywordResult}"`);
+    return keywordResult;
+  }
+  
+  // STEP 3: Fallback to center
+  console.log(`⚠️ Unrecognized alignment "${alignmentStr}" → fallback to "center center"`);
+  return 'center center';
+}
+
+// ADD this helper function - detects ANY valid CSS position:
+isValidCSSPosition(value) {
+  // Patterns that are valid CSS background-position values
+  const validPatterns = [
+    // Two values: percentage, pixel, keyword combinations
+    /^-?\d+(\.\d+)?%\s+-?\d+(\.\d+)?%$/, // "33% 67%", "-10% 120%"
+    /^-?\d+(\.\d+)?px\s+-?\d+(\.\d+)?px$/, // "150px 75px", "-200px -100px"
+    /^-?\d+(\.\d+)?%\s+-?\d+(\.\d+)?px$/, // "33% 150px"
+    /^-?\d+(\.\d+)?px\s+-?\d+(\.\d+)?%$/, // "150px 33%"
+    
+    // Single values: will be expanded to "value center"
+    /^-?\d+(\.\d+)?%$/, // "33%", "-10%"
+    /^-?\d+(\.\d+)?px$/, // "150px", "-200px"
+    
+    // Keyword + value combinations
+    /^(left|right|center)\s+-?\d+(\.\d+)?(px|%)$/, // "left 20px", "center 33%"
+    /^-?\d+(\.\d+)?(px|%)\s+(top|bottom|center)$/, // "20px top", "33% center"
+    /^(top|bottom|center)\s+-?\d+(\.\d+)?(px|%)$/, // "top 20px", "center 33%"
+    /^-?\d+(\.\d+)?(px|%)\s+(left|right|center)$/, // "20px left", "33% center"
+    
+    // Pure keywords (handled separately but included for completeness)
+    /^(left|right|center|top|bottom)(\s+(left|right|center|top|bottom))?$/
+  ];
+  
+  // Check if value matches any valid pattern
+  const isValid = validPatterns.some(pattern => pattern.test(value));
+  
+  if (isValid) {
+    // Special handling for single values - add center for missing axis
+    if (/^-?\d+(\.\d+)?(px|%)$/.test(value)) {
+      console.log(`🔧 Single value detected, expanding: "${value}" → "${value} center"`);
+      return false; // Will be handled in expandSingleValue
+    }
+    return true;
+  }
+  
+  return false;
+}
+
+// ADD this helper function - handles keyword mappings:
+getKeywordPosition(alignmentStr) {
+  const normalized = alignmentStr.toLowerCase().replace(/[_-]/g, '-');
+  
+  // COMPLETE keyword mapping including all edge cases
   const positionMap = {
     // Basic positions
     'center': 'center center',
+    'middle': 'center center',
     'top': 'center top',
     'bottom': 'center bottom',
-    'left': 'left center', 
+    'left': 'left center',
     'right': 'right center',
     
-    // Corner positions - all variations
+    // All corner combinations
     'top-left': 'left top', 'top_left': 'left top', 'topleft': 'left top',
+    'left-top': 'left top', 'left_top': 'left top', 'lefttop': 'left top',
     'top-right': 'right top', 'top_right': 'right top', 'topright': 'right top',
+    'right-top': 'right top', 'right_top': 'right top', 'righttop': 'right top',
     'bottom-left': 'left bottom', 'bottom_left': 'left bottom', 'bottomleft': 'left bottom',
+    'left-bottom': 'left bottom', 'left_bottom': 'left bottom', 'leftbottom': 'left bottom',
     'bottom-right': 'right bottom', 'bottom_right': 'right bottom', 'bottomright': 'right bottom',
+    'right-bottom': 'right bottom', 'right_bottom': 'right bottom', 'rightbottom': 'right bottom',
     
-    // Edge centers - the missing ones you asked about
+    // All edge center combinations
     'center-top': 'center top', 'center_top': 'center top', 'centertop': 'center top',
     'top-center': 'center top', 'top_center': 'center top', 'topcenter': 'center top',
+    'middle-top': 'center top', 'middle_top': 'center top', 'middletop': 'center top',
+    
     'center-bottom': 'center bottom', 'center_bottom': 'center bottom', 'centerbottom': 'center bottom',
     'bottom-center': 'center bottom', 'bottom_center': 'center bottom', 'bottomcenter': 'center bottom',
-    'left-center': 'left center', 'left_center': 'left center', 'leftcenter': 'left center', 
+    'middle-bottom': 'center bottom', 'middle_bottom': 'center bottom', 'middlebottom': 'center bottom',
+    
+    'left-center': 'left center', 'left_center': 'left center', 'leftcenter': 'left center',
     'center-left': 'left center', 'center_left': 'left center', 'centerleft': 'left center',
+    'middle-left': 'left center', 'middle_left': 'left center', 'middleleft': 'left center',
+    
     'right-center': 'right center', 'right_center': 'right center', 'rightcenter': 'right center',
     'center-right': 'right center', 'center_right': 'right center', 'centerright': 'right center',
+    'middle-right': 'right center', 'middle_right': 'right center', 'middleright': 'right center',
     
-    // Space-separated alternatives
-    'center center': 'center center', 'center top': 'center top', 'center bottom': 'center bottom',
-    'left center': 'left center', 'right center': 'right center', 'left top': 'left top',
-    'right top': 'right top', 'left bottom': 'left bottom', 'right bottom': 'right bottom'
+    // CSS logical properties
+    'start': 'left center', 'end': 'right center',
+    'start-start': 'left top', 'start-end': 'left bottom',
+    'end-start': 'right top', 'end-end': 'right bottom',
+    
+    // Space-separated (native CSS format)
+    'left top': 'left top', 'left center': 'left center', 'left bottom': 'left bottom',
+    'center top': 'center top', 'center center': 'center center', 'center bottom': 'center bottom',
+    'right top': 'right top', 'right center': 'right center', 'right bottom': 'right bottom'
   };
   
-  if (!alignment) return 'center center';
+  // Handle single values that need expansion  
+  if (/^-?\d+(\.\d+)?(px|%)$/.test(alignmentStr)) {
+    const expandedValue = `${alignmentStr} center`;
+    console.log(`🔧 Expanding single value: "${alignmentStr}" → "${expandedValue}"`);
+    return expandedValue;
+  }
   
-  const normalized = String(alignment).toLowerCase().replace(/[_-]/g, '-');
-  const result = positionMap[normalized] || 'center center';
-  
-  console.log(`🎯 Alignment '${alignment}' → background-position: '${result}'`);
-  return result;
+  return positionMap[normalized] || null;
 }
 // 2. REPLACE the generateImageStyles function in public/script.js:
 generateImageStyles(config) {
@@ -1047,17 +1127,19 @@ getBackgroundSize(fitting) {
   const fittingMap = {
     // Natural methods (no scaling)
     'natural': 'auto',
-    'background': 'auto', 
+    'background': 'auto',
     'bg': 'auto',
-    'overflow': 'auto',
+    'overflow': 'auto', 
     'window': 'auto',
     
-    // Standard methods  
+    // Standard methods
     'cover': 'cover',
     'contain': 'contain',
     'fit': 'contain',
     'fill': '100% 100%',
-    'scale-down': 'auto',
+    
+    // FIXED: scale-down needs special handling
+    'scale-down': 'SCALE_DOWN_SPECIAL', // Special flag
     
     // Direct values
     'auto': 'auto',
@@ -1068,12 +1150,17 @@ getBackgroundSize(fitting) {
   
   const normalized = String(fitting).toLowerCase().replace(/[_-]/g, '-');
   
+  // Handle scale-down specially
+  if (normalized.includes('scale-down')) {
+    return 'SCALE_DOWN_SPECIAL';
+  }
+  
   // Check for direct matches first
   if (fittingMap[normalized]) {
     return fittingMap[normalized];
   }
   
-  // Check for partial matches (natural-cover, background-fill, etc.)
+  // Check for partial matches (natural-cover, background-fill, etc.)  
   for (const [key, value] of Object.entries(fittingMap)) {
     if (normalized.includes(key)) {
       return value;
@@ -1082,6 +1169,7 @@ getBackgroundSize(fitting) {
   
   return 'auto'; // Default fallback
 }
+
 isCustomAlignmentValue(alignment) {
   if (!alignment || alignment.trim() === '') {
     return false;
@@ -1089,32 +1177,16 @@ isCustomAlignmentValue(alignment) {
   
   const alignmentStr = String(alignment).trim().toLowerCase();
   
-  // Check for pixel values
-  if (alignmentStr.includes('px')) {
-    return true;
-  }
+  // ANY percentage or pixel pattern is considered custom for flexible handling
+  const customPatterns = [
+    /^-?\d+(\.\d+)?%(\s+-?\d+(\.\d+)?%)?$/, // Any percentage(s)
+    /^-?\d+(\.\d+)?px(\s+-?\d+(\.\d+)?px)?$/, // Any pixel(s)  
+    /^-?\d+(\.\d+)?(px|%)\s+-?\d+(\.\d+)?(px|%)$/, // Mixed px/% values
+    /^(left|right|center)\s+-?\d+(\.\d+)?(px|%)$/, // Keyword + value
+    /^-?\d+(\.\d+)?(px|%)\s+(top|bottom|center)$/, // Value + keyword
+  ];
   
-  // Check for percentage values (but not single percentages like "50%")
-  if (alignmentStr.match(/\d+%\s+\d+%/)) {
-    return true;
-  }
-  
-  // Check for custom crop commands
-  if (alignmentStr.startsWith('crop-')) {
-    return true;
-  }
-  
-  // Check for negative values (indicating pixel positioning)
-  if (alignmentStr.includes('-') && alignmentStr.match(/-\d+/)) {
-    return true;
-  }
-  
-  // Check for mixed pixel/keyword values
-  if (alignmentStr.includes('px') && (alignmentStr.includes('center') || alignmentStr.includes('top') || alignmentStr.includes('bottom'))) {
-    return true;
-  }
-  
-  return false;
+  return customPatterns.some(pattern => pattern.test(alignmentStr));
 }
 
 parseSmartAlignment(alignment) {
