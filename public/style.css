@@ -346,9 +346,9 @@ body {
     var(--color-light-gray) 0%, 
     rgba(99, 102, 241, 0.05) 50%,
     var(--color-soft-gray) 100%);
-  padding: var(--space-8) 0; /* Reduced from var(--space-20) */
+  padding: var(--space-16) 0 var(--space-8) 0; /* Added top padding to account for header */
   text-align: center;
-  /* REMOVED: margin-top: 70px; - this was causing double spacing */
+  margin-top: 0; /* Reset any margins */
 }
 
 .hero-content {
@@ -388,7 +388,6 @@ body[data-page-type="category"] .section-header {
 /* Breadcrumb Navigation - FIXED */
 /* ============================== */
 
-/* FIXED: Breadcrumb Navigation - Proper positioning */
 .breadcrumb-nav {
   display: flex;
   align-items: center;
@@ -396,19 +395,15 @@ body[data-page-type="category"] .section-header {
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: 0.9rem;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   padding: var(--space-3) var(--space-6);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-full);
   backdrop-filter: blur(10px);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   max-width: 600px;
-  margin: 0 auto;
-  
-  /* FIXED: Remove conflicting margins that were pushing content down */
-  margin-top: var(--space-2); /* Reduced from var(--space-4) */
-  margin-bottom: var(--space-4); /* Reduced from var(--space-6) */
+  margin: var(--space-4) auto var(--space-6) auto;
 }
 
 .breadcrumb-nav a {
@@ -432,13 +427,14 @@ body[data-page-type="category"] .section-header {
 }
 
 .breadcrumb-nav span {
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   user-select: none;
 }
 
 .breadcrumb-nav span:not([style*="font-weight"]) {
   /* Separator styling */
-  opacity: 0.6;
+  opacity: 1;
+  color: var(--color-text-muted);
 }
 
 .breadcrumb-nav span[style*="font-weight"] {
@@ -446,7 +442,7 @@ body[data-page-type="category"] .section-header {
   color: var(--color-text-primary);
   font-weight: 600;
   padding: var(--space-1) var(--space-2);
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(99, 102, 241, 0.15);
   border-radius: var(--radius-sm);
 }
 
