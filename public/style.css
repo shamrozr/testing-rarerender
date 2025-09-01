@@ -86,13 +86,13 @@ html {
 }
 
 body {
-  padding-top: 70px;
   font-family: var(--font-primary);
   color: var(--color-text-primary);
   background: var(--color-bg);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-top: 70px; /* Single declaration for desktop */
 }
 
 /* Container System */
@@ -136,6 +136,7 @@ body {
 .header.collapsed {
   transform: translateY(-100%);
 }
+/* FIXED: Header content spacing */
 .header-content {
   display: flex;
   align-items: center;
@@ -146,24 +147,64 @@ body {
   max-width: 1200px;
   margin: 0 auto;
 }
+
+/* FIXED: Mobile responsive adjustments */
 @media (max-width: 768px) {
+  body {
+    padding-top: 60px; /* Match mobile header height */
+  }
+  
   .header-content {
     height: 60px;
-    /* mobile tablet styles */
+  }
+  
+  .hero {
+    padding: var(--space-6) var(--space-4); /* Reduced padding */
+  }
+  
+  .hero-title {
+    font-size: 2.2rem; /* Slightly smaller on mobile */
+  }
+  
+  .breadcrumb-nav {
+    margin-top: var(--space-1);
+    margin-bottom: var(--space-3);
+    font-size: 0.8rem;
+    padding: var(--space-2) var(--space-4);
+    max-width: 90%;
   }
 }
 
 @media (max-width: 480px) {
+  body {
+    padding-top: 55px; /* Match smallest mobile header height */
+  }
+  
   .header-content {
     height: 55px;
-    /* mobile phone styles */
+  }
+  
+  .hero {
+    padding: var(--space-4) var(--space-3); /* Even more compact */
+  }
+  
+  .hero-title {
+    font-size: 1.9rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-6); /* Reduced spacing */
+  }
+  
+  .breadcrumb-nav {
+    font-size: 0.75rem;
+    margin-top: 0;
+    margin-bottom: var(--space-2);
   }
 }
 
-/* Body padding to account for fixed header */
-body {
-  padding-top: 70px;
-}
+
 
 @media (max-width: 768px) {
   .header {
@@ -305,9 +346,9 @@ body {
     var(--color-light-gray) 0%, 
     rgba(99, 102, 241, 0.05) 50%,
     var(--color-soft-gray) 100%);
-  padding: var(--space-20) 0;
+  padding: var(--space-8) 0; /* Reduced from var(--space-20) */
   text-align: center;
-  margin-top: 70px; /* Same height as header */
+  /* REMOVED: margin-top: 70px; - this was causing double spacing */
 }
 
 .hero-content {
@@ -332,7 +373,7 @@ body {
 }
 /* Reduce spacing between hero and first section */
 .hero + #dynamicSections .content-section:first-child {
-  padding-top: var(--space-8);
+  padding-top: var(--space-5);
 }
 
 /* Remove section header from category pages */
@@ -347,8 +388,8 @@ body[data-page-type="category"] .section-header {
 /* Breadcrumb Navigation - FIXED */
 /* ============================== */
 
+/* FIXED: Breadcrumb Navigation - Proper positioning */
 .breadcrumb-nav {
-  /* FIXED: Remove margin-bottom and positioning conflicts */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -363,11 +404,11 @@ body[data-page-type="category"] .section-header {
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   max-width: 600px;
-  margin: 0 auto; /* FIXED: Only horizontal centering */
+  margin: 0 auto;
   
-  /* FIXED: Proper spacing from hero title */
-  margin-top: var(--space-4);
-  margin-bottom: var(--space-6);
+  /* FIXED: Remove conflicting margins that were pushing content down */
+  margin-top: var(--space-2); /* Reduced from var(--space-4) */
+  margin-bottom: var(--space-4); /* Reduced from var(--space-6) */
 }
 
 .breadcrumb-nav a {
@@ -460,12 +501,12 @@ body[data-page-type="category"] .section-header {
 /* ================ */
 
 .content-section {
-  padding: var(--space-20) 0;
+  padding: var(--space-12) 0;
 }
 
 .section-header {
   text-align: center;
-  margin-bottom: var(--space-16);
+  margin-bottom: var(--space-10);
 }
 
 .section-title {
