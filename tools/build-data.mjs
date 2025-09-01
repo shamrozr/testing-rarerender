@@ -232,87 +232,109 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   const sectionStats = new Map();
 
   console.log("📝 Processing enhanced catalog entries with image rendering...");
-  let processedCount = 0;
+let processedCount = 0;
+
+for (const r of masterRows) {
+  const name = (r["Name"] || r["Folder/Product"] || "").trim();
+  const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
+  const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
+  const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+  const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
   
-  for (const r of masterRows) {
-    const name = (r["Name"] || r["Folder/Product"] || "").trim();
-    const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
-    const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
-    const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-    const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
-    
-    // Enhanced section support
-    const section = (r["Section"] || r["section"] || "").trim() || "Featured";
-    const category = (r["Category"] || r["category"] || "").trim();
+  // Enhanced section support
+  const section = (r["Section"] || r["section"] || "").trim() || "Featured";
+  const category = (r["Category"] || r["category"] || "").trim();
 
-    // NEW: Image rendering configuration
-    const imageAlignment = (r["Alignment"] || r["alignment"] || "").trim();
-    const imageFitting = (r["Fitting"] || r["fitting"] || "").trim();
-    const imageScaling = (r["Scaling"] || r["scaling"] || "").trim();
-    const imageCustom = (r["Custom"] || r["custom"] || "").trim();
+  // FIXED: Image rendering configuration with better column detection
+  const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || "").trim();
+  const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim();
+  const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
+  
+  // CRITICAL FIX: Multiple ways to detect Custom column
+  const imageCustom = (r["Custom"] || r["custom"] || r["CUSTOM"] || 
+                      r["CustomPosition"] || r["custom_position"] || 
+                      r["Custom Position"] || "").trim();
 
-    if (!rel || !name) continue;
-    
-    processedCount++;
-    if (processedCount % 100 === 0) {
-      console.log(`  ✨ Processed ${processedCount}/${masterRows.length} items...`);
-    }
-
-    // Track section statistics
-    if (!sectionStats.has(section)) {
-      sectionStats.set(section, 0);
-    }
-    sectionStats.set(section, sectionStats.get(section) + 1);
-
-    const full = rel;
-    const segs = full.split("/").filter(Boolean);
-    const isCandidateProduct = !!driveLink;
-    const hasChildren = parentsSet.has(full);
-    const isLeafProduct = isCandidateProduct && !hasChildren;
-
-    if (isCandidateProduct && !GDRIVE.test(driveLink)) {
-      invalidDriveLinks.push({ name, rel, driveLink });
-    }
-
-    const normalizedThumb = toThumbSitePath(thumbRel);
-
-    if (isLeafProduct) {
-      const parentSegs = segs.slice(0, -1);
-      const children = ensureFolderNode(tree, parentSegs);
-      children[name] = { 
-        isProduct: true, 
-        driveLink, 
-        thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
-        section: section,
-        category: category,
-        // NEW: Add image rendering config
-        alignment: imageAlignment,
-        fitting: imageFitting,
-        scaling: imageScaling,
-        custom: imageCustom
-      };
-      totalProducts++;
-    } else {
-      ensureFolderNode(tree, segs);
-      const k = segs.join("/");
-      const existing = folderMeta.get(k) || {};
-      if (normalizedThumb) existing.thumbnail = normalizedThumb;
-      if (driveLink) existing.driveLink = driveLink;
-      if (section) existing.section = section;
-      if (category) existing.category = category;
-      // NEW: Add image rendering config for folders too
-      if (imageAlignment) existing.alignment = imageAlignment;
-      if (imageFitting) existing.fitting = imageFitting;
-      if (imageScaling) existing.scaling = imageScaling;
-      if (imageCustom) existing.custom = imageCustom;
-      // Handle topOrder for categories (first level items)
-      if (segs.length === 1) {
-        const n = parseInt(topOrderRaw, 10);
-        if (!Number.isNaN(n)) existing.topOrder = n;
-      }
-      folderMeta.set(k, existing);
-    }
+  // DEBUG: Log when we find custom values
+  if (imageCustom) {
+    console.log(`🎯 Found Custom positioning: "${imageCustom}" for item: ${name}`);
   }
+
+  if (!rel || !name) continue;
+  
+  processedCount++;
+  if (processedCount % 100 === 0) {
+    console.log(`  ✨ Processed ${processedCount}/${masterRows.length} items...`);
+  }
+
+  // Track section statistics
+  if (!sectionStats.has(section)) {
+    sectionStats.set(section, 0);
+  }
+  sectionStats.set(section, sectionStats.get(section) + 1);
+
+  const full = rel;
+  const segs = full.split("/").filter(Boolean);
+  const isCandidateProduct = !!driveLink;
+  const hasChildren = parentsSet.has(full);
+  const isLeafProduct = isCandidateProduct && !hasChildren;
+
+  if (isCandidateProduct && !GDRIVE.test(driveLink)) {
+    invalidDriveLinks.push({ name, rel, driveLink });
+  }
+
+  const normalizedThumb = toThumbSitePath(thumbRel);
+
+  if (isLeafProduct) {
+    const parentSegs = segs.slice(0, -1);
+    const children = ensureFolderNode(tree, parentSegs);
+    children[name] = { 
+      isProduct: true, 
+      driveLink, 
+      thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+      section: section,
+      category: category,
+      // FIXED: Enhanced image rendering config
+      alignment: imageAlignment,
+      fitting: imageFitting,
+      scaling: imageScaling,
+      custom: imageCustom // CRITICAL: This must be here
+    };
+    
+    // DEBUG: Log products with custom positioning
+    if (imageCustom) {
+      console.log(`✅ Created product "${name}" with custom: "${imageCustom}"`);
+    }
+    
+    totalProducts++;
+  } else {
+    ensureFolderNode(tree, segs);
+    const k = segs.join("/");
+    const existing = folderMeta.get(k) || {};
+    if (normalizedThumb) existing.thumbnail = normalizedThumb;
+    if (driveLink) existing.driveLink = driveLink;
+    if (section) existing.section = section;
+    if (category) existing.category = category;
+    
+    // FIXED: Enhanced image rendering config for folders
+    if (imageAlignment) existing.alignment = imageAlignment;
+    if (imageFitting) existing.fitting = imageFitting;
+    if (imageScaling) existing.scaling = imageScaling;
+    if (imageCustom) existing.custom = imageCustom; // CRITICAL: This must be here
+    
+    // DEBUG: Log folders with custom positioning
+    if (imageCustom) {
+      console.log(`✅ Created folder "${k}" with custom: "${imageCustom}"`);
+    }
+    
+    // Handle topOrder for categories (first level items)
+    if (segs.length === 1) {
+      const n = parseInt(topOrderRaw, 10);
+      if (!Number.isNaN(n)) existing.topOrder = n;
+    }
+    folderMeta.set(k, existing);
+  }
+}
 
   console.log(`📦 Created section-aware catalog with ${totalProducts} products and image rendering support`);
   console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
@@ -320,25 +342,32 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   // Attach enhanced folder metadata including image rendering
   console.log("🔗 Enhancing catalog with sections and image rendering...");
   function attachFolderMeta(node, prefix = []) {
-    for (const k of Object.keys(node)) {
-      const n = node[k];
-      if (!n.isProduct) {
-        const here = [...prefix, k].join("/");
-        const meta = folderMeta.get(here);
-        if (meta?.thumbnail) n.thumbnail = meta.thumbnail;
-        if (meta?.driveLink) n.driveLink = meta.driveLink;
-        if (meta?.section) n.section = meta.section;
-        if (meta?.category) n.category = meta.category;
-        if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
-        // NEW: Attach image rendering config
-        if (meta?.alignment) n.alignment = meta.alignment;
-        if (meta?.fitting) n.fitting = meta.fitting;
-        if (meta?.scaling) n.scaling = meta.scaling;
-        if (meta?.custom) n.custom = meta.custom;
-        if (n.children) attachFolderMeta(n.children, [...prefix, k]);
+  for (const k of Object.keys(node)) {
+    const n = node[k];
+    if (!n.isProduct) {
+      const here = [...prefix, k].join("/");
+      const meta = folderMeta.get(here);
+      if (meta?.thumbnail) n.thumbnail = meta.thumbnail;
+      if (meta?.driveLink) n.driveLink = meta.driveLink;
+      if (meta?.section) n.section = meta.section;
+      if (meta?.category) n.category = meta.category;
+      if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
+      
+      // FIXED: Attach image rendering config including custom
+      if (meta?.alignment) n.alignment = meta.alignment;
+      if (meta?.fitting) n.fitting = meta.fitting;
+      if (meta?.scaling) n.scaling = meta.scaling;
+      if (meta?.custom) n.custom = meta.custom; // CRITICAL: This must be here
+      
+      // DEBUG: Log when custom is attached
+      if (meta?.custom) {
+        console.log(`🔗 Attached custom "${meta.custom}" to folder: ${here}`);
       }
+      
+      if (n.children) attachFolderMeta(n.children, [...prefix, k]);
     }
   }
+}
   attachFolderMeta(tree);
 
   // Convert empty folders with drive links to products
@@ -387,31 +416,32 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   });
 
   async function scanMissingThumbs(node, pfx = []) {
-    for (const k of Object.keys(node)) {
-      const n = node[k];
-      imageRenderingStats.total++;
-      
-      // Check if item has image rendering config
-      if (n.alignment || n.fitting || n.scaling || n.custom) {
-        imageRenderingStats.withConfig++;
-      }
-      
-      if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
-        const exists = await fileExists(n.thumbnail);
-        if (!exists) {
-          missingThumbFiles.push({ 
-            path: [...pfx, k].join("/"), 
-            thumbnail: n.thumbnail,
-            section: n.section || 'Unknown',
-            hasImageConfig: !!(n.alignment || n.fitting || n.scaling || n.custom)
-          });
-        }
-      }
-      if (!n.isProduct && n.children) {
-        await scanMissingThumbs(n.children, [...pfx, k]);
+  for (const k of Object.keys(node)) {
+    const n = node[k];
+    imageRenderingStats.total++;
+    
+    // FIXED: Check if item has image rendering config INCLUDING custom
+    if (n.alignment || n.fitting || n.scaling || n.custom) {
+      imageRenderingStats.withConfig++;
+    }
+    
+    if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
+      const exists = await fileExists(n.thumbnail);
+      if (!exists) {
+        missingThumbFiles.push({ 
+          path: [...pfx, k].join("/"), 
+          thumbnail: n.thumbnail,
+          section: n.section || 'Unknown',
+          hasImageConfig: !!(n.alignment || n.fitting || n.scaling || n.custom) // INCLUDE custom
+        });
       }
     }
+    if (!n.isProduct && n.children) {
+      await scanMissingThumbs(n.children, [...pfx, k]);
+    }
   }
+}
+
   await scanMissingThumbs(tree);
 
   // Generate enhanced report with image rendering stats
@@ -447,12 +477,12 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
         totalItems: data.totalItems
       })),
       sampleCategories: Object.keys(tree).slice(0, 10).map(cat => ({
-        name: cat,
-        items: tree[cat].count || 0,
-        section: tree[cat].section || 'Featured',
-        topOrder: tree[cat].topOrder || 999,
-        hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling || tree[cat].custom)
-      }))
+  name: cat,
+  items: tree[cat].count || 0,
+  section: tree[cat].section || 'Featured',
+  topOrder: tree[cat].topOrder || 999,
+  hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling || tree[cat].custom) // INCLUDE custom
+}))
     }
   };
 
@@ -574,14 +604,17 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
     "- **Make image 20% larger:** `Scaling: 120%`",
     "- **Crop bottom-right:** `Alignment: bottom-right, Fitting: cover`",
     "- **Fit entire image:** `Fitting: contain`",
+    "- **Pixel-perfect positioning:** `Custom: 50px 30px`", // ADD THIS LINE
+    "- **Custom crop:** `Custom: crop-top`", // ADD THIS LINE
     "",
     "### 🚀 **Next Steps**",
     "1. Update your CSV files with the new image rendering columns",
     "2. Set `Alignment` values: center, top, bottom, left, right, top-left, etc.",
     "3. Set `Fitting` values: fit, fill, contain, cover, scale-down",
     "4. Set `Scaling` values: 120%, 80%, 300px, 1.5",
-    "5. Test the enhanced image rendering system",
-    "6. Only fill columns when you want custom behavior - defaults preserved"
+    "5. Set `Custom` values: 50px 30px, crop-top, center 25%, etc.", // ADD THIS LINE
+    "6. Test the enhanced image rendering system",
+    "7. Only fill columns when you want custom behavior - defaults preserved"
   ].filter(Boolean).join("\n");
 
   console.log("\n" + summary);
