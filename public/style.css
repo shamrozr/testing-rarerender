@@ -561,13 +561,16 @@ body[data-page-type="category"] .section-header {
   width: 100%;
   height: 200px;
   object-fit: cover;
-  background: linear-gradient(135deg, var(--color-soft-gray), var(--color-medium-gray));
+  /* FIXED: Changed to pure white to match website body */
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3rem;
   position: relative;
   overflow: hidden;
+  /* Add border to better define the image area */
+  border: 1px solid var(--color-border-light, #f1f3f4);
 }
 
 /* Fix 3: Ensure ALL images in cards have proper sizing */
