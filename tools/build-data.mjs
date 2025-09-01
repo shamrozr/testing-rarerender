@@ -245,20 +245,12 @@ for (const r of masterRows) {
   const section = (r["Section"] || r["section"] || "").trim() || "Featured";
   const category = (r["Category"] || r["category"] || "").trim();
 
-  // FIXED: Image rendering configuration with better column detection
+  // SIMPLIFIED: Only 3 image rendering columns needed now
   const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || "").trim();
   const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim();
   const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
   
-  // CRITICAL FIX: Multiple ways to detect Custom column
-  const imageCustom = (r["Custom"] || r["custom"] || r["CUSTOM"] || 
-                      r["CustomPosition"] || r["custom_position"] || 
-                      r["Custom Position"] || "").trim();
-
-  // DEBUG: Log when we find custom values
-  if (imageCustom) {
-    console.log(`🎯 Found Custom positioning: "${imageCustom}" for item: ${name}`);
-  }
+  // NOTE: Removed imageCustom - now handled by smart alignment
 
   if (!rel || !name) continue;
   
@@ -294,18 +286,12 @@ for (const r of masterRows) {
       thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
       section: section,
       category: category,
-      // FIXED: Enhanced image rendering config
+      // SIMPLIFIED: Only 3 image rendering config properties
       alignment: imageAlignment,
       fitting: imageFitting,
-      scaling: imageScaling,
-      custom: imageCustom // CRITICAL: This must be here
+      scaling: imageScaling
+      // NOTE: Removed custom property
     };
-    
-    // DEBUG: Log products with custom positioning
-    if (imageCustom) {
-      console.log(`✅ Created product "${name}" with custom: "${imageCustom}"`);
-    }
-    
     totalProducts++;
   } else {
     ensureFolderNode(tree, segs);
@@ -316,16 +302,11 @@ for (const r of masterRows) {
     if (section) existing.section = section;
     if (category) existing.category = category;
     
-    // FIXED: Enhanced image rendering config for folders
+    // SIMPLIFIED: Only 3 image rendering config for folders
     if (imageAlignment) existing.alignment = imageAlignment;
     if (imageFitting) existing.fitting = imageFitting;
     if (imageScaling) existing.scaling = imageScaling;
-    if (imageCustom) existing.custom = imageCustom; // CRITICAL: This must be here
-    
-    // DEBUG: Log folders with custom positioning
-    if (imageCustom) {
-      console.log(`✅ Created folder "${k}" with custom: "${imageCustom}"`);
-    }
+    // NOTE: Removed custom handling
     
     // Handle topOrder for categories (first level items)
     if (segs.length === 1) {
@@ -353,16 +334,11 @@ for (const r of masterRows) {
       if (meta?.category) n.category = meta.category;
       if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
       
-      // FIXED: Attach image rendering config including custom
+      // SIMPLIFIED: Only 3 image rendering config properties
       if (meta?.alignment) n.alignment = meta.alignment;
       if (meta?.fitting) n.fitting = meta.fitting;
       if (meta?.scaling) n.scaling = meta.scaling;
-      if (meta?.custom) n.custom = meta.custom; // CRITICAL: This must be here
-      
-      // DEBUG: Log when custom is attached
-      if (meta?.custom) {
-        console.log(`🔗 Attached custom "${meta.custom}" to folder: ${here}`);
-      }
+      // NOTE: Removed custom handling
       
       if (n.children) attachFolderMeta(n.children, [...prefix, k]);
     }
@@ -421,9 +397,9 @@ for (const r of masterRows) {
     imageRenderingStats.total++;
     
     // FIXED: Check if item has image rendering config INCLUDING custom
-    if (n.alignment || n.fitting || n.scaling || n.custom) {
-      imageRenderingStats.withConfig++;
-    }
+    if (n.alignment || n.fitting || n.scaling) {
+  imageRenderingStats.withConfig++;
+}
     
     if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
       const exists = await fileExists(n.thumbnail);
@@ -432,7 +408,8 @@ for (const r of masterRows) {
           path: [...pfx, k].join("/"), 
           thumbnail: n.thumbnail,
           section: n.section || 'Unknown',
-          hasImageConfig: !!(n.alignment || n.fitting || n.scaling || n.custom) // INCLUDE custom
+          hasImageConfig: !!(n.alignment || n.fitting || n.scaling)
+
         });
       }
     }
@@ -481,7 +458,8 @@ for (const r of masterRows) {
   items: tree[cat].count || 0,
   section: tree[cat].section || 'Featured',
   topOrder: tree[cat].topOrder || 999,
-  hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling || tree[cat].custom) // INCLUDE custom
+  hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling)
+
 }))
     }
   };
@@ -588,13 +566,13 @@ for (const r of masterRows) {
     "",
     "**Master CSV Columns:**",
     "- `Name` - Item/category name",
-    "- `RelativePath` - Catalog path",
+    "- `RelativePath` - Catalog path", 
     "- `Section` - Homepage section (Featured/Trending/Premium/etc)",
     "- `TopOrder` - Sort order within section (lower = first)",
     "- `Category` - Additional categorization",
     "- `Thumbs Path` - Thumbnail image path",
     "- `Drive Link` - Google Drive link for products",
-    "- **`Alignment`** - Image focal point (center/top/bottom/left/right/top-left/etc)",
+    "- **`Alignment`** - Image position (center/top/50px 30px/crop-top/etc) - NOW SUPPORTS PIXELS!",
     "- **`Fitting`** - Image fit method (fit/fill/contain/cover/scale-down)",
     "- **`Scaling`** - Image scale (120%/300px/1.2)",
     "",
