@@ -3,15 +3,20 @@
 
 class CSVCatalogApp {
   constructor() {
-    this.data = null;
-    this.currentBrand = null;
-    this.currentPath = [];
-    this.sections = new Map();
-    this.isLoading = false;
-    
-    // Initialize navigation state from URL
-    this.initializeFromURL();
-  }
+  this.data = null;
+  this.currentBrand = null;
+  this.currentPath = [];
+  this.sections = new Map();
+  this.isLoading = false;
+  
+  // Scroll behavior properties
+  this.lastScrollY = 0;
+  this.scrollThreshold = 100;
+  this.isHeaderCollapsed = false;
+  
+  // Initialize navigation state from URL
+  this.initializeFromURL();
+}
 
   initializeFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -64,29 +69,31 @@ class CSVCatalogApp {
   }
 
   async init() {
-    try {
-      await this.loadData();
-      
-      if (!this.data) {
-        return;
-      }
+  try {
+    await this.loadData();
+    
+    if (!this.data) {
+      return;
+    }
 
-      this.setupBrandInfo();
-      
-      // Check if we need to show category view or homepage
-      if (this.currentPath.length > 0) {
-        this.showCategoryView();
-      } else {
-        this.setupDynamicSections();
-      }
-      
-      this.setupTaxonomy();
-      this.setupFooter();
-      this.setupEventListeners();
-      this.setupFABFunctionality();
-
-      
-    } catch (error) {
+    this.setupBrandInfo();
+    
+    // Check if we need to show category view or homepage
+    if (this.currentPath.length > 0) {
+      this.showCategoryView();
+    } else {
+      this.setupDynamicSections();
+    }
+    
+    this.setupTaxonomy();
+    this.setupFooter();
+    this.setupEventListeners();
+    this.setupFABFunctionality();
+    
+    // NEW: Setup scroll behavior
+    this.setupScrollBehavior();
+    
+  } catch (error) {
       // Silent error handling in production
     }
   }
@@ -212,42 +219,43 @@ class CSVCatalogApp {
 
   // Show category view
   showCategoryView() {
-    // Add body attribute for CSS targeting
-    document.body.setAttribute('data-page-type', 'category');
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Navigate to the current path in the data tree
-    let currentNode = this.data.catalog.tree;
-    let breadcrumbs = [];
-    
-    for (const segment of this.currentPath) {
-      if (currentNode[segment]) {
-        breadcrumbs.push({
-          name: segment,
-          path: breadcrumbs.length === 0 ? segment : breadcrumbs[breadcrumbs.length - 1].path + '/' + segment
-        });
-        currentNode = currentNode[segment].children || {};
-      } else {
-        this.showNotification(`Category "${segment}" not found`);
-        this.navigateToHome();
-        return;
-      }
+  // Add body attribute for CSS targeting
+  document.body.setAttribute('data-page-type', 'category');
+  
+  // FIXED: Reset scroll position first
+  this.resetScrollPosition();
+  
+  // Navigate to the current path in the data tree
+  let currentNode = this.data.catalog.tree;
+  let breadcrumbs = [];
+  
+  for (const segment of this.currentPath) {
+    if (currentNode[segment]) {
+      breadcrumbs.push({
+        name: segment,
+        path: breadcrumbs.length === 0 ? segment : breadcrumbs[breadcrumbs.length - 1].path + '/' + segment
+      });
+      currentNode = currentNode[segment].children || {};
+    } else {
+      this.showNotification(`Category "${segment}" not found`);
+      this.navigateToHome();
+      return;
     }
-
-    // Update hero section for category view
-    this.updateHeroForCategory(breadcrumbs);
-
-    // Hide taxonomy section
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'none';
-    }
-
-    // Show category contents
-    this.renderCategoryContents(currentNode, breadcrumbs);
   }
+
+  // Update hero section for category view
+  this.updateHeroForCategory(breadcrumbs);
+
+  // Hide taxonomy section
+  const taxonomySection = document.querySelector('.taxonomy-section');
+  if (taxonomySection) {
+    taxonomySection.style.display = 'none';
+  }
+
+  // Show category contents
+  this.renderCategoryContents(currentNode, breadcrumbs);
+}
+
 
   updateHeroForCategory(breadcrumbs) {
     const heroTitle = document.getElementById('heroTitle');
@@ -452,43 +460,43 @@ class CSVCatalogApp {
     }
   }
   navigateToHome() {
-    // Remove category page attribute
-    document.body.removeAttribute('data-page-type');
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.delete('path');
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ brand: this.currentBrand }, '', newURL);
-    
-    // Reset state
-    this.currentPath = [];
-    
-    // Re-render homepage
-    this.setupDynamicSections();
-    
-    // Show taxonomy section
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'block';
-    }
-
-    // Reset hero
-    this.setupBrandInfo();
-    
-    // Remove breadcrumbs
-    const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
-    if (existingBreadcrumbs) {
-      existingBreadcrumbs.remove();
-    }
+  // Remove category page attribute
+  document.body.removeAttribute('data-page-type');
+  
+  // FIXED: Reset scroll position first
+  this.resetScrollPosition();
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.delete('path');
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
   }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ brand: this.currentBrand }, '', newURL);
+  
+  // Reset state
+  this.currentPath = [];
+  
+  // Re-render homepage
+  this.setupDynamicSections();
+  
+  // Show taxonomy section
+  const taxonomySection = document.querySelector('.taxonomy-section');
+  if (taxonomySection) {
+    taxonomySection.style.display = 'block';
+  }
+
+  // Reset hero
+  this.setupBrandInfo();
+  
+  // Remove breadcrumbs
+  const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+  if (existingBreadcrumbs) {
+    existingBreadcrumbs.remove();
+  }
+}
 
   setupBrandInfo() {
     // Get brand from URL first - THIS IS CRITICAL
@@ -1271,31 +1279,101 @@ getScaleTransform(scaling) {
       this.handleBrowserNavigation();
     });
   }
+// ADD this method after setupEventListeners():
+setupScrollBehavior() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+
+  let ticking = false;
+
+  const handleScroll = () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        this.updateHeaderVisibility();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  };
+
+  // Throttled scroll listener
+  window.addEventListener('scroll', handleScroll, { passive: true });
+}
+
+// ADD this method after setupScrollBehavior():
+updateHeaderVisibility() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+
+  const currentScrollY = window.pageYOffset;
+  const scrollingDown = currentScrollY > this.lastScrollY;
+  const pastThreshold = currentScrollY > this.scrollThreshold;
+
+  if (pastThreshold && scrollingDown && !this.isHeaderCollapsed) {
+    // Scrolling down past threshold - collapse header
+    header.classList.add('collapsed');
+    this.isHeaderCollapsed = true;
+  } else if (pastThreshold && !scrollingDown && this.isHeaderCollapsed) {
+    // Scrolling up past threshold - show header
+    header.classList.remove('collapsed');
+    this.isHeaderCollapsed = false;
+  } else if (!pastThreshold) {
+    // At top of page - always show header
+    header.classList.remove('collapsed');
+    this.isHeaderCollapsed = false;
+  }
+
+  this.lastScrollY = currentScrollY;
+}
+
+// ADD this method to reset scroll position:
+resetScrollPosition() {
+  // Reset header state
+  const header = document.querySelector('.header');
+  if (header) {
+    header.classList.remove('collapsed');
+  }
+  this.isHeaderCollapsed = false;
+  this.lastScrollY = 0;
+  
+  // Force scroll to top immediately
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: 'auto' // Instant scroll, no smooth animation
+  });
+  
+  // Double-check scroll position after brief delay
+  setTimeout(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, 50);
+}
 
   navigateToPath(path) {
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Build new path
-    const pathSegments = path.split('/').filter(Boolean);
-    this.currentPath = pathSegments;
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.set('path', path);
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ 
-      path: pathSegments, 
-      brand: this.currentBrand 
-    }, '', newURL);
-    
-    // Show category view
-    this.showCategoryView();
+  // FIXED: Reset scroll position first
+  this.resetScrollPosition();
+  
+  // Build new path
+  const pathSegments = path.split('/').filter(Boolean);
+  this.currentPath = pathSegments;
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('path', path);
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
   }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ 
+    path: pathSegments, 
+    brand: this.currentBrand 
+  }, '', newURL);
+  
+  // Show category view
+  this.showCategoryView();
+}
+
 
   openProduct(driveLink) {
     this.showNotification('Opening product...');
@@ -1303,40 +1381,39 @@ getScaleTransform(scaling) {
   }
 
   navigateToCategory(category) {
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Build new path
-    let newPath;
-    if (this.currentPath.length === 0) {
-      // From homepage
-      newPath = [category];
-    } else {
-      // From current path
-      newPath = [...this.currentPath, category];
-    }
-    
-    // Update state
-    this.currentPath = newPath;
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.set('path', newPath.join('/'));
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ 
-      category, 
-      brand: this.currentBrand, 
-      path: newPath 
-    }, '', newURL);
-    
-    // Show category view
-    this.showCategoryView();
+  // FIXED: Reset scroll position first
+  this.resetScrollPosition();
+  
+  // Build new path
+  let newPath;
+  if (this.currentPath.length === 0) {
+    // From homepage
+    newPath = [category];
+  } else {
+    // From current path
+    newPath = [...this.currentPath, category];
   }
-
+  
+  // Update state
+  this.currentPath = newPath;
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('path', newPath.join('/'));
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ 
+    category, 
+    brand: this.currentBrand, 
+    path: newPath 
+  }, '', newURL);
+  
+  // Show category view
+  this.showCategoryView();
+}
   // Force brand refresh when URL changes
   handleBrandNavigation() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1363,12 +1440,15 @@ getScaleTransform(scaling) {
   }
 
   handleBrowserNavigation() {
-    // Re-initialize from URL with FORCE
-    this.initializeFromURL();
-    
-    // Force brand refresh
-    this.handleBrandNavigation();
-  }
+  // Re-initialize from URL
+  this.initializeFromURL();
+  
+  // FIXED: Reset scroll position for browser navigation
+  this.resetScrollPosition();
+  
+  // Force brand refresh
+  this.handleBrandNavigation();
+}
 
   // Enhanced search functionality
   handleSearch(query) {
