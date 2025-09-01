@@ -837,10 +837,9 @@ class CSVCatalogApp {
   createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
-  // FIXED: Make sure ALL image config properties are passed through
+  // Smart image config extraction (alignment can now handle custom positioning)
   const imageConfig = this.extractImageConfig(item);
   
-  // DEBUG: Log what we extracted
   console.log('🔍 Image config for', item.title, ':', imageConfig);
   
   const imageStyles = this.generateImageStyles(imageConfig);
@@ -908,7 +907,6 @@ debugImageConfig() {
   }
 }
 extractImageConfig(item) {
-  // Debug log to see what data we have
   console.log('Item data for image config:', item);
   
   return {
@@ -919,36 +917,33 @@ extractImageConfig(item) {
              item.image_fit || item.imageFit || item['Image Fit'] || 'cover',
     scaling: item.scaling || item.Scaling || item.SCALING || 
              item.image_scale || item.imageScale || item['Image Scale'] || 
-             item.scale || item.Scale || null,
-    // FIXED: Better custom detection with more variations
-    custom: item.custom || item.Custom || item.CUSTOM || 
-            item.customPosition || item.custom_position || item['Custom Position'] ||
-            item.customPos || item.custom_pos || null
+             item.scale || item.Scale || null
+    // NOTE: Removed custom - now handled in smart alignment
   };
 }
 
 // 2. REPLACE the generateImageStyles function in public/script.js:
 generateImageStyles(config) {
-  console.log('🎯 Generating styles with config:', config); // DEBUG LOG
+  console.log('🎯 Generating styles with config:', config);
   
   const styles = [];
   
-  // FIXED: Check if custom positioning is requested (any non-empty value)
-  const hasCustom = config.custom && config.custom.trim() !== '';
+  // SMART ALIGNMENT: Detect if alignment contains pixel/custom values
+  const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
   
-  if (hasCustom) {
-    console.log('🔧 Using CUSTOM positioning:', config.custom); // DEBUG LOG
+  if (isCustomAlignment) {
+    console.log('🔧 Using CUSTOM positioning from alignment:', config.alignment);
     
     // Custom positioning: use object-fit: none for pixel-perfect control
     styles.push(`object-fit: none`);
     
-    // Parse and apply custom position
-    const customPos = this.parseCustomPosition(config.custom, config.alignment);
+    // Parse and apply custom position from alignment value
+    const customPos = this.parseSmartAlignment(config.alignment);
     styles.push(`object-position: ${customPos}`);
     
-    console.log('✨ Applied custom position:', customPos); // DEBUG LOG
+    console.log('✨ Applied smart custom position:', customPos);
   } else {
-    console.log('📐 Using STANDARD positioning'); // DEBUG LOG
+    console.log('📐 Using STANDARD positioning');
     
     // Standard positioning: use alignment + fitting
     const fitMethod = this.normalizeFitMethod(config.fitting);
@@ -972,51 +967,40 @@ generateImageStyles(config) {
   styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
   
   const finalStyles = styles.join('; ');
-  console.log('🎨 Final styles:', finalStyles); // DEBUG LOG
+  console.log('🎨 Final styles:', finalStyles);
   
   return finalStyles;
 }
 
+isCustomAlignmentValue(alignment) {
+  if (!alignment || alignment.trim() === '') {
+    return false;
+  }
+  
+  const alignmentStr = String(alignment).trim().toLowerCase();
+  
+  // Check for pixel values
+  if (alignmentStr.includes('px')) {
+    return true;
+  }
+  
+  // Check for percentage values (but not single percentages like "50%")
+  if (alignmentStr.match(/\d+%\s+\d+%/)) {
+    return true;
+  }
 // ADD this NEW function to public/script.js (after generateImageStyles):
 
-generateCustomImageStyles(config) {
-  const styles = [];
-  
-  // Custom positioning uses 'none' object-fit for pixel-perfect control
-  styles.push(`object-fit: none`);
-  
-  // Parse custom position (e.g., "50px 30px", "-20px 0px", "center top")
-  const customPos = this.parseCustomPosition(config.custom, config.alignment);
-  styles.push(`object-position: ${customPos}`);
-  
-  // Apply scaling if specified
-  const scaleTransform = this.getScaleTransform(config.scaling);
-  if (scaleTransform) {
-    styles.push(`transform: ${scaleTransform}`);
-    styles.push(`transform-origin: center`);
+
+parseSmartAlignment(alignment) {
+  if (!alignment) {
+    return 'center center';
   }
   
-  // Base styles with pure white background
-  styles.push(`width: 100%`);
-  styles.push(`height: 100%`);
-  styles.push(`background: #ffffff`); // Pure white background
-  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
-  
-  return styles.join('; ');
-}
-
-// ADD this NEW function to public/script.js (after generateCustomImageStyles):
-
-parseCustomPosition(customValue, fallbackAlignment = 'center') {
-  if (!customValue || customValue.trim() === '') {
-    return this.getObjectPosition(fallbackAlignment);
-  }
-  
-  const custom = String(customValue).trim().toLowerCase();
-  console.log('🔍 Parsing custom position:', custom); // DEBUG LOG
+  const alignmentStr = String(alignment).trim().toLowerCase();
+  console.log('🔍 Parsing smart alignment:', alignmentStr);
   
   // Handle pixel values (e.g., "50px 30px", "-20px 0px")
-  const pixelMatch = custom.match(/^(-?\d+px)\s+(-?\d+px)$/);
+  const pixelMatch = alignmentStr.match(/^(-?\d+px)\s+(-?\d+px)$/);
   if (pixelMatch) {
     const result = `${pixelMatch[1]} ${pixelMatch[2]}`;
     console.log('✅ Matched pixel pattern:', result);
@@ -1024,7 +1008,7 @@ parseCustomPosition(customValue, fallbackAlignment = 'center') {
   }
   
   // Handle single pixel value (applies to both x and y)
-  const singlePixelMatch = custom.match(/^(-?\d+px)$/);
+  const singlePixelMatch = alignmentStr.match(/^(-?\d+px)$/);
   if (singlePixelMatch) {
     const result = `${singlePixelMatch[1]} ${singlePixelMatch[1]}`;
     console.log('✅ Matched single pixel pattern:', result);
@@ -1032,7 +1016,7 @@ parseCustomPosition(customValue, fallbackAlignment = 'center') {
   }
   
   // Handle percentage values (e.g., "30% 70%")
-  const percentMatch = custom.match(/^(-?\d+%)\s+(-?\d+%)$/);
+  const percentMatch = alignmentStr.match(/^(-?\d+%)\s+(-?\d+%)$/);
   if (percentMatch) {
     const result = `${percentMatch[1]} ${percentMatch[2]}`;
     console.log('✅ Matched percentage pattern:', result);
@@ -1040,40 +1024,38 @@ parseCustomPosition(customValue, fallbackAlignment = 'center') {
   }
   
   // Handle mixed values (e.g., "50px 30%", "center 20px")
-  const mixedMatch = custom.match(/^(\S+)\s+(\S+)$/);
+  const mixedMatch = alignmentStr.match(/^(\S+)\s+(\S+)$/);
   if (mixedMatch) {
     const result = `${mixedMatch[1]} ${mixedMatch[2]}`;
     console.log('✅ Matched mixed pattern:', result);
     return result;
   }
   
-  // Handle preset positions with custom syntax
+  // Handle preset crop commands
   const presetMap = {
-    'top-left': 'left top',
-    'top-center': 'center top', 
-    'top-right': 'right top',
-    'center-left': 'left center',
-    'center-center': 'center center',
-    'center-right': 'right center', 
-    'bottom-left': 'left bottom',
-    'bottom-center': 'center bottom',
-    'bottom-right': 'right bottom',
     'crop-top': 'center 0%',
     'crop-bottom': 'center 100%',
     'crop-left': '0% center',
-    'crop-right': '100% center'
+    'crop-right': '100% center',
+    'crop-top-left': '0% 0%',
+    'crop-top-right': '100% 0%',
+    'crop-bottom-left': '0% 100%',
+    'crop-bottom-right': '100% 100%'
   };
   
-  if (presetMap[custom]) {
-    const result = presetMap[custom];
-    console.log('✅ Matched preset pattern:', result);
+  if (presetMap[alignmentStr]) {
+    const result = presetMap[alignmentStr];
+    console.log('✅ Matched crop preset:', result);
     return result;
   }
   
-  // If no pattern matches, try to use it as-is
-  console.log('⚠️ No pattern matched, using as-is:', custom);
-  return custom;
+  // If no custom pattern matches, fall back to standard alignment
+  console.log('⚠️ No custom pattern matched, using standard alignment');
+  return this.getObjectPosition(alignment);
 }
+// ADD this NEW function to public/script.js (after generateCustomImageStyles):
+
+
 /**
  * Normalize fit method values
  */
