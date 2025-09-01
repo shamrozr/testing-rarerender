@@ -76,7 +76,21 @@ class CSVCatalogApp {
       return;
     }
 
+    // DEBUG: Verify topOrder data is available
+    console.log('🔍 Checking topOrder data after load...');
+    if (this.data.catalog && this.data.catalog.tree) {
+      Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+        const topOrder = item.topOrder || item['Top Order'] || item.top_order;
+        if (topOrder !== undefined) {
+          console.log(`✅ ${key} has topOrder: ${topOrder}`);
+        } else {
+          console.log(`❌ ${key} missing topOrder`);
+        }
+      });
+    }
+
     this.setupBrandInfo();
+    
     
     // Check if we need to show category view or homepage
     if (this.currentPath.length > 0) {
@@ -99,35 +113,40 @@ class CSVCatalogApp {
   }
 
   async loadData() {
-    try {
-      this.showLoading();
+  try {
+    this.showLoading();
+    
+    const response = await fetch('/data.json?v=' + Date.now());
+    if (response.ok) {
+      this.data = await response.json();
       
-      const response = await fetch('/data.json?v=' + Date.now());
-      if (response.ok) {
-        this.data = await response.json();
-        
-        // CRITICAL: Don't override currentBrand if it's already set from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const brandFromURL = urlParams.get('brand');
-        
-        const availableBrands = Object.keys(this.data.brands || {});
-        
-        // ALWAYS prioritize URL brand
-        if (brandFromURL && this.data.brands[brandFromURL]) {
-          this.currentBrand = brandFromURL;
-        } else if (!this.currentBrand && availableBrands.length > 0) {
-          this.currentBrand = availableBrands[0];
-        } else if (availableBrands.length === 0) {
-          throw new Error('No brands available');
-        }
-        
-      } else {
-        throw new Error(`Failed to load data: ${response.status}`);
+      // CRITICAL: Don't override currentBrand if it's already set from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const brandFromURL = urlParams.get('brand');
+      
+      const availableBrands = Object.keys(this.data.brands || {});
+      
+      // ALWAYS prioritize URL brand
+      if (brandFromURL && this.data.brands[brandFromURL]) {
+        this.currentBrand = brandFromURL;
+      } else if (!this.currentBrand && availableBrands.length > 0) {
+        this.currentBrand = availableBrands[0];
+      } else if (availableBrands.length === 0) {
+        throw new Error('No brands available');
       }
-    } catch (error) {
-      this.loadMockData();
-    } finally {
-      this.hideLoading();
+      
+      // DEBUG: Check if CSV data is properly loaded
+      console.log('🔍 Loaded data from data.json');
+      this.debugCSVData();
+      
+    } else {
+      throw new Error(`Failed to load data: ${response.status}`);
+    }
+  } catch (error) {
+    console.log('⚠️ Loading mock data instead');
+    this.loadMockData();
+  } finally {
+    this.hideLoading();
     }
   }
 
@@ -368,11 +387,32 @@ addBreadcrumbNavigation(breadcrumbs) {
 
   // REPLACE the entire renderCategoryContents function with this enhanced version:
 
+// REPLACE the entire renderCategoryContents function with this FIXED version:
+
 renderCategoryContents(currentNode, breadcrumbs) {
   const container = document.getElementById('dynamicSections');
   if (!container) return;
 
   const items = Object.entries(currentNode).map(([key, item]) => {
+    // FIXED: Enhanced topOrder extraction with debugging
+    const extractTopOrder = (item) => {
+      const topOrderValue = item.topOrder || item['Top Order'] || item.top_order || 
+                           item.TopOrder || item.TOP_ORDER || item['TOP ORDER'] ||
+                           item.order || item.Order || item.ORDER ||
+                           item.priority || item.Priority || item.PRIORITY;
+      
+      if (topOrderValue !== undefined && topOrderValue !== null && topOrderValue !== '') {
+        const parsed = parseInt(topOrderValue);
+        if (!isNaN(parsed)) {
+          console.log(`🎯 Found topOrder for ${key}: ${topOrderValue} → ${parsed}`);
+          return parsed;
+        }
+      }
+      
+      console.log(`⚠️ No valid topOrder found for ${key}, using default 999`);
+      return 999;
+    };
+
     if (item.isProduct) {
       return {
         key,
@@ -382,7 +422,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
         thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
         isProduct: true,
         driveLink: item.driveLink,
-        topOrder: item.topOrder || item['Top Order'] || item.top_order || 999, // CSV support
+        topOrder: extractTopOrder(item),
         alignment: item.alignment || item.Alignment || item.ALIGNMENT,
         fitting: item.fitting || item.Fitting || item.FITTING,
         scaling: item.scaling || item.Scaling || item.SCALING
@@ -395,7 +435,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
         count: item.count || 0,
         thumbnail: item.thumbnail || this.getEmojiForCategory(key),
         isProduct: false,
-        topOrder: item.topOrder || item['Top Order'] || item.top_order || 999, // CSV support
+        topOrder: extractTopOrder(item),
         alignment: item.alignment || item.Alignment || item.ALIGNMENT,
         fitting: item.fitting || item.Fitting || item.FITTING,
         scaling: item.scaling || item.Scaling || item.SCALING
@@ -417,36 +457,54 @@ renderCategoryContents(currentNode, breadcrumbs) {
     return;
   }
 
-  // ENHANCED SORTING: Separate folders and products
+  // ENHANCED SORTING with detailed logging
   const folders = items.filter(item => !item.isProduct);
   const products = items.filter(item => item.isProduct);
 
-  // Sort folders: topOrder first, then by count (descending), then alphabetically
+  console.log(`📊 Sorting ${folders.length} folders and ${products.length} products`);
+
+  // Sort folders: topOrder → count → alphabetical
   folders.sort((a, b) => {
+    console.log(`🔄 Comparing folders: ${a.title}(order:${a.topOrder}, count:${a.count}) vs ${b.title}(order:${b.topOrder}, count:${b.count})`);
+    
     // First by topOrder (ascending - lower numbers first)
     if (a.topOrder !== b.topOrder) {
-      return a.topOrder - b.topOrder;
+      const result = a.topOrder - b.topOrder;
+      console.log(`  → topOrder sort: ${result > 0 ? b.title : a.title} wins`);
+      return result;
     }
     // Then by count (descending - higher counts first)
     if (a.count !== b.count) {
-      return b.count - a.count;
+      const result = b.count - a.count;
+      console.log(`  → count sort: ${result < 0 ? b.title : a.title} wins`);
+      return result;
     }
     // Finally alphabetically
-    return a.title.localeCompare(b.title);
+    const result = a.title.localeCompare(b.title);
+    console.log(`  → alphabetical sort: ${result < 0 ? a.title : b.title} wins`);
+    return result;
   });
 
-  // Sort products: topOrder first, then alphabetically
+  // Sort products: topOrder → alphabetical
   products.sort((a, b) => {
+    console.log(`🔄 Comparing products: ${a.title}(order:${a.topOrder}) vs ${b.title}(order:${b.topOrder})`);
+    
     // First by topOrder (ascending - lower numbers first)
     if (a.topOrder !== b.topOrder) {
-      return a.topOrder - b.topOrder;
+      const result = a.topOrder - b.topOrder;
+      console.log(`  → topOrder sort: ${result > 0 ? b.title : a.title} wins`);
+      return result;
     }
     // Then alphabetically
-    return a.title.localeCompare(b.title);
+    const result = a.title.localeCompare(b.title);
+    console.log(`  → alphabetical sort: ${result < 0 ? a.title : b.title} wins`);
+    return result;
   });
 
   // Combine: folders first, then products
   const sortedItems = [...folders, ...products];
+  
+  console.log(`✅ Final sort order: ${sortedItems.map(item => `${item.title}(${item.topOrder})`).join(', ')}`);
 
   const gridClass = this.getGridClass(sortedItems.length);
   const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
@@ -469,7 +527,33 @@ renderCategoryContents(currentNode, breadcrumbs) {
     }, 10);
   }
 }
-
+debugCSVData() {
+  console.log('=== CSV DATA DEBUG ===');
+  console.log('Full data object:', this.data);
+  
+  if (this.data && this.data.catalog && this.data.catalog.tree) {
+    console.log('Catalog tree structure:');
+    
+    // Walk through the tree and log topOrder values
+    const walkTree = (node, path = []) => {
+      Object.entries(node).forEach(([key, item]) => {
+        const currentPath = [...path, key];
+        const topOrder = item.topOrder || item['Top Order'] || item.top_order || 'NOT FOUND';
+        
+        console.log(`${currentPath.join('/')} - topOrder: ${topOrder}`, item);
+        
+        if (item.children && !item.isProduct) {
+          walkTree(item.children, currentPath);
+        }
+      });
+    };
+    
+    walkTree(this.data.catalog.tree);
+  } else {
+    console.log('❌ No catalog tree found in data');
+  }
+  console.log('=== END DEBUG ===');
+}
 // ADD this new helper function after renderCategoryContents:
 
 /**
