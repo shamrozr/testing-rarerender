@@ -1019,11 +1019,14 @@ normalizeFitMethod(fitting) {
  */
 getObjectPosition(alignment) {
   const positionMap = {
+    // Basic positions
     'center': 'center center',
     'top': 'center top',
     'bottom': 'center bottom', 
     'left': 'left center',
     'right': 'right center',
+    
+    // Corner positions
     'top-left': 'left top',
     'top_left': 'left top',
     'topleft': 'left top',
@@ -1035,11 +1038,51 @@ getObjectPosition(alignment) {
     'bottomleft': 'left bottom',
     'bottom-right': 'right bottom',
     'bottom_right': 'right bottom',
-    'bottomright': 'right bottom'
+    'bottomright': 'right bottom',
+    
+    // Edge centers (the ones you asked about!)
+    'center-top': 'center top',
+    'center_top': 'center top',
+    'centertop': 'center top',
+    'center-bottom': 'center bottom',
+    'center_bottom': 'center bottom', 
+    'centerbottom': 'center bottom',
+    'left-center': 'left center',
+    'left_center': 'left center',
+    'leftcenter': 'left center',
+    'right-center': 'right center',
+    'right_center': 'right center',
+    'rightcenter': 'right center',
+    
+    // Alternative spellings
+    'center top': 'center top',
+    'center bottom': 'center bottom',
+    'left center': 'left center', 
+    'right center': 'right center',
+    'top center': 'center top',
+    'bottom center': 'center bottom'
   };
   
   const normalized = (alignment || '').toLowerCase().replace(/[_-]/g, '-');
-  return positionMap[normalized] || 'center center';
+  
+  // Check direct mapping first
+  if (positionMap[normalized]) {
+    return positionMap[normalized];
+  }
+  
+  // Check with spaces normalized
+  const withSpaces = normalized.replace(/-/g, ' ');
+  if (positionMap[withSpaces]) {
+    return positionMap[withSpaces];
+  }
+  
+  // Handle percentage values (e.g., "50% 100%", "center 30%")
+  if (alignment.includes('%') || alignment.includes('center') || alignment.includes('left') || alignment.includes('right')) {
+    return alignment; // Pass through as-is for percentage values
+  }
+  
+  // Default fallback
+  return 'center center';
 }
 
 /**
