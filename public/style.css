@@ -584,13 +584,19 @@ body[data-page-type="category"] .section-header {
 .card-image {
   width: 100%;
   height: 200px;
-  overflow: hidden;
-  position: relative;
+  object-fit: cover;
+  background: #ffffff !important; /* FIXED: Pure white background */
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 3rem;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border-light, #f1f3f4);
 }
-
+.card-image:not(:has(img)) {
+  background: #ffffff !important;
+}
 .card-image img {
   width: 100%;
   height: 100%;
@@ -700,6 +706,8 @@ body[data-page-type="category"] .section-header {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: #ffffff; /* FIXED: Pure white background */
+  border: 1px solid var(--color-border-light, #f1f3f4);
 }
 
 /* Enhanced Card Image with Advanced Rendering */
@@ -708,6 +716,9 @@ body[data-page-type="category"] .section-header {
   height: 100% !important;
   display: block;
   transition: all var(--transition-smooth);
+  
+  /* FIXED: Pure white background for any empty spaces */
+  background: #ffffff !important;
   
   /* Ensure image quality */
   image-rendering: -webkit-optimize-contrast;
@@ -771,7 +782,7 @@ body[data-page-type="category"] .section-header {
 
 /* Loading state for images */
 .card-image-enhanced[src=""] {
-  background: linear-gradient(135deg, var(--color-soft-gray), var(--color-medium-gray));
+  background: #ffffff !important; /* Pure white instead of gradient */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -843,7 +854,7 @@ body[data-page-type="category"] .section-header {
   justify-content: center;
   width: 100%;
   height: 100%;
-  background: var(--color-soft-gray);
+  background: #ffffff !important; /* Pure white background */
   font-size: 3rem;
 }
 /* Taxonomy Section */
