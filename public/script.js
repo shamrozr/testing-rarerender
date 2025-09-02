@@ -396,22 +396,29 @@ renderCategoryContents(currentNode, breadcrumbs) {
   const items = Object.entries(currentNode).map(([key, item]) => {
     // FIXED: Enhanced topOrder extraction with better fallback
     const extractTopOrder = (item) => {
-      const topOrderValue = item.topOrder || item['Top Order'] || item.top_order || 
-                           item.TopOrder || item.TOP_ORDER || item['TOP ORDER'] ||
-                           item.order || item.Order || item.ORDER ||
-                           item.priority || item.Priority || item.PRIORITY;
-      
-      if (topOrderValue !== undefined && topOrderValue !== null && topOrderValue !== '') {
-        const parsed = parseInt(topOrderValue);
-        if (!isNaN(parsed)) {
-          console.log(`🎯 Found topOrder for ${key}: ${topOrderValue} → ${parsed}`);
-          return parsed;
-        }
-      }
-      
-      console.log(`⚠️ No valid topOrder found for ${key}, using default 999`);
-      return 999;
-    };
+  // FIXED: Check TopOrder first (your exact column name)
+  const topOrderValue = item.TopOrder || item.topOrder || item['Top Order'] || item.top_order || 
+                        item.ORDER || item.order || item.Order ||
+                        item.PRIORITY || item.priority || item.Priority;
+  
+  console.log(`🔍 Checking TopOrder for ${key}:`, {
+    TopOrder: item.TopOrder,
+    topOrder: item.topOrder,
+    'Top Order': item['Top Order'],
+    raw_item: item
+  });
+  
+  if (topOrderValue !== undefined && topOrderValue !== null && topOrderValue !== '') {
+    const parsed = parseInt(topOrderValue);
+    if (!isNaN(parsed)) {
+      console.log(`🎯 SUCCESS: Found TopOrder for ${key}: ${topOrderValue} → ${parsed}`);
+      return parsed;
+    }
+  }
+  
+  console.log(`❌ NO TopOrder found for ${key}, using default 999`);
+  return 999;
+};
 
     if (item.isProduct) {
       return {
