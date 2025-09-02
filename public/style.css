@@ -658,12 +658,10 @@ body[data-page-type="category"] .section-header {
 }
 
 .content-card[data-is-product="true"] {
-  border-left: 4px solid var(--color-primary);
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.02), var(--color-surface-elevated));
 }
 
 .content-card[data-is-product="true"]:hover {
-  border-left-color: var(--color-primary);
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), var(--color-surface-elevated));
   border-color: var(--color-primary);
 }
