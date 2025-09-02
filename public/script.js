@@ -385,18 +385,21 @@ addBreadcrumbNavigation(breadcrumbs) {
   }
 }
 
-  // LOCATION: public/script.js  
-// REPLACE: Find the renderCategoryContents() function (around line 600) and replace it entirely:
+  // LOCATION: public/script.js
+// REPLACE: The entire renderCategoryContents function (around line 600) with this ENHANCED version:
 
 renderCategoryContents(currentNode, breadcrumbs) {
   const container = document.getElementById('dynamicSections');
   if (!container) return;
 
-  console.log('🔍 CATEGORY DEBUG: Current node structure:', currentNode);
+  console.log('🔍 DEEP NESTED DEBUG: Current node structure:', currentNode);
+  console.log('🗂️ BREADCRUMBS:', breadcrumbs.map(b => b.name).join(' > '));
 
   const items = Object.entries(currentNode).map(([key, item]) => {
+    const currentPath = breadcrumbs.length > 0 ? breadcrumbs.map(b => b.name).join('/') + '/' + key : key;
+    
     // COMPREHENSIVE DEBUG: Check ALL possible TopOrder variations
-    console.log(`🔍 CATEGORY RAW ITEM DEBUG for ${key}:`, {
+    console.log(`🔍 DEEP ITEM DEBUG for ${key} at path ${currentPath}:`, {
       fullItem: item,
       keys: Object.keys(item),
       TopOrder: item.TopOrder,
@@ -406,17 +409,22 @@ renderCategoryContents(currentNode, breadcrumbs) {
       Order: item.Order,
       order: item.order,
       Priority: item.Priority,
-      priority: item.priority
+      priority: item.priority,
+      Rank: item.Rank,
+      rank: item.rank,
+      Sort: item.Sort,
+      sort: item.sort
     });
 
-    const extractTopOrder = (item) => {
-      // Check EVERY possible variation including your exact column name
+    const extractTopOrder = (item, itemKey, fullPath) => {
+      // Check EVERY possible variation
       const variations = [
         'TopOrder', 'topOrder', 'Top Order', 'TOP ORDER',
         'Order', 'order', 'ORDER',
         'Priority', 'priority', 'PRIORITY',
         'Rank', 'rank', 'RANK',
-        'Sort', 'sort', 'SORT'
+        'Sort', 'sort', 'SORT',
+        'Position', 'position', 'POSITION'
       ];
       
       for (const variation of variations) {
@@ -424,17 +432,19 @@ renderCategoryContents(currentNode, breadcrumbs) {
         if (value !== undefined && value !== null && value !== '') {
           const parsed = parseInt(value);
           if (!isNaN(parsed)) {
-            console.log(`✅ CATEGORY SUCCESS: Found ${variation} for ${key}: ${value} → ${parsed}`);
+            console.log(`✅ DEEP SUCCESS: Found ${variation} for ${itemKey} at ${fullPath}: ${value} → ${parsed}`);
             return parsed;
           } else {
-            console.log(`⚠️ CATEGORY Found ${variation} but can't parse: ${value}`);
+            console.log(`⚠️ DEEP Found ${variation} but can't parse: ${value} for ${itemKey}`);
           }
         }
       }
       
-      console.log(`❌ CATEGORY NO TopOrder found for ${key}, using default 999`);
+      console.log(`❌ DEEP NO TopOrder found for ${itemKey} at ${fullPath}, using default 999`);
       return 999;
     };
+
+    const topOrder = extractTopOrder(item, key, currentPath);
 
     if (item.isProduct) {
       return {
@@ -445,7 +455,8 @@ renderCategoryContents(currentNode, breadcrumbs) {
         thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
         isProduct: true,
         driveLink: item.driveLink,
-        topOrder: extractTopOrder(item),
+        topOrder: topOrder,
+        fullPath: currentPath,
         alignment: item.alignment || item.Alignment || item.ALIGNMENT,
         fitting: item.fitting || item.Fitting || item.FITTING,
         scaling: item.scaling || item.Scaling || item.SCALING
@@ -458,7 +469,8 @@ renderCategoryContents(currentNode, breadcrumbs) {
         count: item.count || 0,
         thumbnail: item.thumbnail || this.getEmojiForCategory(key),
         isProduct: false,
-        topOrder: extractTopOrder(item),
+        topOrder: topOrder,
+        fullPath: currentPath,
         alignment: item.alignment || item.Alignment || item.ALIGNMENT,
         fitting: item.fitting || item.Fitting || item.FITTING,
         scaling: item.scaling || item.Scaling || item.SCALING
@@ -480,23 +492,23 @@ renderCategoryContents(currentNode, breadcrumbs) {
     return;
   }
 
-  // DEBUG: Show extracted topOrder values
-  console.log('🎯 CATEGORY EXTRACTED TopOrder VALUES:', items.map(item => ({
-    name: item.title,
-    topOrder: item.topOrder,
-    isProduct: item.isProduct
-  })));
+  // DEBUG: Show extracted topOrder values with full paths
+  console.log('🎯 DEEP EXTRACTED TopOrder VALUES:');
+  items.forEach(item => {
+    console.log(`   ${item.fullPath}: TopOrder=${item.topOrder} (${item.isProduct ? 'PRODUCT' : 'FOLDER'})`);
+  });
 
-  // FIXED: Sort with TopOrder as ABSOLUTE PRIORITY for ALL items
-  console.log(`📊 CATEGORY Sorting ${items.length} items by TopOrder (absolute priority)`);
+  // ENHANCED SORTING: TopOrder has ABSOLUTE PRIORITY at ANY depth
+  const currentDepth = breadcrumbs.length;
+  console.log(`📊 DEEP SORTING ${items.length} items at depth ${currentDepth} by TopOrder (absolute priority)`);
 
   items.sort((a, b) => {
-    console.log(`🔄 CATEGORY Comparing: ${a.title}(topOrder:${a.topOrder}) vs ${b.title}(topOrder:${b.topOrder})`);
+    console.log(`🔄 DEEP Comparing: ${a.title}(${a.topOrder}) vs ${b.title}(${b.topOrder})`);
     
-    // TopOrder has ABSOLUTE PRIORITY - no separation by type
+    // TopOrder has ABSOLUTE PRIORITY - works at any depth
     if (a.topOrder !== b.topOrder) {
       const result = a.topOrder - b.topOrder;
-      console.log(`  → 🏆 CATEGORY TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
+      console.log(`  → 🏆 DEEP TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
       return result;
     }
     
@@ -505,7 +517,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
       return a.isProduct ? 1 : -1; // Folders first
     }
     
-    // If same type, sort by count (for folders) or alphabetically
+    // If same type and folders, sort by count
     if (!a.isProduct && !b.isProduct && a.count !== b.count) {
       return b.count - a.count; // Higher count first for folders
     }
@@ -514,7 +526,10 @@ renderCategoryContents(currentNode, breadcrumbs) {
     return a.title.localeCompare(b.title);
   });
 
-  console.log(`✅ CATEGORY FINAL SORT ORDER:`, items.map(item => `${item.title}(topOrder:${item.topOrder})`));
+  console.log(`✅ DEEP FINAL SORT ORDER at depth ${currentDepth}:`);
+  items.forEach((item, index) => {
+    console.log(`   ${index + 1}. ${item.title} (TopOrder: ${item.topOrder})`);
+  });
 
   const gridClass = this.getGridClass(items.length);
   const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
