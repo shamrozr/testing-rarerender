@@ -241,13 +241,14 @@ for (const r of masterRows) {
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   
-  // FIXED: Support TopOrder for ALL levels and ALL naming variations
+  // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
     r["Order"] || r["order"] || r["ORDER"] ||
     r["Priority"] || r["priority"] || r["PRIORITY"] ||
     r["Rank"] || r["rank"] || r["RANK"] ||
-    r["Sort"] || r["sort"] || r["SORT"] || ""
+    r["Sort"] || r["sort"] || r["SORT"] ||
+    r["Position"] || r["position"] || r["POSITION"] || ""
   ).trim();
   
   const section = (r["Section"] || r["section"] || "").trim() || "Featured";
@@ -261,18 +262,13 @@ for (const r of masterRows) {
   if (!rel || !name) continue;
   
   processedCount++;
-  if (processedCount % 100 === 0) {
+  if (processedCount % 50 === 0) {
     console.log(`  ✨ Processed ${processedCount}/${masterRows.length} items...`);
   }
 
-  // Track section statistics
-  if (!sectionStats.has(section)) {
-    sectionStats.set(section, 0);
-  }
-  sectionStats.set(section, sectionStats.get(section) + 1);
-
   const full = rel;
   const segs = full.split("/").filter(Boolean);
+  const pathDepth = segs.length;
   const isCandidateProduct = !!driveLink;
   const hasChildren = parentsSet.has(full);
   const isLeafProduct = isCandidateProduct && !hasChildren;
@@ -282,19 +278,29 @@ for (const r of masterRows) {
   }
 
   const normalizedThumb = toThumbSitePath(thumbRel);
+
+  // ENHANCED: Parse TopOrder for items at ANY depth
   let parsedTopOrder = 999; // Default
   if (topOrderRaw) {
     const n = parseInt(topOrderRaw, 10);
     if (!Number.isNaN(n)) {
       parsedTopOrder = n;
-      console.log(`✅ BUILD TopOrder for ${name} (${isLeafProduct ? 'PRODUCT' : 'FOLDER'}) at path ${rel}: ${parsedTopOrder}`);
+      console.log(`✅ BUILD TopOrder for ${name} at depth ${pathDepth} (${isLeafProduct ? 'PRODUCT' : 'FOLDER'}) path ${rel}: ${parsedTopOrder}`);
     } else {
-      console.log(`⚠️ BUILD Invalid TopOrder "${topOrderRaw}" for ${name}, using default 999`);
+      console.log(`⚠️ BUILD Invalid TopOrder "${topOrderRaw}" for ${name} at depth ${pathDepth}, using default 999`);
     }
+  } else {
+    console.log(`📝 BUILD No TopOrder specified for ${name} at depth ${pathDepth}, using default 999`);
   }
-  
+
+  // Track section statistics
+  if (!sectionStats.has(section)) {
+    sectionStats.set(section, 0);
+  }
+  sectionStats.set(section, sectionStats.get(section) + 1);
+
   if (isLeafProduct) {
-    // FIXED: Products now get TopOrder too
+    // ENHANCED: Products at ANY depth get TopOrder
     const parentSegs = segs.slice(0, -1);
     const children = ensureFolderNode(tree, parentSegs);
     children[name] = { 
@@ -303,7 +309,7 @@ for (const r of masterRows) {
       thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
       section: section,
       category: category,
-      // CRITICAL: Add TopOrder to products in BOTH formats
+      // CRITICAL: Add TopOrder to products at ANY depth in BOTH formats
       TopOrder: parsedTopOrder,
       topOrder: parsedTopOrder,
       // Image rendering config
@@ -312,9 +318,9 @@ for (const r of masterRows) {
       scaling: imageScaling
     };
     totalProducts++;
-    console.log(`🎯 BUILD Set product ${name} TopOrder: ${parsedTopOrder}`);
+    console.log(`🎯 BUILD Set PRODUCT ${name} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
   } else {
-    // FIXED: Folders at ALL levels get TopOrder
+    // ENHANCED: Folders at ANY depth get TopOrder
     ensureFolderNode(tree, segs);
     const k = segs.join("/");
     const existing = folderMeta.get(k) || {};
@@ -323,10 +329,10 @@ for (const r of masterRows) {
     if (section) existing.section = section;
     if (category) existing.category = category;
     
-    // CRITICAL: Set TopOrder for folders at ALL levels in BOTH formats
+    // CRITICAL: Set TopOrder for folders at ANY depth in BOTH formats
     existing.TopOrder = parsedTopOrder;
     existing.topOrder = parsedTopOrder;
-    console.log(`📁 BUILD Set folder ${k} TopOrder: ${parsedTopOrder}`);
+    console.log(`📁 BUILD Set FOLDER ${k} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
     
     // Image rendering config for folders
     if (imageAlignment) existing.alignment = imageAlignment;
@@ -337,8 +343,9 @@ for (const r of masterRows) {
   }
 }
 
-  console.log(`📦 Created section-aware catalog with ${totalProducts} products and image rendering support`);
-  console.log(`📋 Sections found:`, Array.from(sectionStats.keys()).join(', '));
+console.log(`📊 BUILD Processed ${totalProducts} products across all depths`);
+console.log(`📊 BUILD Created ${folderMeta.size} folder entries across all depths`);
+
 
   // Attach enhanced folder metadata including image rendering
   console.log("🔗 Enhancing catalog with sections and image rendering...");
