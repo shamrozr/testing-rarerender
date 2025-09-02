@@ -70,7 +70,21 @@
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* HIDE Debug Tags - ADD THIS FIRST */
+/* ================================= */
+.card-image-enhanced::after,
+.card-image-background::after {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
 
+.content-card:hover .card-image-enhanced::after,
+.content-card:hover .card-image-background::after {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
 /* Reset & Base Styles */
 /* ================== */
 
@@ -86,7 +100,7 @@ html {
 }
 
 body {
-  padding-top: 70px;
+  padding-top: 60px; /* REDUCED from 70px */
   font-family: var(--font-primary);
   color: var(--color-text-primary);
   background: var(--color-bg);
@@ -124,7 +138,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000; /* Increased z-index */
+  z-index: 1000;
   background: rgba(255, 255, 255, 0.98); /* More opaque */
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--color-border);
@@ -132,6 +146,8 @@ body {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateY(0);
 }
+
+
 /* Collapsed state - hide entire header */
 .header.collapsed {
   transform: translateY(-100%);
@@ -141,9 +157,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
-  gap: var(--space-4);
-  padding: 0 var(--space-4);
+  height: 60px; /* REDUCED from 70px */
+  gap: var(--space-3); /* REDUCED gap */
+  padding: 0 var(--space-3); /* REDUCED padding */
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -154,24 +170,42 @@ body {
     padding-top: 60px; /* Match mobile header height */
   }
   
+  .header {
+    min-height: 70px;
+  }
+  
   .header-content {
-    height: 60px;
+    height: 70px;
+    padding: 0 var(--space-4);
+    gap: var(--space-3);
+  }
+  
+  .search-section {
+    margin-left: 0;
+    margin-top: var(--space-2);
+    flex: 1;
   }
   
   .hero {
-    padding: var(--space-6) var(--space-4); /* Reduced padding */
+    padding: 160px var(--space-4) var(--space-12) var(--space-4); /* INCREASED from var(--space-6) */
   }
   
   .hero-title {
-    font-size: 2.2rem; /* Slightly smaller on mobile */
+    font-size: 2.5rem; /* INCREASED from 2.2rem */
   }
   
   .breadcrumb-nav {
-    margin-top: var(--space-1);
-    margin-bottom: var(--space-3);
+    margin: var(--space-3) auto var(--space-5) auto;
     font-size: 0.8rem;
     padding: var(--space-2) var(--space-4);
     max-width: 90%;
+    gap: var(--space-1);
+  }
+  
+  .breadcrumb-nav a,
+  .breadcrumb-nav span {
+    font-size: 0.8rem !important;
+    color: var(--color-text-primary) !important;
   }
 }
 
@@ -298,6 +332,7 @@ body {
   flex: 1;
   max-width: 400px;
   margin-left: var(--space-4);
+  /* REMOVED: Odd padding that was causing issues */
 }
 
 .search-container {
@@ -350,7 +385,7 @@ body {
     var(--color-light-gray) 0%, 
     rgba(99, 102, 241, 0.05) 50%,
     var(--color-soft-gray) 100%);
-  padding: var(--space-20) 0 var(--space-12) 0; /* INCREASED: More top padding */
+  padding: 140px 0 var(--space-12) 0; /* INCREASED: Much more top padding */
   text-align: center;
   margin-top: 0;
   position: relative;
@@ -360,6 +395,8 @@ body {
 .hero-content {
   max-width: 800px;
   margin: 0 auto;
+  position: relative;
+  z-index: 6;
 }
 
 .hero-title {
@@ -394,6 +431,7 @@ body[data-page-type="category"] .section-header {
 /* Breadcrumb Navigation - FIXED */
 /* ============================== */
 
+
 .breadcrumb-nav {
   display: flex !important;
   align-items: center;
@@ -425,7 +463,6 @@ body[data-page-type="category"] .section-header {
   visibility: visible !important;
   display: inline-block !important;
 }
-
 .breadcrumb-nav a:hover {
   background: rgba(99, 102, 241, 0.2) !important;
   color: var(--color-primary) !important;
@@ -472,13 +509,6 @@ body[data-page-type="category"] .section-header {
   }
 }
 
-/* ALSO ADD: Ensure search section doesn't overlap */
-.search-section {
-  flex: 1;
-  max-width: 400px;
-  margin-left: var(--space-4);
-  /* REMOVED: Odd padding that was causing issues */
-}
 
 
 /* Breadcrumb navigation styling fix */
@@ -954,13 +984,7 @@ body[data-page-type="category"] .section-header {
     transform: scale(1.02);
   }
   
-  /* Hide debug labels on mobile */
-  .card-image-enhanced::after,
-  .card-image-background::after {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-}
+
 /* Enhanced Image Rendering System - FIXED VERSION */
 /* ================================================ */
 
@@ -2520,7 +2544,7 @@ body[data-page-type="category"] .section-header {
 }
 @media (max-width: 768px) {
   body {
-    padding-top: 80px !important; /* Increased to prevent hero overlap */
+    padding-top: 70px !important; /* Increased to prevent hero overlap */
   }
   
   .header {
@@ -2559,4 +2583,5 @@ body[data-page-type="category"] .section-header {
   }
 }
   
+}
 }
