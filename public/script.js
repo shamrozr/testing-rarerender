@@ -393,32 +393,49 @@ renderCategoryContents(currentNode, breadcrumbs) {
   const container = document.getElementById('dynamicSections');
   if (!container) return;
 
+  console.log('🔍 FULL DEBUG: Current node structure:', currentNode);
+
   const items = Object.entries(currentNode).map(([key, item]) => {
-    // FIXED: Enhanced topOrder extraction with better fallback
+    // COMPREHENSIVE DEBUG: Check ALL possible TopOrder variations
+    console.log(`🔍 RAW ITEM DEBUG for ${key}:`, {
+      fullItem: item,
+      keys: Object.keys(item),
+      TopOrder: item.TopOrder,
+      topOrder: item.topOrder,
+      'Top Order': item['Top Order'],
+      'TOP ORDER': item['TOP ORDER'],
+      Order: item.Order,
+      order: item.order,
+      Priority: item.Priority,
+      priority: item.priority
+    });
+
     const extractTopOrder = (item) => {
-  // FIXED: Check TopOrder first (your exact column name)
-  const topOrderValue = item.TopOrder || item.topOrder || item['Top Order'] || item.top_order || 
-                        item.ORDER || item.order || item.Order ||
-                        item.PRIORITY || item.priority || item.Priority;
-  
-  console.log(`🔍 Checking TopOrder for ${key}:`, {
-    TopOrder: item.TopOrder,
-    topOrder: item.topOrder,
-    'Top Order': item['Top Order'],
-    raw_item: item
-  });
-  
-  if (topOrderValue !== undefined && topOrderValue !== null && topOrderValue !== '') {
-    const parsed = parseInt(topOrderValue);
-    if (!isNaN(parsed)) {
-      console.log(`🎯 SUCCESS: Found TopOrder for ${key}: ${topOrderValue} → ${parsed}`);
-      return parsed;
-    }
-  }
-  
-  console.log(`❌ NO TopOrder found for ${key}, using default 999`);
-  return 999;
-};
+      // Check EVERY possible variation including your exact column name
+      const variations = [
+        'TopOrder', 'topOrder', 'Top Order', 'TOP ORDER',
+        'Order', 'order', 'ORDER',
+        'Priority', 'priority', 'PRIORITY',
+        'Rank', 'rank', 'RANK',
+        'Sort', 'sort', 'SORT'
+      ];
+      
+      for (const variation of variations) {
+        const value = item[variation];
+        if (value !== undefined && value !== null && value !== '') {
+          const parsed = parseInt(value);
+          if (!isNaN(parsed)) {
+            console.log(`✅ SUCCESS: Found ${variation} for ${key}: ${value} → ${parsed}`);
+            return parsed;
+          } else {
+            console.log(`⚠️ Found ${variation} but can't parse: ${value}`);
+          }
+        }
+      }
+      
+      console.log(`❌ NO TopOrder found for ${key}, using default 999`);
+      return 999;
+    };
 
     if (item.isProduct) {
       return {
@@ -464,54 +481,52 @@ renderCategoryContents(currentNode, breadcrumbs) {
     return;
   }
 
-  // FIXED: CORRECTED SORTING - TopOrder has ABSOLUTE PRIORITY
+  // DEBUG: Show extracted topOrder values
+  console.log('🎯 EXTRACTED TopOrder VALUES:', items.map(item => ({
+    name: item.title,
+    topOrder: item.topOrder,
+    isProduct: item.isProduct
+  })));
+
   const folders = items.filter(item => !item.isProduct);
   const products = items.filter(item => item.isProduct);
 
   console.log(`📊 Sorting ${folders.length} folders and ${products.length} products`);
 
-  // FIXED: Sort folders with TopOrder as ABSOLUTE PRIORITY
+  // FIXED: Sort with TopOrder as ABSOLUTE PRIORITY
   folders.sort((a, b) => {
     console.log(`🔄 Comparing folders: ${a.title}(topOrder:${a.topOrder}, count:${a.count}) vs ${b.title}(topOrder:${b.topOrder}, count:${b.count})`);
     
-    // FIXED: TopOrder comparison - ABSOLUTE PRIORITY
+    // TopOrder has ABSOLUTE PRIORITY
     if (a.topOrder !== b.topOrder) {
       const result = a.topOrder - b.topOrder;
       console.log(`  → 🏆 TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
       return result;
     }
-    // Only if TopOrder is equal, then by count (descending)
+    // Only if TopOrder is equal, then by count
     if (a.count !== b.count) {
-      const result = b.count - a.count;
-      console.log(`  → count sort: ${result < 0 ? b.title : a.title} wins`);
-      return result;
+      return b.count - a.count;
     }
     // Finally alphabetically
-    const result = a.title.localeCompare(b.title);
-    console.log(`  → alphabetical sort: ${result < 0 ? a.title : b.title} wins`);
-    return result;
+    return a.title.localeCompare(b.title);
   });
 
-  // FIXED: Sort products with TopOrder as ABSOLUTE PRIORITY
   products.sort((a, b) => {
     console.log(`🔄 Comparing products: ${a.title}(topOrder:${a.topOrder}) vs ${b.title}(topOrder:${b.topOrder})`);
     
-    // FIXED: TopOrder comparison - ABSOLUTE PRIORITY
+    // TopOrder has ABSOLUTE PRIORITY
     if (a.topOrder !== b.topOrder) {
       const result = a.topOrder - b.topOrder;
       console.log(`  → 🏆 TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
       return result;
     }
     // Only if TopOrder is equal, then alphabetically
-    const result = a.title.localeCompare(b.title);
-    console.log(`  → alphabetical sort: ${result < 0 ? a.title : b.title} wins`);
-    return result;
+    return a.title.localeCompare(b.title);
   });
 
-  // Combine: folders first, then products
   const sortedItems = [...folders, ...products];
   
-  console.log(`✅ Final sort order: ${sortedItems.map(item => `${item.title}(${item.topOrder})`).join(', ')}`);
+  console.log(`✅ FINAL SORT ORDER:`, sortedItems.map(item => `${item.title}(topOrder:${item.topOrder})`));
 
   const gridClass = this.getGridClass(sortedItems.length);
   const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
@@ -526,7 +541,6 @@ renderCategoryContents(currentNode, breadcrumbs) {
     </section>
   `;
 
-  // Apply smart centering for category contents
   if (gridClass === 'grid-smart') {
     setTimeout(() => {
       const gridContainer = document.getElementById(containerId);
