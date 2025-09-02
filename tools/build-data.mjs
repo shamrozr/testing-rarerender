@@ -309,10 +309,14 @@ for (const r of masterRows) {
     // NOTE: Removed custom handling
     
     // Handle topOrder for categories (first level items)
-    if (segs.length === 1) {
-      const n = parseInt(topOrderRaw, 10);
-      if (!Number.isNaN(n)) existing.topOrder = n;
-    }
+    // Handle topOrder for categories (first level items)
+if (segs.length === 1) {
+  const n = parseInt(topOrderRaw, 10);
+  if (!Number.isNaN(n)) {
+    console.log(`✅ Setting TopOrder for ${here}: ${n}`);
+    existing.TopOrder = n; // Capital T, capital O - exact match
+  }
+}
     folderMeta.set(k, existing);
   }
 }
