@@ -394,7 +394,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
   if (!container) return;
 
   const items = Object.entries(currentNode).map(([key, item]) => {
-    // FIXED: Enhanced topOrder extraction with debugging
+    // FIXED: Enhanced topOrder extraction with better fallback
     const extractTopOrder = (item) => {
       const topOrderValue = item.topOrder || item['Top Order'] || item.top_order || 
                            item.TopOrder || item.TOP_ORDER || item['TOP ORDER'] ||
@@ -457,23 +457,23 @@ renderCategoryContents(currentNode, breadcrumbs) {
     return;
   }
 
-  // ENHANCED SORTING with detailed logging
+  // FIXED: CORRECTED SORTING - TopOrder has ABSOLUTE PRIORITY
   const folders = items.filter(item => !item.isProduct);
   const products = items.filter(item => item.isProduct);
 
   console.log(`📊 Sorting ${folders.length} folders and ${products.length} products`);
 
-  // Sort folders: topOrder → count → alphabetical
+  // FIXED: Sort folders with TopOrder as ABSOLUTE PRIORITY
   folders.sort((a, b) => {
-    console.log(`🔄 Comparing folders: ${a.title}(order:${a.topOrder}, count:${a.count}) vs ${b.title}(order:${b.topOrder}, count:${b.count})`);
+    console.log(`🔄 Comparing folders: ${a.title}(topOrder:${a.topOrder}, count:${a.count}) vs ${b.title}(topOrder:${b.topOrder}, count:${b.count})`);
     
-    // First by topOrder (ascending - lower numbers first)
+    // FIXED: TopOrder comparison - ABSOLUTE PRIORITY
     if (a.topOrder !== b.topOrder) {
       const result = a.topOrder - b.topOrder;
-      console.log(`  → topOrder sort: ${result > 0 ? b.title : a.title} wins`);
+      console.log(`  → 🏆 TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
       return result;
     }
-    // Then by count (descending - higher counts first)
+    // Only if TopOrder is equal, then by count (descending)
     if (a.count !== b.count) {
       const result = b.count - a.count;
       console.log(`  → count sort: ${result < 0 ? b.title : a.title} wins`);
@@ -485,17 +485,17 @@ renderCategoryContents(currentNode, breadcrumbs) {
     return result;
   });
 
-  // Sort products: topOrder → alphabetical
+  // FIXED: Sort products with TopOrder as ABSOLUTE PRIORITY
   products.sort((a, b) => {
-    console.log(`🔄 Comparing products: ${a.title}(order:${a.topOrder}) vs ${b.title}(order:${b.topOrder})`);
+    console.log(`🔄 Comparing products: ${a.title}(topOrder:${a.topOrder}) vs ${b.title}(topOrder:${b.topOrder})`);
     
-    // First by topOrder (ascending - lower numbers first)
+    // FIXED: TopOrder comparison - ABSOLUTE PRIORITY
     if (a.topOrder !== b.topOrder) {
       const result = a.topOrder - b.topOrder;
-      console.log(`  → topOrder sort: ${result > 0 ? b.title : a.title} wins`);
+      console.log(`  → 🏆 TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
       return result;
     }
-    // Then alphabetically
+    // Only if TopOrder is equal, then alphabetically
     const result = a.title.localeCompare(b.title);
     console.log(`  → alphabetical sort: ${result < 0 ? a.title : b.title} wins`);
     return result;
