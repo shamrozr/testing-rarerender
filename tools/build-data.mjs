@@ -311,11 +311,12 @@ for (const r of masterRows) {
     // Handle topOrder for categories (first level items)
     // Handle topOrder for categories (first level items)
 // Handle topOrder for categories (first level items)
-if (segs.length === 1) {
+// Handle TopOrder for ALL levels (categories, subcategories, products)
+if (topOrderRaw) {
   const n = parseInt(topOrderRaw, 10);
   if (!Number.isNaN(n)) {
-    console.log(`✅ Setting TopOrder for ${name}: ${n}`);
-    existing.TopOrder = n; // Capital T, capital O - exact match
+    console.log(`✅ Setting TopOrder for ${name} at level ${segs.length}: ${n}`);
+    existing.TopOrder = n; // Apply to ALL levels, not just top-level
   }
 }
     folderMeta.set(k, existing);
@@ -337,7 +338,7 @@ if (segs.length === 1) {
       if (meta?.driveLink) n.driveLink = meta.driveLink;
       if (meta?.section) n.section = meta.section;
       if (meta?.category) n.category = meta.category;
-      if (typeof meta?.topOrder !== "undefined") n.topOrder = meta.topOrder;
+      if (typeof meta?.TopOrder !== "undefined") n.TopOrder = meta.TopOrder;
       
       // SIMPLIFIED: Only 3 image rendering config properties
       if (meta?.alignment) n.alignment = meta.alignment;
