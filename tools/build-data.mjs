@@ -310,10 +310,11 @@ for (const r of masterRows) {
     
     // Handle topOrder for categories (first level items)
     // Handle topOrder for categories (first level items)
+// Handle topOrder for categories (first level items)
 if (segs.length === 1) {
   const n = parseInt(topOrderRaw, 10);
   if (!Number.isNaN(n)) {
-    console.log(`✅ Setting TopOrder for ${here}: ${n}`);
+    console.log(`✅ Setting TopOrder for ${name}: ${n}`);
     existing.TopOrder = n; // Capital T, capital O - exact match
   }
 }
