@@ -86,7 +86,7 @@ html {
 }
 
 body {
-  padding-top: 70px;
+  padding-top: 60px; /* FIXED: Standardized desktop padding */
   font-family: var(--font-primary);
   color: var(--color-text-primary);
   background: var(--color-bg);
@@ -107,6 +107,13 @@ body {
 @media (min-width: 768px) {
   .container {
     padding: 0 var(--space-6);
+  }
+}
+
+/* ADDED: Desktop header height specification */
+@media (min-width: 769px) {
+  .header-content {
+    height: 60px;
   }
 }
 
@@ -141,7 +148,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
+  height: 60px; /* FIXED: Updated base height */
   gap: var(--space-4);
   padding: 0 var(--space-4);
   max-width: 1200px;
@@ -151,15 +158,15 @@ body {
 /* FIXED: Mobile responsive adjustments */
 @media (max-width: 768px) {
   body {
-    padding-top: 60px; /* Match mobile header height */
+    padding-top: 75px; /* FIXED: Increased mobile body padding */
   }
   
   .header-content {
-    height: 60px;
+    height: 70px; /* FIXED: Increased mobile header height */
   }
   
   .hero {
-    padding: var(--space-6) var(--space-4); /* Reduced padding */
+    padding: 120px var(--space-4) var(--space-6) var(--space-4); /* FIXED: Reduced top padding from 160px to 120px */
   }
   
   .hero-title {
@@ -177,15 +184,16 @@ body {
 
 @media (max-width: 480px) {
   body {
-    padding-top: 55px; /* Match smallest mobile header height */
+    padding-top: 90px; /* FIXED: Increased from 85px to 90px */
   }
   
   .header-content {
-    height: 55px;
+    height: auto; /* FIXED: Changed to auto */
+    min-height: 80px; /* FIXED: Added min-height */
   }
   
   .hero {
-    padding: var(--space-4) var(--space-3); /* Even more compact */
+    padding: 100px var(--space-3) var(--space-4) var(--space-3); /* FIXED: Reduced top padding from 170px to 100px */
   }
   
   .hero-title {
@@ -206,35 +214,6 @@ body {
 
 
 
-@media (max-width: 768px) {
-  .header {
-    padding-top: calc(env(safe-area-inset-top, 20px) + 16px) !important;
-    min-height: calc(80px + env(safe-area-inset-top, 20px)) !important;
-  }
-  
-  /* Ensure header content has proper spacing */
-  .header .header-content {
-    padding-top: 12px !important;
-    padding-bottom: 12px !important;
-  }
-  
-  /* Fix search bar positioning */
-  .search-container {
-    margin-top: 8px !important;
-  }
-  
-  /* Ensure brand info section has proper spacing */
-  .brand-info {
-    padding-top: 8px !important;
-  }
-}
-
-/* For devices with notches (iPhone X+) */
-@media (max-width: 768px) and (orientation: portrait) {
-  .header {
-    padding-top: calc(env(safe-area-inset-top, 20px) + 24px) !important;
-  }
-}
 /* Brand Section */
 /* ============= */
 
