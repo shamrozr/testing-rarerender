@@ -232,6 +232,7 @@ function fillMissingThumbsFromAncestors(node, inherited = "") {
   const sectionStats = new Map();
 
   console.log("📝 Processing enhanced catalog entries with image rendering...");
+console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
 let processedCount = 0;
 
 for (const r of masterRows) {
@@ -239,19 +240,24 @@ for (const r of masterRows) {
   const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-  const topOrderRaw = (r["TopOrder"] || r["Top Order"] || r["topOrder"] || "").trim();
   
-  // Enhanced section support
+  // FIXED: Support TopOrder for ALL levels and ALL naming variations
+  const topOrderRaw = (
+    r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
+    r["Order"] || r["order"] || r["ORDER"] ||
+    r["Priority"] || r["priority"] || r["PRIORITY"] ||
+    r["Rank"] || r["rank"] || r["RANK"] ||
+    r["Sort"] || r["sort"] || r["SORT"] || ""
+  ).trim();
+  
   const section = (r["Section"] || r["section"] || "").trim() || "Featured";
   const category = (r["Category"] || r["category"] || "").trim();
 
-  // SIMPLIFIED: Only 3 image rendering columns needed now
+  // Image rendering columns
   const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || "").trim();
   const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim();
   const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
   
-  // NOTE: Removed imageCustom - now handled by smart alignment
-
   if (!rel || !name) continue;
   
   processedCount++;
@@ -276,8 +282,19 @@ for (const r of masterRows) {
   }
 
   const normalizedThumb = toThumbSitePath(thumbRel);
-
+  let parsedTopOrder = 999; // Default
+  if (topOrderRaw) {
+    const n = parseInt(topOrderRaw, 10);
+    if (!Number.isNaN(n)) {
+      parsedTopOrder = n;
+      console.log(`✅ BUILD TopOrder for ${name} (${isLeafProduct ? 'PRODUCT' : 'FOLDER'}) at path ${rel}: ${parsedTopOrder}`);
+    } else {
+      console.log(`⚠️ BUILD Invalid TopOrder "${topOrderRaw}" for ${name}, using default 999`);
+    }
+  }
+  
   if (isLeafProduct) {
+    // FIXED: Products now get TopOrder too
     const parentSegs = segs.slice(0, -1);
     const children = ensureFolderNode(tree, parentSegs);
     children[name] = { 
@@ -286,14 +303,18 @@ for (const r of masterRows) {
       thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
       section: section,
       category: category,
-      // SIMPLIFIED: Only 3 image rendering config properties
+      // CRITICAL: Add TopOrder to products in BOTH formats
+      TopOrder: parsedTopOrder,
+      topOrder: parsedTopOrder,
+      // Image rendering config
       alignment: imageAlignment,
       fitting: imageFitting,
       scaling: imageScaling
-      // NOTE: Removed custom property
     };
     totalProducts++;
+    console.log(`🎯 BUILD Set product ${name} TopOrder: ${parsedTopOrder}`);
   } else {
+    // FIXED: Folders at ALL levels get TopOrder
     ensureFolderNode(tree, segs);
     const k = segs.join("/");
     const existing = folderMeta.get(k) || {};
@@ -302,23 +323,16 @@ for (const r of masterRows) {
     if (section) existing.section = section;
     if (category) existing.category = category;
     
-    // SIMPLIFIED: Only 3 image rendering config for folders
+    // CRITICAL: Set TopOrder for folders at ALL levels in BOTH formats
+    existing.TopOrder = parsedTopOrder;
+    existing.topOrder = parsedTopOrder;
+    console.log(`📁 BUILD Set folder ${k} TopOrder: ${parsedTopOrder}`);
+    
+    // Image rendering config for folders
     if (imageAlignment) existing.alignment = imageAlignment;
     if (imageFitting) existing.fitting = imageFitting;
     if (imageScaling) existing.scaling = imageScaling;
-    // NOTE: Removed custom handling
     
-    // Handle topOrder for categories (first level items)
-    // Handle topOrder for categories (first level items)
-// Handle topOrder for categories (first level items)
-// Handle TopOrder for ALL levels (categories, subcategories, products)
-if (topOrderRaw) {
-  const n = parseInt(topOrderRaw, 10);
-  if (!Number.isNaN(n)) {
-    console.log(`✅ Setting TopOrder for ${name} at level ${segs.length}: ${n}`);
-    existing.TopOrder = n; // Apply to ALL levels, not just top-level
-  }
-}
     folderMeta.set(k, existing);
   }
 }
@@ -328,7 +342,9 @@ if (topOrderRaw) {
 
   // Attach enhanced folder metadata including image rendering
   console.log("🔗 Enhancing catalog with sections and image rendering...");
-  function attachFolderMeta(node, prefix = []) {
+  console.log("🔗 Enhancing catalog with TopOrder at ALL levels...");
+
+function attachFolderMeta(node, prefix = []) {
   for (const k of Object.keys(node)) {
     const n = node[k];
     if (!n.isProduct) {
@@ -338,19 +354,37 @@ if (topOrderRaw) {
       if (meta?.driveLink) n.driveLink = meta.driveLink;
       if (meta?.section) n.section = meta.section;
       if (meta?.category) n.category = meta.category;
-      if (typeof meta?.TopOrder !== "undefined") n.TopOrder = meta.TopOrder;
       
-      // SIMPLIFIED: Only 3 image rendering config properties
+      // CRITICAL: Apply TopOrder to ALL levels in BOTH formats
+      if (typeof meta?.TopOrder !== "undefined") {
+        n.TopOrder = meta.TopOrder;
+        n.topOrder = meta.TopOrder; // Both formats for maximum compatibility
+        console.log(`📌 BUILD Applied TopOrder ${meta.TopOrder} to folder: ${here}`);
+      } else {
+        // FALLBACK: Ensure default TopOrder exists
+        n.TopOrder = 999;
+        n.topOrder = 999;
+        console.log(`🔧 BUILD Applied default TopOrder 999 to folder: ${here}`);
+      }
+      
+      // Image rendering config
       if (meta?.alignment) n.alignment = meta.alignment;
       if (meta?.fitting) n.fitting = meta.fitting;
       if (meta?.scaling) n.scaling = meta.scaling;
-      // NOTE: Removed custom handling
       
       if (n.children) attachFolderMeta(n.children, [...prefix, k]);
+    } else {
+      // ENSURE products also have TopOrder fallback
+      if (typeof n.TopOrder === "undefined") {
+        n.TopOrder = 999;
+        n.topOrder = 999;
+        console.log(`🔧 BUILD Applied default TopOrder 999 to product: ${[...prefix, k].join("/")}`);
+      }
     }
   }
 }
-  attachFolderMeta(tree);
+
+attachFolderMeta(tree);
 
   // Convert empty folders with drive links to products
   console.log("🔄 Optimizing catalog structure...");
@@ -396,7 +430,25 @@ if (topOrderRaw) {
     sectionAnalysis[section].categories.push(key);
     sectionAnalysis[section].totalItems += item.count || 0;
   });
-
+console.log("🔍 BUILD Verifying TopOrder coverage...");
+function verifyTopOrder(node, path = []) {
+  for (const [key, item] of Object.entries(node)) {
+    const fullPath = [...path, key].join("/");
+    const hasTopOrder = typeof item.TopOrder !== "undefined" || typeof item.topOrder !== "undefined";
+    
+    if (!hasTopOrder) {
+      console.log(`❌ BUILD Missing TopOrder: ${fullPath}`);
+    } else {
+      console.log(`✅ BUILD TopOrder verified: ${fullPath} = ${item.TopOrder || item.topOrder}`);
+    }
+    
+    if (!item.isProduct && item.children) {
+      verifyTopOrder(item.children, [...path, key]);
+    }
+  }
+}
+verifyTopOrder(tree);
+console.log("✅ BUILD TopOrder verification complete");
   async function scanMissingThumbs(node, pfx = []) {
   for (const k of Object.keys(node)) {
     const n = node[k];
