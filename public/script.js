@@ -385,19 +385,18 @@ addBreadcrumbNavigation(breadcrumbs) {
   }
 }
 
-  // REPLACE the entire renderCategoryContents function with this enhanced version:
-
-// REPLACE the entire renderCategoryContents function with this FIXED version:
+  // LOCATION: public/script.js  
+// REPLACE: Find the renderCategoryContents() function (around line 600) and replace it entirely:
 
 renderCategoryContents(currentNode, breadcrumbs) {
   const container = document.getElementById('dynamicSections');
   if (!container) return;
 
-  console.log('🔍 FULL DEBUG: Current node structure:', currentNode);
+  console.log('🔍 CATEGORY DEBUG: Current node structure:', currentNode);
 
   const items = Object.entries(currentNode).map(([key, item]) => {
     // COMPREHENSIVE DEBUG: Check ALL possible TopOrder variations
-    console.log(`🔍 RAW ITEM DEBUG for ${key}:`, {
+    console.log(`🔍 CATEGORY RAW ITEM DEBUG for ${key}:`, {
       fullItem: item,
       keys: Object.keys(item),
       TopOrder: item.TopOrder,
@@ -425,15 +424,15 @@ renderCategoryContents(currentNode, breadcrumbs) {
         if (value !== undefined && value !== null && value !== '') {
           const parsed = parseInt(value);
           if (!isNaN(parsed)) {
-            console.log(`✅ SUCCESS: Found ${variation} for ${key}: ${value} → ${parsed}`);
+            console.log(`✅ CATEGORY SUCCESS: Found ${variation} for ${key}: ${value} → ${parsed}`);
             return parsed;
           } else {
-            console.log(`⚠️ Found ${variation} but can't parse: ${value}`);
+            console.log(`⚠️ CATEGORY Found ${variation} but can't parse: ${value}`);
           }
         }
       }
       
-      console.log(`❌ NO TopOrder found for ${key}, using default 999`);
+      console.log(`❌ CATEGORY NO TopOrder found for ${key}, using default 999`);
       return 999;
     };
 
@@ -482,60 +481,49 @@ renderCategoryContents(currentNode, breadcrumbs) {
   }
 
   // DEBUG: Show extracted topOrder values
-  console.log('🎯 EXTRACTED TopOrder VALUES:', items.map(item => ({
+  console.log('🎯 CATEGORY EXTRACTED TopOrder VALUES:', items.map(item => ({
     name: item.title,
     topOrder: item.topOrder,
     isProduct: item.isProduct
   })));
 
-  const folders = items.filter(item => !item.isProduct);
-  const products = items.filter(item => item.isProduct);
+  // FIXED: Sort with TopOrder as ABSOLUTE PRIORITY for ALL items
+  console.log(`📊 CATEGORY Sorting ${items.length} items by TopOrder (absolute priority)`);
 
-  console.log(`📊 Sorting ${folders.length} folders and ${products.length} products`);
-
-  // FIXED: Sort with TopOrder as ABSOLUTE PRIORITY
-  folders.sort((a, b) => {
-    console.log(`🔄 Comparing folders: ${a.title}(topOrder:${a.topOrder}, count:${a.count}) vs ${b.title}(topOrder:${b.topOrder}, count:${b.count})`);
+  items.sort((a, b) => {
+    console.log(`🔄 CATEGORY Comparing: ${a.title}(topOrder:${a.topOrder}) vs ${b.title}(topOrder:${b.topOrder})`);
     
-    // TopOrder has ABSOLUTE PRIORITY
+    // TopOrder has ABSOLUTE PRIORITY - no separation by type
     if (a.topOrder !== b.topOrder) {
       const result = a.topOrder - b.topOrder;
-      console.log(`  → 🏆 TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
+      console.log(`  → 🏆 CATEGORY TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
       return result;
     }
-    // Only if TopOrder is equal, then by count
-    if (a.count !== b.count) {
-      return b.count - a.count;
+    
+    // If TopOrder is equal, folders come before products
+    if (a.isProduct !== b.isProduct) {
+      return a.isProduct ? 1 : -1; // Folders first
     }
+    
+    // If same type, sort by count (for folders) or alphabetically
+    if (!a.isProduct && !b.isProduct && a.count !== b.count) {
+      return b.count - a.count; // Higher count first for folders
+    }
+    
     // Finally alphabetically
     return a.title.localeCompare(b.title);
   });
 
-  products.sort((a, b) => {
-    console.log(`🔄 Comparing products: ${a.title}(topOrder:${a.topOrder}) vs ${b.title}(topOrder:${b.topOrder})`);
-    
-    // TopOrder has ABSOLUTE PRIORITY
-    if (a.topOrder !== b.topOrder) {
-      const result = a.topOrder - b.topOrder;
-      console.log(`  → 🏆 TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
-      return result;
-    }
-    // Only if TopOrder is equal, then alphabetically
-    return a.title.localeCompare(b.title);
-  });
+  console.log(`✅ CATEGORY FINAL SORT ORDER:`, items.map(item => `${item.title}(topOrder:${item.topOrder})`));
 
-  const sortedItems = [...folders, ...products];
-  
-  console.log(`✅ FINAL SORT ORDER:`, sortedItems.map(item => `${item.title}(topOrder:${item.topOrder})`));
-
-  const gridClass = this.getGridClass(sortedItems.length);
+  const gridClass = this.getGridClass(items.length);
   const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
   
   container.innerHTML = `
     <section class="content-section">
       <div class="container">
         <div class="cards-grid ${gridClass}" id="${containerId}">
-          ${sortedItems.map(item => this.createCardHTML(item)).join('')}
+          ${items.map(item => this.createCardHTML(item)).join('')}
         </div>
       </div>
     </section>
@@ -544,10 +532,12 @@ renderCategoryContents(currentNode, breadcrumbs) {
   if (gridClass === 'grid-smart') {
     setTimeout(() => {
       const gridContainer = document.getElementById(containerId);
-      if (gridContainer) this.addSmartCentering(gridContainer, sortedItems.length);
+      if (gridContainer) this.addSmartCentering(gridContainer, items.length);
     }, 10);
   }
 }
+
+  
 debugCSVData() {
   console.log('=== CSV DATA DEBUG ===');
   console.log('Full data object:', this.data);
@@ -909,7 +899,10 @@ sortItemsEnhanced(items, isHomepage = false) {
   }
 }
 
-  groupItemsBySection() {
+  // LOCATION: public/script.js
+// REPLACE: Find the groupItemsBySection() function (around line 400) and replace it entirely:
+
+groupItemsBySection() {
   this.sections.clear();
   
   Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
@@ -919,25 +912,69 @@ sortItemsEnhanced(items, isHomepage = false) {
       this.sections.set(section, []);
     }
     
+    // FIXED: Extract TopOrder with comprehensive fallback for HOMEPAGE
+    const getTopOrder = (item) => {
+      const variations = [
+        'TopOrder', 'topOrder', 'Top Order', 'TOP ORDER',
+        'Order', 'order', 'ORDER',
+        'Priority', 'priority', 'PRIORITY',
+        'Rank', 'rank', 'RANK',
+        'Sort', 'sort', 'SORT'
+      ];
+      
+      for (const variation of variations) {
+        const value = item[variation];
+        if (value !== undefined && value !== null && value !== '') {
+          const parsed = parseInt(value);
+          if (!isNaN(parsed)) {
+            console.log(`✅ HOMEPAGE TopOrder for ${key}: ${variation} = ${parsed}`);
+            return parsed;
+          }
+        }
+      }
+      
+      console.log(`⚠️ No TopOrder found for ${key} on homepage, using default 999`);
+      return 999;
+    };
+    
     this.sections.get(section).push({
       key,
       title: key.replace(/_/g, ' '),
       description: `Explore our premium ${key.toLowerCase()} collection with ${item.count || 0} items`,
       count: item.count || 0,
       thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-      topOrder: item.topOrder || 999,
-      // FIXED: Pass through CSV image configuration from tree data
+      topOrder: getTopOrder(item),
+      // Pass through image configuration
       alignment: item.alignment || item.Alignment || item.ALIGNMENT,
       fitting: item.fitting || item.Fitting || item.FITTING,
       scaling: item.scaling || item.Scaling || item.SCALING
     });
   });
 
-  this.sections.forEach(items => {
-    items.sort((a, b) => a.topOrder - b.topOrder);
+  // FIXED: Sort each section by TopOrder on HOMEPAGE
+  this.sections.forEach((items, sectionName) => {
+    items.sort((a, b) => {
+      console.log(`🏠 HOMEPAGE sorting in ${sectionName}: ${a.title}(${a.topOrder}) vs ${b.title}(${b.topOrder})`);
+      
+      // TopOrder has ABSOLUTE priority on homepage too
+      if (a.topOrder !== b.topOrder) {
+        const result = a.topOrder - b.topOrder;
+        console.log(`  → 🏆 HOMEPAGE TopOrder WINS: ${result > 0 ? b.title : a.title}`);
+        return result;
+      }
+      
+      // Secondary sort by count (higher first)
+      if (a.count !== b.count) {
+        return b.count - a.count;
+      }
+      
+      // Tertiary sort alphabetically
+      return a.title.localeCompare(b.title);
+    });
+    
+    console.log(`📋 Final HOMEPAGE ${sectionName} order:`, items.map(item => `${item.title}(${item.topOrder})`));
   });
-}
-
+}  
   createSectionHTML(sectionName, items) {
     const gridClass = this.getGridClass(items.length);
     const shouldShowTitle = sectionName && sectionName !== 'Featured' && sectionName !== '';
