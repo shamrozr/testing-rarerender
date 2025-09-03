@@ -1121,20 +1121,29 @@ extractImageConfig(item) {
   console.log('Item data for image config:', item);
   
   return {
-    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 
-               item.image_alignment || item.imageAlignment || item['Image Alignment'] || 'center',
-    fitting: item.fitting || item.Fitting || item.FITTING || 
-             item.object_fit || item.objectFit || item['Object Fit'] || 
-             item.image_fit || item.imageFit || item['Image Fit'] || 'cover',
-    scaling: item.scaling || item.Scaling || item.SCALING || 
-             item.image_scale || item.imageScale || item['Image Scale'] || 
-             item.scale || item.Scale || null
-    // NOTE: Removed custom - now handled in smart alignment
+    // FIXED: Only pass through actual CSV values, let defaults handle empty cases
+    alignment: (item.alignment && item.alignment.trim() !== '') ? item.alignment : 
+               (item.Alignment && item.Alignment.trim() !== '') ? item.Alignment :
+               (item.ALIGNMENT && item.ALIGNMENT.trim() !== '') ? item.ALIGNMENT : 
+               undefined, // Let getObjectPosition/getBackgroundPosition handle default
+               
+    fitting: (item.fitting && item.fitting.trim() !== '') ? item.fitting :
+             (item.Fitting && item.Fitting.trim() !== '') ? item.Fitting :
+             (item.FITTING && item.FITTING.trim() !== '') ? item.FITTING : 
+             undefined, // Let normalizeFitMethod/getBackgroundSize handle default
+             
+    scaling: (item.scaling && item.scaling.trim() !== '') ? item.scaling :
+             (item.Scaling && item.Scaling.trim() !== '') ? item.Scaling :
+             (item.SCALING && item.SCALING.trim() !== '') ? item.SCALING : 
+             undefined // No default needed for scaling
   };
 }
 
 getBackgroundPosition(alignment) {
-  if (!alignment) return 'center center';
+  // FIXED: Ensure default is always applied for undefined/empty alignment
+  if (!alignment || alignment.trim() === '') {
+    return 'center center'; // EXPLICIT DEFAULT
+  }
   
   const alignmentStr = String(alignment).trim();
   console.log(`🔍 Processing alignment: "${alignmentStr}"`);
@@ -1492,6 +1501,10 @@ parseSmartAlignment(alignment) {
  * Normalize fit method values
  */
 normalizeFitMethod(fitting) {
+  // FIXED: Ensure default is always applied for undefined/empty fitting
+  if (!fitting || fitting.trim() === '') {
+    return 'cover'; // EXPLICIT DEFAULT - your original natural-cover behavior
+  }
   const fitMap = {
     'fit': 'contain',
     'fill': 'fill', 
@@ -1509,6 +1522,10 @@ normalizeFitMethod(fitting) {
  * Convert alignment to CSS object-position
  */
 getObjectPosition(alignment) {
+  // FIXED: Ensure default is always applied for undefined/empty alignment
+  if (!alignment || alignment.trim() === '') {
+    return 'center center'; // EXPLICIT DEFAULT
+  }
   const positionMap = {
     // Basic positions
     'center': 'center center',
