@@ -2520,5 +2520,16 @@ body[data-page-type="category"] .section-header {
   body {
     padding-top: 55px !important;
   }
+  
+}
+  /* NUCLEAR OPTION: Force cover as default for all card images */
+.content-card .card-image img:not([style*="object-fit"]) {
+  object-fit: cover !important;
+  object-position: center center !important;
+}
+
+.content-card .card-image .card-image-enhanced:not([style*="object-fit"]) {
+  object-fit: cover !important;
+  object-position: center center !important;
 }
 }
