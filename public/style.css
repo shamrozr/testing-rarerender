@@ -953,12 +953,15 @@ body[data-page-type="category"] .section-header {
   border: 1px solid var(--color-border-light, #f1f3f4);
 }
 
-/* Enhanced Card Image with Advanced Rendering */
 .card-image-enhanced {
   width: 100% !important;
   height: 100% !important;
   display: block;
   transition: all var(--transition-smooth);
+  
+  /* FIXED: Ensure default object-fit is cover */
+  object-fit: cover !important;
+  object-position: center center !important;
   
   /* FIXED: Pure white background for any empty spaces */
   background: #ffffff !important;
