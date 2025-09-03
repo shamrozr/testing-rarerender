@@ -88,30 +88,41 @@ function setCounts(node) {
   return sum;
 }
 
-function propagateThumbsFromChildren(node) {
+function propagateThumbsFromChildren(node, currentDepth = 0) {
   for (const k of Object.keys(node)) {
     const n = node[k];
     if (!n.isProduct && n.children) {
-      propagateThumbsFromChildren(n.children);
+      propagateThumbsFromChildren(n.children, currentDepth + 1);
       
-      if (!n.thumbnail) {
+      // FIXED: Only inherit for folder display at depth 2+ (BrandsFolders level)
+      // Level 0: Homepage categories (BAGS, SHOES) - NO inheritance
+      // Level 1: Brand folders (Chanel, Gucci) - NO inheritance  
+      // Level 2+: Brand subfolders - YES inheritance for FOLDER display only
+      const shouldInherit = currentDepth >= 2;
+      
+      if (!n.thumbnail && shouldInherit) {
         const childKeys = Object.keys(n.children);
         for (const ckey of childKeys) {
           const child = n.children[ckey];
           if (child.thumbnail) {
             n.thumbnail = child.thumbnail;
             
-            // FIXED: Only inherit EXPLICIT non-default image config
-            // Don't inherit if child has default values that would pollute other items
-            const hasExplicitAlignment = child.alignment && !['center', 'center center'].includes(child.alignment.toLowerCase());
-            const hasExplicitFitting = child.fitting && !['cover'].includes(child.fitting.toLowerCase());
-            const hasExplicitScaling = child.scaling && child.scaling.toString().trim() !== '';
+            // INHERIT image config for FOLDER display only
+            // This is ONLY for how the folder itself looks, NOT for child items
+            if (child.alignment && child.alignment.trim() !== '') {
+              n.alignment = child.alignment;
+              n._inherited_alignment = true; // Mark as inherited for folder display
+            }
+            if (child.fitting && child.fitting.trim() !== '') {
+              n.fitting = child.fitting;
+              n._inherited_fitting = true; // Mark as inherited for folder display
+            }
+            if (child.scaling && child.scaling.trim() !== '') {
+              n.scaling = child.scaling;
+              n._inherited_scaling = true; // Mark as inherited for folder display
+            }
             
-            if (hasExplicitAlignment) n.alignment = child.alignment;
-            if (hasExplicitFitting) n.fitting = child.fitting; 
-            if (hasExplicitScaling) n.scaling = child.scaling;
-            
-            console.log(`📸 SELECTIVE INHERITANCE for folder ${k} from child ${ckey}: alignment=${hasExplicitAlignment ? n.alignment : 'default'}, fitting=${hasExplicitFitting ? n.fitting : 'default'}, scaling=${hasExplicitScaling ? n.scaling : 'default'}`);
+            console.log(`📸 FOLDER DISPLAY inheritance for ${k} at depth ${currentDepth} from child ${ckey}: alignment=${n.alignment || 'default'}, fitting=${n.fitting || 'default'}, scaling=${n.scaling || 'default'}`);
             break;
           }
         }
@@ -120,36 +131,22 @@ function propagateThumbsFromChildren(node) {
   }
 }
 
-function fillMissingThumbsFromAncestors(node, inheritedThumb = "", inheritedAlignment = "", inheritedFitting = "", inheritedScaling = "") {
+function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth = 0) {
   for (const k of Object.keys(node)) {
     const n = node[k];
+    
+    // Only inherit thumbnails for display purposes
     const currentThumb = n.thumbnail || inheritedThumb || PLACEHOLDER_THUMB || "";
-    
-    // FIXED: Only inherit EXPLICIT non-default configuration
-    // Prevent default values from cascading and polluting items without config
-    const shouldInheritAlignment = inheritedAlignment && !['center', 'center center', ''].includes(inheritedAlignment.toLowerCase());
-    const shouldInheritFitting = inheritedFitting && !['cover', ''].includes(inheritedFitting.toLowerCase());
-    const shouldInheritScaling = inheritedScaling && inheritedScaling.toString().trim() !== '';
-    
-    const currentAlignment = n.alignment || (shouldInheritAlignment ? inheritedAlignment : '');
-    const currentFitting = n.fitting || (shouldInheritFitting ? inheritedFitting : '');
-    const currentScaling = n.scaling || (shouldInheritScaling ? inheritedScaling : '');
-    
     if (!n.thumbnail && currentThumb) n.thumbnail = currentThumb;
     
-    // FIXED: Only set inherited values if they're truly custom (non-default)
-    if (!n.alignment && currentAlignment && shouldInheritAlignment) n.alignment = currentAlignment;
-    if (!n.fitting && currentFitting && shouldInheritFitting) n.fitting = currentFitting;
-    if (!n.scaling && currentScaling && shouldInheritScaling) n.scaling = currentScaling;
+    // CRITICAL: Do NOT inherit image configuration to children
+    // Children without explicit CSV config should use GLOBAL defaults (cover + center)
+    // Children WITH explicit CSV config should keep their config
+    // Only folders inherit for their own display, never pass it down to children
     
     if (!n.isProduct && n.children) {
-      fillMissingThumbsFromAncestors(
-        n.children, 
-        currentThumb,
-        currentAlignment,
-        currentFitting, 
-        currentScaling
-      );
+      // Pass only thumbnail to children, never image config
+      fillMissingThumbsFromAncestors(n.children, currentThumb, currentDepth + 1);
     }
   }
 }
@@ -397,31 +394,30 @@ function attachFolderMeta(node, prefix = []) {
       if (meta?.section) n.section = meta.section;
       if (meta?.category) n.category = meta.category;
       
-      // CRITICAL: Apply TopOrder to ALL levels in BOTH formats
+      // CRITICAL: Apply TopOrder and image config to folders only
       if (typeof meta?.TopOrder !== "undefined") {
         n.TopOrder = meta.TopOrder;
-        n.topOrder = meta.TopOrder; // Both formats for maximum compatibility
+        n.topOrder = meta.TopOrder;
         console.log(`📌 BUILD Applied TopOrder ${meta.TopOrder} to folder: ${here}`);
       } else {
-        // FALLBACK: Ensure default TopOrder exists
         n.TopOrder = 999;
         n.topOrder = 999;
-        console.log(`🔧 BUILD Applied default TopOrder 999 to folder: ${here}`);
       }
       
-      // Image rendering config
-      if (meta?.alignment) n.alignment = meta.alignment;
-      if (meta?.fitting) n.fitting = meta.fitting;
-      if (meta?.scaling) n.scaling = meta.scaling;
+      // FIXED: Image config for folders only (for folder display)
+      // Do NOT override inherited config if it exists
+      if (meta?.alignment && !n._inherited_alignment) n.alignment = meta.alignment;
+      if (meta?.fitting && !n._inherited_fitting) n.fitting = meta.fitting;
+      if (meta?.scaling && !n._inherited_scaling) n.scaling = meta.scaling;
       
       if (n.children) attachFolderMeta(n.children, [...prefix, k]);
     } else {
-      // ENSURE products also have TopOrder fallback
+      // ENSURE products have TopOrder fallback but NO image config inheritance
       if (typeof n.TopOrder === "undefined") {
         n.TopOrder = 999;
         n.topOrder = 999;
-        console.log(`🔧 BUILD Applied default TopOrder 999 to product: ${[...prefix, k].join("/")}`);
       }
+      // Products keep their own explicit CSV config or get GLOBAL defaults via JavaScript
     }
   }
 }
