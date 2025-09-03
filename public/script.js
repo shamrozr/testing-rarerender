@@ -1120,16 +1120,20 @@ createCardHTML(item) {
 extractImageConfig(item) {
   console.log('Item data for image config:', item);
   
+  // Extract raw values - don't apply defaults here
+  const rawAlignment = item.alignment || item.Alignment || item.ALIGNMENT || 
+                      item.image_alignment || item.imageAlignment || item['Image Alignment'];
+  const rawFitting = item.fitting || item.Fitting || item.FITTING || 
+                    item.object_fit || item.objectFit || item['Object Fit'] || 
+                    item.image_fit || item.imageFit || item['Image Fit'];
+  const rawScaling = item.scaling || item.Scaling || item.SCALING || 
+                    item.image_scale || item.imageScale || item['Image Scale'] || 
+                    item.scale || item.Scale;
+  
   return {
-    alignment: item.alignment || item.Alignment || item.ALIGNMENT || 
-               item.image_alignment || item.imageAlignment || item['Image Alignment'] || 'center',
-    fitting: item.fitting || item.Fitting || item.FITTING || 
-             item.object_fit || item.objectFit || item['Object Fit'] || 
-             item.image_fit || item.imageFit || item['Image Fit'] || 'cover',
-    scaling: item.scaling || item.Scaling || item.SCALING || 
-             item.image_scale || item.imageScale || item['Image Scale'] || 
-             item.scale || item.Scale || null
-    // NOTE: Removed custom - now handled in smart alignment
+    alignment: rawAlignment || null, // Let defaults be handled in normalization functions
+    fitting: rawFitting || null,     // Let defaults be handled in normalization functions  
+    scaling: rawScaling || null
   };
 }
 
@@ -1277,12 +1281,14 @@ generateImageStyles(config) {
     styles.push(`object-fit: ${fitMethod}`);
     
     // Handle alignment (both standard and custom positioning)
+    // Handle alignment (both standard and custom positioning)
     const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
     if (isCustomAlignment) {
       const customPos = this.parseSmartAlignment(config.alignment);
       styles.push(`object-position: ${customPos}`);
     } else {
-      const objectPosition = this.getObjectPosition(config.alignment);
+      // If no alignment specified, default to 'center center'
+      const objectPosition = this.getObjectPosition(config.alignment || 'center');
       styles.push(`object-position: ${objectPosition}`);
     }
     
@@ -1492,6 +1498,11 @@ parseSmartAlignment(alignment) {
  * Normalize fit method values
  */
 normalizeFitMethod(fitting) {
+  // If no fitting specified, default to 'cover'
+  if (!fitting || fitting.trim() === '') {
+    return 'cover';
+  }
+  
   const fitMap = {
     'fit': 'contain',
     'fill': 'fill', 
@@ -1501,8 +1512,8 @@ normalizeFitMethod(fitting) {
     'scale_down': 'scale-down'
   };
   
-  const normalized = (fitting || '').toLowerCase().replace(/[_-]/g, '-');
-  return fitMap[normalized] || 'cover';
+  const normalized = fitting.toLowerCase().replace(/[_-]/g, '-');
+  return fitMap[normalized] || 'cover'; // Default to 'cover' for unrecognized values
 }
 
 /**
