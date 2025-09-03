@@ -101,12 +101,13 @@ function propagateThumbsFromChildren(node) {
           if (child.thumbnail) {
             n.thumbnail = child.thumbnail;
             
-            // ENHANCED: Also inherit image rendering config from first child with thumbnail
-            if (child.alignment) n.alignment = child.alignment;
-            if (child.fitting) n.fitting = child.fitting; 
+            // FIXED: Only inherit image config if the child has EXPLICIT configuration
+            // Don't inherit default/fallback values that would override system defaults
+            if (child.alignment && child.alignment !== 'center') n.alignment = child.alignment;
+            if (child.fitting && child.fitting !== 'cover') n.fitting = child.fitting; 
             if (child.scaling) n.scaling = child.scaling;
             
-            console.log(`📸 INHERITED image config for folder ${k} from child ${ckey}: alignment=${n.alignment}, fitting=${n.fitting}, scaling=${n.scaling}`);
+            console.log(`📸 INHERITED image config for folder ${k} from child ${ckey}: alignment=${n.alignment || 'default'}, fitting=${n.fitting || 'default'}, scaling=${n.scaling || 'default'}`);
             break;
           }
         }
@@ -119,13 +120,17 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", inheritedAlig
   for (const k of Object.keys(node)) {
     const n = node[k];
     const currentThumb = n.thumbnail || inheritedThumb || PLACEHOLDER_THUMB || "";
-    const currentAlignment = n.alignment || inheritedAlignment;
-    const currentFitting = n.fitting || inheritedFitting;
+    
+    // FIXED: Only inherit non-default image configuration
+    // Don't inherit 'center' alignment or 'cover' fitting as these are system defaults
+    const currentAlignment = n.alignment || (inheritedAlignment && inheritedAlignment !== 'center' ? inheritedAlignment : '');
+    const currentFitting = n.fitting || (inheritedFitting && inheritedFitting !== 'cover' ? inheritedFitting : '');
     const currentScaling = n.scaling || inheritedScaling;
     
     if (!n.thumbnail && currentThumb) n.thumbnail = currentThumb;
-    if (!n.alignment && currentAlignment) n.alignment = currentAlignment;
-    if (!n.fitting && currentFitting) n.fitting = currentFitting;
+    // FIXED: Only set inherited values if they're not defaults
+    if (!n.alignment && currentAlignment && currentAlignment !== 'center') n.alignment = currentAlignment;
+    if (!n.fitting && currentFitting && currentFitting !== 'cover') n.fitting = currentFitting;
     if (!n.scaling && currentScaling) n.scaling = currentScaling;
     
     if (!n.isProduct && n.children) {
@@ -321,47 +326,47 @@ for (const r of masterRows) {
   sectionStats.set(section, sectionStats.get(section) + 1);
 
   if (isLeafProduct) {
-    // ENHANCED: Products at ANY depth get TopOrder
-    const parentSegs = segs.slice(0, -1);
-    const children = ensureFolderNode(tree, parentSegs);
-    children[name] = { 
-      isProduct: true, 
-      driveLink, 
-      thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
-      section: section,
-      category: category,
-      // CRITICAL: Add TopOrder to products at ANY depth in BOTH formats
-      TopOrder: parsedTopOrder,
-      topOrder: parsedTopOrder,
-      // Image rendering config
-      alignment: imageAlignment,
-      fitting: imageFitting,
-      scaling: imageScaling
-    };
-    totalProducts++;
-    console.log(`🎯 BUILD Set PRODUCT ${name} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
-  } else {
-    // ENHANCED: Folders at ANY depth get TopOrder
-    ensureFolderNode(tree, segs);
-    const k = segs.join("/");
-    const existing = folderMeta.get(k) || {};
-    if (normalizedThumb) existing.thumbnail = normalizedThumb;
-    if (driveLink) existing.driveLink = driveLink;
-    if (section) existing.section = section;
-    if (category) existing.category = category;
-    
-    // CRITICAL: Set TopOrder for folders at ANY depth in BOTH formats
-    existing.TopOrder = parsedTopOrder;
-    existing.topOrder = parsedTopOrder;
-    console.log(`📁 BUILD Set FOLDER ${k} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
-    
-    // Image rendering config for folders
-    if (imageAlignment) existing.alignment = imageAlignment;
-    if (imageFitting) existing.fitting = imageFitting;
-    if (imageScaling) existing.scaling = imageScaling;
-    
-    folderMeta.set(k, existing);
-  }
+  // ENHANCED: Products at ANY depth get TopOrder
+  const parentSegs = segs.slice(0, -1);
+  const children = ensureFolderNode(tree, parentSegs);
+  children[name] = { 
+    isProduct: true, 
+    driveLink, 
+    thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+    section: section,
+    category: category,
+    // CRITICAL: Add TopOrder to products at ANY depth in BOTH formats
+    TopOrder: parsedTopOrder,
+    topOrder: parsedTopOrder,
+    // Image rendering config - only set if explicitly provided
+    ...(imageAlignment ? { alignment: imageAlignment } : {}),
+    ...(imageFitting ? { fitting: imageFitting } : {}),
+    ...(imageScaling ? { scaling: imageScaling } : {}),
+  };
+  totalProducts++;
+  console.log(`🎯 BUILD Set PRODUCT ${name} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
+} else {
+  // ENHANCED: Folders at ANY depth get TopOrder
+  ensureFolderNode(tree, segs);
+  const k = segs.join("/");
+  const existing = folderMeta.get(k) || {};
+  if (normalizedThumb) existing.thumbnail = normalizedThumb;
+  if (driveLink) existing.driveLink = driveLink;
+  if (section) existing.section = section;
+  if (category) existing.category = category;
+  
+  // CRITICAL: Set TopOrder for folders at ANY depth in BOTH formats
+  existing.TopOrder = parsedTopOrder;
+  existing.topOrder = parsedTopOrder;
+  console.log(`📁 BUILD Set FOLDER ${k} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
+  
+  // Image rendering config for folders - only set if explicitly provided
+  if (imageAlignment) existing.alignment = imageAlignment;
+  if (imageFitting) existing.fitting = imageFitting;
+  if (imageScaling) existing.scaling = imageScaling;
+  
+  folderMeta.set(k, existing);
+}
 }
 
 console.log(`📊 BUILD Processed ${totalProducts} products across all depths`);
