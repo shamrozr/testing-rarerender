@@ -1120,7 +1120,7 @@ createCardHTML(item) {
 extractImageConfig(item) {
   console.log('Item data for image config:', item);
   
-  // Extract raw values - don't apply defaults here
+  // Extract raw values
   const rawAlignment = item.alignment || item.Alignment || item.ALIGNMENT || 
                       item.image_alignment || item.imageAlignment || item['Image Alignment'];
   const rawFitting = item.fitting || item.Fitting || item.FITTING || 
@@ -1130,11 +1130,18 @@ extractImageConfig(item) {
                     item.image_scale || item.imageScale || item['Image Scale'] || 
                     item.scale || item.Scale;
   
+  // FIXED: Return null for default values to prevent inheritance pollution
+  const cleanAlignment = rawAlignment && !['center', 'center center'].includes(rawAlignment.toLowerCase()) ? rawAlignment : null;
+  const cleanFitting = rawFitting && !['cover'].includes(rawFitting.toLowerCase()) ? rawFitting : null;
+  const cleanScaling = rawScaling && rawScaling.toString().trim() !== '' ? rawScaling : null;
+  
+  console.log(`🧹 CLEANED config for ${item.title || item.key}: alignment=${cleanAlignment}, fitting=${cleanFitting}, scaling=${cleanScaling}`);
+  
   return {
-  alignment: rawAlignment || null,
-  fitting: rawFitting && rawFitting.trim() !== '' ? rawFitting : null, // FIXED: Handle empty strings
-  scaling: rawScaling || null
-};
+    alignment: cleanAlignment,
+    fitting: cleanFitting,     
+    scaling: cleanScaling
+  };
 }
 
 getBackgroundPosition(alignment) {
@@ -1276,26 +1283,26 @@ generateImageStyles(config) {
   } else {
     console.log('📐 Using standard img tag method');
     
-    // FIXED: Only apply custom fitting if config.fitting exists, otherwise let CSS handle default
-    if (config.fitting && config.fitting.trim() !== '') {
+    // FIXED: Only apply custom styles if config exists, let CSS handle defaults
+    if (config.fitting) {
       const fitMethod = this.normalizeFitMethod(config.fitting);
       styles.push(`object-fit: ${fitMethod}`);
     }
-    // If no config.fitting, don't add any object-fit to inline styles - let CSS default take over
-    
-    // Handle alignment (both standard and custom positioning)
-    // Handle alignment (both standard and custom positioning)
-    const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
-    if (isCustomAlignment) {
-      const customPos = this.parseSmartAlignment(config.alignment);
-      styles.push(`object-position: ${customPos}`);
-    } else {
-      // If no alignment specified, default to 'center center'
-      const objectPosition = this.getObjectPosition(config.alignment || 'center');
-      styles.push(`object-position: ${objectPosition}`);
+
+    if (config.alignment) {
+      const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
+      if (isCustomAlignment) {
+        const customPos = this.parseSmartAlignment(config.alignment);
+        styles.push(`object-position: ${customPos}`);
+      } else {
+        const objectPosition = this.getObjectPosition(config.alignment);
+        styles.push(`object-position: ${objectPosition}`);
+      }
     }
+    // If no config.fitting or config.alignment, don't add any inline styles
+    // Let CSS defaults (cover + center center) take over
     
-    // Scaling (if provided)
+    // Scaling (if provided) - keep this unchanged
     const scaleTransform = this.getScaleTransform(config.scaling);
     if (scaleTransform) {
       styles.push(`transform: ${scaleTransform}`);
