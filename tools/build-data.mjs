@@ -100,6 +100,13 @@ function propagateThumbsFromChildren(node) {
           const child = n.children[ckey];
           if (child.thumbnail) {
             n.thumbnail = child.thumbnail;
+            
+            // ENHANCED: Also inherit image rendering config from first child with thumbnail
+            if (child.alignment) n.alignment = child.alignment;
+            if (child.fitting) n.fitting = child.fitting; 
+            if (child.scaling) n.scaling = child.scaling;
+            
+            console.log(`📸 INHERITED image config for folder ${k} from child ${ckey}: alignment=${n.alignment}, fitting=${n.fitting}, scaling=${n.scaling}`);
             break;
           }
         }
@@ -108,13 +115,27 @@ function propagateThumbsFromChildren(node) {
   }
 }
 
-function fillMissingThumbsFromAncestors(node, inherited = "") {
+function fillMissingThumbsFromAncestors(node, inheritedThumb = "", inheritedAlignment = "", inheritedFitting = "", inheritedScaling = "") {
   for (const k of Object.keys(node)) {
     const n = node[k];
-    const current = n.thumbnail || inherited || PLACEHOLDER_THUMB || "";
-    if (!n.thumbnail && current) n.thumbnail = current;
+    const currentThumb = n.thumbnail || inheritedThumb || PLACEHOLDER_THUMB || "";
+    const currentAlignment = n.alignment || inheritedAlignment;
+    const currentFitting = n.fitting || inheritedFitting;
+    const currentScaling = n.scaling || inheritedScaling;
+    
+    if (!n.thumbnail && currentThumb) n.thumbnail = currentThumb;
+    if (!n.alignment && currentAlignment) n.alignment = currentAlignment;
+    if (!n.fitting && currentFitting) n.fitting = currentFitting;
+    if (!n.scaling && currentScaling) n.scaling = currentScaling;
+    
     if (!n.isProduct && n.children) {
-      fillMissingThumbsFromAncestors(n.children, current);
+      fillMissingThumbsFromAncestors(
+        n.children, 
+        currentThumb,
+        currentAlignment,
+        currentFitting, 
+        currentScaling
+      );
     }
   }
 }
@@ -413,9 +434,11 @@ attachFolderMeta(tree);
   convertEmpty(tree);
 
   // Enhance catalog with visual and section data
-  console.log("🖼️  Enhancing visual and section elements...");
+  // Enhance catalog with visual and section data
+  console.log("🖼️  Enhancing visual and section elements with inherited config...");
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
+  console.log("✅ Image config inheritance complete");
 
   console.log("🧮 Calculating enhanced catalog metrics...");
   for (const top of Object.keys(tree)) {
@@ -462,9 +485,13 @@ console.log("✅ BUILD TopOrder verification complete");
     imageRenderingStats.total++;
     
     // FIXED: Check if item has image rendering config INCLUDING custom
+    // ENHANCED: Check if item has image rendering config (including inherited)
     if (n.alignment || n.fitting || n.scaling) {
-  imageRenderingStats.withConfig++;
-}
+      imageRenderingStats.withConfig++;
+      if ([...pfx, k].join("/").includes("/")) {
+        console.log(`📸 Config found at ${[...pfx, k].join("/")}: alignment=${n.alignment}, fitting=${n.fitting}, scaling=${n.scaling}`);
+      }
+    }
     
     if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
       const exists = await fileExists(n.thumbnail);
@@ -523,8 +550,12 @@ console.log("✅ BUILD TopOrder verification complete");
   items: tree[cat].count || 0,
   section: tree[cat].section || 'Featured',
   topOrder: tree[cat].topOrder || 999,
-  hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling)
-
+  hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling),
+  imageConfig: {
+    alignment: tree[cat].alignment || 'inherited/default',
+    fitting: tree[cat].fitting || 'inherited/default', 
+    scaling: tree[cat].scaling || 'inherited/default'
+  }
 }))
     }
   };
