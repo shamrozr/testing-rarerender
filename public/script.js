@@ -1131,10 +1131,10 @@ extractImageConfig(item) {
                     item.scale || item.Scale;
   
   return {
-    alignment: rawAlignment || null, // Let defaults be handled in normalization functions
-    fitting: rawFitting || null,     // Let defaults be handled in normalization functions  
-    scaling: rawScaling || null
-  };
+  alignment: rawAlignment || null,
+  fitting: rawFitting && rawFitting.trim() !== '' ? rawFitting : null, // FIXED: Handle empty strings
+  scaling: rawScaling || null
+};
 }
 
 getBackgroundPosition(alignment) {
@@ -1276,9 +1276,12 @@ generateImageStyles(config) {
   } else {
     console.log('📐 Using standard img tag method');
     
-    // Standard img tag method - NEVER use object-fit: none
-    const fitMethod = this.normalizeFitMethod(config.fitting);
-    styles.push(`object-fit: ${fitMethod}`);
+    // FIXED: Only apply custom fitting if config.fitting exists, otherwise let CSS handle default
+    if (config.fitting && config.fitting.trim() !== '') {
+      const fitMethod = this.normalizeFitMethod(config.fitting);
+      styles.push(`object-fit: ${fitMethod}`);
+    }
+    // If no config.fitting, don't add any object-fit to inline styles - let CSS default take over
     
     // Handle alignment (both standard and custom positioning)
     // Handle alignment (both standard and custom positioning)
