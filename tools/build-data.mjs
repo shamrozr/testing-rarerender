@@ -101,13 +101,17 @@ function propagateThumbsFromChildren(node) {
           if (child.thumbnail) {
             n.thumbnail = child.thumbnail;
             
-            // FIXED: Only inherit image config if the child has EXPLICIT configuration
-            // Don't inherit default/fallback values that would override system defaults
-            if (child.alignment && child.alignment !== 'center') n.alignment = child.alignment;
-            if (child.fitting && child.fitting !== 'cover') n.fitting = child.fitting; 
-            if (child.scaling) n.scaling = child.scaling;
+            // FIXED: Only inherit EXPLICIT non-default image config
+            // Don't inherit if child has default values that would pollute other items
+            const hasExplicitAlignment = child.alignment && !['center', 'center center'].includes(child.alignment.toLowerCase());
+            const hasExplicitFitting = child.fitting && !['cover'].includes(child.fitting.toLowerCase());
+            const hasExplicitScaling = child.scaling && child.scaling.toString().trim() !== '';
             
-            console.log(`📸 INHERITED image config for folder ${k} from child ${ckey}: alignment=${n.alignment || 'default'}, fitting=${n.fitting || 'default'}, scaling=${n.scaling || 'default'}`);
+            if (hasExplicitAlignment) n.alignment = child.alignment;
+            if (hasExplicitFitting) n.fitting = child.fitting; 
+            if (hasExplicitScaling) n.scaling = child.scaling;
+            
+            console.log(`📸 SELECTIVE INHERITANCE for folder ${k} from child ${ckey}: alignment=${hasExplicitAlignment ? n.alignment : 'default'}, fitting=${hasExplicitFitting ? n.fitting : 'default'}, scaling=${hasExplicitScaling ? n.scaling : 'default'}`);
             break;
           }
         }
@@ -121,17 +125,22 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", inheritedAlig
     const n = node[k];
     const currentThumb = n.thumbnail || inheritedThumb || PLACEHOLDER_THUMB || "";
     
-    // FIXED: Only inherit non-default image configuration
-    // Don't inherit 'center' alignment or 'cover' fitting as these are system defaults
-    const currentAlignment = n.alignment || (inheritedAlignment && inheritedAlignment !== 'center' ? inheritedAlignment : '');
-    const currentFitting = n.fitting || (inheritedFitting && inheritedFitting !== 'cover' ? inheritedFitting : '');
-    const currentScaling = n.scaling || inheritedScaling;
+    // FIXED: Only inherit EXPLICIT non-default configuration
+    // Prevent default values from cascading and polluting items without config
+    const shouldInheritAlignment = inheritedAlignment && !['center', 'center center', ''].includes(inheritedAlignment.toLowerCase());
+    const shouldInheritFitting = inheritedFitting && !['cover', ''].includes(inheritedFitting.toLowerCase());
+    const shouldInheritScaling = inheritedScaling && inheritedScaling.toString().trim() !== '';
+    
+    const currentAlignment = n.alignment || (shouldInheritAlignment ? inheritedAlignment : '');
+    const currentFitting = n.fitting || (shouldInheritFitting ? inheritedFitting : '');
+    const currentScaling = n.scaling || (shouldInheritScaling ? inheritedScaling : '');
     
     if (!n.thumbnail && currentThumb) n.thumbnail = currentThumb;
-    // FIXED: Only set inherited values if they're not defaults
-    if (!n.alignment && currentAlignment && currentAlignment !== 'center') n.alignment = currentAlignment;
-    if (!n.fitting && currentFitting && currentFitting !== 'cover') n.fitting = currentFitting;
-    if (!n.scaling && currentScaling) n.scaling = currentScaling;
+    
+    // FIXED: Only set inherited values if they're truly custom (non-default)
+    if (!n.alignment && currentAlignment && shouldInheritAlignment) n.alignment = currentAlignment;
+    if (!n.fitting && currentFitting && shouldInheritFitting) n.fitting = currentFitting;
+    if (!n.scaling && currentScaling && shouldInheritScaling) n.scaling = currentScaling;
     
     if (!n.isProduct && n.children) {
       fillMissingThumbsFromAncestors(
