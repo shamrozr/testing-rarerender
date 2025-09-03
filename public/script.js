@@ -1301,12 +1301,16 @@ generateImageStyles(config) {
   }
   
   // Base styles
+// Base styles
   styles.push(`width: 100%`);
   styles.push(`height: 100%`);
   styles.push(`background: #ffffff`);
   styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
   
-  return styles.join('; ');
+  // FIXED: Add !important to ensure inline styles override CSS
+  const finalStyles = styles.join('; ').replace(/object-fit: ([^;]+)/, 'object-fit: $1 !important').replace(/object-position: ([^;]+)/, 'object-position: $1 !important');
+  
+  return finalStyles;
 }
 
 // ADD this new function AFTER generateImageStyles:
