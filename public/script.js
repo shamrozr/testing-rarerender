@@ -1120,7 +1120,7 @@ createCardHTML(item) {
 extractImageConfig(item) {
   console.log('Item data for image config:', item);
   
-  // Extract raw values
+  // Extract raw values - only from explicit CSV data
   const rawAlignment = item.alignment || item.Alignment || item.ALIGNMENT || 
                       item.image_alignment || item.imageAlignment || item['Image Alignment'];
   const rawFitting = item.fitting || item.Fitting || item.FITTING || 
@@ -1130,20 +1130,30 @@ extractImageConfig(item) {
                     item.image_scale || item.imageScale || item['Image Scale'] || 
                     item.scale || item.Scale;
   
-  // FIXED: Return null for default values to prevent inheritance pollution
-  const cleanAlignment = rawAlignment && !['center', 'center center'].includes(rawAlignment.toLowerCase()) ? rawAlignment : null;
-  const cleanFitting = rawFitting && !['cover'].includes(rawFitting.toLowerCase()) ? rawFitting : null;
-  const cleanScaling = rawScaling && rawScaling.toString().trim() !== '' ? rawScaling : null;
+  // FIXED: Return explicit config or null (for GLOBAL defaults)
+  // Items get either their explicit CSV config OR global defaults (cover + center)
+  // NEVER inherit from folder - folders only use inheritance for their own display
   
-  console.log(`🧹 CLEANED config for ${item.title || item.key}: alignment=${cleanAlignment}, fitting=${cleanFitting}, scaling=${cleanScaling}`);
+  const hasExplicitConfig = (rawAlignment && rawAlignment.trim() !== '') || 
+                           (rawFitting && rawFitting.trim() !== '') || 
+                           (rawScaling && rawScaling.trim() !== '');
   
-  return {
-    alignment: cleanAlignment,
-    fitting: cleanFitting,     
-    scaling: cleanScaling
-  };
+  if (hasExplicitConfig) {
+    console.log(`✅ EXPLICIT config found for ${item.title || item.key}`);
+    return {
+      alignment: (rawAlignment && rawAlignment.trim() !== '') ? rawAlignment : null,
+      fitting: (rawFitting && rawFitting.trim() !== '') ? rawFitting : null,     
+      scaling: (rawScaling && rawScaling.trim() !== '') ? rawScaling : null
+    };
+  } else {
+    console.log(`🌍 GLOBAL defaults will apply for ${item.title || item.key}`);
+    return {
+      alignment: null, // Will get global default (center center)
+      fitting: null,   // Will get global default (cover)
+      scaling: null
+    };
+  }
 }
-
 getBackgroundPosition(alignment) {
   if (!alignment) return 'center center';
   
@@ -1281,15 +1291,23 @@ generateImageStyles(config) {
     console.log('🖼️ Using background-image method');
     return 'BACKGROUND_METHOD'; // Special flag for createCardHTML
   } else {
-    console.log('📐 Using standard img tag method');
+console.log('📐 Using standard img tag method');
     
-    // FIXED: Only apply custom styles if config exists, let CSS handle defaults
-    if (config.fitting) {
+    // FIXED: Apply explicit config OR let CSS apply global defaults
+    // Never inherit folder config - each item is independent
+    
+    if (config.fitting && config.fitting.trim() !== '') {
+      // Item has explicit fitting from CSV
       const fitMethod = this.normalizeFitMethod(config.fitting);
       styles.push(`object-fit: ${fitMethod}`);
+      console.log(`🎯 Applied explicit fitting: ${fitMethod}`);
+    } else {
+      // Item has no explicit fitting - let CSS apply global default (cover)
+      console.log(`🌍 Using global default fitting (cover) via CSS`);
     }
 
-    if (config.alignment) {
+    if (config.alignment && config.alignment.trim() !== '') {
+      // Item has explicit alignment from CSV
       const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
       if (isCustomAlignment) {
         const customPos = this.parseSmartAlignment(config.alignment);
@@ -1298,9 +1316,11 @@ generateImageStyles(config) {
         const objectPosition = this.getObjectPosition(config.alignment);
         styles.push(`object-position: ${objectPosition}`);
       }
+      console.log(`🎯 Applied explicit alignment: ${config.alignment}`);
+    } else {
+      // Item has no explicit alignment - let CSS apply global default (center center)
+      console.log(`🌍 Using global default alignment (center center) via CSS`);
     }
-    // If no config.fitting or config.alignment, don't add any inline styles
-    // Let CSS defaults (cover + center center) take over
     
     // Scaling (if provided) - keep this unchanged
     const scaleTransform = this.getScaleTransform(config.scaling);
