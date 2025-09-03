@@ -101,18 +101,12 @@ function propagateThumbsFromChildren(node) {
           if (child.thumbnail) {
             n.thumbnail = child.thumbnail;
             
-            // FIXED: Only inherit config if child actually has meaningful values
-            if (child.alignment && child.alignment.trim() !== '') {
-              n.alignment = child.alignment;
-            }
-            if (child.fitting && child.fitting.trim() !== '') {
-              n.fitting = child.fitting;
-            }
-            if (child.scaling && child.scaling.trim() !== '') {
-              n.scaling = child.scaling;
-            }
+            // ENHANCED: Also inherit image rendering config from first child with thumbnail
+            if (child.alignment) n.alignment = child.alignment;
+            if (child.fitting) n.fitting = child.fitting; 
+            if (child.scaling) n.scaling = child.scaling;
             
-            console.log(`📸 INHERITED image config for folder ${k} from child ${ckey}: alignment=${n.alignment || 'default'}, fitting=${n.fitting || 'default'}, scaling=${n.scaling || 'default'}`);
+            console.log(`📸 INHERITED image config for folder ${k} from child ${ckey}: alignment=${n.alignment}, fitting=${n.fitting}, scaling=${n.scaling}`);
             break;
           }
         }
@@ -125,15 +119,11 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", inheritedAlig
   for (const k of Object.keys(node)) {
     const n = node[k];
     const currentThumb = n.thumbnail || inheritedThumb || PLACEHOLDER_THUMB || "";
-    
-    // FIXED: Only apply inherited config if current item has NO config AND inherited has meaningful values
-    const currentAlignment = n.alignment || (inheritedAlignment && inheritedAlignment.trim() !== '' ? inheritedAlignment : undefined);
-    const currentFitting = n.fitting || (inheritedFitting && inheritedFitting.trim() !== '' ? inheritedFitting : undefined);
-    const currentScaling = n.scaling || (inheritedScaling && inheritedScaling.trim() !== '' ? inheritedScaling : undefined);
+    const currentAlignment = n.alignment || inheritedAlignment;
+    const currentFitting = n.fitting || inheritedFitting;
+    const currentScaling = n.scaling || inheritedScaling;
     
     if (!n.thumbnail && currentThumb) n.thumbnail = currentThumb;
-    
-    // CRITICAL: Only set config properties if they have actual values - let JavaScript defaults handle empty cases
     if (!n.alignment && currentAlignment) n.alignment = currentAlignment;
     if (!n.fitting && currentFitting) n.fitting = currentFitting;
     if (!n.scaling && currentScaling) n.scaling = currentScaling;
