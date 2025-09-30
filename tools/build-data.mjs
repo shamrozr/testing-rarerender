@@ -627,7 +627,7 @@ applySmartBrowseBrandsFilter(tree);
 
 // Add summary
 console.log("\n📊 BROWSE BRANDS FILTER RESULTS:");
-let totalBrands = 0;
+
 let shownBrands = 0;
 let auto10Plus = 0;
 let manualOn = 0;
