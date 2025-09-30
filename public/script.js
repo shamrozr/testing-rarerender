@@ -632,7 +632,14 @@ sortItemsEnhanced(items, isHomepage = false) {
 }
 
   setupPreviewModal() {
-  if (document.getElementById('drivePreviewModal')) return;
+  // Remove any existing modal first
+  const existingModal = document.getElementById('drivePreviewModal');
+  if (existingModal) {
+    existingModal.remove();
+    console.log('🗑️ Removed existing modal');
+  }
+  
+  console.log('🔨 Creating fresh preview modal...');
   
   const modal = document.createElement('div');
   modal.id = 'drivePreviewModal';
@@ -661,8 +668,12 @@ sortItemsEnhanced(items, isHomepage = false) {
   `;
   
   document.body.appendChild(modal);
+  console.log('✅ Modal added to DOM');
+  
+  // Bind events AFTER modal is in DOM
   this.bindPreviewEvents();
-  console.log('✅ Preview modal initialized');
+  
+  console.log('✅ Preview modal fully initialized');
 }
 
 bindPreviewEvents() {
@@ -753,25 +764,53 @@ openPreview(product, productTitle) {
     return;
   }
   
+  // Ensure modal exists and is fresh
   this.setupPreviewModal();
   
+  // Set preview data
   this.currentPreview = {
     images: product.preview.images,
     currentIndex: 0,
     title: productTitle
   };
   
-  const titleEl = document.getElementById('previewTitle');
-  if (titleEl) titleEl.textContent = productTitle;
+  console.log(`📦 Preview data set: ${product.preview.images.length} images`);
   
-  const modal = document.getElementById('drivePreviewModal');
-  if (modal) {
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    console.log('✅ Modal opened, scroll locked');
+  // Update title
+  const titleEl = document.getElementById('previewTitle');
+  if (titleEl) {
+    titleEl.textContent = productTitle;
   }
   
-  this.showCurrentImage();
+  // Get modal and make it visible
+  const modal = document.getElementById('drivePreviewModal');
+  if (modal) {
+    // Force display with both class and inline styles
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.right = '0';
+    modal.style.bottom = '0';
+    modal.style.zIndex = '10000';
+    modal.style.background = 'rgba(0, 0, 0, 0.95)';
+    
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    
+    console.log('✅ Modal forced visible with inline styles');
+    console.log('✅ Body scroll locked');
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      this.showCurrentImage();
+    }, 50);
+  } else {
+    console.error('❌ Modal element not found after setup!');
+  }
 }
 
 showCurrentImage() {
@@ -876,15 +915,18 @@ showNextImage() {
 }
 
 closePreview() {
-  console.log('🔓 Closing preview, unlocking scroll');
+  console.log('🔓 Closing preview...');
   
   const modal = document.getElementById('drivePreviewModal');
   if (modal) {
     modal.classList.remove('active');
+    modal.style.display = 'none';
   }
   
+  // Restore body scroll
   document.body.style.overflow = '';
   document.body.style.position = '';
+  document.body.style.width = '';
   document.documentElement.style.overflow = '';
   
   this.currentPreview = null;
@@ -892,6 +934,24 @@ closePreview() {
   console.log('✅ Preview closed, scroll restored');
 }
 
+
+
+  // Debug function to check modal state
+debugModalState() {
+  const modal = document.getElementById('drivePreviewModal');
+  console.log('🔍 Modal Debug:');
+  console.log('  - Exists:', !!modal);
+  if (modal) {
+    console.log('  - Display:', window.getComputedStyle(modal).display);
+    console.log('  - Visibility:', window.getComputedStyle(modal).visibility);
+    console.log('  - Z-index:', window.getComputedStyle(modal).zIndex);
+    console.log('  - Position:', window.getComputedStyle(modal).position);
+    console.log('  - Classes:', modal.className);
+    console.log('  - Has active class:', modal.classList.contains('active'));
+  }
+}
+
+  
   navigateToHome() {
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
