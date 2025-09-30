@@ -2828,9 +2828,8 @@ body[data-page-type="category"] .section-header {
   object-fit: cover !important;
   object-position: center center !important;
 }
-  /* ============================================================================
+/* ============================================================================
    DRIVE PREVIEW MODAL STYLES
-   Add this section to your public/style.css file
    ============================================================================ */
 
 .drive-preview-modal {
@@ -2875,9 +2874,8 @@ body[data-page-type="category"] .section-header {
   z-index: 1;
 }
 
-/* Preview Header */
 .preview-header {
-  padding: var(--space-4) var(--space-6);
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2908,7 +2906,7 @@ body[data-page-type="category"] .section-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-base);
+  transition: all 0.2s ease;
   line-height: 1;
 }
 
@@ -2917,17 +2915,12 @@ body[data-page-type="category"] .section-header {
   transform: scale(1.05);
 }
 
-.preview-close:active {
-  transform: scale(0.95);
-}
-
-/* Preview Content */
 .preview-content {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6);
+  padding: 1.5rem;
   overflow: hidden;
   position: relative;
 }
@@ -2936,29 +2929,18 @@ body[data-page-type="category"] .section-header {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   cursor: pointer;
   transition: transform 0.3s ease;
 }
 
-.preview-image:active {
-  transform: scale(0.98);
-}
-
-/* Loading State */
 .preview-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: 1rem;
   color: white;
-}
-
-.preview-loading span {
-  font-size: 1rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
 }
 
 .preview-spinner {
@@ -2974,45 +2956,31 @@ body[data-page-type="category"] .section-header {
   to { transform: rotate(360deg); }
 }
 
-/* Error State */
 .preview-error {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: 1rem;
   color: white;
   text-align: center;
-  padding: var(--space-8);
+  padding: 2rem;
 }
 
 .preview-error-icon {
   font-size: 4rem;
   opacity: 0.7;
-  margin-bottom: var(--space-4);
-}
-
-.preview-error h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: var(--space-2);
-}
-
-.preview-error p {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: var(--space-4);
 }
 
 .preview-btn {
-  padding: var(--space-3) var(--space-6);
+  padding: 0.75rem 1.5rem;
   background: rgba(255, 255, 255, 0.15);
   color: white;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-base);
+  transition: all 0.2s ease;
 }
 
 .preview-btn:hover {
@@ -3020,13 +2988,8 @@ body[data-page-type="category"] .section-header {
   transform: translateY(-2px);
 }
 
-.preview-btn:active {
-  transform: translateY(0);
-}
-
-/* Preview Navigation */
 .preview-navigation {
-  padding: var(--space-4) var(--space-6);
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -3047,17 +3010,13 @@ body[data-page-type="category"] .section-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-base);
+  transition: all 0.2s ease;
   line-height: 1;
 }
 
 .preview-nav:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.25);
   transform: scale(1.05);
-}
-
-.preview-nav:active:not(:disabled) {
-  transform: scale(0.95);
 }
 
 .preview-nav:disabled {
@@ -3071,14 +3030,13 @@ body[data-page-type="category"] .section-header {
   font-weight: 500;
   color: white;
   background: rgba(255, 255, 255, 0.1);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-full);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
   .preview-header {
-    padding: var(--space-3) var(--space-4);
+    padding: 0.75rem 1rem;
   }
   
   .preview-title {
@@ -3093,75 +3051,13 @@ body[data-page-type="category"] .section-header {
   }
   
   .preview-content {
-    padding: var(--space-4);
-  }
-  
-  .preview-navigation {
-    padding: var(--space-3) var(--space-4);
+    padding: 1rem;
   }
   
   .preview-nav {
     width: 44px;
     height: 44px;
     font-size: 1.75rem;
-  }
-  
-  .preview-counter {
-    font-size: 0.9rem;
-    padding: var(--space-2) var(--space-3);
-  }
-}
-
-@media (max-width: 480px) {
-  .preview-header {
-    padding: var(--space-2) var(--space-3);
-  }
-  
-  .preview-title {
-    font-size: 0.9rem;
-    max-width: 55%;
-  }
-  
-  .preview-close {
-    width: 36px;
-    height: 36px;
-    font-size: 1.5rem;
-  }
-  
-  .preview-content {
-    padding: var(--space-3);
-  }
-  
-  .preview-nav {
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
-  }
-  
-  .preview-counter {
-    font-size: 0.85rem;
-  }
-  
-  .preview-image {
-    border-radius: var(--radius-md);
-  }
-}
-
-/* High Performance Mode */
-@media (prefers-reduced-motion: reduce) {
-  .drive-preview-modal,
-  .preview-image,
-  .preview-nav,
-  .preview-close {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* Dark Mode Support (if you add dark mode in the future) */
-@media (prefers-color-scheme: dark) {
-  .drive-preview-modal {
-    background: rgba(0, 0, 0, 0.97);
   }
 }
 }
