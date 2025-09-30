@@ -1652,21 +1652,18 @@ getScaleTransform(scaling) {
   const taxonomyGrid = document.getElementById('taxonomyGrid');
   if (!taxonomyGrid) return;
 
-  console.log('🏢 Setting up SIMPLIFIED brand taxonomy section');
+  console.log('🏢 Setting up BRAND taxonomy section');
 
   // Extract all brands from the catalog tree
-  const brands = this.extractAllBrands();
+  const brands = this.extractBrandsFromTree();
   
   if (brands.length === 0) {
     console.log('⚠️ No brands found');
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'none';
-    }
+    taxonomyGrid.innerHTML = '<p style="text-align:center;">No brands available</p>';
     return;
   }
 
-  console.log(`✅ Found ${brands.length} brands`);
+  console.log(`✅ Found ${brands.length} brands:`, brands.map(b => b.name));
 
   // Update section title
   const taxonomyTitle = document.querySelector('.taxonomy-title');
@@ -1674,7 +1671,7 @@ getScaleTransform(scaling) {
     taxonomyTitle.textContent = 'Browse All Brands';
   }
 
-  // Render ALL brand items with logos (no filtering)
+  // Render brand items with logos
   taxonomyGrid.innerHTML = brands.map(brand => `
     <div class="taxonomy-item brand-item" 
          data-brand="${brand.slug}" 
@@ -1694,8 +1691,10 @@ getScaleTransform(scaling) {
     </div>
   `).join('');
 
-  console.log('✅ Brand taxonomy rendered (showing ALL brands)');
+  console.log('✅ Brand taxonomy rendered');
 }
+
+
 extractAllBrands() {
   if (!this.data?.catalog?.tree) {
     console.log('❌ No catalog tree found');
@@ -1756,17 +1755,21 @@ extractAllBrands() {
   }
 
   const brandsMap = new Map();
+  
+  console.log('🔍 Extracting brands from tree...');
+
+  // Walk through the tree structure
+  // Expected: tree[CATEGORY][BRAND][PRODUCTS]
   const tree = this.data.catalog.tree;
   
-  console.log('🔍 Extracting all brands...');
-  
   Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+    console.log(`📂 Processing category: ${categoryKey}`);
+    
     if (!categoryData.children) return;
     
+    // Second level = Brands
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      const itemCount = brandData.count || 0;
-      
-      console.log(`  ✅ ${brandKey} (${itemCount} items)`);
+      console.log(`  🏢 Found brand: ${brandKey}`);
       
       const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       
@@ -1775,22 +1778,23 @@ extractAllBrands() {
           name: brandKey,
           slug: brandSlug,
           logo: brandData.thumbnail || '',
-          count: itemCount,
+          count: brandData.count || 0,
           categories: new Set([categoryKey])
         });
       } else {
+        // Brand exists, add category and update count
         const existing = brandsMap.get(brandSlug);
         existing.categories.add(categoryKey);
-        existing.count += itemCount;
+        existing.count += (brandData.count || 0);
       }
     });
   });
 
+  // Convert to array and sort by count
   const brandsArray = Array.from(brandsMap.values())
     .sort((a, b) => b.count - a.count);
 
-  console.log(`✅ Total brands: ${brandsArray.length}`);
-  
+  console.log(`✅ Extracted ${brandsArray.length} unique brands`);
   return brandsArray;
 }
   
@@ -2059,6 +2063,141 @@ navigateToBrand(brandSlug, brandName) {
 }
 
 
+showBrandCategories(brandSlug, brandName) {
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
+
+  console.log(`📂 Showing categories for brand: ${brandName}`);
+
+  // Find all categories that contain this brand
+  const categories = this.findBrandCategories(brandSlug, brandName);
+  
+  if (categories.length === 0) {
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">No Categories Found</h2>
+            <p class="section-description">This brand has no products available.</p>
+          </div>
+        </div>
+      </section>
+    `;
+    return;
+  }
+
+  // Update hero
+  const heroTitle = document.getElementById('heroTitle');
+  const heroSubtitle = document.getElementById('heroSubtitle');
+  if (heroTitle) heroTitle.textContent = `${brandName} Collection`;
+  if (heroSubtitle) heroSubtitle.textContent = `Browse ${categories.length} ${categories.length === 1 ? 'category' : 'categories'}`;
+
+  // Add breadcrumb
+  this.addBreadcrumbNavigation([
+    { name: 'Home', path: '', isBrand: false },
+    { name: brandName, path: brandSlug, isBrand: true, isActive: true }
+  ]);
+
+  const gridClass = this.getGridClass(categories.length);
+  
+  container.innerHTML = `
+    <section class="content-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">${brandName} Categories</h2>
+          <p class="section-description">Select a category to explore ${brandName} products</p>
+        </div>
+        <div class="cards-grid ${gridClass}">
+          ${categories.map(cat => this.createCategoryCardForBrand(cat, brandSlug, brandName)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+// ============================================================================
+// NEW METHOD: Find categories for a brand
+// ADD THIS METHOD after showBrandCategories()
+// ============================================================================
+
+findBrandCategories(brandSlug, brandName) {
+  if (!this.data?.catalog?.tree) return [];
+  
+  const categories = [];
+  const tree = this.data.catalog.tree;
+  
+  console.log(`🔍 Finding categories for brand: ${brandName} (slug: ${brandSlug})`);
+  
+  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+    if (!categoryData.children) return;
+    
+    // Look for this brand in this category (case-insensitive matching)
+    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
+      // Normalize the brand key for comparison
+      const currentBrandSlug = brandKey
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      console.log(`  Comparing: "${currentBrandSlug}" vs "${brandSlug}"`);
+      
+      if (currentBrandSlug === brandSlug.toLowerCase()) {
+        console.log(`  ✅ Found match in category: ${categoryKey}`);
+        categories.push({
+          categoryKey: categoryKey,
+          brandKey: brandKey,
+          name: categoryKey,
+          count: brandData.count || 0,
+          thumbnail: brandData.thumbnail || categoryData.thumbnail || '',
+          brandSlug: brandSlug,
+          brandName: brandName
+        });
+      }
+    });
+  });
+  
+  console.log(`✅ Found ${categories.length} categories for ${brandName}`);
+  return categories;
+}
+
+// ============================================================================
+// NEW METHOD: Create category card for brand page
+// ADD THIS METHOD after findBrandCategories()
+// ============================================================================
+
+createCategoryCardForBrand(category, brandSlug, brandName) {
+  const imageSrc = category.thumbnail || '';
+  
+  return `
+    <div class="content-card brand-category-card" 
+         data-brand-slug="${brandSlug}"
+         data-brand-name="${brandName}"
+         data-category="${category.categoryKey}"
+         data-brand-key="${category.brandKey}"
+         role="button" 
+         tabindex="0">
+      <div class="card-image">
+        ${imageSrc ? 
+          `<img src="${imageSrc}" alt="${category.name}" loading="lazy" 
+                onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(category.categoryKey)}'">` 
+          : this.getEmojiForCategory(category.categoryKey)}
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">${category.name}</h3>
+        <p class="card-description">${brandName} ${category.name} Collection</p>
+        <div class="card-footer">
+          <span class="card-badge">${category.count} Items</span>
+          <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 navigateToBrandCategory(brandSlug, brandName, categoryKey, brandKey) {
   console.log(`📂 Navigating to: ${brandName} → ${categoryKey}`);
   
@@ -2092,6 +2231,7 @@ navigateToBrandCategory(brandSlug, brandName, categoryKey, brandKey) {
   // Show products for this brand + category
   this.showBrandCategoryProducts(brandSlug, brandName, categoryKey, brandKey);
 }
+
 
 
 showBrandCategoryProducts(brandSlug, brandName, categoryKey, brandKey) {
@@ -2184,7 +2324,6 @@ showBrandCategoryProducts(brandSlug, brandName, categoryKey, brandKey) {
     </section>
   `;
 }
-
   
 // ============================================================================
 // NEW METHOD: Show brand's categories
