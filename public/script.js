@@ -1678,58 +1678,48 @@ getScaleTransform(scaling) {
   const taxonomyGrid = document.getElementById('taxonomyGrid');
   if (!taxonomyGrid) return;
 
-  // Extract brands from data
-  const brands = this.extractBrands();
+  console.log('🏢 Setting up BRAND taxonomy section');
+
+  // Extract all brands from the catalog tree
+  const brands = this.extractBrandsFromTree();
   
+  if (brands.length === 0) {
+    console.log('⚠️ No brands found');
+    taxonomyGrid.innerHTML = '<p style="text-align:center;">No brands available</p>';
+    return;
+  }
+
+  console.log(`✅ Found ${brands.length} brands:`, brands.map(b => b.name));
+
+  // Update section title
+  const taxonomyTitle = document.querySelector('.taxonomy-title');
+  if (taxonomyTitle) {
+    taxonomyTitle.textContent = 'Browse All Brands';
+  }
+
+  // Render brand items with logos
   taxonomyGrid.innerHTML = brands.map(brand => `
-    <div class="taxonomy-item brand-item" data-brand="${brand.slug}" role="button" tabindex="0">
-      ${brand.logo ? `<img src="${brand.logo}" alt="${brand.name}" class="brand-logo-small">` : ''}
-      <div class="taxonomy-name">${brand.name}</div>
-      <div class="taxonomy-count">${brand.count} items</div>
+    <div class="taxonomy-item brand-item" 
+         data-brand="${brand.slug}" 
+         data-brand-name="${brand.name}"
+         role="button" 
+         tabindex="0">
+      ${brand.logo ? 
+        `<img src="${brand.logo}" 
+             alt="${brand.name}" 
+             class="brand-logo-small"
+             onerror="this.style.display='none'">` 
+        : ''}
+      <div class="brand-text-content">
+        <div class="taxonomy-name">${brand.name}</div>
+        <div class="taxonomy-count">${brand.count} items</div>
+      </div>
     </div>
   `).join('');
-}
 
-// ADD NEW METHOD to extract brands
-extractBrands() {
-  if (!this.data?.catalog?.tree) return [];
-  
-  const brandsMap = new Map();
-  
-  // Walk through all items and extract brands
-  const walkTree = (node, path = []) => {
-    Object.entries(node).forEach(([key, item]) => {
-      // Extract brand from second level of path (after category)
-      if (path.length === 1 && item.children) {
-        // This is a brand level (e.g., BAGS/YSL Bags/)
-        const brandName = key;
-        const categoryName = path[0];
-        
-        if (!brandsMap.has(brandName)) {
-          brandsMap.set(brandName, {
-            name: brandName,
-            slug: brandName.toLowerCase().replace(/\s+/g, ''),
-            logo: item.thumbnail || '',
-            count: item.count || 0,
-            categories: new Set()
-          });
-        }
-        
-        brandsMap.get(brandName).categories.add(categoryName);
-      }
-      
-      if (item.children && !item.isProduct) {
-        walkTree(item.children, [...path, key]);
-      }
-    });
-  };
-  
-  walkTree(this.data.catalog.tree);
-  
-  return Array.from(brandsMap.values())
-    .sort((a, b) => b.count - a.count);
+  console.log('✅ Brand taxonomy rendered');
 }
-
+  
   setupFooter() {
     const footerContent = document.getElementById('footerContent');
     if (!footerContent) return;
