@@ -672,19 +672,36 @@ bindPreviewEvents() {
   const prevBtn = document.getElementById('previewPrev');
   const nextBtn = document.getElementById('previewNext');
   
-  closeBtn?.addEventListener('click', () => {
+  if (!modal) {
+    console.error('❌ Preview modal not found in DOM');
+    return;
+  }
+  
+  console.log('✅ Binding preview events');
+  
+  closeBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
     console.log('🔴 Close button clicked');
     this.closePreview();
   });
   
-  overlay?.addEventListener('click', () => {
+  overlay?.addEventListener('click', (e) => {
+    e.stopPropagation();
     console.log('🔴 Overlay clicked');
     this.closePreview();
   });
   
-  prevBtn?.addEventListener('click', () => this.showPreviousImage());
-  nextBtn?.addEventListener('click', () => this.showNextImage());
+  prevBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    this.showPreviousImage();
+  });
   
+  nextBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    this.showNextImage();
+  });
+  
+  // Keyboard navigation
   document.addEventListener('keydown', (e) => {
     if (!this.isPreviewActive()) return;
     
@@ -702,6 +719,7 @@ bindPreviewEvents() {
     e.preventDefault();
   });
   
+  // Touch swipe support
   let touchStartX = 0;
   modal?.addEventListener('touchstart', (e) => {
     touchStartX = e.changedTouches[0].screenX;
@@ -717,6 +735,8 @@ bindPreviewEvents() {
   }, { passive: true });
 }
 
+
+  
 isPreviewActive() {
   const modal = document.getElementById('drivePreviewModal');
   return modal && modal.classList.contains('active');
@@ -755,10 +775,15 @@ openPreview(product, productTitle) {
 }
 
 showCurrentImage() {
-  if (!this.currentPreview || !this.currentPreview.images) return;
+  if (!this.currentPreview || !this.currentPreview.images) {
+    console.error('❌ No preview data available');
+    return;
+  }
   
   const { images, currentIndex } = this.currentPreview;
   const currentImage = images[currentIndex];
+  
+  console.log(`📸 Showing image ${currentIndex + 1}/${images.length}:`, currentImage.name);
   
   const content = document.getElementById('previewContent');
   const prevBtn = document.getElementById('previewPrev');
@@ -771,8 +796,12 @@ showCurrentImage() {
   if (prevBtn) prevBtn.disabled = currentIndex === 0;
   if (nextBtn) nextBtn.disabled = currentIndex === images.length - 1;
   
-  if (!content) return;
+  if (!content) {
+    console.error('❌ Preview content container not found');
+    return;
+  }
   
+  // Show loading state
   content.innerHTML = `
     <div class="preview-loading">
       <div class="preview-spinner"></div>
@@ -780,17 +809,22 @@ showCurrentImage() {
     </div>
   `;
   
+  // Try multiple image URL formats for Google Drive
   const img = new Image();
   const imageUrls = [
-    currentImage.viewUrl,
+    `https://lh3.googleusercontent.com/d/${currentImage.id}=w2000`, // High quality
+    `https://lh3.googleusercontent.com/d/${currentImage.id}`,
     `https://drive.google.com/uc?export=view&id=${currentImage.id}`,
-    `https://drive.google.com/uc?id=${currentImage.id}`
+    `https://drive.google.com/uc?id=${currentImage.id}`,
+    currentImage.viewUrl,
+    currentImage.thumbnailUrl
   ];
   
   let urlIndex = 0;
   
   const tryNextUrl = () => {
     if (urlIndex >= imageUrls.length) {
+      console.error('❌ All image URLs failed for:', currentImage.name);
       content.innerHTML = `
         <div class="preview-error">
           <div class="preview-error-icon">🖼️</div>
@@ -804,11 +838,13 @@ showCurrentImage() {
       return;
     }
     
+    console.log(`🔄 Trying URL ${urlIndex + 1}/${imageUrls.length}:`, imageUrls[urlIndex]);
     img.src = imageUrls[urlIndex];
     urlIndex++;
   };
   
   img.onload = () => {
+    console.log('✅ Image loaded successfully');
     content.innerHTML = `
       <img src="${img.src}" 
            alt="${currentImage.name}" 
@@ -817,9 +853,13 @@ showCurrentImage() {
     `;
   };
   
-  img.onerror = tryNextUrl;
+  img.onerror = () => {
+    console.warn(`⚠️ Failed to load image from URL ${urlIndex}/${imageUrls.length}`);
+    tryNextUrl();
+  };
+  
   tryNextUrl();
-};
+}
     
 
 
@@ -2517,6 +2557,7 @@ navigateToBrandCategory(brandName, categoryName) {
 
     // Card clicks
     // Card clicks
+// Card clicks - ENHANCED with proper preview support
 document.addEventListener('click', (e) => {
   const card = e.target.closest('.content-card, .taxonomy-item');
   if (card) {
@@ -2535,14 +2576,20 @@ document.addEventListener('click', (e) => {
     }
     
     if (isProduct && driveLink) {
-      // NEW: Find product object with preview data
+      // FIXED: Properly find product with preview data
       const productData = this.findProductByPath(searchPath || category);
       const productTitle = card.querySelector('.card-title')?.textContent || category;
       
-      console.log('🎯 Opening product', { productData, productTitle });
+      console.log('🎯 Opening product with preview data:', productData);
       
-      // Enhanced opening with preview support
-      this.openProduct(driveLink, productData, productTitle);
+      // Open with preview support
+      if (productData && productData.preview && productData.preview.images && productData.preview.images.length > 0) {
+        console.log('✅ Opening preview modal with', productData.preview.images.length, 'images');
+        this.openPreview(productData, productTitle);
+      } else {
+        console.log('⚠️ No preview data, opening Drive link');
+        window.open(driveLink, '_blank', 'noopener,noreferrer');
+      }
     } else if (searchPath) {
       this.navigateToPath(searchPath);
     } else {
