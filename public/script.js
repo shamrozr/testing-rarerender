@@ -1687,54 +1687,58 @@ getScaleTransform(scaling) {
     const brandsGrid = document.getElementById('brandsGrid');
     if (!brandsGrid || !this.data.catalog?.tree) return;
 
-    // Extract and normalize all brands across all categories
+    // Extract ONLY brands (not categories) from inside categories
     const brandMap = new Map();
     
-    const extractBrands = (node, parentPath = []) => {
-      for (const [key, item] of Object.entries(node)) {
-        if (!item.isProduct && item.children) {
-          // This is a brand folder (e.g., "Chanel", "Gucci Bags", "LV")
-          const normalizedName = this.normalizeBrandName(key);
+    const extractBrands = (categoryNode, categoryName) => {
+      // categoryNode.children contains the actual brands (Chanel, Gucci, etc.)
+      for (const [brandKey, brandItem] of Object.entries(categoryNode.children || {})) {
+        if (!brandItem.isProduct && brandItem.children) {
+          const normalizedName = this.normalizeBrandName(brandKey);
           
           if (!brandMap.has(normalizedName)) {
             brandMap.set(normalizedName, {
               displayName: normalizedName,
-              categories: new Map(), // Changed to Map to store category data
+              categories: new Map(),
               totalCount: 0,
               paths: [],
-              thumbnail: '' // For brand card thumbnail
+              thumbnail: brandItem.thumbnail || '' // Get from CSV Thumbs Path
             });
           }
           
           const brandData = brandMap.get(normalizedName);
-          const categoryName = parentPath[0] || 'Other';
           
           // Store category with its data
           if (!brandData.categories.has(categoryName)) {
             brandData.categories.set(categoryName, {
               count: 0,
-              thumbnail: this.data.catalog.tree[categoryName]?.thumbnail || ''
+              thumbnail: categoryNode.thumbnail || ''
             });
           }
           
           const catData = brandData.categories.get(categoryName);
-          catData.count += item.count || 0;
+          catData.count += brandItem.count || 0;
           
-          brandData.totalCount += item.count || 0;
-          brandData.paths.push([...parentPath, key].join('/'));
+          brandData.totalCount += brandItem.count || 0;
+          brandData.paths.push(`${categoryName}/${brandKey}`);
           
-          // Set brand thumbnail from Cards/{brandname}.webp if not set
-          if (!brandData.thumbnail) {
-            brandData.thumbnail = `/Cards/${normalizedName.replace(/\s+/g, '')}.webp`;
+          // Use thumbnail from CSV if available, fallback to constructed path
+          if (!brandData.thumbnail && brandItem.thumbnail) {
+            brandData.thumbnail = brandItem.thumbnail;
+          } else if (!brandData.thumbnail) {
+            // Fallback to constructed path
+            brandData.thumbnail = `/Cards/${normalizedName.replace(/\s+/g, '-')}.webp`;
           }
-          
-          // Recursively check children
-          extractBrands(item.children, [...parentPath, key]);
         }
       }
     };
     
-    extractBrands(this.data.catalog.tree);
+    // Only iterate through top-level categories (BAGS, SHOES, etc.)
+    for (const [categoryKey, categoryItem] of Object.entries(this.data.catalog.tree)) {
+      if (!categoryItem.isProduct) {
+        extractBrands(categoryItem, categoryKey);
+      }
+    }
 
     // Convert to array and sort by count
     const brands = Array.from(brandMap.entries())
@@ -1747,13 +1751,17 @@ getScaleTransform(scaling) {
       }))
       .sort((a, b) => b.count - a.count);
 
+    // Homepage: Small logo on left + text (list style)
     brandsGrid.innerHTML = brands.map(brand => `
       <div class="brand-item" data-brand="${brand.name}" data-paths='${JSON.stringify(brand.paths)}' data-categories='${JSON.stringify(Array.from(brand.categories.entries()))}' role="button" tabindex="0">
-        <div class="brand-image">
-          <img src="${brand.thumbnail}" alt="${brand.name}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory('BAGS')}'">
+        <div class="brand-logo-small">
+          <img src="${brand.thumbnail}" alt="${brand.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="brand-logo-fallback" style="display: none;">${this.getEmojiForCategory('BAGS')}</div>
         </div>
-        <div class="brand-name-display">${brand.name}</div>
-        <div class="brand-count">${brand.count} items</div>
+        <div class="brand-info">
+          <div class="brand-name-display">${brand.name}</div>
+          <div class="brand-count">${brand.count} items</div>
+        </div>
       </div>
     `).join('');
 
@@ -1767,6 +1775,10 @@ getScaleTransform(scaling) {
       });
     });
   }
+
+
+
+  
   normalizeBrandName(name) {
     // Remove common suffixes
     let normalized = name
@@ -1858,8 +1870,22 @@ getScaleTransform(scaling) {
   if (slideshowSection) slideshowSection.style.display = 'block';
     
     // Create category cards
+    // Create category cards
     const categoryCards = [];
-    const brandThumbnail = `/Cards/${brandName.replace(/\s+/g, '')}.webp`;
+    // Find the actual brand thumbnail from the first path
+    let brandThumbnail = '';
+    if (paths.length > 0) {
+      const firstPath = paths[0].split('/');
+      const categoryKey = firstPath[0];
+      const brandKey = firstPath[1];
+      if (this.data.catalog.tree[categoryKey]?.children?.[brandKey]?.thumbnail) {
+        brandThumbnail = this.data.catalog.tree[categoryKey].children[brandKey].thumbnail;
+      }
+    }
+    // Fallback to constructed path
+    if (!brandThumbnail) {
+      brandThumbnail = `/Cards/${brandName.replace(/\s+/g, '-')}.webp`;
+    }
     
     categories.forEach((catData, categoryName) => {
       categoryCards.push({
