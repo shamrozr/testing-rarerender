@@ -1719,6 +1719,56 @@ getScaleTransform(scaling) {
 
   console.log('✅ Brand taxonomy rendered');
 }
+
+  extractBrandsFromTree() {
+  if (!this.data?.catalog?.tree) {
+    console.log('❌ No catalog tree found');
+    return [];
+  }
+
+  const brandsMap = new Map();
+  
+  console.log('🔍 Extracting brands from tree...');
+
+  // Walk through the tree structure
+  // Expected: tree[CATEGORY][BRAND][PRODUCTS]
+  const tree = this.data.catalog.tree;
+  
+  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+    console.log(`📂 Processing category: ${categoryKey}`);
+    
+    if (!categoryData.children) return;
+    
+    // Second level = Brands
+    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
+      console.log(`  🏢 Found brand: ${brandKey}`);
+      
+      const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      if (!brandsMap.has(brandSlug)) {
+        brandsMap.set(brandSlug, {
+          name: brandKey,
+          slug: brandSlug,
+          logo: brandData.thumbnail || '',
+          count: brandData.count || 0,
+          categories: new Set([categoryKey])
+        });
+      } else {
+        // Brand exists, add category and update count
+        const existing = brandsMap.get(brandSlug);
+        existing.categories.add(categoryKey);
+        existing.count += (brandData.count || 0);
+      }
+    });
+  });
+
+  // Convert to array and sort by count
+  const brandsArray = Array.from(brandsMap.values())
+    .sort((a, b) => b.count - a.count);
+
+  console.log(`✅ Extracted ${brandsArray.length} unique brands`);
+  return brandsArray;
+}
   
   setupFooter() {
     const footerContent = document.getElementById('footerContent');
