@@ -1156,6 +1156,28 @@ body[data-page-type="category"] .section-header {
   color: var(--color-text-secondary);
   font-size: 0.9rem;
 }
+/* Brand items in taxonomy section */
+.taxonomy-item.brand-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand-logo-small {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: white;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+}
+
+.taxonomy-item.brand-item .taxonomy-name {
+  flex: 1;
+  text-align: left;
+}
+
 
 /* Footer */
 /* ====== */
