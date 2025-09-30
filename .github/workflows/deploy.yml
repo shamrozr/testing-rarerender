@@ -15,6 +15,14 @@ on:
         description: "Optional placeholder (e.g. /thumbs/_placeholder.webp)"
         required: false
         default: ""
+      rebuild_drive_previews:
+        description: "Rebuild Drive preview database? (true/false)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 jobs:
   build-deploy:
@@ -32,6 +40,14 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install Dependencies
+        run: |
+          npm install
+          # Install Drive API dependency only if needed
+          if [ "${{ inputs.rebuild_drive_previews }}" == "true" ]; then
+            npm install googleapis
+          fi
+
       - name: Build data.json (merge + validate + health report)
         env:
           BRANDS_CSV_URL: ${{ inputs.brands_csv_url }}
@@ -39,11 +55,20 @@ jobs:
           PLACEHOLDER_THUMB: ${{ inputs.placeholder_thumb }}
         run: node tools/build-data.mjs
 
-      - name: Upload health report artifact
+      - name: Build Drive Preview Database
+        if: inputs.rebuild_drive_previews == 'true'
+        env:
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          echo "🚀 Building Drive preview database..."
+          node tools/build-drive-previews.mjs
+          echo "✅ Preview database build complete"
+
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: health-report
+          name: build-artifacts
           path: |
             build/health.json
             public/data.json
