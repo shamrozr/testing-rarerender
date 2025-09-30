@@ -106,6 +106,8 @@ class CSVCatalogApp {
     this.setupReviewSlideshow();
     this.setupFooter();
     this.setupEventListeners();
+    this.setupPreviewModal();
+    
     this.setupFABFunctionality();
     
     // NEW: Setup scroll behavior
