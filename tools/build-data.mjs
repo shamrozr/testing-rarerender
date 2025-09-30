@@ -414,9 +414,13 @@ for (const r of masterRows) {
     }
     brandCategoryMap.get(brandSlug).add(categoryName);
     
-    const shouldShowInBrowse = ['on', 'yes', 'true', '1'].includes(browseBrands);
-if (!brandBrowseStatus.has(brandSlug) || shouldShowInBrowse) {
-  brandBrowseStatus.set(brandSlug, shouldShowInBrowse);
+    // Track Browse Brands status - only set if explicitly "on" or "off"
+if (browseBrands !== '') {
+  if (['on', 'yes', 'true', '1'].includes(browseBrands)) {
+    brandBrowseStatus.set(brandSlug, 'FORCE_SHOW');
+  } else if (['off', 'no', 'false', '0'].includes(browseBrands)) {
+    brandBrowseStatus.set(brandSlug, 'FORCE_HIDE');
+  }
 }
     
     // Replace the brand name in segments with normalized version
@@ -568,6 +572,8 @@ applyBrandLogosToTree(tree);
 
 console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)...");
 
+console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)...");
+
 function applySmartBrowseBrandsFilter(node, prefix = []) {
   for (const k of Object.keys(node)) {
     const n = node[k];
@@ -575,22 +581,39 @@ function applySmartBrowseBrandsFilter(node, prefix = []) {
     
     if (currentPath.length === 2 && !n.isProduct) {
       const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const manuallyEnabled = brandBrowseStatus.get(brandSlug) || false;
+      const manualStatus = brandBrowseStatus.get(brandSlug); // 'FORCE_SHOW', 'FORCE_HIDE', or undefined
       const itemCount = n.count || 0;
       
-      // ✅ SMART LOGIC: Show if (10+ items) OR (manually set to On)
-      const shouldShow = itemCount >= 10 || manuallyEnabled;
+      let shouldShow;
+      let reason;
+      
+      // Priority 1: Manual override to HIDE
+      if (manualStatus === 'FORCE_HIDE') {
+        shouldShow = false;
+        reason = 'Manually hidden (Browse Brands = Off)';
+      }
+      // Priority 2: Manual override to SHOW
+      else if (manualStatus === 'FORCE_SHOW') {
+        shouldShow = true;
+        reason = 'Manually shown (Browse Brands = On)';
+      }
+      // Priority 3: Auto-show if 10+ items
+      else if (itemCount >= 10) {
+        shouldShow = true;
+        reason = 'Auto-shown (10+ items)';
+      }
+      // Default: Hide if <10 items and no manual override
+      else {
+        shouldShow = false;
+        reason = `Hidden (<10 items: ${itemCount})`;
+      }
       
       n.browseBrands = shouldShow;
       
       if (shouldShow) {
-        if (manuallyEnabled) {
-          console.log(`  ✅ ${k} (${itemCount} items) - Shown: Manual override (On)`);
-        } else {
-          console.log(`  ✅ ${k} (${itemCount} items) - Shown: 10+ items`);
-        }
+        console.log(`  ✅ ${k} (${itemCount} items) - ${reason}`);
       } else {
-        console.log(`  ❌ ${k} (${itemCount} items) - Hidden: <10 items and not manually enabled`);
+        console.log(`  ❌ ${k} (${itemCount} items) - ${reason}`);
       }
     }
     
@@ -601,6 +624,44 @@ function applySmartBrowseBrandsFilter(node, prefix = []) {
 }
 
 applySmartBrowseBrandsFilter(tree);
+
+// Add summary
+console.log("\n📊 BROWSE BRANDS FILTER RESULTS:");
+let totalBrands = 0;
+let shownBrands = 0;
+let auto10Plus = 0;
+let manualOn = 0;
+let hiddenBrands = 0;
+
+Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+  if (!categoryData.children) return;
+  Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
+    totalBrands++;
+    if (brandData.browseBrands) {
+      shownBrands++;
+      const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      if (brandBrowseStatus.get(brandSlug) === 'FORCE_SHOW') {
+        manualOn++;
+      } else {
+        auto10Plus++;
+      }
+    } else {
+      hiddenBrands++;
+    }
+  });
+});
+
+console.log(`   Total brands: ${totalBrands}`);
+console.log(`   ✅ SHOWN: ${shownBrands} brands`);
+console.log(`      - Auto (10+ items): ${auto10Plus}`);
+console.log(`      - Manual (Browse Brands = On): ${manualOn}`);
+console.log(`   ❌ HIDDEN: ${hiddenBrands} brands`);
+
+if (shownBrands === 0) {
+  console.log("\n⚠️  WARNING: No brands will be shown!");
+  console.log("   All brands have <10 items and no manual overrides.");
+  console.log("   To fix: Add 'Browse Brands = On' to brands you want to show.");
+}
 
 
   
