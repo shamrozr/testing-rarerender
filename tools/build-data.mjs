@@ -574,6 +574,9 @@ console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)..
 
 console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)...");
 
+// Apply smart Browse Brands filter
+console.log("🔍 Applying smart Browse Brands filter...");
+
 function applySmartBrowseBrandsFilter(node, prefix = []) {
   for (const k of Object.keys(node)) {
     const n = node[k];
@@ -581,40 +584,30 @@ function applySmartBrowseBrandsFilter(node, prefix = []) {
     
     if (currentPath.length === 2 && !n.isProduct) {
       const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const manualStatus = brandBrowseStatus.get(brandSlug); // 'FORCE_SHOW', 'FORCE_HIDE', or undefined
+      const manualStatus = brandBrowseStatus.get(brandSlug);
       const itemCount = n.count || 0;
       
-      let shouldShow;
-      let reason;
+      let shouldShow = false;
+      let reason = '';
       
-      // Priority 1: Manual override to HIDE
       if (manualStatus === 'FORCE_HIDE') {
         shouldShow = false;
-        reason = 'Manually hidden (Browse Brands = Off)';
-      }
-      // Priority 2: Manual override to SHOW
-      else if (manualStatus === 'FORCE_SHOW') {
+        reason = 'Hidden (Browse Brands = Off)';
+      } else if (manualStatus === 'FORCE_SHOW') {
         shouldShow = true;
-        reason = 'Manually shown (Browse Brands = On)';
-      }
-      // Priority 3: Auto-show if 10+ items
-      else if (itemCount >= 10) {
+        reason = 'Shown (Browse Brands = On)';
+      } else if (itemCount >= 10) {
         shouldShow = true;
         reason = 'Auto-shown (10+ items)';
-      }
-      // Default: Hide if <10 items and no manual override
-      else {
+      } else {
         shouldShow = false;
         reason = `Hidden (<10 items: ${itemCount})`;
       }
       
       n.browseBrands = shouldShow;
       
-      if (shouldShow) {
-        console.log(`  ✅ ${k} (${itemCount} items) - ${reason}`);
-      } else {
-        console.log(`  ❌ ${k} (${itemCount} items) - ${reason}`);
-      }
+      const icon = shouldShow ? '✅' : '❌';
+      console.log(`  ${icon} ${k} (${itemCount} items) - ${reason}`);
     }
     
     if (n.children && !n.isProduct) {
@@ -625,43 +618,18 @@ function applySmartBrowseBrandsFilter(node, prefix = []) {
 
 applySmartBrowseBrandsFilter(tree);
 
-// Add summary
-console.log("\n📊 BROWSE BRANDS FILTER RESULTS:");
-
-let shownBrands = 0;
-let auto10Plus = 0;
-let manualOn = 0;
-let hiddenBrands = 0;
-
-Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-  if (!categoryData.children) return;
-  Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-    totalBrands++;
-    if (brandData.browseBrands) {
-      shownBrands++;
-      const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      if (brandBrowseStatus.get(brandSlug) === 'FORCE_SHOW') {
-        manualOn++;
-      } else {
-        auto10Plus++;
-      }
-    } else {
-      hiddenBrands++;
-    }
-  });
+// Summary
+console.log("\n📊 BROWSE BRANDS SUMMARY:");
+let shown = 0, hidden = 0;
+Object.values(tree).forEach(cat => {
+  if (cat.children) {
+    Object.values(cat.children).forEach(brand => {
+      if (brand.browseBrands) shown++; else hidden++;
+    });
+  }
 });
-
-console.log(`   Total brands: ${totalBrands}`);
-console.log(`   ✅ SHOWN: ${shownBrands} brands`);
-console.log(`      - Auto (10+ items): ${auto10Plus}`);
-console.log(`      - Manual (Browse Brands = On): ${manualOn}`);
-console.log(`   ❌ HIDDEN: ${hiddenBrands} brands`);
-
-if (shownBrands === 0) {
-  console.log("\n⚠️  WARNING: No brands will be shown!");
-  console.log("   All brands have <10 items and no manual overrides.");
-  console.log("   To fix: Add 'Browse Brands = On' to brands you want to show.");
-}
+console.log(`   ✅ Shown: ${shown} brands`);
+console.log(`   ❌ Hidden: ${hidden} brands`);
 
 
   
