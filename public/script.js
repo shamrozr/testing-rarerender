@@ -632,159 +632,231 @@ sortItemsEnhanced(items, isHomepage = false) {
 }
 
   setupPreviewModal() {
-  // Remove any existing modal first
+  // Remove any existing modal
   const existingModal = document.getElementById('drivePreviewModal');
   if (existingModal) {
     existingModal.remove();
-    console.log('🗑️ Removed existing modal');
   }
   
-  console.log('🔨 Creating fresh preview modal...');
+  console.log('🔨 Creating simplified preview modal...');
   
+  // Create modal with INLINE STYLES for guaranteed rendering
   const modal = document.createElement('div');
   modal.id = 'drivePreviewModal';
-  modal.className = 'drive-preview-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+    display: none;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+  `;
+  
   modal.innerHTML = `
-    <div class="preview-overlay" id="previewOverlay"></div>
-    <div class="preview-container">
-      <div class="preview-header">
-        <div class="preview-title" id="previewTitle">Product Gallery</div>
-        <button class="preview-close" id="previewClose" title="Close (Esc)">×</button>
+    <div id="previewOverlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; cursor: pointer;"></div>
+    
+    <div class="preview-wrapper" style="
+      position: relative;
+      z-index: 10001;
+      width: 90%;
+      max-width: 1200px;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(0, 0, 0, 0.9);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    ">
+      
+      <!-- Header -->
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: rgba(0, 0, 0, 0.95);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+      ">
+        <div id="previewTitle" style="
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: white;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        ">Product Gallery</div>
+        
+        <button id="previewClose" style="
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.15);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          color: white;
+          font-size: 2rem;
+          font-weight: 300;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        " title="Close">×</button>
       </div>
-      <div class="preview-content" id="previewContent">
-        <div class="preview-loading">
-          <div class="preview-spinner"></div>
+      
+      <!-- Image Container -->
+      <div id="previewContent" style="
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow: hidden;
+        position: relative;
+        background: #000;
+        min-height: 0;
+      ">
+        <div class="preview-loading" style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          color: white;
+        ">
+          <div style="
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          "></div>
           <span>Loading images...</span>
         </div>
       </div>
-      <div class="preview-navigation">
-        <button class="preview-nav prev" id="previewPrev" title="Previous (←)">‹</button>
-        <div class="preview-counter">
+      
+      <!-- Navigation -->
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: rgba(0, 0, 0, 0.95);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+      ">
+        <button id="previewPrev" style="
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          font-size: 2rem;
+          font-weight: 300;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        " title="Previous">‹</button>
+        
+        <div style="
+          font-size: 1rem;
+          font-weight: 500;
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          min-width: 80px;
+          text-align: center;
+        ">
           <span id="previewCurrent">1</span> / <span id="previewTotal">1</span>
         </div>
-        <button class="preview-nav next" id="previewNext" title="Next (→)">›</button>
+        
+        <button id="previewNext" style="
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          font-size: 2rem;
+          font-weight: 300;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        " title="Next">›</button>
       </div>
+      
     </div>
   `;
   
   document.body.appendChild(modal);
-  console.log('✅ Modal added to DOM');
+  console.log('✅ Modal created with inline styles');
   
-  // Bind events AFTER modal is in DOM
-  this.bindPreviewEvents();
-  
-  console.log('✅ Preview modal fully initialized');
+  // Bind events
+  this.bindPreviewEventsSimple();
 }
 
-bindPreviewEvents() {
+// NEW SIMPLE EVENT BINDING
+bindPreviewEventsSimple() {
   const modal = document.getElementById('drivePreviewModal');
   const overlay = document.getElementById('previewOverlay');
   const closeBtn = document.getElementById('previewClose');
   const prevBtn = document.getElementById('previewPrev');
   const nextBtn = document.getElementById('previewNext');
   
-  if (!modal) {
-    console.error('❌ Preview modal not found in DOM');
-    return;
-  }
+  console.log('🔗 Binding simple events...');
   
-  console.log('✅ Binding preview events');
+  // Close events
+  closeBtn?.addEventListener('click', () => {
+    console.log('❌ Close clicked');
+    this.closePreview();
+  });
   
-  // Remove any existing listeners first
-  const newCloseBtn = closeBtn?.cloneNode(true);
-  const newPrevBtn = prevBtn?.cloneNode(true);
-  const newNextBtn = nextBtn?.cloneNode(true);
-  const newOverlay = overlay?.cloneNode(true);
+  overlay?.addEventListener('click', () => {
+    console.log('❌ Overlay clicked');
+    this.closePreview();
+  });
   
-  if (closeBtn && newCloseBtn) {
-    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-    newCloseBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      console.log('🔴 Close button clicked');
-      this.closePreview();
-    });
-  }
+  // Navigation events
+  prevBtn?.addEventListener('click', () => {
+    console.log('⬅️ Prev clicked, current index:', this.currentPreview?.currentIndex);
+    this.showPreviousImage();
+  });
   
-  if (prevBtn && newPrevBtn) {
-    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-    newPrevBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      console.log('⬅️ Prev button clicked');
-      this.showPreviousImage();
-    });
-  }
+  nextBtn?.addEventListener('click', () => {
+    console.log('➡️ Next clicked, current index:', this.currentPreview?.currentIndex);
+    this.showNextImage();
+  });
   
-  if (nextBtn && newNextBtn) {
-    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-    newNextBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      console.log('➡️ Next button clicked');
-      this.showNextImage();
-    });
-  }
-  
-  if (overlay && newOverlay) {
-    overlay.parentNode.replaceChild(newOverlay, overlay);
-    newOverlay.addEventListener('click', (e) => {
-      e.stopPropagation();
-      console.log('🔴 Overlay clicked');
-      this.closePreview();
-    });
-  }
-  
-  // Keyboard navigation
-  const keyHandler = (e) => {
-    if (!this.isPreviewActive()) return;
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (modal?.style.display !== 'flex') return;
     
-    console.log('⌨️ Key pressed:', e.key);
+    console.log('⌨️ Key:', e.key);
     
-    switch(e.key) {
-      case 'Escape':
-        this.closePreview();
-        break;
-      case 'ArrowLeft':
-        this.showPreviousImage();
-        break;
-      case 'ArrowRight':
-        this.showNextImage();
-        break;
-    }
-    e.preventDefault();
-  };
+    if (e.key === 'Escape') this.closePreview();
+    if (e.key === 'ArrowLeft') this.showPreviousImage();
+    if (e.key === 'ArrowRight') this.showNextImage();
+  });
   
-  // Remove old keyboard listener if exists
-  if (this.keyboardHandler) {
-    document.removeEventListener('keydown', this.keyboardHandler);
-  }
-  this.keyboardHandler = keyHandler;
-  document.addEventListener('keydown', keyHandler);
-  
-  // Touch swipe support
-  let touchStartX = 0;
-  let touchEndX = 0;
-  
-  modal.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-  
-  modal.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    const diff = touchStartX - touchEndX;
-    
-    console.log('👆 Swipe detected:', diff);
-    
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        console.log('👉 Swipe left - next');
-        this.showNextImage();
-      } else {
-        console.log('👈 Swipe right - previous');
-        this.showPreviousImage();
-      }
-    }
-  }, { passive: true });
-  
-  console.log('✅ All preview events bound successfully');
+  console.log('✅ Events bound');
 }
 
 
@@ -795,150 +867,153 @@ isPreviewActive() {
 }
 
 openPreview(product, productTitle) {
-  console.log('🎯 openPreview called', { product, productTitle });
+  console.log('🎯 Opening preview for:', productTitle);
+  console.log('📦 Product data:', product);
   
-  if (!product || !product.preview || !product.preview.images || product.preview.images.length === 0) {
-    console.log('⚠️ No preview data, opening Drive link');
-    if (product && product.driveLink) {
+  if (!product?.preview?.images?.length) {
+    console.log('⚠️ No preview images, opening Drive');
+    if (product?.driveLink) {
       window.open(product.driveLink, '_blank', 'noopener,noreferrer');
     }
     return;
   }
   
-  // Ensure modal exists and is fresh
+  // Ensure modal exists
   this.setupPreviewModal();
   
-  // Set preview data
+  // Set data
   this.currentPreview = {
     images: product.preview.images,
     currentIndex: 0,
     title: productTitle
   };
   
-  console.log(`📦 Preview data set: ${product.preview.images.length} images`);
+  console.log(`✅ Preview data set: ${product.preview.images.length} images`);
   
   // Update title
-  const titleEl = document.getElementById('previewTitle');
-  if (titleEl) {
-    titleEl.textContent = productTitle;
-  }
+  document.getElementById('previewTitle').textContent = productTitle;
   
-  // Get modal and make it visible
+  // Show modal
   const modal = document.getElementById('drivePreviewModal');
-  if (modal) {
-    // Force display with both class and inline styles
-    modal.classList.add('active');
-    modal.style.display = 'flex';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.right = '0';
-    modal.style.bottom = '0';
-    modal.style.zIndex = '10000';
-    modal.style.background = 'rgba(0, 0, 0, 0.95)';
-    
-    // Lock body scroll
-    document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    
-    console.log('✅ Modal forced visible with inline styles');
-    console.log('✅ Body scroll locked');
-    
-    // Small delay to ensure DOM is ready
-    setTimeout(() => {
-      this.showCurrentImage();
-    }, 50);
-  } else {
-    console.error('❌ Modal element not found after setup!');
-  }
+  modal.style.display = 'flex';
+  
+  // Lock scroll
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  
+  console.log('✅ Modal visible');
+  
+  // Show first image
+  setTimeout(() => this.showCurrentImage(), 100);
 }
 
 showCurrentImage() {
-  if (!this.currentPreview || !this.currentPreview.images) {
-    console.error('❌ No preview data available');
+  if (!this.currentPreview?.images) {
+    console.error('❌ No preview data');
     return;
   }
   
   const { images, currentIndex } = this.currentPreview;
   const currentImage = images[currentIndex];
   
-  console.log(`📸 Showing image ${currentIndex + 1}/${images.length}:`, currentImage.name);
+  console.log(`🖼️ Showing image ${currentIndex + 1}/${images.length}: ${currentImage.name}`);
   
-  const content = document.getElementById('previewContent');
+  // Update UI
+  document.getElementById('previewCurrent').textContent = currentIndex + 1;
+  document.getElementById('previewTotal').textContent = images.length;
+  
+  // Update buttons
   const prevBtn = document.getElementById('previewPrev');
   const nextBtn = document.getElementById('previewNext');
-  const currentEl = document.getElementById('previewCurrent');
-  const totalEl = document.getElementById('previewTotal');
   
-  if (currentEl) currentEl.textContent = currentIndex + 1;
-  if (totalEl) totalEl.textContent = images.length;
-  if (prevBtn) prevBtn.disabled = currentIndex === 0;
-  if (nextBtn) nextBtn.disabled = currentIndex === images.length - 1;
-  
-  if (!content) {
-    console.error('❌ Preview content container not found');
-    return;
+  if (prevBtn) {
+    prevBtn.disabled = currentIndex === 0;
+    prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
+    prevBtn.style.cursor = currentIndex === 0 ? 'not-allowed' : 'pointer';
   }
   
-  // Show loading state
+  if (nextBtn) {
+    nextBtn.disabled = currentIndex === images.length - 1;
+    nextBtn.style.opacity = currentIndex === images.length - 1 ? '0.3' : '1';
+    nextBtn.style.cursor = currentIndex === images.length - 1 ? 'not-allowed' : 'pointer';
+  }
+  
+  // Show loading
+  const content = document.getElementById('previewContent');
   content.innerHTML = `
-    <div class="preview-loading">
-      <div class="preview-spinner"></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; color: white;">
+      <div style="width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
       <span>Loading image...</span>
     </div>
   `;
   
-  // Try multiple image URL formats for Google Drive
+  // Load image
   const img = new Image();
   const imageUrls = [
-    `https://lh3.googleusercontent.com/d/${currentImage.id}=w2000`, // High quality
+    `https://lh3.googleusercontent.com/d/${currentImage.id}=w2000`,
     `https://lh3.googleusercontent.com/d/${currentImage.id}`,
-    `https://drive.google.com/uc?export=view&id=${currentImage.id}`,
-    `https://drive.google.com/uc?id=${currentImage.id}`,
-    currentImage.viewUrl,
-    currentImage.thumbnailUrl
+    `https://drive.google.com/uc?export=view&id=${currentImage.id}`
   ];
   
   let urlIndex = 0;
   
-  const tryNextUrl = () => {
+  const tryNext = () => {
     if (urlIndex >= imageUrls.length) {
-      console.error('❌ All image URLs failed for:', currentImage.name);
+      console.error('❌ All URLs failed');
       content.innerHTML = `
-        <div class="preview-error">
-          <div class="preview-error-icon">🖼️</div>
-          <h3>Image preview unavailable</h3>
-          <p>${currentImage.name}</p>
-          <button class="preview-btn" onclick="window.open('${currentImage.driveUrl}', '_blank')">
-            Open in Google Drive
-          </button>
+        <div style="text-align: center; color: white;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">🖼️</div>
+          <h3 style="margin-bottom: 0.5rem;">Image preview unavailable</h3>
+          <p style="opacity: 0.8; margin-bottom: 1rem;">${currentImage.name}</p>
+          <button onclick="window.open('${currentImage.driveUrl}', '_blank')" style="
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+          ">Open in Google Drive</button>
         </div>
       `;
       return;
     }
     
-    console.log(`🔄 Trying URL ${urlIndex + 1}/${imageUrls.length}:`, imageUrls[urlIndex]);
+    console.log(`🔄 Trying URL ${urlIndex + 1}/${imageUrls.length}`);
     img.src = imageUrls[urlIndex];
     urlIndex++;
   };
   
   img.onload = () => {
     console.log('✅ Image loaded successfully');
+    
+    // CRITICAL: Use inline styles for guaranteed centering
     content.innerHTML = `
       <img src="${img.src}" 
-           alt="${currentImage.name}" 
-           class="preview-image"
-           onclick="window.catalogApp.showNextImage()">
+           alt="${currentImage.name}"
+           onclick="window.catalogApp.showNextImage()"
+           style="
+             max-width: 100%;
+             max-height: 100%;
+             width: auto;
+             height: auto;
+             object-fit: contain;
+             object-position: center center;
+             border-radius: 8px;
+             cursor: pointer;
+             display: block;
+             margin: 0 auto;
+           ">
     `;
   };
   
   img.onerror = () => {
-    console.warn(`⚠️ Failed to load image from URL ${urlIndex}/${imageUrls.length}`);
-    tryNextUrl();
+    console.warn(`⚠️ URL ${urlIndex} failed`);
+    tryNext();
   };
   
-  tryNextUrl();
+  tryNext();
 }
     
 
