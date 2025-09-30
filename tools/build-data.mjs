@@ -684,12 +684,19 @@ attachFolderMeta(tree);
   console.log("✅ Image config inheritance complete");
 
   console.log("🧮 Calculating enhanced catalog metrics...");
-  for (const top of Object.keys(tree)) {
-    setCounts(tree[top]);
-  }
+for (const top of Object.keys(tree)) {
+  setCounts(tree[top]);
+}
 
-
-
+// ADD THIS DEBUG BEFORE THE FUNCTION CALL:
+console.log("🔍 Debug: brandBrowseStatus Map contents:");
+console.log(brandBrowseStatus);
+console.log("🔍 Debug: Sample brand counts from tree:");
+if (tree.BAGS && tree.BAGS.children) {
+  Object.entries(tree.BAGS.children).forEach(([name, data]) => {
+    console.log(`  ${name}: ${data.count} items`);
+  });
+}
 
 applySmartBrowseBrandsFilter(tree);
   
