@@ -821,10 +821,7 @@ showCurrentImage() {
   tryNextUrl();
 };
     
-    // Start loading with first URL
-    tryNextUrl();
-  }
-}
+
 
 showPreviousImage() {
   if (!this.currentPreview || this.currentPreview.currentIndex === 0) return;
