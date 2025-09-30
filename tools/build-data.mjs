@@ -571,19 +571,23 @@ function applyBrandLogosToTree(node, prefix = []) {
 applyBrandLogosToTree(tree);
 
   
+console.log("🔍 Applying smart Browse Brands filter...");
+
 function applySmartBrowseBrandsFilter(node, prefix = []) {
   for (const k of Object.keys(node)) {
     const n = node[k];
     const currentPath = [...prefix, k];
     
     if (currentPath.length === 2 && !n.isProduct) {
-      const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const brandName = k;
+      const brandSlug = brandName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const manualStatus = brandBrowseStatus.get(brandSlug);
       const itemCount = n.count || 0;
       
       let shouldShow = false;
       let reason = '';
       
+      // Check manual status
       if (manualStatus === 'FORCE_HIDE') {
         shouldShow = false;
         reason = 'Hidden (Browse Brands = Off)';
@@ -592,16 +596,16 @@ function applySmartBrowseBrandsFilter(node, prefix = []) {
         reason = 'Shown (Browse Brands = On)';
       } else if (itemCount >= 10) {
         shouldShow = true;
-        reason = 'Auto-shown (10+ items)';
+        reason = `Auto-shown (${itemCount} items >= 10)`;
       } else {
         shouldShow = false;
-        reason = `Hidden (<10 items: ${itemCount})`;
+        reason = `Hidden (${itemCount} items < 10)`;
       }
       
       n.browseBrands = shouldShow;
       
       const icon = shouldShow ? '✅' : '❌';
-      console.log(`  ${icon} ${k} (${itemCount} items) - ${reason}`);
+      console.log(`  ${icon} ${brandName} (${itemCount} items) - ${reason}`);
     }
     
     if (n.children && !n.isProduct) {
