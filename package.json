@@ -6,5 +6,8 @@
   "scripts": {
     "build": "node tools/build-data.mjs",
     "serve": "npx http-server public -c-1 -p 5173"
+  },
+  "dependencies": {
+    "googleapis": "^134.0.0"
   }
 }
