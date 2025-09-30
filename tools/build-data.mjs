@@ -577,46 +577,7 @@ console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)..
 // Apply smart Browse Brands filter
 console.log("🔍 Applying smart Browse Brands filter...");
 
-function applySmartBrowseBrandsFilter(node, prefix = []) {
-  for (const k of Object.keys(node)) {
-    const n = node[k];
-    const currentPath = [...prefix, k];
-    
-    if (currentPath.length === 2 && !n.isProduct) {
-      const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const manualStatus = brandBrowseStatus.get(brandSlug);
-      const itemCount = n.count || 0;
-      
-      let shouldShow = false;
-      let reason = '';
-      
-      if (manualStatus === 'FORCE_HIDE') {
-        shouldShow = false;
-        reason = 'Hidden (Browse Brands = Off)';
-      } else if (manualStatus === 'FORCE_SHOW') {
-        shouldShow = true;
-        reason = 'Shown (Browse Brands = On)';
-      } else if (itemCount >= 10) {
-        shouldShow = true;
-        reason = 'Auto-shown (10+ items)';
-      } else {
-        shouldShow = false;
-        reason = `Hidden (<10 items: ${itemCount})`;
-      }
-      
-      n.browseBrands = shouldShow;
-      
-      const icon = shouldShow ? '✅' : '❌';
-      console.log(`  ${icon} ${k} (${itemCount} items) - ${reason}`);
-    }
-    
-    if (n.children && !n.isProduct) {
-      applySmartBrowseBrandsFilter(n.children, currentPath);
-    }
-  }
-}
 
-applySmartBrowseBrandsFilter(tree);
 
 // Summary
 console.log("\n📊 BROWSE BRANDS SUMMARY:");
@@ -684,6 +645,48 @@ attachFolderMeta(tree);
     setCounts(tree[top]);
   }
 
+
+function applySmartBrowseBrandsFilter(node, prefix = []) {
+  for (const k of Object.keys(node)) {
+    const n = node[k];
+    const currentPath = [...prefix, k];
+    
+    if (currentPath.length === 2 && !n.isProduct) {
+      const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const manualStatus = brandBrowseStatus.get(brandSlug);
+      const itemCount = n.count || 0;
+      
+      let shouldShow = false;
+      let reason = '';
+      
+      if (manualStatus === 'FORCE_HIDE') {
+        shouldShow = false;
+        reason = 'Hidden (Browse Brands = Off)';
+      } else if (manualStatus === 'FORCE_SHOW') {
+        shouldShow = true;
+        reason = 'Shown (Browse Brands = On)';
+      } else if (itemCount >= 10) {
+        shouldShow = true;
+        reason = 'Auto-shown (10+ items)';
+      } else {
+        shouldShow = false;
+        reason = `Hidden (<10 items: ${itemCount})`;
+      }
+      
+      n.browseBrands = shouldShow;
+      
+      const icon = shouldShow ? '✅' : '❌';
+      console.log(`  ${icon} ${k} (${itemCount} items) - ${reason}`);
+    }
+    
+    if (n.children && !n.isProduct) {
+      applySmartBrowseBrandsFilter(n.children, currentPath);
+    }
+  }
+}
+
+applySmartBrowseBrandsFilter(tree);
+  
   // Enhanced health checks including image rendering
   console.log("🔍 Running enhanced quality assurance with image rendering checks...");
   const missingThumbFiles = [];
