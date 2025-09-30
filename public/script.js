@@ -93,14 +93,27 @@ class CSVCatalogApp {
     
     
     // Check if we need to show category view or homepage
+    // Check if we need to show category view or homepage
     if (this.currentPath.length > 0) {
       this.showCategoryView();
     } else {
       this.setupDynamicSections();
     }
-    // Show brands and slideshow on initial homepage load
-
-
+    
+    // Initialize section visibility based on current view
+    if (this.currentPath.length > 0) {
+      // On category/brand view - hide brands and slideshow
+      const brandsSection = document.querySelector('.brands-section');
+      const slideshowSection = document.querySelector('.slideshow-section');
+      if (brandsSection) brandsSection.style.display = 'none';
+      if (slideshowSection) slideshowSection.style.display = 'none';
+    } else {
+      // On homepage - show brands and slideshow
+      const brandsSection = document.querySelector('.brands-section');
+      const slideshowSection = document.querySelector('.slideshow-section');
+      if (brandsSection) brandsSection.style.display = 'block';
+      if (slideshowSection) slideshowSection.style.display = 'block';
+    }
     
     this.setupBrands();
     this.setupReviewSlideshow();
@@ -271,13 +284,11 @@ class CSVCatalogApp {
   // Update hero section for category view
   this.updateHeroForCategory(breadcrumbs);
 
-  // Hide taxonomy section
- // Hide brands and slideshow sections when NOT on homepage
-  // Show brands and slideshow sections on homepage
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  if (brandsSection) brandsSection.style.display = 'block';
-  if (slideshowSection) slideshowSection.style.display = 'block';
+ // HIDE brands and slideshow sections on category pages
+const brandsSection = document.querySelector('.brands-section');
+const slideshowSection = document.querySelector('.slideshow-section');
+if (brandsSection) brandsSection.style.display = 'none';
+if (slideshowSection) slideshowSection.style.display = 'none';
 
   // Show category contents
   this.renderCategoryContents(currentNode, breadcrumbs);
@@ -1116,7 +1127,11 @@ debugModalState() {
   if (taxonomySection) {
     taxonomySection.style.display = 'block';
   }
-
+  /// HIDE brands and slideshow sections on brand view pages
+const brandsSection = document.querySelector('.brands-section');
+const slideshowSection = document.querySelector('.slideshow-section');
+if (brandsSection) brandsSection.style.display = 'none';
+if (slideshowSection) slideshowSection.style.display = 'none';
   // Reset hero
   this.setupBrandInfo();
   
@@ -3114,10 +3129,11 @@ resetScrollPosition() {
     
     // Hide taxonomy section during search
     // Show brands and slideshow sections
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  if (brandsSection) brandsSection.style.display = 'block';
-  if (slideshowSection) slideshowSection.style.display = 'block';
+  // HIDE brands and slideshow sections during search
+const brandsSection = document.querySelector('.brands-section');
+const slideshowSection = document.querySelector('.slideshow-section');
+if (brandsSection) brandsSection.style.display = 'none';
+if (slideshowSection) slideshowSection.style.display = 'none';
   }
 
 // REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
