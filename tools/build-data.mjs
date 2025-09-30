@@ -49,72 +49,6 @@ function normPath(p) {
   return parts.join("/");
 }
 
-function normalizeBrandName(brandName) {
-  if (!brandName) return '';
-  
-  // List of suffixes to remove (case-insensitive)
-  const suffixes = [
-    ' Bags',
-    ' Shoes', 
-    ' Wallets',
-    ' Belts',
-    ' Accessories',
-    ' Watches',
-    ' Jewelry',
-    ' Jewellery',
-    ' Sunglasses',
-    ' Glasses',
-    ' Handbags',
-    ' Purses',
-    ' Totes',
-    ' Clutches',
-    ' Backpacks'
-  ];
-  
-  let normalized = brandName.trim();
-  
-  // Remove suffixes (case-insensitive)
-  for (const suffix of suffixes) {
-    const regex = new RegExp(suffix + '$', 'i'); // 'i' flag for case-insensitive
-    normalized = normalized.replace(regex, '');
-  }
-  
-  // Trim any extra whitespace
-  normalized = normalized.trim();
-  
-  // Special case: Convert common brands to standard capitalization
-  const brandCapitalization = {
-    'ysl': 'YSL',
-    'gucci': 'GUCCI',
-    'dior': 'Dior',
-    'fendi': 'FENDI',
-    'lv': 'LV',
-    'd&g': 'D&G',
-    'bvlgari': 'BVLGARI',
-    'omega': 'OMEGA'
-  };
-  
-  const lowerNormalized = normalized.toLowerCase();
-  if (brandCapitalization[lowerNormalized]) {
-    return brandCapitalization[lowerNormalized];
-  }
-  
-  return normalized;
-}
-
-/**
- * Get a slug for a brand (for URLs and matching)
- */
-function getBrandSlug(brandName) {
-  return brandName
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-
 function toThumbSitePath(rel) {
   if (!rel) return "";
   let p = rel.replace(/\\/g, "/").replace(/^\/+/, "");
@@ -329,12 +263,8 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
   const folderMeta = new Map();
   const sectionStats = new Map();
 
-console.log("📝 Processing enhanced catalog entries with brand normalization...");
-
-// Track brand mappings
-const brandNormalizationMap = new Map(); // originalName → normalizedName
-const brandCategoryMap = new Map(); // normalizedBrandSlug → Set of categories
-
+  console.log("📝 Processing enhanced catalog entries with image rendering...");
+console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
 let processedCount = 0;
 
 for (const r of masterRows) {
@@ -343,6 +273,7 @@ for (const r of masterRows) {
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   
+  // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
     r["Order"] || r["order"] || r["ORDER"] ||
@@ -380,109 +311,69 @@ for (const r of masterRows) {
 
   const normalizedThumb = toThumbSitePath(thumbRel);
 
-  let parsedTopOrder = 999;
+  // ENHANCED: Parse TopOrder for items at ANY depth
+  let parsedTopOrder = 999; // Default
   if (topOrderRaw) {
     const n = parseInt(topOrderRaw, 10);
     if (!Number.isNaN(n)) {
       parsedTopOrder = n;
+      console.log(`✅ BUILD TopOrder for ${name} at depth ${pathDepth} (${isLeafProduct ? 'PRODUCT' : 'FOLDER'}) path ${rel}: ${parsedTopOrder}`);
+    } else {
+      console.log(`⚠️ BUILD Invalid TopOrder "${topOrderRaw}" for ${name} at depth ${pathDepth}, using default 999`);
     }
+  } else {
+    console.log(`📝 BUILD No TopOrder specified for ${name} at depth ${pathDepth}, using default 999`);
   }
 
-  // ✅ BRAND NORMALIZATION - If this is a brand-level entry (depth 2)
-  if (segs.length >= 2) {
-    const categoryName = segs[0];
-    const originalBrandName = segs[1];
-    const normalizedBrandName = normalizeBrandName(originalBrandName);
-    const brandSlug = getBrandSlug(normalizedBrandName);
-    
-    // Track the normalization
-    if (originalBrandName !== normalizedBrandName) {
-      brandNormalizationMap.set(originalBrandName, normalizedBrandName);
-      console.log(`🔄 Normalized: "${originalBrandName}" → "${normalizedBrandName}"`);
-    }
-    
-    // Track which categories this brand appears in
-    if (!brandCategoryMap.has(brandSlug)) {
-      brandCategoryMap.set(brandSlug, new Set());
-    }
-    brandCategoryMap.get(brandSlug).add(categoryName);
-    
-    // Replace the brand name in segments with normalized version
-    segs[1] = normalizedBrandName;
+  // Track section statistics
+  if (!sectionStats.has(section)) {
+    sectionStats.set(section, 0);
   }
+  sectionStats.set(section, sectionStats.get(section) + 1);
 
   if (isLeafProduct) {
-    // Product
-    const parentSegs = segs.slice(0, -1);
-    const children = ensureFolderNode(tree, parentSegs);
-    children[name] = { 
-      isProduct: true, 
-      driveLink, 
-      thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
-      section: section,
-      category: category,
-      TopOrder: parsedTopOrder,
-      topOrder: parsedTopOrder,
-      ...(imageAlignment ? { alignment: imageAlignment } : {}),
-      ...(imageFitting ? { fitting: imageFitting } : {}),
-      ...(imageScaling ? { scaling: imageScaling } : {}),
-    };
-    totalProducts++;
-  } else {
-    // Folder
-    ensureFolderNode(tree, segs);
-    const k = segs.join("/");
-    const existing = folderMeta.get(k) || {};
-    if (normalizedThumb) existing.thumbnail = normalizedThumb;
-    if (driveLink) existing.driveLink = driveLink;
-    if (section) existing.section = section;
-    if (category) existing.category = category;
-    
-    existing.TopOrder = parsedTopOrder;
-    existing.topOrder = parsedTopOrder;
-    
-    if (imageAlignment) existing.alignment = imageAlignment;
-    if (imageFitting) existing.fitting = imageFitting;
-    if (imageScaling) existing.scaling = imageScaling;
-    
-    folderMeta.set(k, existing);
-  }
+  // ENHANCED: Products at ANY depth get TopOrder
+  const parentSegs = segs.slice(0, -1);
+  const children = ensureFolderNode(tree, parentSegs);
+  children[name] = { 
+    isProduct: true, 
+    driveLink, 
+    thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+    section: section,
+    category: category,
+    // CRITICAL: Add TopOrder to products at ANY depth in BOTH formats
+    TopOrder: parsedTopOrder,
+    topOrder: parsedTopOrder,
+    // Image rendering config - only set if explicitly provided
+    ...(imageAlignment ? { alignment: imageAlignment } : {}),
+    ...(imageFitting ? { fitting: imageFitting } : {}),
+    ...(imageScaling ? { scaling: imageScaling } : {}),
+  };
+  totalProducts++;
+  console.log(`🎯 BUILD Set PRODUCT ${name} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
+} else {
+  // ENHANCED: Folders at ANY depth get TopOrder
+  ensureFolderNode(tree, segs);
+  const k = segs.join("/");
+  const existing = folderMeta.get(k) || {};
+  if (normalizedThumb) existing.thumbnail = normalizedThumb;
+  if (driveLink) existing.driveLink = driveLink;
+  if (section) existing.section = section;
+  if (category) existing.category = category;
   
-  // ✅ BRAND LOGO CAPTURE - Capture at depth 2 (Category/Brand)
-  if (segs.length === 2 && thumbRel) {
-    const categoryName = segs[0];
-    const normalizedBrandName = segs[1]; // Already normalized above
-    
-    const brandPath = `${categoryName}/${normalizedBrandName}`;
-    const brandMeta = folderMeta.get(brandPath) || {};
-    
-    if (!brandMeta.thumbnail && normalizedThumb) {
-      brandMeta.thumbnail = normalizedThumb;
-      folderMeta.set(brandPath, brandMeta);
-      console.log(`  📸 Brand logo: ${brandPath} → ${normalizedThumb}`);
-    }
-  }
+  // CRITICAL: Set TopOrder for folders at ANY depth in BOTH formats
+  existing.TopOrder = parsedTopOrder;
+  existing.topOrder = parsedTopOrder;
+  console.log(`📁 BUILD Set FOLDER ${k} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
+  
+  // Image rendering config for folders - only set if explicitly provided
+  if (imageAlignment) existing.alignment = imageAlignment;
+  if (imageFitting) existing.fitting = imageFitting;
+  if (imageScaling) existing.scaling = imageScaling;
+  
+  folderMeta.set(k, existing);
 }
-
-// Log normalization summary
-console.log(`\n📊 Brand Normalization Summary:`);
-console.log(`   Total normalizations: ${brandNormalizationMap.size}`);
-if (brandNormalizationMap.size > 0) {
-  console.log(`   Examples:`);
-  let count = 0;
-  for (const [original, normalized] of brandNormalizationMap.entries()) {
-    if (count < 10) {
-      console.log(`     "${original}" → "${normalized}"`);
-      count++;
-    }
-  }
 }
-
-console.log(`\n📊 Brand-Category Mapping:`);
-for (const [brandSlug, categories] of brandCategoryMap.entries()) {
-  console.log(`   ${brandSlug}: ${Array.from(categories).join(', ')}`);
-}
-
 
 console.log(`📊 BUILD Processed ${totalProducts} products across all depths`);
 console.log(`📊 BUILD Created ${folderMeta.size} folder entries across all depths`);
@@ -532,32 +423,6 @@ function attachFolderMeta(node, prefix = []) {
 }
 
 attachFolderMeta(tree);
-// ✅ APPLY BRAND LOGOS - Add this AFTER attachFolderMeta(tree);
-console.log("🖼️  Applying brand logos to tree...");
-
-function applyBrandLogosToTree(node, prefix = []) {
-  for (const k of Object.keys(node)) {
-    const n = node[k];
-    const currentPath = [...prefix, k];
-    const pathStr = currentPath.join("/");
-    
-    // Brand level is at depth 2
-    if (currentPath.length === 2 && !n.isProduct) {
-      const meta = folderMeta.get(pathStr);
-      if (meta?.thumbnail && !n.thumbnail) {
-        n.thumbnail = meta.thumbnail;
-        console.log(`  ✅ Logo applied: ${pathStr}`);
-      }
-    }
-    
-    if (n.children && !n.isProduct) {
-      applyBrandLogosToTree(n.children, currentPath);
-    }
-  }
-}
-
-applyBrandLogosToTree(tree);
-
 
   // Convert empty folders with drive links to products
   console.log("🔄 Optimizing catalog structure...");
@@ -851,41 +716,6 @@ console.log("✅ BUILD TopOrder verification complete");
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
-
-  // ✅ BRAND VERIFICATION - Add this BEFORE the catch block
-console.log("\n" + "=".repeat(70));
-console.log("🔍 BRAND STRUCTURE VERIFICATION:\n");
-
-let totalBrands = 0;
-let brandsWithLogos = 0;
-
-Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-  console.log(`📂 ${categoryKey}`);
-  
-  if (categoryData.children) {
-    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      totalBrands++;
-      const hasLogo = brandData.thumbnail && brandData.thumbnail !== PLACEHOLDER_THUMB;
-      
-      if (hasLogo) {
-        brandsWithLogos++;
-        console.log(`   ✅ ${brandKey} (${brandData.count} items) 🖼️`);
-      } else {
-        console.log(`   ⚠️  ${brandKey} (${brandData.count} items) NO LOGO`);
-      }
-    });
-  }
-});
-
-console.log("\n" + "=".repeat(70));
-console.log(`📊 Total Brands: ${totalBrands}`);
-console.log(`🖼️  With Logos: ${brandsWithLogos}/${totalBrands} (${totalBrands > 0 ? ((brandsWithLogos/totalBrands)*100).toFixed(0) : 0}%)`);
-
-if (totalBrands - brandsWithLogos > 0) {
-  console.log(`\n⚠️  ${totalBrands - brandsWithLogos} brands missing logos - check CSV "Thumbs Path" column!`);
-}
-
-
 })().catch(err => {
   console.error("💥 Enhanced build failed:", err);
   process.exit(1);
