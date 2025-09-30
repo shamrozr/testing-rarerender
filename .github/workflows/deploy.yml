@@ -1,5 +1,4 @@
 name: Deploy Brand Directory
-
 on:
   workflow_dispatch:
     inputs:
@@ -15,30 +14,32 @@ on:
         description: "Optional placeholder (e.g. /thumbs/_placeholder.webp)"
         required: false
         default: ""
-
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Build data.json (merge + validate + health report)
         env:
           BRANDS_CSV_URL: ${{ inputs.brands_csv_url }}
           MASTER_CSV_URL: ${{ inputs.master_csv_url }}
           PLACEHOLDER_THUMB: ${{ inputs.placeholder_thumb }}
         run: node tools/build-data.mjs
-
+      - name: Install googleapis
+        run: npm install googleapis
+      - name: Build Drive database
+        env:
+          GOOGLE_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
+          GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY }}
+        run: node tools/build-drive-database.mjs
       - name: Upload health report artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -47,7 +48,6 @@ jobs:
           path: |
             build/health.json
             public/data.json
-
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
