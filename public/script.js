@@ -690,31 +690,53 @@ bindPreviewEvents() {
   
   console.log('✅ Binding preview events');
   
-  closeBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    console.log('🔴 Close button clicked');
-    this.closePreview();
-  });
+  // Remove any existing listeners first
+  const newCloseBtn = closeBtn?.cloneNode(true);
+  const newPrevBtn = prevBtn?.cloneNode(true);
+  const newNextBtn = nextBtn?.cloneNode(true);
+  const newOverlay = overlay?.cloneNode(true);
   
-  overlay?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    console.log('🔴 Overlay clicked');
-    this.closePreview();
-  });
+  if (closeBtn && newCloseBtn) {
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+    newCloseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('🔴 Close button clicked');
+      this.closePreview();
+    });
+  }
   
-  prevBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    this.showPreviousImage();
-  });
+  if (prevBtn && newPrevBtn) {
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    newPrevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('⬅️ Prev button clicked');
+      this.showPreviousImage();
+    });
+  }
   
-  nextBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    this.showNextImage();
-  });
+  if (nextBtn && newNextBtn) {
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+    newNextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('➡️ Next button clicked');
+      this.showNextImage();
+    });
+  }
+  
+  if (overlay && newOverlay) {
+    overlay.parentNode.replaceChild(newOverlay, overlay);
+    newOverlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('🔴 Overlay clicked');
+      this.closePreview();
+    });
+  }
   
   // Keyboard navigation
-  document.addEventListener('keydown', (e) => {
+  const keyHandler = (e) => {
     if (!this.isPreviewActive()) return;
+    
+    console.log('⌨️ Key pressed:', e.key);
     
     switch(e.key) {
       case 'Escape':
@@ -728,22 +750,41 @@ bindPreviewEvents() {
         break;
     }
     e.preventDefault();
-  });
+  };
+  
+  // Remove old keyboard listener if exists
+  if (this.keyboardHandler) {
+    document.removeEventListener('keydown', this.keyboardHandler);
+  }
+  this.keyboardHandler = keyHandler;
+  document.addEventListener('keydown', keyHandler);
   
   // Touch swipe support
   let touchStartX = 0;
-  modal?.addEventListener('touchstart', (e) => {
+  let touchEndX = 0;
+  
+  modal.addEventListener('touchstart', (e) => {
     touchStartX = e.changedTouches[0].screenX;
   }, { passive: true });
   
-  modal?.addEventListener('touchend', (e) => {
-    const touchEndX = e.changedTouches[0].screenX;
+  modal.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
     const diff = touchStartX - touchEndX;
     
+    console.log('👆 Swipe detected:', diff);
+    
     if (Math.abs(diff) > 50) {
-      diff > 0 ? this.showNextImage() : this.showPreviousImage();
+      if (diff > 0) {
+        console.log('👉 Swipe left - next');
+        this.showNextImage();
+      } else {
+        console.log('👈 Swipe right - previous');
+        this.showPreviousImage();
+      }
     }
   }, { passive: true });
+  
+  console.log('✅ All preview events bound successfully');
 }
 
 
@@ -903,14 +944,34 @@ showCurrentImage() {
 
 
 showPreviousImage() {
-  if (!this.currentPreview || this.currentPreview.currentIndex === 0) return;
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex <= 0) {
+    console.log('⚠️ Already at first image');
+    return;
+  }
+  
   this.currentPreview.currentIndex--;
+  console.log(`⬅️ Previous: Moving to image ${this.currentPreview.currentIndex + 1}/${this.currentPreview.images.length}`);
   this.showCurrentImage();
 }
 
 showNextImage() {
-  if (!this.currentPreview || this.currentPreview.currentIndex >= this.currentPreview.images.length - 1) return;
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex >= this.currentPreview.images.length - 1) {
+    console.log('⚠️ Already at last image');
+    return;
+  }
+  
   this.currentPreview.currentIndex++;
+  console.log(`➡️ Next: Moving to image ${this.currentPreview.currentIndex + 1}/${this.currentPreview.images.length}`);
   this.showCurrentImage();
 }
 
