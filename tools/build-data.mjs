@@ -373,6 +373,23 @@ for (const r of masterRows) {
   
   folderMeta.set(k, existing);
 }
+   if (segs.length === 2 && thumbRel) {
+    const categoryName = segs[0];
+    const brandName = segs[1];
+    
+    console.log(`🏢 Brand-level entry: ${categoryName}/${brandName} with logo: ${thumbRel}`);
+    
+    // Ensure this is stored in folderMeta for brand level
+    const brandPath = `${categoryName}/${brandName}`;
+    const brandMeta = folderMeta.get(brandPath) || {};
+    
+    // Only set thumbnail if not already set
+    if (!brandMeta.thumbnail && normalizedThumb) {
+      brandMeta.thumbnail = normalizedThumb;
+      folderMeta.set(brandPath, brandMeta);
+      console.log(`  ✅ Stored brand logo for ${brandPath}: ${normalizedThumb}`);
+    }
+  }
 }
 
 console.log(`📊 BUILD Processed ${totalProducts} products across all depths`);
@@ -421,7 +438,31 @@ function attachFolderMeta(node, prefix = []) {
     }
   }
 }
+console.log("🖼️  Applying brand logos to tree structure...");
 
+function applyBrandLogosToTree(node, prefix = []) {
+  for (const k of Object.keys(node)) {
+    const n = node[k];
+    const currentPath = [...prefix, k];
+    const pathStr = currentPath.join("/");
+    
+    // Check if this is brand level (depth 2: Category/Brand)
+    if (currentPath.length === 2 && !n.isProduct) {
+      const meta = folderMeta.get(pathStr);
+      if (meta?.thumbnail && !n.thumbnail) {
+        n.thumbnail = meta.thumbnail;
+        console.log(`  ✅ Applied brand logo to ${pathStr}: ${meta.thumbnail}`);
+      }
+    }
+    
+    if (n.children && !n.isProduct) {
+      applyBrandLogosToTree(n.children, currentPath);
+    }
+  }
+}
+
+applyBrandLogosToTree(tree);
+  
 attachFolderMeta(tree);
 
   // Convert empty folders with drive links to products
@@ -716,6 +757,38 @@ console.log("✅ BUILD TopOrder verification complete");
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
+  // ✅ BRAND VERIFICATION - Add this BEFORE the catch block
+console.log("\n" + "=".repeat(70));
+console.log("🔍 BRAND STRUCTURE VERIFICATION:\n");
+
+let totalBrands = 0;
+let brandsWithLogos = 0;
+
+Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+  console.log(`📂 ${categoryKey}`);
+  
+  if (categoryData.children) {
+    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
+      totalBrands++;
+      const hasLogo = brandData.thumbnail && brandData.thumbnail !== PLACEHOLDER_THUMB;
+      
+      if (hasLogo) {
+        brandsWithLogos++;
+        console.log(`   ✅ ${brandKey} (${brandData.count} items) 🖼️`);
+      } else {
+        console.log(`   ⚠️  ${brandKey} (${brandData.count} items) NO LOGO`);
+      }
+    });
+  }
+});
+
+console.log("\n" + "=".repeat(70));
+console.log(`📊 Total Brands: ${totalBrands}`);
+console.log(`🖼️  With Logos: ${brandsWithLogos}/${totalBrands} (${totalBrands > 0 ? ((brandsWithLogos/totalBrands)*100).toFixed(0) : 0}%)`);
+
+if (totalBrands - brandsWithLogos > 0) {
+  console.log(`\n⚠️  ${totalBrands - brandsWithLogos} brands missing logos - check CSV "Thumbs Path" column!`);
+}
 })().catch(err => {
   console.error("💥 Enhanced build failed:", err);
   process.exit(1);
