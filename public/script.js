@@ -76,27 +76,41 @@ class CSVCatalogApp {
       return;
     }
 
+    // DEBUG: Verify topOrder data is available
+    console.log('🔍 Checking topOrder data after load...');
+    if (this.data.catalog && this.data.catalog.tree) {
+      Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+        const topOrder = item.topOrder || item['Top Order'] || item.top_order;
+        if (topOrder !== undefined) {
+          console.log(`✅ ${key} has topOrder: ${topOrder}`);
+        } else {
+          console.log(`❌ ${key} missing topOrder`);
+        }
+      });
+    }
+
     this.setupBrandInfo();
     
+    
+    // Check if we need to show category view or homepage
     if (this.currentPath.length > 0) {
       this.showCategoryView();
     } else {
       this.setupDynamicSections();
     }
     
-    // ADD THIS LINE:
-    this.setupStoriesSlider();
-    
     this.setupTaxonomy();
     this.setupFooter();
     this.setupEventListeners();
     this.setupFABFunctionality();
+    
+    // NEW: Setup scroll behavior
     this.setupScrollBehavior();
     
   } catch (error) {
-    // Silent error handling in production
+      // Silent error handling in production
+    }
   }
-}
 
   async loadData() {
   try {
@@ -295,20 +309,26 @@ addBreadcrumbNavigation(breadcrumbs) {
   const breadcrumbNav = document.createElement('nav');
   breadcrumbNav.className = 'breadcrumb-nav';
 
+  // Home link
+  const homeLink = document.createElement('a');
+  homeLink.href = '#';
+  homeLink.textContent = 'Home';
+  homeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    this.navigateToHome();
+  });
+
+  breadcrumbNav.appendChild(homeLink);
+
   // Add breadcrumb items
   breadcrumbs.forEach((crumb, index) => {
-    const isLast = index === breadcrumbs.length - 1;
-    const isActive = crumb.isActive || isLast;
+    // Add separator
+    const separator = document.createElement('span');
+    separator.textContent = ' / ';
+    separator.style.color = 'var(--color-text-muted)';
+    breadcrumbNav.appendChild(separator);
 
-    // Add separator (except before first item)
-    if (index > 0) {
-      const separator = document.createElement('span');
-      separator.textContent = ' / ';
-      separator.style.color = 'var(--color-text-muted)';
-      breadcrumbNav.appendChild(separator);
-    }
-
-    if (isActive) {
+    if (index === breadcrumbs.length - 1) {
       // Current page - no link
       const current = document.createElement('span');
       current.textContent = crumb.name;
@@ -328,32 +348,39 @@ addBreadcrumbNavigation(breadcrumbs) {
       link.addEventListener('click', (e) => {
         e.preventDefault();
         
-        if (crumb.name === 'Home' || crumb.path === '') {
-          this.navigateToHome();
-        } else if (crumb.isBrand) {
-          this.navigateToBrand(crumb.path, crumb.name);
-        } else {
-          // Category navigation
-          const params = new URLSearchParams(window.location.search);
-          params.set('path', crumb.path);
-          const newURL = `${window.location.pathname}?${params.toString()}`;
-          window.history.pushState({ path: crumb.path }, '', newURL);
-          this.showCategoryView();
+        const pathSegments = crumb.path.split('/').filter(Boolean);
+        this.currentPath = pathSegments;
+        
+        const params = new URLSearchParams(window.location.search);
+        params.set('path', crumb.path);
+        if (this.currentBrand) {
+          params.set('brand', this.currentBrand);
         }
+        
+        const newURL = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({ 
+          path: pathSegments, 
+          brand: this.currentBrand 
+        }, '', newURL);
+        
+        this.showCategoryView();
       });
       breadcrumbNav.appendChild(link);
     }
   });
 
-  // Insert breadcrumbs after hero title/subtitle
+  // FIXED: Insert breadcrumbs AFTER hero title and subtitle
   const heroTitle = hero.querySelector('.hero-title');
   const heroSubtitle = hero.querySelector('.hero-subtitle');
   
   if (heroSubtitle) {
+    // Insert after subtitle
     heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
   } else if (heroTitle) {
+    // Insert after title if no subtitle
     heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
   } else {
+    // Fallback: append to hero content
     hero.appendChild(breadcrumbNav);
   }
 }
@@ -1390,7 +1417,6 @@ getBackgroundSize(fitting) {
       return 'cover';
     }
   }
-
   
   // Standard fit methods (unchanged behavior)
   const fitMap = {
@@ -1649,155 +1675,25 @@ getScaleTransform(scaling) {
   }
 
   setupTaxonomy() {
-  const taxonomyGrid = document.getElementById('taxonomyGrid');
-  if (!taxonomyGrid) return;
+    const taxonomyGrid = document.getElementById('taxonomyGrid');
+    if (!taxonomyGrid || !this.data.catalog?.tree) return;
 
-  console.log('🏢 Setting up BRAND taxonomy section');
+    const taxonomyItems = Object.entries(this.data.catalog.tree)
+      .map(([key, item]) => ({
+        name: key.replace(/_/g, ' '),
+        count: item.count,
+        key: key
+      }))
+      .sort((a, b) => b.count - a.count);
 
-  // Extract all brands from the catalog tree
-  const brands = this.extractBrandsFromTree();
-  
-  if (brands.length === 0) {
-    console.log('⚠️ No brands found');
-    taxonomyGrid.innerHTML = '<p style="text-align:center;">No brands available</p>';
-    return;
-  }
-
-  console.log(`✅ Found ${brands.length} brands:`, brands.map(b => b.name));
-
-  // Update section title
-  const taxonomyTitle = document.querySelector('.taxonomy-title');
-  if (taxonomyTitle) {
-    taxonomyTitle.textContent = 'Browse All Brands';
-  }
-
-  // Render brand items with logos
-  taxonomyGrid.innerHTML = brands.map(brand => `
-    <div class="taxonomy-item brand-item" 
-         data-brand="${brand.slug}" 
-         data-brand-name="${brand.name}"
-         role="button" 
-         tabindex="0">
-      ${brand.logo ? 
-        `<img src="${brand.logo}" 
-             alt="${brand.name}" 
-             class="brand-logo-small"
-             onerror="this.style.display='none'">` 
-        : ''}
-      <div class="brand-text-content">
-        <div class="taxonomy-name">${brand.name}</div>
-        <div class="taxonomy-count">${brand.count} items</div>
+    taxonomyGrid.innerHTML = taxonomyItems.map(item => `
+      <div class="taxonomy-item" data-category="${item.key}" role="button" tabindex="0">
+        <div class="taxonomy-name">${item.name}</div>
+        <div class="taxonomy-count">${item.count} items</div>
       </div>
-    </div>
-  `).join('');
-
-  console.log('✅ Brand taxonomy rendered');
-}
-
-
-extractAllBrands() {
-  if (!this.data?.catalog?.tree) {
-    console.log('❌ No catalog tree found');
-    return [];
+    `).join('');
   }
 
-  const brandsMap = new Map();
-  const tree = this.data.catalog.tree;
-  
-  console.log('🔍 Extracting all brands (no filters)...');
-  
-  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-    if (!categoryData.children) return;
-    
-    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      const itemCount = brandData.count || 0;
-      
-      console.log(`  ✅ ${brandKey} (${itemCount} items)`);
-      
-      // Normalize brand slug
-      const brandSlug = brandKey
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-      
-      if (!brandsMap.has(brandSlug)) {
-        brandsMap.set(brandSlug, {
-          name: brandKey,
-          slug: brandSlug,
-          logo: brandData.thumbnail || '',
-          count: itemCount,
-          categories: new Set([categoryKey])
-        });
-      } else {
-        // Merge counts if brand appears in multiple categories
-        const existing = brandsMap.get(brandSlug);
-        existing.categories.add(categoryKey);
-        existing.count += itemCount;
-      }
-    });
-  });
-
-  // Sort by count (most items first)
-  const brandsArray = Array.from(brandsMap.values())
-    .sort((a, b) => b.count - a.count);
-
-  console.log(`✅ Total brands: ${brandsArray.length} (showing ALL)`);
-  
-  return brandsArray;
-}
-  
-  extractBrandsFromTree() {
-  if (!this.data?.catalog?.tree) {
-    console.log('❌ No catalog tree found');
-    return [];
-  }
-
-  const brandsMap = new Map();
-  
-  console.log('🔍 Extracting brands from tree...');
-
-  // Walk through the tree structure
-  // Expected: tree[CATEGORY][BRAND][PRODUCTS]
-  const tree = this.data.catalog.tree;
-  
-  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-    console.log(`📂 Processing category: ${categoryKey}`);
-    
-    if (!categoryData.children) return;
-    
-    // Second level = Brands
-    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      console.log(`  🏢 Found brand: ${brandKey}`);
-      
-      const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      
-      if (!brandsMap.has(brandSlug)) {
-        brandsMap.set(brandSlug, {
-          name: brandKey,
-          slug: brandSlug,
-          logo: brandData.thumbnail || '',
-          count: brandData.count || 0,
-          categories: new Set([categoryKey])
-        });
-      } else {
-        // Brand exists, add category and update count
-        const existing = brandsMap.get(brandSlug);
-        existing.categories.add(categoryKey);
-        existing.count += (brandData.count || 0);
-      }
-    });
-  });
-
-  // Convert to array and sort by count
-  const brandsArray = Array.from(brandsMap.values())
-    .sort((a, b) => b.count - a.count);
-
-  console.log(`✅ Extracted ${brandsArray.length} unique brands`);
-  return brandsArray;
-}
-  
   setupFooter() {
     const footerContent = document.getElementById('footerContent');
     if (!footerContent) return;
@@ -1824,76 +1720,52 @@ extractAllBrands() {
   }
 
   setupEventListeners() {
-  // Logo click - go to home
-  const logo = document.getElementById('brandLogo');
-  if (logo) {
-    logo.addEventListener('click', () => {
-      this.navigateToHome();
-    });
-  }
+    // Logo click - go to home
+    const logo = document.getElementById('brandLogo');
+    if (logo) {
+      logo.addEventListener('click', () => {
+        this.navigateToHome();
+      });
+    }
 
-  // ✅ ENHANCED CARD CLICK HANDLER
-  document.addEventListener('click', (e) => {
-    const card = e.target.closest('.content-card, .taxonomy-item');
-    if (!card) return;
-    
-    // CASE 1: Brand item from taxonomy (bottom section)
-    if (card.classList.contains('brand-item')) {
-      const brandSlug = card.dataset.brand;
-      const brandName = card.dataset.brandName;
-      console.log(`🏢 Clicked brand from taxonomy: ${brandName}`);
-      this.navigateToBrand(brandSlug, brandName);
-      return;
-    }
-    
-    // CASE 2: Brand category card (from brand page)
-    if (card.classList.contains('brand-category-card')) {
-      const brandSlug = card.dataset.brandSlug;
-      const brandName = card.dataset.brandName;
-      const categoryKey = card.dataset.category;
-      const brandKey = card.dataset.brandKey;
-      
-      console.log(`📂 Clicked category: ${categoryKey} for brand: ${brandName}`);
-      this.navigateToBrandCategory(brandSlug, brandName, categoryKey, brandKey);
-      return;
-    }
-    
-    // CASE 3: Regular category/product cards
-    const category = card.dataset.category;
-    const isProduct = card.dataset.isProduct === 'true';
-    const driveLink = card.dataset.driveLink;
-    const searchPath = card.dataset.searchPath;
-    
-    if (isProduct && driveLink) {
-      this.openProduct(driveLink);
-    } else if (searchPath) {
-      this.navigateToPath(searchPath);
-    } else if (category) {
-      this.navigateToCategory(category);
-    }
-  });
-
-  // Search functionality
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        this.handleSearch(e.target.value);
+    // Card clicks
+    document.addEventListener('click', (e) => {
+      const card = e.target.closest('.content-card, .taxonomy-item');
+      if (card) {
+        const category = card.dataset.category;
+        const isProduct = card.dataset.isProduct === 'true';
+        const driveLink = card.dataset.driveLink;
+        const searchPath = card.dataset.searchPath;
+        
+        if (isProduct && driveLink) {
+          // Open product link
+          this.openProduct(driveLink);
+        } else if (searchPath) {
+          // Navigate using search path
+          this.navigateToPath(searchPath);
+        } else {
+          // Navigate to category
+          this.navigateToCategory(category);
+        }
       }
     });
+
+    // Search functionality - only on Enter press
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.handleSearch(e.target.value);
+        }
+      });
+    }
+
+    // Browser back/forward navigation
+    window.addEventListener('popstate', (e) => {
+      this.handleBrowserNavigation();
+    });
   }
-
-  // Browser back/forward navigation
-  window.addEventListener('popstate', (e) => {
-    this.handleBrowserNavigation();
-  });
-}
-
-
-
-
-  
 // ADD this method after setupEventListeners():
 setupScrollBehavior() {
   const header = document.querySelector('.header');
@@ -2029,443 +1901,6 @@ resetScrollPosition() {
   // Show category view
   this.showCategoryView();
 }
-
-navigateToBrand(brandSlug, brandName) {
-  console.log(`🏢 Navigating to brand: ${brandName} (${brandSlug})`);
-  
-  this.resetScrollPosition();
-  
-  // Update state
-  this.currentBrand = brandSlug;
-  this.currentBrandName = brandName;
-  this.currentPath = []; // Clear any category path
-  
-  // Update URL
-  const params = new URLSearchParams(window.location.search);
-  params.set('brand', brandSlug);
-  params.delete('path'); // Clear category path
-  
-  const newURL = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ 
-    view: 'brand',
-    brand: brandSlug,
-    brandName: brandName 
-  }, '', newURL);
-  
-  // Hide taxonomy section on brand page
-  const taxonomySection = document.querySelector('.taxonomy-section');
-  if (taxonomySection) {
-    taxonomySection.style.display = 'none';
-  }
-  
-  // Show brand's categories
-  this.showBrandCategories(brandSlug, brandName);
-}
-
-
-showBrandCategories(brandSlug, brandName) {
-  const container = document.getElementById('dynamicSections');
-  if (!container) return;
-
-  console.log(`📂 Showing categories for brand: ${brandName}`);
-
-  // Find all categories that contain this brand
-  const categories = this.findBrandCategories(brandSlug, brandName);
-  
-  if (categories.length === 0) {
-    container.innerHTML = `
-      <section class="content-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">No Categories Found</h2>
-            <p class="section-description">This brand has no products available.</p>
-          </div>
-        </div>
-      </section>
-    `;
-    return;
-  }
-
-  // Update hero
-  const heroTitle = document.getElementById('heroTitle');
-  const heroSubtitle = document.getElementById('heroSubtitle');
-  if (heroTitle) heroTitle.textContent = `${brandName} Collection`;
-  if (heroSubtitle) heroSubtitle.textContent = `Browse ${categories.length} ${categories.length === 1 ? 'category' : 'categories'}`;
-
-  // Add breadcrumb
-  this.addBreadcrumbNavigation([
-    { name: 'Home', path: '', isBrand: false },
-    { name: brandName, path: brandSlug, isBrand: true, isActive: true }
-  ]);
-
-  const gridClass = this.getGridClass(categories.length);
-  
-  container.innerHTML = `
-    <section class="content-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">${brandName} Categories</h2>
-          <p class="section-description">Select a category to explore ${brandName} products</p>
-        </div>
-        <div class="cards-grid ${gridClass}">
-          ${categories.map(cat => this.createCategoryCardForBrand(cat, brandSlug, brandName)).join('')}
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-// ============================================================================
-// NEW METHOD: Find categories for a brand
-// ADD THIS METHOD after showBrandCategories()
-// ============================================================================
-
-findBrandCategories(brandSlug, brandName) {
-  if (!this.data?.catalog?.tree) return [];
-  
-  const categories = [];
-  const tree = this.data.catalog.tree;
-  
-  console.log(`🔍 Finding categories for brand: ${brandName} (slug: ${brandSlug})`);
-  
-  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-    if (!categoryData.children) return;
-    
-    // Look for this brand in this category (case-insensitive matching)
-    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      // Normalize the brand key for comparison
-      const currentBrandSlug = brandKey
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-      
-      console.log(`  Comparing: "${currentBrandSlug}" vs "${brandSlug}"`);
-      
-      if (currentBrandSlug === brandSlug.toLowerCase()) {
-        console.log(`  ✅ Found match in category: ${categoryKey}`);
-        categories.push({
-          categoryKey: categoryKey,
-          brandKey: brandKey,
-          name: categoryKey,
-          count: brandData.count || 0,
-          thumbnail: brandData.thumbnail || categoryData.thumbnail || '',
-          brandSlug: brandSlug,
-          brandName: brandName
-        });
-      }
-    });
-  });
-  
-  console.log(`✅ Found ${categories.length} categories for ${brandName}`);
-  return categories;
-}
-
-// ============================================================================
-// NEW METHOD: Create category card for brand page
-// ADD THIS METHOD after findBrandCategories()
-// ============================================================================
-
-createCategoryCardForBrand(category, brandSlug, brandName) {
-  const imageSrc = category.thumbnail || '';
-  
-  return `
-    <div class="content-card brand-category-card" 
-         data-brand-slug="${brandSlug}"
-         data-brand-name="${brandName}"
-         data-category="${category.categoryKey}"
-         data-brand-key="${category.brandKey}"
-         role="button" 
-         tabindex="0">
-      <div class="card-image">
-        ${imageSrc ? 
-          `<img src="${imageSrc}" alt="${category.name}" loading="lazy" 
-                onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(category.categoryKey)}'">` 
-          : this.getEmojiForCategory(category.categoryKey)}
-      </div>
-      <div class="card-content">
-        <h3 class="card-title">${category.name}</h3>
-        <p class="card-description">${brandName} ${category.name} Collection</p>
-        <div class="card-footer">
-          <span class="card-badge">${category.count} Items</span>
-          <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-navigateToBrandCategory(brandSlug, brandName, categoryKey, brandKey) {
-  console.log(`📂 Navigating to: ${brandName} → ${categoryKey}`);
-  
-  this.resetScrollPosition();
-  
-  // Update state
-  this.currentBrand = brandSlug;
-  this.currentBrandName = brandName;
-  this.currentPath = [categoryKey, brandKey]; // Store the path
-  
-  // Update URL
-  const params = new URLSearchParams(window.location.search);
-  params.set('brand', brandSlug);
-  params.set('category', categoryKey);
-  
-  const newURL = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ 
-    view: 'products',
-    brand: brandSlug,
-    brandName: brandName,
-    category: categoryKey,
-    brandKey: brandKey
-  }, '', newURL);
-  
-  // Hide taxonomy section
-  const taxonomySection = document.querySelector('.taxonomy-section');
-  if (taxonomySection) {
-    taxonomySection.style.display = 'none';
-  }
-  
-  // Show products for this brand + category
-  this.showBrandCategoryProducts(brandSlug, brandName, categoryKey, brandKey);
-}
-
-
-
-showBrandCategoryProducts(brandSlug, brandName, categoryKey, brandKey) {
-  const container = document.getElementById('dynamicSections');
-  if (!container) return;
-
-  console.log(`🛍️ Showing products: ${brandName} ${categoryKey}`);
-
-  // Navigate to the correct position in tree
-  const tree = this.data.catalog?.tree;
-  if (!tree || !tree[categoryKey] || !tree[categoryKey].children || !tree[categoryKey].children[brandKey]) {
-    container.innerHTML = `
-      <section class="content-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">No Products Found</h2>
-            <p class="section-description">This category is currently empty.</p>
-          </div>
-        </div>
-      </section>
-    `;
-    return;
-  }
-
-  const brandNode = tree[categoryKey].children[brandKey];
-  const products = [];
-  
-  // Extract all products from this brand node
-  const extractProducts = (node, path = []) => {
-    Object.entries(node).forEach(([key, item]) => {
-      if (item.isProduct) {
-        products.push({
-          key: key,
-          title: key,
-          description: `${brandName} ${categoryKey}`,
-          thumbnail: item.thumbnail || '',
-          driveLink: item.driveLink,
-          isProduct: true,
-          topOrder: item.topOrder || 999
-        });
-      } else if (item.children) {
-        extractProducts(item.children, [...path, key]);
-      }
-    });
-  };
-  
-  if (brandNode.children) {
-    extractProducts(brandNode.children);
-  }
-  
-  // Sort by topOrder
-  products.sort((a, b) => a.topOrder - b.topOrder);
-
-  // Update hero
-  const heroTitle = document.getElementById('heroTitle');
-  const heroSubtitle = document.getElementById('heroSubtitle');
-  if (heroTitle) heroTitle.textContent = `${brandName} ${categoryKey}`;
-  if (heroSubtitle) heroSubtitle.textContent = `${products.length} ${products.length === 1 ? 'item' : 'items'} available`;
-
-  // Add breadcrumb
-  this.addBreadcrumbNavigation([
-    { name: 'Home', path: '', isBrand: false },
-    { name: brandName, path: brandSlug, isBrand: true },
-    { name: categoryKey, path: `${brandSlug}/${categoryKey}`, isActive: true }
-  ]);
-
-  if (products.length === 0) {
-    container.innerHTML = `
-      <section class="content-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">No Products Available</h2>
-            <p class="section-description">Check back soon for new items.</p>
-          </div>
-        </div>
-      </section>
-    `;
-    return;
-  }
-
-  const gridClass = this.getGridClass(products.length);
-  
-  container.innerHTML = `
-    <section class="content-section">
-      <div class="container">
-        <div class="cards-grid ${gridClass}">
-          ${products.map(product => this.createCardHTML(product)).join('')}
-        </div>
-      </div>
-    </section>
-  `;
-}
-  
-// ============================================================================
-// NEW METHOD: Show brand's categories
-// ADD THIS METHOD after navigateToBrand()
-// ============================================================================
-
-showBrandCategories(brandSlug, brandName) {
-  const container = document.getElementById('dynamicSections');
-  if (!container) return;
-
-  console.log(`📂 Showing categories for brand: ${brandName}`);
-
-  // Find all categories that contain this brand
-  const categories = this.findBrandCategories(brandSlug, brandName);
-  
-  if (categories.length === 0) {
-    container.innerHTML = `
-      <section class="content-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">No Categories Found</h2>
-            <p class="section-description">This brand has no products available.</p>
-          </div>
-        </div>
-      </section>
-    `;
-    return;
-  }
-
-  // Update hero
-  const heroTitle = document.getElementById('heroTitle');
-  const heroSubtitle = document.getElementById('heroSubtitle');
-  if (heroTitle) heroTitle.textContent = `${brandName} Collection`;
-  if (heroSubtitle) heroSubtitle.textContent = `Browse ${categories.length} ${categories.length === 1 ? 'category' : 'categories'}`;
-
-  // Add breadcrumb
-  this.addBreadcrumbNavigation([
-    { name: 'Home', path: '', isBrand: false },
-    { name: brandName, path: brandSlug, isBrand: true, isActive: true }
-  ]);
-
-  const gridClass = this.getGridClass(categories.length);
-  
-  container.innerHTML = `
-    <section class="content-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">${brandName} Categories</h2>
-          <p class="section-description">Select a category to explore ${brandName} products</p>
-        </div>
-        <div class="cards-grid ${gridClass}">
-          ${categories.map(cat => this.createCategoryCardForBrand(cat, brandSlug, brandName)).join('')}
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-// ============================================================================
-// NEW METHOD: Find categories for a brand
-// ADD THIS METHOD after showBrandCategories()
-// ============================================================================
-
-findBrandCategories(brandSlug, brandName) {
-  if (!this.data?.catalog?.tree) return [];
-  
-  const categories = [];
-  const tree = this.data.catalog.tree;
-  
-  console.log(`🔍 Finding categories for brand: ${brandName} (slug: ${brandSlug})`);
-  
-  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-    if (!categoryData.children) return;
-    
-    // Look for this brand in this category (case-insensitive matching)
-    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      // Normalize the brand key for comparison
-      const currentBrandSlug = brandKey
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-      
-      console.log(`  Comparing: "${currentBrandSlug}" vs "${brandSlug}"`);
-      
-      if (currentBrandSlug === brandSlug.toLowerCase()) {
-        console.log(`  ✅ Found match in category: ${categoryKey}`);
-        categories.push({
-          categoryKey: categoryKey,
-          brandKey: brandKey,
-          name: categoryKey,
-          count: brandData.count || 0,
-          thumbnail: brandData.thumbnail || categoryData.thumbnail || '',
-          brandSlug: brandSlug,
-          brandName: brandName
-        });
-      }
-    });
-  });
-  
-  console.log(`✅ Found ${categories.length} categories for ${brandName}`);
-  return categories;
-}
-
-// ============================================================================
-// NEW METHOD: Create category card for brand page
-// ADD THIS METHOD after findBrandCategories()
-// ============================================================================
-
-createCategoryCardForBrand(category, brandSlug, brandName) {
-  const imageSrc = category.thumbnail || '';
-  
-  return `
-    <div class="content-card brand-category-card" 
-         data-brand-slug="${brandSlug}"
-         data-brand-name="${brandName}"
-         data-category="${category.categoryKey}"
-         data-brand-key="${category.brandKey}"
-         role="button" 
-         tabindex="0">
-      <div class="card-image">
-        ${imageSrc ? 
-          `<img src="${imageSrc}" alt="${category.name}" loading="lazy" 
-                onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(category.categoryKey)}'">` 
-          : this.getEmojiForCategory(category.categoryKey)}
-      </div>
-      <div class="card-content">
-        <h3 class="card-title">${category.name}</h3>
-        <p class="card-description">${brandName} ${category.name} Collection</p>
-        <div class="card-footer">
-          <span class="card-badge">${category.count} Items</span>
-          <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-  
   // Force brand refresh when URL changes
   handleBrandNavigation() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -2640,371 +2075,6 @@ setupFABFunctionality() {
 
 // REPLACE the entire discoverWebPFiles function with this FIXED version:
 
-// ============================================================================
-// Instagram Stories Slider Functionality
-// ============================================================================
-
-setupStoriesSlider(); {
-  console.log('📸 Setting up Instagram stories slider...');
-  
-  const storiesTrack = document.getElementById('storiesTrack');
-  const prevBtn = document.getElementById('storiesPrev');
-  const nextBtn = document.getElementById('storiesNext');
-  
-  if (!storiesTrack || !prevBtn || !nextBtn) {
-    console.log('⚠️ Stories elements not found');
-    return;
-  }
-
-  // State management
-  let allStories = [];
-  let loadedCount = 0;
-  const INITIAL_LOAD = 15; // 5 from each folder
-  const BATCH_SIZE = 9; // Load 3 from each folder on next click
-
-  const folders = [
-    { name: 'Reviews', path: 'Reviews', color: '#10b981', label: 'Review' },
-    { name: 'Payment', path: 'Payment', color: '#3b82f6', label: 'Payment' },
-    { name: 'Delivered', path: 'Delivered', color: '#8b5cf6', label: 'Delivered' }
-  ];
-
-  // Discover all images from folders
-  const discoverAllStories = async () => {
-    console.log('🔍 Discovering stories from all folders...');
-    
-    const allImages = [];
-    
-    for (const folder of folders) {
-      const images = await this.discoverWebPFiles(folder.path);
-      console.log(`📁 ${folder.name}: ${images.length} images`);
-      
-      images.forEach(img => {
-        allImages.push({
-          ...img,
-          folder: folder.name,
-          folderPath: folder.path,
-          color: folder.color,
-          label: folder.label
-        });
-      });
-    }
-  
-    // Interleave images from different folders for variety
-    const interleaved = this.interleaveStories(allImages, folders.length);
-    console.log(`✅ Total stories discovered: ${interleaved.length}`);
-    
-    return interleaved;
-  };
-
-  // Interleave stories from different folders
-  this.interleaveStories = (images, folderCount) => {
-    const byFolder = {};
-    
-    // Group by folder
-    images.forEach(img => {
-      if (!byFolder[img.folder]) byFolder[img.folder] = [];
-      byFolder[img.folder].push(img);
-    });
-    
-    // Interleave
-    const result = [];
-    const maxLength = Math.max(...Object.values(byFolder).map(arr => arr.length));
-    
-    for (let i = 0; i < maxLength; i++) {
-      Object.keys(byFolder).forEach(folder => {
-        if (byFolder[folder][i]) {
-          result.push(byFolder[folder][i]);
-        }
-      });
-    }
-    
-    return result;
-  };
-
-  // Render story items
-  const renderStories = (stories, append = false) => {
-    const storyHTML = stories.map((story, index) => `
-      <div class="story-item" data-index="${loadedCount + index}" data-folder="${story.folder}">
-        <div class="story-ring">
-          <div class="story-image-container">
-            <img src="${story.src}" 
-                 alt="${story.title}" 
-                 class="story-image"
-                 loading="lazy">
-            <div class="story-category-badge" style="background: ${story.color}">
-              ${story.label}
-            </div>
-          </div>
-        </div>
-        <div class="story-label">${story.name || `Image ${index + 1}`}</div>
-      </div>
-    `).join('');
-    
-    if (append) {
-      storiesTrack.insertAdjacentHTML('beforeend', storyHTML);
-    } else {
-      storiesTrack.innerHTML = storyHTML;
-    }
-    
-    // Add click handlers
-    const storyItems = storiesTrack.querySelectorAll('.story-item');
-    storyItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const index = parseInt(item.dataset.index);
-        this.openStoryViewer(index);
-      });
-    });
-  };
-
-  // Open story in full viewer
-  this.openStoryViewer = (startIndex) => {
-    const modal = document.getElementById('imageViewerModal');
-    if (!modal) return;
-    
-    // Use existing image viewer modal
-    this.currentImages = allStories;
-    this.currentImageIndex = startIndex;
-    
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    
-    this.showCurrentImage();
-  };
-
-  // Show current image (uses existing viewer)
-  this.showCurrentImage = () => {
-    if (!this.currentImages || this.currentImages.length === 0) return;
-    
-    const image = this.currentImages[this.currentImageIndex];
-    const viewerImage = document.getElementById('viewerImage');
-    const viewerTitle = document.getElementById('viewerTitle');
-    const viewerCounter = document.getElementById('viewerCounter');
-    
-    if (viewerImage) viewerImage.src = image.src;
-    if (viewerTitle) viewerTitle.textContent = `${image.folder} - ${image.title}`;
-    if (viewerCounter) viewerCounter.textContent = `${this.currentImageIndex + 1} / ${this.currentImages.length}`;
-    
-    // Preload adjacent images
-    this.preloadImages();
-  };
-
-  // Preload adjacent images
-  this.preloadImages = () => {
-    if (!this.currentImages || this.currentImages.length <= 1) return;
-    
-    const nextIndex = (this.currentImageIndex + 1) % this.currentImages.length;
-    const prevIndex = (this.currentImageIndex - 1 + this.currentImages.length) % this.currentImages.length;
-    
-    const nextImg = new Image();
-    nextImg.src = this.currentImages[nextIndex].src;
-    
-    const prevImg = new Image();
-    prevImg.src = this.currentImages[prevIndex].src;
-  };
-
-  // Navigation
-  const scroll = (direction) => {
-    const scrollAmount = 380; // Width of ~3 stories
-    const currentScroll = storiesTrack.scrollLeft;
-    
-    if (direction === 'left') {
-      storiesTrack.scrollTo({
-        left: currentScroll - scrollAmount,
-        behavior: 'smooth'
-      });
-    } else {
-      storiesTrack.scrollTo({
-        left: currentScroll + scrollAmount,
-        behavior: 'smooth'
-      });
-      
-      // Load more if near end
-      const isNearEnd = currentScroll + storiesTrack.clientWidth >= storiesTrack.scrollWidth - 200;
-      if (isNearEnd && loadedCount < allStories.length) {
-        loadMoreStories();
-      }
-    }
-    
-    updateNavButtons();
-  };
-
-  // Update navigation button states
-  const updateNavButtons = () => {
-    setTimeout(() => {
-      const isAtStart = storiesTrack.scrollLeft <= 10;
-      const isAtEnd = storiesTrack.scrollLeft + storiesTrack.clientWidth >= storiesTrack.scrollWidth - 10;
-      
-      prevBtn.disabled = isAtStart;
-      nextBtn.disabled = isAtEnd && loadedCount >= allStories.length;
-    }, 100);
-  };
-
-  // Load more stories
-  const loadMoreStories = () => {
-    if (loadedCount >= allStories.length) {
-      console.log('✅ All stories loaded');
-      return;
-    }
-    
-    const nextBatch = allStories.slice(loadedCount, loadedCount + BATCH_SIZE);
-    renderStories(nextBatch, true);
-    loadedCount += nextBatch.length;
-    
-    console.log(`📸 Loaded ${nextBatch.length} more stories (${loadedCount}/${allStories.length})`);
-    updateNavButtons();
-  };
-
-  // Event listeners
-  prevBtn.addEventListener('click', () => scroll('left'));
-  nextBtn.addEventListener('click', () => scroll('right'));
-  
-  storiesTrack.addEventListener('scroll', updateNavButtons);
-
-  // Touch/swipe support
-  let touchStartX = 0;
-  storiesTrack.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX;
-  }, { passive: true });
-
-  storiesTrack.addEventListener('touchend', (e) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
-    
-    if (Math.abs(diff) > 50) {
-      scroll(diff > 0 ? 'right' : 'left');
-    }
-  }, { passive: true });
-
-  // Initialize
-  (async () => {
-    try {
-      console.log('🚀 Initializing stories slider...');
-      
-      // Show loading state
-      storiesTrack.innerHTML = `
-        ${Array(15).fill(0).map((_, i) => `
-          <div class="story-item loading">
-            <div class="story-ring">
-              <div class="story-image-container">
-                <div class="story-image"></div>
-              </div>
-            </div>
-            <div class="story-label">Loading...</div>
-          </div>
-        `).join('')}
-      `;
-      
-      // Discover all images
-      allStories = await discoverAllStories();
-      
-      if (allStories.length === 0) {
-        storiesTrack.innerHTML = `
-          <div style="text-align: center; padding: var(--space-8); width: 100%; color: var(--color-text-secondary);">
-            <p>📸 No stories available yet</p>
-            <p style="font-size: 0.9rem; margin-top: var(--space-2);">Add .webp images to Reviews/, Payment/, or Delivered/ folders</p>
-          </div>
-        `;
-        prevBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-        return;
-      }
-      
-      // Load initial batch
-      const initialBatch = allStories.slice(0, INITIAL_LOAD);
-      renderStories(initialBatch);
-      loadedCount = initialBatch.length;
-      
-      updateNavButtons();
-      
-      console.log(`✅ Stories slider ready with ${loadedCount}/${allStories.length} stories`);
-      
-    } catch (error) {
-      console.error('❌ Error setting up stories:', error);
-      storiesTrack.innerHTML = `
-        <div style="text-align: center; padding: var(--space-8); width: 100%; color: var(--color-error);">
-          <p>⚠️ Error loading stories</p>
-        </div>
-      `;
-    }
-  })();
-}
-
-// Helper: Discover WebP files (reuse from FAB code)
-discoverWebPFiles(folderName); {
-  return new Promise(async (resolve) => {
-    console.log(`🔍 Scanning ${folderName} for .webp files...`);
-    
-    const testImageExists = (imagePath) => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        const timeout = setTimeout(() => resolve(false), 1000);
-        
-        img.onload = () => {
-          clearTimeout(timeout);
-          resolve(true);
-        };
-        
-        img.onerror = () => {
-          clearTimeout(timeout);
-          resolve(false);
-        };
-        
-        img.src = imagePath;
-      });
-    };
-    
-    const foundImages = [];
-    const batchSize = 10;
-    let consecutiveFailures = 0;
-    
-    // Test image*.webp pattern
-    for (let startIndex = 1; startIndex <= 50; startIndex += batchSize) {
-      const endIndex = Math.min(startIndex + batchSize - 1, 50);
-      const batch = [];
-      
-      for (let i = startIndex; i <= endIndex; i++) {
-        const webpPath = `${folderName}/image${i}.webp`;
-        batch.push(
-          testImageExists(webpPath).then(exists => ({
-            exists,
-            path: webpPath,
-            index: i,
-            name: `image${i}`
-          }))
-        );
-      }
-      
-      const results = await Promise.all(batch);
-      let batchFoundAny = false;
-      
-      results.forEach(result => {
-        if (result.exists) {
-          foundImages.push({
-            src: result.path,
-            title: `${folderName} Image ${result.index}`,
-            name: result.name,
-            index: result.index
-          });
-          batchFoundAny = true;
-          consecutiveFailures = 0;
-        }
-      });
-      
-      if (!batchFoundAny) {
-        consecutiveFailures++;
-        if (consecutiveFailures >= 2 && foundImages.length > 0) {
-          break;
-        }
-      }
-    }
-    
-    console.log(`✅ Found ${foundImages.length} images in ${folderName}`);
-    resolve(foundImages.sort((a, b) => a.index - b.index));
-  });
-}
-
-
-  
 // REPLACE the entire discoverWebPFiles function with this FASTER & MORE RELIABLE version:
 
 const discoverWebPFiles = async (folderName) => {
@@ -3221,7 +2291,7 @@ const preloadImages = () => {
         if (threeDotMenu) threeDotMenu.classList.remove('expanded');
         return;
       }
-    }
+      }
     
       // Show loading state
       if (viewerImage) {
