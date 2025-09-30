@@ -510,6 +510,11 @@ function attachFolderMeta(node, prefix = []) {
       if (meta?.driveLink) n.driveLink = meta.driveLink;
       if (meta?.section) n.section = meta.section;
       if (meta?.category) n.category = meta.category;
+
+      if (typeof n.count === 'undefined') {
+        n.count = 0;
+      }
+      
       
       // CRITICAL: Apply TopOrder and image config to folders only
       if (typeof meta?.TopOrder !== "undefined") {
@@ -563,7 +568,8 @@ function applyBrandLogosToTree(node, prefix = []) {
 
 applyBrandLogosToTree(tree);
 
-  
+
+
 console.log("🔍 Setting all brands to visible...");
 
 function setAllBrandsVisible(node, prefix = []) {
@@ -583,25 +589,6 @@ function setAllBrandsVisible(node, prefix = []) {
 }
 
 setAllBrandsVisible(tree);
-
-  
-function applyBrowseBrandsFilter(node, prefix = []) {
-  for (const k of Object.keys(node)) {
-    const n = node[k];
-    const currentPath = [...prefix, k];
-    
-    if (currentPath.length === 2 && !n.isProduct) {
-      const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      n.browseBrands = brandBrowseStatus.get(brandSlug) || false;
-    }
-    
-    if (n.children && !n.isProduct) {
-      applyBrowseBrandsFilter(n.children, currentPath);
-    }
-  }
-}
-
-applyBrowseBrandsFilter(tree);
   
 attachFolderMeta(tree);
 
@@ -631,14 +618,30 @@ attachFolderMeta(tree);
   fillMissingThumbsFromAncestors(tree);
   console.log("✅ Image config inheritance complete");
 
-  console.log("🧮 Calculating enhanced catalog metrics...");
+console.log("🧮 Calculating enhanced catalog metrics...");
+
+// CRITICAL FIX: Calculate counts BEFORE any other operations
+function setCounts(node) {
+  if (node.isProduct) return 1;
+  
+  let sum = 0;
+  const children = node.children || {};
+  
+  for (const k of Object.keys(children)) {
+    sum += setCounts(children[k]);
+  }
+  
+  node.count = sum;
+  return sum;
+}
+
+// Calculate counts for entire tree
 for (const top of Object.keys(tree)) {
   setCounts(tree[top]);
 }
 
-// ADD THIS DEBUG BEFORE THE FUNCTION CALL:
-console.log("🔍 Debug: brandBrowseStatus Map contents:");
-console.log(brandBrowseStatus);
+console.log("✅ Counts calculated for all categories and brands");
+
 console.log("🔍 Debug: Sample brand counts from tree:");
 if (tree.BAGS && tree.BAGS.children) {
   Object.entries(tree.BAGS.children).forEach(([name, data]) => {
@@ -909,29 +912,44 @@ console.log("✅ BUILD TopOrder verification complete");
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
   // ✅ BRAND VERIFICATION - Add this BEFORE the catch block
+// ✅ BRAND VERIFICATION - Add this BEFORE the catch block
 console.log("\n" + "=".repeat(70));
 console.log("🔍 BRAND STRUCTURE VERIFICATION:\n");
 
 let totalBrands = 0;
 let brandsWithLogos = 0;
+let brandsWithZeroItems = 0;
 
 Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-  console.log(`📂 ${categoryKey}`);
+  console.log(`📂 ${categoryKey} (Category count: ${categoryData.count || 0})`);
   
   if (categoryData.children) {
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
       totalBrands++;
       const hasLogo = brandData.thumbnail && brandData.thumbnail !== PLACEHOLDER_THUMB;
+      const itemCount = brandData.count || 0;
       
-      if (hasLogo) {
+      if (itemCount === 0) {
+        brandsWithZeroItems++;
+        console.log(`   ❌ ${brandKey} (${itemCount} items) - ZERO COUNT!`);
+      } else if (hasLogo) {
         brandsWithLogos++;
-        console.log(`   ✅ ${brandKey} (${brandData.count} items) 🖼️`);
+        console.log(`   ✅ ${brandKey} (${itemCount} items) 🖼️`);
       } else {
-        console.log(`   ⚠️  ${brandKey} (${brandData.count} items) NO LOGO`);
+        console.log(`   ⚠️  ${brandKey} (${itemCount} items) NO LOGO`);
       }
     });
   }
 });
+
+console.log("\n" + "=".repeat(70));
+console.log(`📊 Total Brands: ${totalBrands}`);
+console.log(`🖼️  With Logos: ${brandsWithLogos}/${totalBrands} (${totalBrands > 0 ? ((brandsWithLogos/totalBrands)*100).toFixed(0) : 0}%)`);
+console.log(`⚠️  With Zero Items: ${brandsWithZeroItems}/${totalBrands}`);
+
+if (brandsWithZeroItems > 0) {
+  console.log(`\n❌ WARNING: ${brandsWithZeroItems} brands have 0 items - check CSV data!`);
+}
 
 console.log("\n" + "=".repeat(70));
 console.log(`📊 Total Brands: ${totalBrands}`);
