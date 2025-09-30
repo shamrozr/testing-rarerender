@@ -1796,52 +1796,59 @@ getScaleTransform(scaling) {
   }
 
   setupEventListeners() {
-    // Logo click - go to home
-    const logo = document.getElementById('brandLogo');
-    if (logo) {
-      logo.addEventListener('click', () => {
-        this.navigateToHome();
-      });
-    }
-
-    // Card clicks
-    document.addEventListener('click', (e) => {
-      const card = e.target.closest('.content-card, .taxonomy-item');
-      if (card) {
-        const category = card.dataset.category;
-        const isProduct = card.dataset.isProduct === 'true';
-        const driveLink = card.dataset.driveLink;
-        const searchPath = card.dataset.searchPath;
-        
-        if (isProduct && driveLink) {
-          // Open product link
-          this.openProduct(driveLink);
-        } else if (searchPath) {
-          // Navigate using search path
-          this.navigateToPath(searchPath);
-        } else {
-          // Navigate to category
-          this.navigateToCategory(category);
-        }
-      }
-    });
-
-    // Search functionality - only on Enter press
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-      searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.handleSearch(e.target.value);
-        }
-      });
-    }
-
-    // Browser back/forward navigation
-    window.addEventListener('popstate', (e) => {
-      this.handleBrowserNavigation();
+  // Logo click - go to home
+  const logo = document.getElementById('brandLogo');
+  if (logo) {
+    logo.addEventListener('click', () => {
+      this.navigateToHome();
     });
   }
+
+  // Card clicks - Enhanced to handle brand items
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.content-card, .taxonomy-item');
+    if (card) {
+      // Check if it's a brand item (from taxonomy section)
+      if (card.classList.contains('brand-item')) {
+        const brandSlug = card.dataset.brand;
+        const brandName = card.dataset.brandName;
+        console.log(`🏢 Clicked brand: ${brandName} (${brandSlug})`);
+        this.navigateToBrand(brandSlug, brandName);
+        return;
+      }
+      
+      // Regular card/category navigation
+      const category = card.dataset.category;
+      const isProduct = card.dataset.isProduct === 'true';
+      const driveLink = card.dataset.driveLink;
+      const searchPath = card.dataset.searchPath;
+      
+      if (isProduct && driveLink) {
+        this.openProduct(driveLink);
+      } else if (searchPath) {
+        this.navigateToPath(searchPath);
+      } else {
+        this.navigateToCategory(category);
+      }
+    }
+  });
+
+  // Search functionality
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.handleSearch(e.target.value);
+      }
+    });
+  }
+
+  // Browser back/forward navigation
+  window.addEventListener('popstate', (e) => {
+    this.handleBrowserNavigation();
+  });
+}
 // ADD this method after setupEventListeners():
 setupScrollBehavior() {
   const header = document.querySelector('.header');
@@ -1977,6 +1984,160 @@ resetScrollPosition() {
   // Show category view
   this.showCategoryView();
 }
+
+navigateToBrand(brandSlug, brandName) {
+  console.log(`🏢 Navigating to brand: ${brandName}`);
+  
+  this.resetScrollPosition();
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('brand', brandSlug);
+  params.delete('path'); // Clear any category path
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ 
+    brand: brandSlug, 
+    brandName: brandName 
+  }, '', newURL);
+  
+  // Show brand's categories
+  this.showBrandCategories(brandSlug, brandName);
+}
+
+// ============================================================================
+// NEW METHOD: Show brand's categories
+// ADD THIS METHOD after navigateToBrand()
+// ============================================================================
+
+showBrandCategories(brandSlug, brandName) {
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
+
+  console.log(`📂 Showing categories for brand: ${brandName}`);
+
+  // Find all categories that contain this brand
+  const categories = this.findBrandCategories(brandSlug);
+  
+  if (categories.length === 0) {
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">No Categories Found</h2>
+            <p class="section-description">This brand has no products available.</p>
+          </div>
+        </div>
+      </section>
+    `;
+    return;
+  }
+
+  // Update hero
+  const heroTitle = document.getElementById('heroTitle');
+  const heroSubtitle = document.getElementById('heroSubtitle');
+  if (heroTitle) heroTitle.textContent = `${brandName} Collection`;
+  if (heroSubtitle) heroSubtitle.textContent = `Browse ${categories.length} categories`;
+
+  // Add breadcrumb
+  this.addBreadcrumbNavigation([
+    { name: 'Brands', path: '' },
+    { name: brandName, path: brandSlug }
+  ]);
+
+  // Hide taxonomy section on brand page
+  const taxonomySection = document.querySelector('.taxonomy-section');
+  if (taxonomySection) {
+    taxonomySection.style.display = 'none';
+  }
+
+  const gridClass = this.getGridClass(categories.length);
+  
+  container.innerHTML = `
+    <section class="content-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">${brandName} Categories</h2>
+          <p class="section-description">Explore our ${brandName} collection</p>
+        </div>
+        <div class="cards-grid ${gridClass}">
+          ${categories.map(cat => this.createCategoryCardForBrand(cat, brandSlug)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+// ============================================================================
+// NEW METHOD: Find categories for a brand
+// ADD THIS METHOD after showBrandCategories()
+// ============================================================================
+
+findBrandCategories(brandSlug) {
+  if (!this.data?.catalog?.tree) return [];
+  
+  const categories = [];
+  const tree = this.data.catalog.tree;
+  
+  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+    if (!categoryData.children) return;
+    
+    // Look for this brand in this category
+    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
+      const currentBrandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      if (currentBrandSlug === brandSlug) {
+        categories.push({
+          categoryKey: categoryKey,
+          brandKey: brandKey,
+          name: categoryKey,
+          count: brandData.count || 0,
+          thumbnail: brandData.thumbnail || categoryData.thumbnail || ''
+        });
+      }
+    });
+  });
+  
+  return categories;
+}
+
+// ============================================================================
+// NEW METHOD: Create category card for brand page
+// ADD THIS METHOD after findBrandCategories()
+// ============================================================================
+
+createCategoryCardForBrand(category, brandSlug) {
+  const imageSrc = category.thumbnail || '';
+  
+  return `
+    <div class="content-card" 
+         data-brand="${brandSlug}"
+         data-category="${category.categoryKey}"
+         data-brand-category="true"
+         role="button" 
+         tabindex="0">
+      <div class="card-image">
+        ${imageSrc ? 
+          `<img src="${imageSrc}" alt="${category.name}" loading="lazy" 
+                onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(category.categoryKey)}'">` 
+          : this.getEmojiForCategory(category.categoryKey)}
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">${category.name}</h3>
+        <p class="card-description">${category.count} items in this category</p>
+        <div class="card-footer">
+          <span class="card-badge">${category.count} Items</span>
+          <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
+  
   // Force brand refresh when URL changes
   handleBrandNavigation() {
     const urlParams = new URLSearchParams(window.location.search);
