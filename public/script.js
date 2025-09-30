@@ -1671,10 +1671,13 @@ getScaleTransform(scaling) {
   const brands = this.extractBrandsFromTree();
   
   if (brands.length === 0) {
-    console.log('⚠️ No brands found');
-    taxonomyGrid.innerHTML = '<p style="text-align:center;">No brands available</p>';
-    return;
+  console.log('⚠️ No brands with Browse Brands enabled');
+  const taxonomySection = document.querySelector('.taxonomy-section');
+  if (taxonomySection) {
+    taxonomySection.style.display = 'none';
   }
+  return;
+}
 
   console.log(`✅ Found ${brands.length} brands:`, brands.map(b => b.name));
 
@@ -1714,21 +1717,19 @@ getScaleTransform(scaling) {
   }
 
   const brandsMap = new Map();
-  
-  console.log('🔍 Extracting brands from tree...');
-
-  // Walk through the tree structure
-  // Expected: tree[CATEGORY][BRAND][PRODUCTS]
   const tree = this.data.catalog.tree;
   
   Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-    console.log(`📂 Processing category: ${categoryKey}`);
-    
     if (!categoryData.children) return;
     
-    // Second level = Brands
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      console.log(`  🏢 Found brand: ${brandKey}`);
+      // Filter: Only include brands with browseBrands = true
+      if (brandData.browseBrands !== true) {
+        console.log(`  ❌ Skipping ${brandKey} (browseBrands not enabled)`);
+        return;
+      }
+      
+      console.log(`  ✅ Including brand: ${brandKey}`);
       
       const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       
@@ -1741,7 +1742,6 @@ getScaleTransform(scaling) {
           categories: new Set([categoryKey])
         });
       } else {
-        // Brand exists, add category and update count
         const existing = brandsMap.get(brandSlug);
         existing.categories.add(categoryKey);
         existing.count += (brandData.count || 0);
@@ -1749,11 +1749,10 @@ getScaleTransform(scaling) {
     });
   });
 
-  // Convert to array and sort by count
   const brandsArray = Array.from(brandsMap.values())
     .sort((a, b) => b.count - a.count);
 
-  console.log(`✅ Extracted ${brandsArray.length} unique brands`);
+  console.log(`✅ Extracted ${brandsArray.length} brands for Browse Brands section`);
   return brandsArray;
 }
   
