@@ -338,7 +338,7 @@ console.log("📝 Processing enhanced catalog entries with brand normalization..
 const brandNormalizationMap = new Map(); // originalName → normalizedName
 const brandCategoryMap = new Map(); // normalizedBrandSlug → Set of categories
   
-const brandBrowseStatus = new Map();
+
   
 let processedCount = 0;
 
@@ -348,7 +348,7 @@ for (const r of masterRows) {
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   
-  const browseBrands = (r["Browse Brands"] || r["browse brands"] || r["Browse_Brands"] || "").trim().toLowerCase();
+
   
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
@@ -414,14 +414,7 @@ for (const r of masterRows) {
     }
     brandCategoryMap.get(brandSlug).add(categoryName);
     
-    // Track Browse Brands status - only set if explicitly "on" or "off"
-if (browseBrands !== '') {
-  if (['on', 'yes', 'true', '1'].includes(browseBrands)) {
-    brandBrowseStatus.set(brandSlug, 'FORCE_SHOW');
-  } else if (['off', 'no', 'false', '0'].includes(browseBrands)) {
-    brandBrowseStatus.set(brandSlug, 'FORCE_HIDE');
-  }
-}
+
     
     // Replace the brand name in segments with normalized version
     segs[1] = normalizedBrandName;
@@ -571,70 +564,25 @@ function applyBrandLogosToTree(node, prefix = []) {
 applyBrandLogosToTree(tree);
 
   
-console.log("🔍 Applying smart Browse Brands filter...");
+console.log("🔍 Setting all brands to visible...");
 
-function applySmartBrowseBrandsFilter(node, prefix = []) {
+function setAllBrandsVisible(node, prefix = []) {
   for (const k of Object.keys(node)) {
     const n = node[k];
     const currentPath = [...prefix, k];
     
     if (currentPath.length === 2 && !n.isProduct) {
-      const brandName = k;
-      const brandSlug = brandName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      const manualStatus = brandBrowseStatus.get(brandSlug);
-      const itemCount = n.count || 0;
-      
-      let shouldShow = false;
-      let reason = '';
-      
-      // Check manual status
-      if (manualStatus === 'FORCE_HIDE') {
-        shouldShow = false;
-        reason = 'Hidden (Browse Brands = Off)';
-      } else if (manualStatus === 'FORCE_SHOW') {
-        shouldShow = true;
-        reason = 'Shown (Browse Brands = On)';
-      } else if (itemCount >= 10) {
-        shouldShow = true;
-        reason = `Auto-shown (${itemCount} items >= 10)`;
-      } else {
-        shouldShow = false;
-        reason = `Hidden (${itemCount} items < 10)`;
-      }
-      
-      n.browseBrands = shouldShow;
-      
-      const icon = shouldShow ? '✅' : '❌';
-      console.log(`  ${icon} ${brandName} (${itemCount} items) - ${reason}`);
+      n.browseBrands = true;
+      console.log(`  ✅ ${k} (${n.count || 0} items)`);
     }
     
     if (n.children && !n.isProduct) {
-      applySmartBrowseBrandsFilter(n.children, currentPath);
+      setAllBrandsVisible(n.children, currentPath);
     }
   }
 }
-console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)...");
 
-console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)...");
-
-// Apply smart Browse Brands filter
-console.log("🔍 Applying smart Browse Brands filter...");
-
-
-
-// Summary
-console.log("\n📊 BROWSE BRANDS SUMMARY:");
-let shown = 0, hidden = 0;
-Object.values(tree).forEach(cat => {
-  if (cat.children) {
-    Object.values(cat.children).forEach(brand => {
-      if (brand.browseBrands) shown++; else hidden++;
-    });
-  }
-});
-console.log(`   ✅ Shown: ${shown} brands`);
-console.log(`   ❌ Hidden: ${hidden} brands`);
-
+setAllBrandsVisible(tree);
 
   
 function applyBrowseBrandsFilter(node, prefix = []) {
@@ -698,7 +646,6 @@ if (tree.BAGS && tree.BAGS.children) {
   });
 }
 
-applySmartBrowseBrandsFilter(tree);
   
   // Enhanced health checks including image rendering
   console.log("🔍 Running enhanced quality assurance with image rendering checks...");
