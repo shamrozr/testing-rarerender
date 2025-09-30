@@ -1390,6 +1390,7 @@ getBackgroundSize(fitting) {
       return 'cover';
     }
   }
+
   
   // Standard fit methods (unchanged behavior)
   const fitMap = {
@@ -2504,7 +2505,7 @@ setupFABFunctionality() {
 // Instagram Stories Slider Functionality
 // ============================================================================
 
-setupStoriesSlider() {
+setupStoriesSlider(); {
   console.log('📸 Setting up Instagram stories slider...');
   
   const storiesTrack = document.getElementById('storiesTrack');
@@ -2548,7 +2549,7 @@ setupStoriesSlider() {
         });
       });
     }
-    
+  
     // Interleave images from different folders for variety
     const interleaved = this.interleaveStories(allImages, folders.length);
     console.log(`✅ Total stories discovered: ${interleaved.length}`);
@@ -2790,7 +2791,7 @@ setupStoriesSlider() {
 }
 
 // Helper: Discover WebP files (reuse from FAB code)
-discoverWebPFiles(folderName) {
+discoverWebPFiles(folderName); {
   return new Promise(async (resolve) => {
     console.log(`🔍 Scanning ${folderName} for .webp files...`);
     
@@ -3081,7 +3082,7 @@ const preloadImages = () => {
         if (threeDotMenu) threeDotMenu.classList.remove('expanded');
         return;
       }
-      }
+    }
     
       // Show loading state
       if (viewerImage) {
