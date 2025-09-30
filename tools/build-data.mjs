@@ -144,15 +144,6 @@ function ensureFolderNode(tree, segs) {
   return node;
 }
 
-function setCounts(node) {
-  if (node.isProduct) return 1;
-  let sum = 0;
-  for (const k of Object.keys(node.children || {})) {
-    sum += setCounts(node.children[k]);
-  }
-  node.count = sum;
-  return sum;
-}
 
 function propagateThumbsFromChildren(node, currentDepth = 0) {
   for (const k of Object.keys(node)) {
@@ -589,10 +580,10 @@ function setAllBrandsVisible(node, prefix = []) {
 }
 
 setAllBrandsVisible(tree);
-  
 attachFolderMeta(tree);
 
   // Convert empty folders with drive links to products
+// Convert empty folders with drive links to products
   console.log("🔄 Optimizing catalog structure...");
   function convertEmpty(node) {
     for (const k of Object.keys(node)) {
@@ -611,34 +602,33 @@ attachFolderMeta(tree);
   }
   convertEmpty(tree);
 
-  // Enhance catalog with visual and section data
+  // CRITICAL: Calculate counts IMMEDIATELY after structure is finalized
+  console.log("🧮 Calculating item counts...");
+  function setCounts(node) {
+    if (node.isProduct) return 1;
+    
+    let sum = 0;
+    const children = node.children || {};
+    
+    for (const k of Object.keys(children)) {
+      sum += setCounts(children[k]);
+    }
+    
+    node.count = sum;
+    return sum;
+  }
+
+  // Calculate for entire tree
+  for (const top of Object.keys(tree)) {
+    const count = setCounts(tree[top]);
+    console.log(`  ${top}: ${count} items`);
+  }
+
   // Enhance catalog with visual and section data
   console.log("🖼️  Enhancing visual and section elements with inherited config...");
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
   console.log("✅ Image config inheritance complete");
-
-console.log("🧮 Calculating enhanced catalog metrics...");
-
-// CRITICAL FIX: Calculate counts BEFORE any other operations
-function setCounts(node) {
-  if (node.isProduct) return 1;
-  
-  let sum = 0;
-  const children = node.children || {};
-  
-  for (const k of Object.keys(children)) {
-    sum += setCounts(children[k]);
-  }
-  
-  node.count = sum;
-  return sum;
-}
-
-// Calculate counts for entire tree
-for (const top of Object.keys(tree)) {
-  setCounts(tree[top]);
-}
 
 console.log("✅ Counts calculated for all categories and brands");
 
