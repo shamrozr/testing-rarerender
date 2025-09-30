@@ -99,13 +99,7 @@ class CSVCatalogApp {
       this.setupDynamicSections();
     }
     // Show brands and slideshow on initial homepage load
-    setTimeout(() => {
-      // Hide sections
-    const brandsSection = document.querySelector('.brands-section');
-    const slideshowSection = document.querySelector('.slideshow-section');
-    if (brandsSection) brandsSection.style.display = 'none';
-    if (slideshowSection) slideshowSection.style.display = 'none';
-    }, 100);
+
 
     
     this.setupBrands();
@@ -277,10 +271,11 @@ class CSVCatalogApp {
 
   // Hide taxonomy section
  // Hide brands and slideshow sections when NOT on homepage
+  // Show brands and slideshow sections on homepage
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
-  if (brandsSection) brandsSection.style.display = 'none';
-  if (slideshowSection) slideshowSection.style.display = 'none';
+  if (brandsSection) brandsSection.style.display = 'block';
+  if (slideshowSection) slideshowSection.style.display = 'block';
 
   // Show category contents
   this.renderCategoryContents(currentNode, breadcrumbs);
