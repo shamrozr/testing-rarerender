@@ -420,6 +420,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
       rank: item.rank,
       Sort: item.Sort,
       sort: item.sort
+      
     });
 
     const extractTopOrder = (item, itemKey, fullPath) => {
@@ -463,6 +464,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
         driveLink: item.driveLink,
         topOrder: topOrder,
         fullPath: currentPath,
+        fullPath: currentPath,
         alignment: item.alignment || item.Alignment || item.ALIGNMENT,
         fitting: item.fitting || item.Fitting || item.FITTING,
         scaling: item.scaling || item.Scaling || item.SCALING
@@ -476,6 +478,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
         thumbnail: item.thumbnail || this.getEmojiForCategory(key),
         isProduct: false,
         topOrder: topOrder,
+        fullPath: currentPath,
         fullPath: currentPath,
         alignment: item.alignment || item.Alignment || item.ALIGNMENT,
         fitting: item.fitting || item.Fitting || item.FITTING,
@@ -626,7 +629,234 @@ sortItemsEnhanced(items, isHomepage = false) {
   return [...folders, ...products];
 }
 
+  setupPreviewModal() {
+  // Create modal HTML if it doesn't exist
+  if (document.getElementById('drivePreviewModal')) return;
   
+  const modal = document.createElement('div');
+  modal.id = 'drivePreviewModal';
+  modal.className = 'drive-preview-modal';
+  modal.innerHTML = `
+    <div class="preview-overlay" id="previewOverlay"></div>
+    <div class="preview-container">
+      <div class="preview-header">
+        <div class="preview-title" id="previewTitle">Product Gallery</div>
+        <button class="preview-close" id="previewClose" title="Close (Esc)">×</button>
+      </div>
+      <div class="preview-content" id="previewContent">
+        <div class="preview-loading">
+          <div class="preview-spinner"></div>
+          <span>Loading images...</span>
+        </div>
+      </div>
+      <div class="preview-navigation">
+        <button class="preview-nav prev" id="previewPrev" title="Previous (←)">‹</button>
+        <div class="preview-counter">
+          <span id="previewCurrent">1</span> / <span id="previewTotal">1</span>
+        </div>
+        <button class="preview-nav next" id="previewNext" title="Next (→)">›</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  this.bindPreviewEvents();
+}
+
+bindPreviewEvents() {
+  const modal = document.getElementById('drivePreviewModal');
+  const overlay = document.getElementById('previewOverlay');
+  const closeBtn = document.getElementById('previewClose');
+  const prevBtn = document.getElementById('previewPrev');
+  const nextBtn = document.getElementById('previewNext');
+  
+  // Close handlers
+  closeBtn?.addEventListener('click', () => this.closePreview());
+  overlay?.addEventListener('click', () => this.closePreview());
+  
+  // Navigation handlers
+  prevBtn?.addEventListener('click', () => this.showPreviousImage());
+  nextBtn?.addEventListener('click', () => this.showNextImage());
+  
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!modal.classList.contains('active')) return;
+    
+    switch(e.key) {
+      case 'Escape':
+        this.closePreview();
+        break;
+      case 'ArrowLeft':
+        this.showPreviousImage();
+        break;
+      case 'ArrowRight':
+        this.showNextImage();
+        break;
+    }
+    e.preventDefault();
+  });
+  
+  // Touch/swipe support for mobile
+  let touchStartX = 0;
+  modal.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  modal.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].screenX;
+    const swipeDistance = touchStartX - touchEndX;
+    
+    if (Math.abs(swipeDistance) > 50) {
+      if (swipeDistance > 0) {
+        this.showNextImage(); // Swipe left = next
+      } else {
+        this.showPreviousImage(); // Swipe right = previous
+      }
+    }
+  }, { passive: true });
+}
+
+openPreview(product, productTitle) {
+  // Check if product has preview data
+  if (!product.preview || !product.preview.images || product.preview.images.length === 0) {
+    // No preview data - open Drive link directly
+    console.log('No preview data available, opening Drive link');
+    this.openProduct(product.driveLink);
+    return;
+  }
+  
+  // Setup modal if not already done
+  this.setupPreviewModal();
+  
+  // Store current preview data
+  this.currentPreview = {
+    images: product.preview.images,
+    currentIndex: 0,
+    title: productTitle
+  };
+  
+  // Update title
+  const titleEl = document.getElementById('previewTitle');
+  if (titleEl) {
+    titleEl.textContent = productTitle;
+  }
+  
+  // Show modal
+  const modal = document.getElementById('drivePreviewModal');
+  if (modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+  
+  // Load first image
+  this.showCurrentImage();
+}
+
+showCurrentImage() {
+  if (!this.currentPreview || !this.currentPreview.images) return;
+  
+  const { images, currentIndex } = this.currentPreview;
+  const currentImage = images[currentIndex];
+  
+  const content = document.getElementById('previewContent');
+  const prevBtn = document.getElementById('previewPrev');
+  const nextBtn = document.getElementById('previewNext');
+  const currentEl = document.getElementById('previewCurrent');
+  const totalEl = document.getElementById('previewTotal');
+  
+  // Update counter
+  if (currentEl) currentEl.textContent = currentIndex + 1;
+  if (totalEl) totalEl.textContent = images.length;
+  
+  // Update navigation buttons
+  if (prevBtn) prevBtn.disabled = currentIndex === 0;
+  if (nextBtn) nextBtn.disabled = currentIndex === images.length - 1;
+  
+  // Load image with multiple fallback URLs for reliability
+  if (content) {
+    content.innerHTML = `
+      <div class="preview-loading">
+        <div class="preview-spinner"></div>
+        <span>Loading image...</span>
+      </div>
+    `;
+    
+    const img = new Image();
+    
+    // Try multiple URL formats for best compatibility
+    const imageUrls = [
+      currentImage.viewUrl,
+      `https://drive.google.com/uc?export=view&id=${currentImage.id}`,
+      `https://drive.google.com/uc?id=${currentImage.id}`
+    ];
+    
+    let currentUrlIndex = 0;
+    
+    const tryNextUrl = () => {
+      if (currentUrlIndex >= imageUrls.length) {
+        // All URLs failed - show error with Drive link
+        content.innerHTML = `
+          <div class="preview-error">
+            <div class="preview-error-icon">🖼️</div>
+            <h3>Image preview unavailable</h3>
+            <p>${currentImage.name}</p>
+            <button class="preview-btn" onclick="window.open('${currentImage.driveUrl}', '_blank')">
+              Open in Google Drive
+            </button>
+          </div>
+        `;
+        return;
+      }
+      
+      img.src = imageUrls[currentUrlIndex];
+      currentUrlIndex++;
+    };
+    
+    img.onload = () => {
+      content.innerHTML = `
+        <img src="${img.src}" 
+             alt="${currentImage.name}" 
+             class="preview-image"
+             onclick="window.catalogApp.showNextImage()">
+      `;
+    };
+    
+    img.onerror = () => {
+      tryNextUrl();
+    };
+    
+    // Start loading with first URL
+    tryNextUrl();
+  }
+}
+
+showPreviousImage() {
+  if (!this.currentPreview || this.currentPreview.currentIndex === 0) return;
+  
+  this.currentPreview.currentIndex--;
+  this.showCurrentImage();
+}
+
+showNextImage() {
+  if (!this.currentPreview || 
+      this.currentPreview.currentIndex >= this.currentPreview.images.length - 1) {
+    return;
+  }
+  
+  this.currentPreview.currentIndex++;
+  this.showCurrentImage();
+}
+
+closePreview() {
+  const modal = document.getElementById('drivePreviewModal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  
+  this.currentPreview = null;
+}
+
   navigateToHome() {
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
@@ -1104,7 +1334,13 @@ createCardHTML(item) {
   const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
 
   return `
-    <div class="content-card" data-category="${item.key}" data-is-product="${item.isProduct || false}" data-drive-link="${item.driveLink || ''}" data-search-path="${item.searchPath || ''}" role="button" tabindex="0">
+    <div class="content-card" 
+         data-category="${item.key}" 
+         data-is-product="${item.isProduct || false}" 
+         data-drive-link="${item.driveLink || ''}" 
+         data-search-path="${item.fullPath || ''}"
+         role="button" 
+         tabindex="0">
       <div class="card-image card-image-container">
         ${imageContent}
         <div class="card-overlay"></div>
@@ -2285,34 +2521,41 @@ navigateToBrandCategory(brandName, categoryName) {
     }
 
     // Card clicks
-    document.addEventListener('click', (e) => {
-      const card = e.target.closest('.content-card, .taxonomy-item');
-      if (card) {
-        const brand = card.dataset.brand;
-        const category = card.dataset.category;
-        const isProduct = card.dataset.isProduct === 'true';
-        const driveLink = card.dataset.driveLink;
-        const searchPath = card.dataset.searchPath;
-        
-        // Check if this is a brand category card
-        if (brand && category && !isProduct) {
-          // Navigate to brand's category
-          this.navigateToBrandCategory(brand, category);
-          return;
-        }
-        
-        if (isProduct && driveLink) {
-          // Open product link
-          this.openProduct(driveLink);
-        } else if (searchPath) {
-          // Navigate using search path
-          this.navigateToPath(searchPath);
-        } else {
-          // Navigate to category
-          this.navigateToCategory(category);
-        }
-      }
-    });
+    // Card clicks
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('.content-card, .taxonomy-item');
+  if (card) {
+    const brand = card.dataset.brand;
+    const category = card.dataset.category;
+    const isProduct = card.dataset.isProduct === 'true';
+    const driveLink = card.dataset.driveLink;
+    const searchPath = card.dataset.searchPath;
+    
+    // Check if this is a brand category card
+    if (brand && category && !isProduct) {
+      this.navigateToBrandCategory(brand, category);
+      return;
+    }
+    
+    if (isProduct && driveLink) {
+      // NEW: Find the actual product object to pass preview data
+      const productData = this.findProductByPath(searchPath || category);
+      const productTitle = card.querySelector('.card-title')?.textContent || category;
+      
+      // Enhanced product opening with preview support
+      this.openProduct(driveLink, productData, productTitle);
+
+
+    } else if (searchPath) {
+      this.navigateToPath(searchPath);
+    } else {
+      this.navigateToCategory(category);
+    }
+  }
+});
+
+
+
 
     // Search functionality - only on Enter press
     const searchInput = document.getElementById('searchInput');
@@ -2349,6 +2592,26 @@ setupScrollBehavior() {
 
   // Throttled scroll listener
   window.addEventListener('scroll', handleScroll, { passive: true });
+}
+
+    findProductByPath(pathString) {
+  if (!pathString || !this.data || !this.data.catalog) return null;
+  
+  const segments = pathString.split('/').filter(Boolean);
+  let current = this.data.catalog.tree;
+  
+  for (const seg of segments) {
+    if (current[seg]) {
+      if (current[seg].isProduct) {
+        return current[seg];
+      }
+      current = current[seg].children || {};
+    } else {
+      return null;
+    }
+  }
+  
+  return null;
 }
 
 // ADD this method after setupScrollBehavior():
@@ -2426,10 +2689,17 @@ resetScrollPosition() {
 }
 
 
-  openProduct(driveLink) {
-    this.showNotification('Opening product...');
-    window.open(driveLink, '_blank', 'noopener,noreferrer');
+  openProduct(driveLink, product, productTitle) {
+  // If product has preview data, open preview modal
+  if (product && product.preview && product.preview.images && product.preview.images.length > 0) {
+    this.openPreview(product, productTitle);
+    return;
   }
+  
+  // Otherwise, open Drive link directly (existing behavior)
+  this.showNotification('Opening product...');
+  window.open(driveLink, '_blank', 'noopener,noreferrer');
+}
 
   navigateToCategory(category) {
   // FIXED: Reset scroll position first
