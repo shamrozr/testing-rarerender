@@ -78,12 +78,29 @@
     </section>
   </main>
 
-  <!-- Taxonomy Navigation -->
-  <section class="taxonomy-section">
+<!-- Review Slideshow -->
+  <section class="slideshow-section">
     <div class="container">
-      <h2 class="taxonomy-title">Browse All Categories</h2>
-      <div class="taxonomy-grid" id="taxonomyGrid">
-        <!-- Categories will be populated here -->
+      <h2 class="slideshow-title">Customer Gallery</h2>
+      <div class="slideshow-container">
+        <button class="slideshow-nav prev" id="slideshowPrev" aria-label="Previous">‹</button>
+        <div class="slideshow-viewport" id="slideshowViewport">
+          <img class="slideshow-image" id="slideshowImage" alt="Customer gallery" />
+          <div class="slideshow-loading">Loading...</div>
+        </div>
+        <button class="slideshow-nav next" id="slideshowNext" aria-label="Next">›</button>
+        <div class="slideshow-counter" id="slideshowCounter">1 / 15</div>
+        <div class="slideshow-caption" id="slideshowCaption">Reviews</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Browse All Brands -->
+  <section class="brands-section">
+    <div class="container">
+      <h2 class="brands-title">Browse All Brands</h2>
+      <div class="brands-grid" id="brandsGrid">
+        <!-- Brands will be populated here -->
       </div>
     </div>
   </section>
