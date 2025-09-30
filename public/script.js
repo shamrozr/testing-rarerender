@@ -1671,7 +1671,7 @@ getScaleTransform(scaling) {
   const brands = this.extractBrandsFromTree();
   
   if (brands.length === 0) {
-  console.log('⚠️ No brands with Browse Brands enabled');
+  console.log('⚠️ No brands match filter criteria');
   const taxonomySection = document.querySelector('.taxonomy-section');
   if (taxonomySection) {
     taxonomySection.style.display = 'none';
@@ -1719,17 +1719,22 @@ getScaleTransform(scaling) {
   const brandsMap = new Map();
   const tree = this.data.catalog.tree;
   
+  console.log('🔍 Extracting brands with smart filter (10+ items OR Browse Brands = On)...');
+  
   Object.entries(tree).forEach(([categoryKey, categoryData]) => {
     if (!categoryData.children) return;
     
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
-      // Filter: Only include brands with browseBrands = true
-      if (brandData.browseBrands !== true) {
-        console.log(`  ❌ Skipping ${brandKey} (browseBrands not enabled)`);
+      const itemCount = brandData.count || 0;
+      const browseBrands = brandData.browseBrands === true;
+      
+      // ✅ SMART FILTER: Only include if browseBrands = true (backend already did the logic)
+      if (!browseBrands) {
+        console.log(`  ❌ Skipping ${brandKey} (${itemCount} items) - Hidden by filter`);
         return;
       }
       
-      console.log(`  ✅ Including brand: ${brandKey}`);
+      console.log(`  ✅ Including ${brandKey} (${itemCount} items)`);
       
       const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       
@@ -1738,13 +1743,13 @@ getScaleTransform(scaling) {
           name: brandKey,
           slug: brandSlug,
           logo: brandData.thumbnail || '',
-          count: brandData.count || 0,
+          count: itemCount,
           categories: new Set([categoryKey])
         });
       } else {
         const existing = brandsMap.get(brandSlug);
         existing.categories.add(categoryKey);
-        existing.count += (brandData.count || 0);
+        existing.count += itemCount;
       }
     });
   });
@@ -1753,8 +1758,14 @@ getScaleTransform(scaling) {
     .sort((a, b) => b.count - a.count);
 
   console.log(`✅ Extracted ${brandsArray.length} brands for Browse Brands section`);
+  
+  if (brandsArray.length === 0) {
+    console.log(`⚠️ No brands match criteria (10+ items OR manually enabled)`);
+  }
+  
   return brandsArray;
 }
+
   
   setupFooter() {
     const footerContent = document.getElementById('footerContent');
