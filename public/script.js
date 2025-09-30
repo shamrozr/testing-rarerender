@@ -94,29 +94,44 @@ class CSVCatalogApp {
     
     // Check if we need to show category view or homepage
     // Check if we need to show category view or homepage
-    if (this.currentPath.length > 0) {
-      this.showCategoryView();
-    } else {
-      this.setupDynamicSections();
-    }
+    // Check if we need to show category view or homepage
+if (this.currentPath.length > 0) {
+  this.showCategoryView();
+} else {
+  this.setupDynamicSections();
+}
+
+// Setup brands and slideshow FIRST (creates the sections)
+this.setupBrands();
+this.setupReviewSlideshow();
+
+// THEN control visibility based on current view
+if (this.currentPath.length > 0) {
+  // On category/brand view - hide brands and slideshow
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'none';
+    console.log('🙈 Hiding brands section (category view)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'none';
+    console.log('🙈 Hiding slideshow section (category view)');
+  }
+} else {
+  // On homepage - show brands and slideshow
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'block';
+    console.log('👁️ Showing brands section (homepage)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'block';
+    console.log('👁️ Showing slideshow section (homepage)');
+  }
+}
     
-    // Initialize section visibility based on current view
-    if (this.currentPath.length > 0) {
-      // On category/brand view - hide brands and slideshow
-      const brandsSection = document.querySelector('.brands-section');
-      const slideshowSection = document.querySelector('.slideshow-section');
-      if (brandsSection) brandsSection.style.display = 'none';
-      if (slideshowSection) slideshowSection.style.display = 'none';
-    } else {
-      // On homepage - show brands and slideshow
-      const brandsSection = document.querySelector('.brands-section');
-      const slideshowSection = document.querySelector('.slideshow-section');
-      if (brandsSection) brandsSection.style.display = 'block';
-      if (slideshowSection) slideshowSection.style.display = 'block';
-    }
-    
-    this.setupBrands();
-    this.setupReviewSlideshow();
     this.setupFooter();
     this.setupEventListeners();
     this.setupPreviewModal();
@@ -284,11 +299,8 @@ class CSVCatalogApp {
   // Update hero section for category view
   this.updateHeroForCategory(breadcrumbs);
 
- // HIDE brands and slideshow sections on category pages
-const brandsSection = document.querySelector('.brands-section');
-const slideshowSection = document.querySelector('.slideshow-section');
-if (brandsSection) brandsSection.style.display = 'none';
-if (slideshowSection) slideshowSection.style.display = 'none';
+  // HIDE brands and slideshow sections on category pages
+  this.updateSectionVisibility(false);
 
   // Show category contents
   this.renderCategoryContents(currentNode, breadcrumbs);
@@ -1127,11 +1139,10 @@ debugModalState() {
   if (taxonomySection) {
     taxonomySection.style.display = 'block';
   }
-  /// HIDE brands and slideshow sections on brand view pages
-const brandsSection = document.querySelector('.brands-section');
-const slideshowSection = document.querySelector('.slideshow-section');
-if (brandsSection) brandsSection.style.display = 'none';
-if (slideshowSection) slideshowSection.style.display = 'none';
+
+  // HIDE brands and slideshow sections on brand view pages
+  this.updateSectionVisibility(false);
+  
   // Reset hero
   this.setupBrandInfo();
   
@@ -1141,6 +1152,25 @@ if (slideshowSection) slideshowSection.style.display = 'none';
     existingBreadcrumbs.remove();
   }
 }
+
+// Helper function to control section visibility
+updateSectionVisibility(showSections) {
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  
+  const displayValue = showSections ? 'block' : 'none';
+  
+  if (brandsSection) {
+    brandsSection.style.display = displayValue;
+    console.log(`${showSections ? '👁️ Showing' : '🙈 Hiding'} brands section`);
+  }
+  
+  if (slideshowSection) {
+    slideshowSection.style.display = displayValue;
+    console.log(`${showSections ? '👁️ Showing' : '🙈 Hiding'} slideshow section`);
+  }
+}
+
 
   setupBrandInfo() {
     // Get brand from URL first - THIS IS CRITICAL
@@ -2418,13 +2448,8 @@ getScaleTransform(scaling) {
       }
     }
     
-    // Hide sections
-    // Hide brands and slideshow sections on homepage
- // Show brands and slideshow sections on homepage
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  if (brandsSection) brandsSection.style.display = 'block';
-  if (slideshowSection) slideshowSection.style.display = 'block';
+  // SHOW brands and slideshow sections on homepage
+  this.updateSectionVisibility(true);
     
     // Create category cards
     // Create category cards
@@ -3127,13 +3152,10 @@ resetScrollPosition() {
       </section>
     `;
     
-    // Hide taxonomy section during search
-    // Show brands and slideshow sections
+
   // HIDE brands and slideshow sections during search
-const brandsSection = document.querySelector('.brands-section');
-const slideshowSection = document.querySelector('.slideshow-section');
-if (brandsSection) brandsSection.style.display = 'none';
-if (slideshowSection) slideshowSection.style.display = 'none';
+  this.updateSectionVisibility(false);
+
   }
 
 // REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
