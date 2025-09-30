@@ -331,7 +331,6 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
 
   console.log("📝 Processing enhanced catalog entries with image rendering...");
 console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
-let processedCount = 0;
 
 console.log("📝 Processing enhanced catalog entries with brand normalization...");
 
