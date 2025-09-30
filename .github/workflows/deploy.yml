@@ -14,6 +14,14 @@ on:
         description: "Optional placeholder (e.g. /thumbs/_placeholder.webp)"
         required: false
         default: ""
+      rebuild_drive_database:
+        description: "Rebuild Drive preview database? (true/false)"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -39,11 +47,16 @@ jobs:
           PLACEHOLDER_THUMB: ${{ inputs.placeholder_thumb }}
         run: node tools/build-data.mjs
       
-      - name: Build Drive database
+      - name: Build Drive database (conditional)
+        if: inputs.rebuild_drive_database == 'true'
         env:
           GOOGLE_SERVICE_ACCOUNT_EMAIL: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}
           GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY }}
         run: node tools/build-drive-database.mjs
+      
+      - name: Skip Drive database rebuild
+        if: inputs.rebuild_drive_database == 'false'
+        run: echo "Skipping Drive database rebuild - using existing data"
       
       - name: Upload health report artifact
         if: always()
