@@ -1719,40 +1719,30 @@ getScaleTransform(scaling) {
   const brandsMap = new Map();
   const tree = this.data.catalog.tree;
   
-  console.log('🔍 Extracting brands from tree...');
+  console.log('🔍 Extracting all brands...');
   
   Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-    console.log(`📂 Processing category: ${categoryKey}`);
-    
     if (!categoryData.children) return;
     
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
       const itemCount = brandData.count || 0;
-      const hasBrowseBrandsTrue = brandData.browseBrands === true;
       
-      console.log(`   Brand: ${brandKey}, items: ${itemCount}, browseBrands: ${brandData.browseBrands}`);
+      console.log(`  ✅ ${brandKey} (${itemCount} items)`);
       
-      // Only include brands where browseBrands = true
-      if (hasBrowseBrandsTrue) {
-        console.log(`   ✅ Including brand: ${brandKey}`);
-        
-        const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        
-        if (!brandsMap.has(brandSlug)) {
-          brandsMap.set(brandSlug, {
-            name: brandKey,
-            slug: brandSlug,
-            logo: brandData.thumbnail || '',
-            count: itemCount,
-            categories: new Set([categoryKey])
-          });
-        } else {
-          const existing = brandsMap.get(brandSlug);
-          existing.categories.add(categoryKey);
-          existing.count += itemCount;
-        }
+      const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      if (!brandsMap.has(brandSlug)) {
+        brandsMap.set(brandSlug, {
+          name: brandKey,
+          slug: brandSlug,
+          logo: brandData.thumbnail || '',
+          count: itemCount,
+          categories: new Set([categoryKey])
+        });
       } else {
-        console.log(`   ❌ Skipping brand: ${brandKey} (browseBrands = ${brandData.browseBrands})`);
+        const existing = brandsMap.get(brandSlug);
+        existing.categories.add(categoryKey);
+        existing.count += itemCount;
       }
     });
   });
@@ -1760,11 +1750,10 @@ getScaleTransform(scaling) {
   const brandsArray = Array.from(brandsMap.values())
     .sort((a, b) => b.count - a.count);
 
-  console.log(`\n✅ Total brands extracted: ${brandsArray.length}`);
+  console.log(`✅ Total brands: ${brandsArray.length}`);
   
   return brandsArray;
 }
-
   
   setupFooter() {
     const footerContent = document.getElementById('footerContent');
