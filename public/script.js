@@ -98,6 +98,14 @@ class CSVCatalogApp {
     } else {
       this.setupDynamicSections();
     }
+    // Show brands and slideshow on initial homepage load
+    setTimeout(() => {
+      const brandsSection = document.querySelector('.brands-section');
+      const slideshowSection = document.querySelector('.slideshow-section');
+      if (brandsSection) brandsSection.style.display = 'block';
+      if (slideshowSection) slideshowSection.style.display = 'block';
+    }, 100);
+
     
     this.setupBrands();
     this.setupReviewSlideshow();
@@ -1842,10 +1850,12 @@ getScaleTransform(scaling) {
     }
     
     // Hide sections
-    const brandsSection = document.querySelector('.brands-section');
-    const slideshowSection = document.querySelector('.slideshow-section');
-    if (brandsSection) brandsSection.style.display = 'none';
-    if (slideshowSection) slideshowSection.style.display = 'none';
+    // Hide brands and slideshow sections on homepage
+ // Show brands and slideshow sections on homepage
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) brandsSection.style.display = 'block';
+  if (slideshowSection) slideshowSection.style.display = 'block';
     
     // Create category cards
     const categoryCards = [];
