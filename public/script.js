@@ -1675,24 +1675,60 @@ getScaleTransform(scaling) {
   }
 
   setupTaxonomy() {
-    const taxonomyGrid = document.getElementById('taxonomyGrid');
-    if (!taxonomyGrid || !this.data.catalog?.tree) return;
+  const taxonomyGrid = document.getElementById('taxonomyGrid');
+  if (!taxonomyGrid) return;
 
-    const taxonomyItems = Object.entries(this.data.catalog.tree)
-      .map(([key, item]) => ({
-        name: key.replace(/_/g, ' '),
-        count: item.count,
-        key: key
-      }))
-      .sort((a, b) => b.count - a.count);
+  // Extract brands from data
+  const brands = this.extractBrands();
+  
+  taxonomyGrid.innerHTML = brands.map(brand => `
+    <div class="taxonomy-item brand-item" data-brand="${brand.slug}" role="button" tabindex="0">
+      ${brand.logo ? `<img src="${brand.logo}" alt="${brand.name}" class="brand-logo-small">` : ''}
+      <div class="taxonomy-name">${brand.name}</div>
+      <div class="taxonomy-count">${brand.count} items</div>
+    </div>
+  `).join('');
+}
 
-    taxonomyGrid.innerHTML = taxonomyItems.map(item => `
-      <div class="taxonomy-item" data-category="${item.key}" role="button" tabindex="0">
-        <div class="taxonomy-name">${item.name}</div>
-        <div class="taxonomy-count">${item.count} items</div>
-      </div>
-    `).join('');
-  }
+// ADD NEW METHOD to extract brands
+extractBrands() {
+  if (!this.data?.catalog?.tree) return [];
+  
+  const brandsMap = new Map();
+  
+  // Walk through all items and extract brands
+  const walkTree = (node, path = []) => {
+    Object.entries(node).forEach(([key, item]) => {
+      // Extract brand from second level of path (after category)
+      if (path.length === 1 && item.children) {
+        // This is a brand level (e.g., BAGS/YSL Bags/)
+        const brandName = key;
+        const categoryName = path[0];
+        
+        if (!brandsMap.has(brandName)) {
+          brandsMap.set(brandName, {
+            name: brandName,
+            slug: brandName.toLowerCase().replace(/\s+/g, ''),
+            logo: item.thumbnail || '',
+            count: item.count || 0,
+            categories: new Set()
+          });
+        }
+        
+        brandsMap.get(brandName).categories.add(categoryName);
+      }
+      
+      if (item.children && !item.isProduct) {
+        walkTree(item.children, [...path, key]);
+      }
+    });
+  };
+  
+  walkTree(this.data.catalog.tree);
+  
+  return Array.from(brandsMap.values())
+    .sort((a, b) => b.count - a.count);
+}
 
   setupFooter() {
     const footerContent = document.getElementById('footerContent');
