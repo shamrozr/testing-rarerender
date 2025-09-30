@@ -107,7 +107,7 @@ class CSVCatalogApp {
     this.setupFooter();
     this.setupEventListeners();
     this.setupFABFunctionality();
-    this.setupProductPreview();
+    
     // NEW: Setup scroll behavior
     this.setupScrollBehavior();
     
@@ -2302,22 +2302,8 @@ navigateToBrandCategory(brandName, categoryName) {
         }
         
         if (isProduct && driveLink) {
-          // Check if product has preview files
-          const cardElement = e.target.closest('.content-card');
-          const productTitle = cardElement?.querySelector('.card-title')?.textContent || 'Product';
-          
-          // Find product in tree to get previewFiles
-          const previewFiles = this.findProductPreviewFiles(searchPath || category);
-          
-          if (previewFiles && previewFiles.length > 0) {
-            // Show preview modal
-            this.openProductPreview(productTitle, previewFiles);
-          } else {
-            // Fallback to opening Drive link
-            this.openProduct(driveLink);
-          }
-
-          
+          // Open product link
+          this.openProduct(driveLink);
         } else if (searchPath) {
           // Navigate using search path
           this.navigateToPath(searchPath);
@@ -2445,27 +2431,6 @@ resetScrollPosition() {
     window.open(driveLink, '_blank', 'noopener,noreferrer');
   }
 
-  findProductPreviewFiles(pathStr) {
-    if (!pathStr) return null;
-    
-    const segments = pathStr.split('/').filter(Boolean);
-    let node = this.data.catalog.tree;
-    
-    for (const seg of segments) {
-      if (node[seg]) {
-        if (node[seg].isProduct) {
-          return node[seg].previewFiles || null;
-        }
-        node = node[seg].children || {};
-      } else {
-        return null;
-      }
-    }
-    
-    return null;
-  }
-
-  
   navigateToCategory(category) {
   // FIXED: Reset scroll position first
   this.resetScrollPosition();
@@ -2675,118 +2640,6 @@ setupFABFunctionality() {
 
 // REPLACE the entire discoverWebPFiles function with this FIXED version:
 
-setupProductPreview() {
-    this.currentPreviewFiles = [];
-    this.currentPreviewIndex = 0;
-    
-    // Create modal
-    const modalHTML = `
-      <div class="product-preview-modal" id="productPreviewModal">
-        <div class="preview-overlay" id="previewOverlay"></div>
-        <div class="preview-container">
-          <div class="preview-header">
-            <div class="preview-title" id="previewTitle">Loading...</div>
-            <button class="preview-close" id="previewClose">×</button>
-          </div>
-          <div class="preview-content" id="previewContent">
-            <div class="preview-loading">
-              <div class="spinner"></div>
-              <span>Loading preview...</span>
-            </div>
-          </div>
-          <div class="preview-navigation">
-            <button class="preview-nav prev" id="previewPrev">‹</button>
-            <div class="preview-counter" id="previewCounter">1 / 1</div>
-            <button class="preview-nav next" id="previewNext">›</button>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Bind events
-    document.getElementById('previewClose').addEventListener('click', () => this.closePreview());
-    document.getElementById('previewOverlay').addEventListener('click', () => this.closePreview());
-    document.getElementById('previewPrev').addEventListener('click', () => this.showPreviewImage(this.currentPreviewIndex - 1));
-    document.getElementById('previewNext').addEventListener('click', () => this.showPreviewImage(this.currentPreviewIndex + 1));
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      const modal = document.getElementById('productPreviewModal');
-      if (modal && modal.classList.contains('active')) {
-        if (e.key === 'Escape') this.closePreview();
-        if (e.key === 'ArrowLeft') this.showPreviewImage(this.currentPreviewIndex - 1);
-        if (e.key === 'ArrowRight') this.showPreviewImage(this.currentPreviewIndex + 1);
-      }
-    });
-  }
-
-  openProductPreview(productName, previewFiles) {
-    if (!previewFiles || previewFiles.length === 0) {
-      this.showNotification('No preview available for this product');
-      return;
-    }
-    
-    this.currentPreviewFiles = previewFiles.filter(f => 
-      f.mimeType && f.mimeType.startsWith('image/')
-    );
-    
-    if (this.currentPreviewFiles.length === 0) {
-      this.showNotification('No images available for preview');
-      return;
-    }
-    
-    this.currentPreviewIndex = 0;
-    
-    const modal = document.getElementById('productPreviewModal');
-    const title = document.getElementById('previewTitle');
-    
-    if (modal) modal.classList.add('active');
-    if (title) title.textContent = productName;
-    document.body.style.overflow = 'hidden';
-    
-    this.showPreviewImage(0);
-  }
-
-  showPreviewImage(index) {
-    if (this.currentPreviewFiles.length === 0) return;
-    
-    this.currentPreviewIndex = (index + this.currentPreviewFiles.length) % this.currentPreviewFiles.length;
-    const current = this.currentPreviewFiles[this.currentPreviewIndex];
-    
-    const content = document.getElementById('previewContent');
-    const counter = document.getElementById('previewCounter');
-    const prevBtn = document.getElementById('previewPrev');
-    const nextBtn = document.getElementById('previewNext');
-    
-    if (content) {
-      content.innerHTML = `
-        <img src="${current.preview}" 
-             alt="${current.name}" 
-             class="preview-image"
-             onerror="this.onerror=null; this.src='${current.viewLink}';">
-      `;
-    }
-    
-    if (counter) {
-      counter.textContent = `${this.currentPreviewIndex + 1} / ${this.currentPreviewFiles.length}`;
-    }
-    
-    if (prevBtn) prevBtn.disabled = this.currentPreviewIndex === 0;
-    if (nextBtn) nextBtn.disabled = this.currentPreviewIndex === this.currentPreviewFiles.length - 1;
-  }
-
-  closePreview() {
-    const modal = document.getElementById('productPreviewModal');
-    if (modal) modal.classList.remove('active');
-    document.body.style.overflow = '';
-    
-    this.currentPreviewFiles = [];
-    this.currentPreviewIndex = 0;
-  }
-
-  
 // REPLACE the entire discoverWebPFiles function with this FASTER & MORE RELIABLE version:
 
 const discoverWebPFiles = async (folderName) => {
