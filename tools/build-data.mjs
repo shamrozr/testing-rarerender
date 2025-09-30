@@ -565,6 +565,44 @@ function applyBrandLogosToTree(node, prefix = []) {
 }
 
 applyBrandLogosToTree(tree);
+
+console.log("🔍 Applying smart Browse Brands filter (10+ items OR manual On)...");
+
+function applySmartBrowseBrandsFilter(node, prefix = []) {
+  for (const k of Object.keys(node)) {
+    const n = node[k];
+    const currentPath = [...prefix, k];
+    
+    if (currentPath.length === 2 && !n.isProduct) {
+      const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const manuallyEnabled = brandBrowseStatus.get(brandSlug) || false;
+      const itemCount = n.count || 0;
+      
+      // ✅ SMART LOGIC: Show if (10+ items) OR (manually set to On)
+      const shouldShow = itemCount >= 10 || manuallyEnabled;
+      
+      n.browseBrands = shouldShow;
+      
+      if (shouldShow) {
+        if (manuallyEnabled) {
+          console.log(`  ✅ ${k} (${itemCount} items) - Shown: Manual override (On)`);
+        } else {
+          console.log(`  ✅ ${k} (${itemCount} items) - Shown: 10+ items`);
+        }
+      } else {
+        console.log(`  ❌ ${k} (${itemCount} items) - Hidden: <10 items and not manually enabled`);
+      }
+    }
+    
+    if (n.children && !n.isProduct) {
+      applySmartBrowseBrandsFilter(n.children, currentPath);
+    }
+  }
+}
+
+applySmartBrowseBrandsFilter(tree);
+
+
   
 function applyBrowseBrandsFilter(node, prefix = []) {
   for (const k of Object.keys(node)) {
