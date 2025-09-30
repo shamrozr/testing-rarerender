@@ -3221,4 +3221,136 @@ body[data-page-type="category"] .section-header {
     transition: none;
   }
 }
+  /* ============================================================================
+   NUCLEAR MODAL FIX - MAXIMUM SPECIFICITY
+   ============================================================================ */
+
+/* Force modal base styles */
+div#drivePreviewModal.drive-preview-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 10000 !important;
+  display: none !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Force modal active state */
+div#drivePreviewModal.drive-preview-modal.active {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Force container centering */
+div#drivePreviewModal .preview-container {
+  position: relative !important;
+  width: 90% !important;
+  max-width: 1200px !important;
+  height: 90% !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 10001 !important;
+  margin: 0 auto !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Force content area sizing */
+div#drivePreviewModal .preview-content {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2rem !important;
+  overflow: hidden !important;
+  position: relative !important;
+  background: #000 !important;
+  min-height: 0 !important;
+}
+
+/* Force image proper sizing */
+div#drivePreviewModal .preview-content .preview-image {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  border-radius: 8px !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+/* Force navigation button visibility */
+div#drivePreviewModal .preview-nav {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  font-size: 2rem !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+div#drivePreviewModal .preview-nav:disabled {
+  opacity: 0.3 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+div#drivePreviewModal .preview-nav:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.1) !important;
+}
+
+/* Mobile specific overrides */
+@media (max-width: 768px) {
+  div#drivePreviewModal .preview-container {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+  
+  div#drivePreviewModal .preview-content {
+    padding: 1rem !important;
+  }
+  
+  div#drivePreviewModal .preview-content .preview-image {
+    max-width: 95% !important;
+    max-height: 95% !important;
+  }
+  
+  div#drivePreviewModal .preview-nav {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1.75rem !important;
+  }
+}
+
+/* Tablet overrides */
+@media (min-width: 769px) and (max-width: 1024px) {
+  div#drivePreviewModal .preview-container {
+    width: 95% !important;
+    max-width: 900px !important;
+  }
+}
 }
