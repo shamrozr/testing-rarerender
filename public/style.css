@@ -1,4 +1,4 @@
-/* Professional CSV-Driven Catalog Styles with Enhanced Navigation */
+  /* Professional CSV-Driven Catalog Styles with Enhanced Navigation */
 /* ================================================================= */
 
 /* CSS Custom Properties (Variables) */
@@ -1365,6 +1365,33 @@ body[data-page-type="category"] .section-header {
   object-fit: contain;
   object-position: center;
 }
+
+
+/* Brand Category Cards - Contain Fit Override */
+/* =========================================== */
+
+.brand-category-card .card-image-brand-logo {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  background: #ffffff !important;
+  padding: var(--space-4) !important;
+}
+
+/* Ensure contain is used for brand category cards */
+.brand-category-card .card-image {
+  background: #ffffff !important;
+  padding: var(--space-3);
+}
+
+/* Override any conflicting global styles for brand logos */
+.card-image-brand-logo {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+
 @media (max-width: 768px) {
   .brands-grid {
     grid-template-columns: 1fr;
@@ -1380,6 +1407,9 @@ body[data-page-type="category"] .section-header {
   }
 
 }
+
+
+
 .taxonomy-title {
   font-family: var(--font-display);
   font-size: 2rem;
