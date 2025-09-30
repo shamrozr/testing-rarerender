@@ -76,41 +76,27 @@ class CSVCatalogApp {
       return;
     }
 
-    // DEBUG: Verify topOrder data is available
-    console.log('🔍 Checking topOrder data after load...');
-    if (this.data.catalog && this.data.catalog.tree) {
-      Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
-        const topOrder = item.topOrder || item['Top Order'] || item.top_order;
-        if (topOrder !== undefined) {
-          console.log(`✅ ${key} has topOrder: ${topOrder}`);
-        } else {
-          console.log(`❌ ${key} missing topOrder`);
-        }
-      });
-    }
-
     this.setupBrandInfo();
     
-    
-    // Check if we need to show category view or homepage
     if (this.currentPath.length > 0) {
       this.showCategoryView();
     } else {
       this.setupDynamicSections();
     }
     
+    // ADD THIS LINE:
+    this.setupStoriesSlider();
+    
     this.setupTaxonomy();
     this.setupFooter();
     this.setupEventListeners();
     this.setupFABFunctionality();
-    
-    // NEW: Setup scroll behavior
     this.setupScrollBehavior();
     
   } catch (error) {
-      // Silent error handling in production
-    }
+    // Silent error handling in production
   }
+}
 
   async loadData() {
   try {
@@ -1665,21 +1651,21 @@ getScaleTransform(scaling) {
   const taxonomyGrid = document.getElementById('taxonomyGrid');
   if (!taxonomyGrid) return;
 
-  console.log('🏢 Setting up BRAND taxonomy section');
+  console.log('🏢 Setting up SIMPLIFIED brand taxonomy section');
 
   // Extract all brands from the catalog tree
-  const brands = this.extractBrandsFromTree();
+  const brands = this.extractAllBrands();
   
   if (brands.length === 0) {
-  console.log('⚠️ No brands match filter criteria');
-  const taxonomySection = document.querySelector('.taxonomy-section');
-  if (taxonomySection) {
-    taxonomySection.style.display = 'none';
+    console.log('⚠️ No brands found');
+    const taxonomySection = document.querySelector('.taxonomy-section');
+    if (taxonomySection) {
+      taxonomySection.style.display = 'none';
+    }
+    return;
   }
-  return;
-}
 
-  console.log(`✅ Found ${brands.length} brands:`, brands.map(b => b.name));
+  console.log(`✅ Found ${brands.length} brands`);
 
   // Update section title
   const taxonomyTitle = document.querySelector('.taxonomy-title');
@@ -1687,7 +1673,7 @@ getScaleTransform(scaling) {
     taxonomyTitle.textContent = 'Browse All Brands';
   }
 
-  // Render brand items with logos
+  // Render ALL brand items with logos (no filtering)
   taxonomyGrid.innerHTML = brands.map(brand => `
     <div class="taxonomy-item brand-item" 
          data-brand="${brand.slug}" 
@@ -1707,9 +1693,61 @@ getScaleTransform(scaling) {
     </div>
   `).join('');
 
-  console.log('✅ Brand taxonomy rendered');
+  console.log('✅ Brand taxonomy rendered (showing ALL brands)');
 }
+extractAllBrands() {
+  if (!this.data?.catalog?.tree) {
+    console.log('❌ No catalog tree found');
+    return [];
+  }
 
+  const brandsMap = new Map();
+  const tree = this.data.catalog.tree;
+  
+  console.log('🔍 Extracting all brands (no filters)...');
+  
+  Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+    if (!categoryData.children) return;
+    
+    Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
+      const itemCount = brandData.count || 0;
+      
+      console.log(`  ✅ ${brandKey} (${itemCount} items)`);
+      
+      // Normalize brand slug
+      const brandSlug = brandKey
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      if (!brandsMap.has(brandSlug)) {
+        brandsMap.set(brandSlug, {
+          name: brandKey,
+          slug: brandSlug,
+          logo: brandData.thumbnail || '',
+          count: itemCount,
+          categories: new Set([categoryKey])
+        });
+      } else {
+        // Merge counts if brand appears in multiple categories
+        const existing = brandsMap.get(brandSlug);
+        existing.categories.add(categoryKey);
+        existing.count += itemCount;
+      }
+    });
+  });
+
+  // Sort by count (most items first)
+  const brandsArray = Array.from(brandsMap.values())
+    .sort((a, b) => b.count - a.count);
+
+  console.log(`✅ Total brands: ${brandsArray.length} (showing ALL)`);
+  
+  return brandsArray;
+}
+  
   extractBrandsFromTree() {
   if (!this.data?.catalog?.tree) {
     console.log('❌ No catalog tree found');
@@ -2462,6 +2500,371 @@ setupFABFunctionality() {
 
 // REPLACE the entire discoverWebPFiles function with this FIXED version:
 
+// ============================================================================
+// Instagram Stories Slider Functionality
+// ============================================================================
+
+setupStoriesSlider() {
+  console.log('📸 Setting up Instagram stories slider...');
+  
+  const storiesTrack = document.getElementById('storiesTrack');
+  const prevBtn = document.getElementById('storiesPrev');
+  const nextBtn = document.getElementById('storiesNext');
+  
+  if (!storiesTrack || !prevBtn || !nextBtn) {
+    console.log('⚠️ Stories elements not found');
+    return;
+  }
+
+  // State management
+  let allStories = [];
+  let loadedCount = 0;
+  const INITIAL_LOAD = 15; // 5 from each folder
+  const BATCH_SIZE = 9; // Load 3 from each folder on next click
+
+  const folders = [
+    { name: 'Reviews', path: 'Reviews', color: '#10b981', label: 'Review' },
+    { name: 'Payment', path: 'Payment', color: '#3b82f6', label: 'Payment' },
+    { name: 'Delivered', path: 'Delivered', color: '#8b5cf6', label: 'Delivered' }
+  ];
+
+  // Discover all images from folders
+  const discoverAllStories = async () => {
+    console.log('🔍 Discovering stories from all folders...');
+    
+    const allImages = [];
+    
+    for (const folder of folders) {
+      const images = await this.discoverWebPFiles(folder.path);
+      console.log(`📁 ${folder.name}: ${images.length} images`);
+      
+      images.forEach(img => {
+        allImages.push({
+          ...img,
+          folder: folder.name,
+          folderPath: folder.path,
+          color: folder.color,
+          label: folder.label
+        });
+      });
+    }
+    
+    // Interleave images from different folders for variety
+    const interleaved = this.interleaveStories(allImages, folders.length);
+    console.log(`✅ Total stories discovered: ${interleaved.length}`);
+    
+    return interleaved;
+  };
+
+  // Interleave stories from different folders
+  this.interleaveStories = (images, folderCount) => {
+    const byFolder = {};
+    
+    // Group by folder
+    images.forEach(img => {
+      if (!byFolder[img.folder]) byFolder[img.folder] = [];
+      byFolder[img.folder].push(img);
+    });
+    
+    // Interleave
+    const result = [];
+    const maxLength = Math.max(...Object.values(byFolder).map(arr => arr.length));
+    
+    for (let i = 0; i < maxLength; i++) {
+      Object.keys(byFolder).forEach(folder => {
+        if (byFolder[folder][i]) {
+          result.push(byFolder[folder][i]);
+        }
+      });
+    }
+    
+    return result;
+  };
+
+  // Render story items
+  const renderStories = (stories, append = false) => {
+    const storyHTML = stories.map((story, index) => `
+      <div class="story-item" data-index="${loadedCount + index}" data-folder="${story.folder}">
+        <div class="story-ring">
+          <div class="story-image-container">
+            <img src="${story.src}" 
+                 alt="${story.title}" 
+                 class="story-image"
+                 loading="lazy">
+            <div class="story-category-badge" style="background: ${story.color}">
+              ${story.label}
+            </div>
+          </div>
+        </div>
+        <div class="story-label">${story.name || `Image ${index + 1}`}</div>
+      </div>
+    `).join('');
+    
+    if (append) {
+      storiesTrack.insertAdjacentHTML('beforeend', storyHTML);
+    } else {
+      storiesTrack.innerHTML = storyHTML;
+    }
+    
+    // Add click handlers
+    const storyItems = storiesTrack.querySelectorAll('.story-item');
+    storyItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const index = parseInt(item.dataset.index);
+        this.openStoryViewer(index);
+      });
+    });
+  };
+
+  // Open story in full viewer
+  this.openStoryViewer = (startIndex) => {
+    const modal = document.getElementById('imageViewerModal');
+    if (!modal) return;
+    
+    // Use existing image viewer modal
+    this.currentImages = allStories;
+    this.currentImageIndex = startIndex;
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    this.showCurrentImage();
+  };
+
+  // Show current image (uses existing viewer)
+  this.showCurrentImage = () => {
+    if (!this.currentImages || this.currentImages.length === 0) return;
+    
+    const image = this.currentImages[this.currentImageIndex];
+    const viewerImage = document.getElementById('viewerImage');
+    const viewerTitle = document.getElementById('viewerTitle');
+    const viewerCounter = document.getElementById('viewerCounter');
+    
+    if (viewerImage) viewerImage.src = image.src;
+    if (viewerTitle) viewerTitle.textContent = `${image.folder} - ${image.title}`;
+    if (viewerCounter) viewerCounter.textContent = `${this.currentImageIndex + 1} / ${this.currentImages.length}`;
+    
+    // Preload adjacent images
+    this.preloadImages();
+  };
+
+  // Preload adjacent images
+  this.preloadImages = () => {
+    if (!this.currentImages || this.currentImages.length <= 1) return;
+    
+    const nextIndex = (this.currentImageIndex + 1) % this.currentImages.length;
+    const prevIndex = (this.currentImageIndex - 1 + this.currentImages.length) % this.currentImages.length;
+    
+    const nextImg = new Image();
+    nextImg.src = this.currentImages[nextIndex].src;
+    
+    const prevImg = new Image();
+    prevImg.src = this.currentImages[prevIndex].src;
+  };
+
+  // Navigation
+  const scroll = (direction) => {
+    const scrollAmount = 380; // Width of ~3 stories
+    const currentScroll = storiesTrack.scrollLeft;
+    
+    if (direction === 'left') {
+      storiesTrack.scrollTo({
+        left: currentScroll - scrollAmount,
+        behavior: 'smooth'
+      });
+    } else {
+      storiesTrack.scrollTo({
+        left: currentScroll + scrollAmount,
+        behavior: 'smooth'
+      });
+      
+      // Load more if near end
+      const isNearEnd = currentScroll + storiesTrack.clientWidth >= storiesTrack.scrollWidth - 200;
+      if (isNearEnd && loadedCount < allStories.length) {
+        loadMoreStories();
+      }
+    }
+    
+    updateNavButtons();
+  };
+
+  // Update navigation button states
+  const updateNavButtons = () => {
+    setTimeout(() => {
+      const isAtStart = storiesTrack.scrollLeft <= 10;
+      const isAtEnd = storiesTrack.scrollLeft + storiesTrack.clientWidth >= storiesTrack.scrollWidth - 10;
+      
+      prevBtn.disabled = isAtStart;
+      nextBtn.disabled = isAtEnd && loadedCount >= allStories.length;
+    }, 100);
+  };
+
+  // Load more stories
+  const loadMoreStories = () => {
+    if (loadedCount >= allStories.length) {
+      console.log('✅ All stories loaded');
+      return;
+    }
+    
+    const nextBatch = allStories.slice(loadedCount, loadedCount + BATCH_SIZE);
+    renderStories(nextBatch, true);
+    loadedCount += nextBatch.length;
+    
+    console.log(`📸 Loaded ${nextBatch.length} more stories (${loadedCount}/${allStories.length})`);
+    updateNavButtons();
+  };
+
+  // Event listeners
+  prevBtn.addEventListener('click', () => scroll('left'));
+  nextBtn.addEventListener('click', () => scroll('right'));
+  
+  storiesTrack.addEventListener('scroll', updateNavButtons);
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  storiesTrack.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  storiesTrack.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > 50) {
+      scroll(diff > 0 ? 'right' : 'left');
+    }
+  }, { passive: true });
+
+  // Initialize
+  (async () => {
+    try {
+      console.log('🚀 Initializing stories slider...');
+      
+      // Show loading state
+      storiesTrack.innerHTML = `
+        ${Array(15).fill(0).map((_, i) => `
+          <div class="story-item loading">
+            <div class="story-ring">
+              <div class="story-image-container">
+                <div class="story-image"></div>
+              </div>
+            </div>
+            <div class="story-label">Loading...</div>
+          </div>
+        `).join('')}
+      `;
+      
+      // Discover all images
+      allStories = await discoverAllStories();
+      
+      if (allStories.length === 0) {
+        storiesTrack.innerHTML = `
+          <div style="text-align: center; padding: var(--space-8); width: 100%; color: var(--color-text-secondary);">
+            <p>📸 No stories available yet</p>
+            <p style="font-size: 0.9rem; margin-top: var(--space-2);">Add .webp images to Reviews/, Payment/, or Delivered/ folders</p>
+          </div>
+        `;
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        return;
+      }
+      
+      // Load initial batch
+      const initialBatch = allStories.slice(0, INITIAL_LOAD);
+      renderStories(initialBatch);
+      loadedCount = initialBatch.length;
+      
+      updateNavButtons();
+      
+      console.log(`✅ Stories slider ready with ${loadedCount}/${allStories.length} stories`);
+      
+    } catch (error) {
+      console.error('❌ Error setting up stories:', error);
+      storiesTrack.innerHTML = `
+        <div style="text-align: center; padding: var(--space-8); width: 100%; color: var(--color-error);">
+          <p>⚠️ Error loading stories</p>
+        </div>
+      `;
+    }
+  })();
+}
+
+// Helper: Discover WebP files (reuse from FAB code)
+discoverWebPFiles(folderName) {
+  return new Promise(async (resolve) => {
+    console.log(`🔍 Scanning ${folderName} for .webp files...`);
+    
+    const testImageExists = (imagePath) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const timeout = setTimeout(() => resolve(false), 1000);
+        
+        img.onload = () => {
+          clearTimeout(timeout);
+          resolve(true);
+        };
+        
+        img.onerror = () => {
+          clearTimeout(timeout);
+          resolve(false);
+        };
+        
+        img.src = imagePath;
+      });
+    };
+    
+    const foundImages = [];
+    const batchSize = 10;
+    let consecutiveFailures = 0;
+    
+    // Test image*.webp pattern
+    for (let startIndex = 1; startIndex <= 50; startIndex += batchSize) {
+      const endIndex = Math.min(startIndex + batchSize - 1, 50);
+      const batch = [];
+      
+      for (let i = startIndex; i <= endIndex; i++) {
+        const webpPath = `${folderName}/image${i}.webp`;
+        batch.push(
+          testImageExists(webpPath).then(exists => ({
+            exists,
+            path: webpPath,
+            index: i,
+            name: `image${i}`
+          }))
+        );
+      }
+      
+      const results = await Promise.all(batch);
+      let batchFoundAny = false;
+      
+      results.forEach(result => {
+        if (result.exists) {
+          foundImages.push({
+            src: result.path,
+            title: `${folderName} Image ${result.index}`,
+            name: result.name,
+            index: result.index
+          });
+          batchFoundAny = true;
+          consecutiveFailures = 0;
+        }
+      });
+      
+      if (!batchFoundAny) {
+        consecutiveFailures++;
+        if (consecutiveFailures >= 2 && foundImages.length > 0) {
+          break;
+        }
+      }
+    }
+    
+    console.log(`✅ Found ${foundImages.length} images in ${folderName}`);
+    resolve(foundImages.sort((a, b) => a.index - b.index));
+  });
+}
+
+
+  
 // REPLACE the entire discoverWebPFiles function with this FASTER & MORE RELIABLE version:
 
 const discoverWebPFiles = async (folderName) => {
