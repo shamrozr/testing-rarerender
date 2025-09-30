@@ -107,7 +107,7 @@ class CSVCatalogApp {
     this.setupFooter();
     this.setupEventListeners();
     this.setupFABFunctionality();
-    
+    this.setupProductPreview();
     // NEW: Setup scroll behavior
     this.setupScrollBehavior();
     
@@ -2302,8 +2302,22 @@ navigateToBrandCategory(brandName, categoryName) {
         }
         
         if (isProduct && driveLink) {
-          // Open product link
-          this.openProduct(driveLink);
+          // Check if product has preview files
+          const cardElement = e.target.closest('.content-card');
+          const productTitle = cardElement?.querySelector('.card-title')?.textContent || 'Product';
+          
+          // Find product in tree to get previewFiles
+          const previewFiles = this.findProductPreviewFiles(searchPath || category);
+          
+          if (previewFiles && previewFiles.length > 0) {
+            // Show preview modal
+            this.openProductPreview(productTitle, previewFiles);
+          } else {
+            // Fallback to opening Drive link
+            this.openProduct(driveLink);
+          }
+
+          
         } else if (searchPath) {
           // Navigate using search path
           this.navigateToPath(searchPath);
@@ -2431,6 +2445,27 @@ resetScrollPosition() {
     window.open(driveLink, '_blank', 'noopener,noreferrer');
   }
 
+  findProductPreviewFiles(pathStr) {
+    if (!pathStr) return null;
+    
+    const segments = pathStr.split('/').filter(Boolean);
+    let node = this.data.catalog.tree;
+    
+    for (const seg of segments) {
+      if (node[seg]) {
+        if (node[seg].isProduct) {
+          return node[seg].previewFiles || null;
+        }
+        node = node[seg].children || {};
+      } else {
+        return null;
+      }
+    }
+    
+    return null;
+  }
+
+  
   navigateToCategory(category) {
   // FIXED: Reset scroll position first
   this.resetScrollPosition();
