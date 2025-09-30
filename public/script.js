@@ -1726,30 +1726,29 @@ getScaleTransform(scaling) {
     
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
       const itemCount = brandData.count || 0;
-      const browseBrands = brandData.browseBrands === true;
       
-      // ✅ SMART FILTER: Only include if browseBrands = true (backend already did the logic)
-      if (!browseBrands) {
-        console.log(`  ❌ Skipping ${brandKey} (${itemCount} items) - Hidden by filter`);
-        return;
-      }
-      
-      console.log(`  ✅ Including ${brandKey} (${itemCount} items)`);
-      
-      const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      
-      if (!brandsMap.has(brandSlug)) {
-        brandsMap.set(brandSlug, {
-          name: brandKey,
-          slug: brandSlug,
-          logo: brandData.thumbnail || '',
-          count: itemCount,
-          categories: new Set([categoryKey])
-        });
+      // ✅ SIMPLE CHECK: Just check if browseBrands is true
+      // The backend already did all the logic (10+ items OR manual On)
+      if (brandData.browseBrands === true) {
+        console.log(`  ✅ Including ${brandKey} (${itemCount} items)`);
+        
+        const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        
+        if (!brandsMap.has(brandSlug)) {
+          brandsMap.set(brandSlug, {
+            name: brandKey,
+            slug: brandSlug,
+            logo: brandData.thumbnail || '',
+            count: itemCount,
+            categories: new Set([categoryKey])
+          });
+        } else {
+          const existing = brandsMap.get(brandSlug);
+          existing.categories.add(categoryKey);
+          existing.count += itemCount;
+        }
       } else {
-        const existing = brandsMap.get(brandSlug);
-        existing.categories.add(categoryKey);
-        existing.count += itemCount;
+        console.log(`  ❌ Skipping ${brandKey} (${itemCount} items) - browseBrands = ${brandData.browseBrands}`);
       }
     });
   });
@@ -1760,11 +1759,15 @@ getScaleTransform(scaling) {
   console.log(`✅ Extracted ${brandsArray.length} brands for Browse Brands section`);
   
   if (brandsArray.length === 0) {
-    console.log(`⚠️ No brands match criteria (10+ items OR manually enabled)`);
+    console.log(`⚠️ No brands have browseBrands = true in the data`);
+    console.log(`   This means either:`);
+    console.log(`   1. All brands have <10 items AND no manual "On" setting`);
+    console.log(`   2. The backend filter didn't run correctly`);
   }
   
   return brandsArray;
 }
+
 
   
   setupFooter() {
