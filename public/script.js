@@ -1719,18 +1719,22 @@ getScaleTransform(scaling) {
   const brandsMap = new Map();
   const tree = this.data.catalog.tree;
   
-  console.log('🔍 Extracting brands with smart filter (10+ items OR Browse Brands = On)...');
+  console.log('🔍 Extracting brands from tree...');
   
   Object.entries(tree).forEach(([categoryKey, categoryData]) => {
+    console.log(`📂 Processing category: ${categoryKey}`);
+    
     if (!categoryData.children) return;
     
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
       const itemCount = brandData.count || 0;
+      const hasBrowseBrandsTrue = brandData.browseBrands === true;
       
-      // ✅ SIMPLE CHECK: Just check if browseBrands is true
-      // The backend already did all the logic (10+ items OR manual On)
-      if (brandData.browseBrands === true) {
-        console.log(`  ✅ Including ${brandKey} (${itemCount} items)`);
+      console.log(`   Brand: ${brandKey}, items: ${itemCount}, browseBrands: ${brandData.browseBrands}`);
+      
+      // Only include brands where browseBrands = true
+      if (hasBrowseBrandsTrue) {
+        console.log(`   ✅ Including brand: ${brandKey}`);
         
         const brandSlug = brandKey.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         
@@ -1748,7 +1752,7 @@ getScaleTransform(scaling) {
           existing.count += itemCount;
         }
       } else {
-        console.log(`  ❌ Skipping ${brandKey} (${itemCount} items) - browseBrands = ${brandData.browseBrands}`);
+        console.log(`   ❌ Skipping brand: ${brandKey} (browseBrands = ${brandData.browseBrands})`);
       }
     });
   });
@@ -1756,18 +1760,10 @@ getScaleTransform(scaling) {
   const brandsArray = Array.from(brandsMap.values())
     .sort((a, b) => b.count - a.count);
 
-  console.log(`✅ Extracted ${brandsArray.length} brands for Browse Brands section`);
-  
-  if (brandsArray.length === 0) {
-    console.log(`⚠️ No brands have browseBrands = true in the data`);
-    console.log(`   This means either:`);
-    console.log(`   1. All brands have <10 items AND no manual "On" setting`);
-    console.log(`   2. The backend filter didn't run correctly`);
-  }
+  console.log(`\n✅ Total brands extracted: ${brandsArray.length}`);
   
   return brandsArray;
 }
-
 
   
   setupFooter() {
