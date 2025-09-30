@@ -99,7 +99,8 @@ class CSVCatalogApp {
       this.setupDynamicSections();
     }
     
-    this.setupTaxonomy();
+    this.setupBrands();
+    this.setupReviewSlideshow();
     this.setupFooter();
     this.setupEventListeners();
     this.setupFABFunctionality();
@@ -1674,24 +1675,398 @@ getScaleTransform(scaling) {
     return emojiMap[category?.toUpperCase()] || '🎁';
   }
 
-  setupTaxonomy() {
-    const taxonomyGrid = document.getElementById('taxonomyGrid');
-    if (!taxonomyGrid || !this.data.catalog?.tree) return;
+  setupBrands() {
+    const brandsGrid = document.getElementById('brandsGrid');
+    if (!brandsGrid || !this.data.catalog?.tree) return;
 
-    const taxonomyItems = Object.entries(this.data.catalog.tree)
-      .map(([key, item]) => ({
-        name: key.replace(/_/g, ' '),
-        count: item.count,
-        key: key
+    // Extract and normalize all brands across all categories
+    const brandMap = new Map();
+    
+    const extractBrands = (node, parentPath = []) => {
+      for (const [key, item] of Object.entries(node)) {
+        if (!item.isProduct && item.children) {
+          // This is a brand folder (e.g., "Chanel", "Gucci Bags", "LV")
+          const normalizedName = this.normalizeBrandName(key);
+          
+          if (!brandMap.has(normalizedName)) {
+            brandMap.set(normalizedName, {
+              displayName: normalizedName,
+              categories: new Set(),
+              totalCount: 0,
+              paths: []
+            });
+          }
+          
+          const brandData = brandMap.get(normalizedName);
+          const categoryName = parentPath[0] || 'Other';
+          brandData.categories.add(categoryName);
+          brandData.totalCount += item.count || 0;
+          brandData.paths.push([...parentPath, key].join('/'));
+          
+          // Recursively check children
+          extractBrands(item.children, [...parentPath, key]);
+        }
+      }
+    };
+    
+    extractBrands(this.data.catalog.tree);
+
+    // Convert to array and sort by count
+    const brands = Array.from(brandMap.entries())
+      .map(([name, data]) => ({
+        name,
+        categories: Array.from(data.categories),
+        count: data.totalCount,
+        paths: data.paths
       }))
       .sort((a, b) => b.count - a.count);
 
-    taxonomyGrid.innerHTML = taxonomyItems.map(item => `
-      <div class="taxonomy-item" data-category="${item.key}" role="button" tabindex="0">
-        <div class="taxonomy-name">${item.name}</div>
-        <div class="taxonomy-count">${item.count} items</div>
+    brandsGrid.innerHTML = brands.map(brand => `
+      <div class="brand-item" data-brand="${brand.name}" data-paths='${JSON.stringify(brand.paths)}' role="button" tabindex="0">
+        <div class="brand-name-display">${brand.name}</div>
+        <div class="brand-count">${brand.count} items across ${brand.categories.length} ${brand.categories.length === 1 ? 'category' : 'categories'}</div>
       </div>
     `).join('');
+
+    // Add click handlers for brands
+    document.querySelectorAll('.brand-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const brandName = item.dataset.brand;
+        const paths = JSON.parse(item.dataset.paths);
+        this.showBrandView(brandName, paths);
+      });
+    });
+  }
+
+  normalizeBrandName(name) {
+    // Remove common suffixes
+    let normalized = name
+      .replace(/\s+bags?$/i, '')
+      .replace(/\s+shoes?$/i, '')
+      .replace(/\s+accessories?$/i, '')
+      .replace(/\s+clothing?$/i, '')
+      .replace(/\s+watches?$/i, '')
+      .replace(/\s+jewelry?$/i, '')
+      .trim();
+    
+    // Handle special cases
+    const specialCases = {
+      'LV': 'Louis Vuitton',
+      'YSL': 'Yves Saint Laurent',
+      'D&G': 'Dolce & Gabbana',
+      'MK': 'Michael Kors'
+    };
+    
+    if (specialCases[normalized.toUpperCase()]) {
+      return specialCases[normalized.toUpperCase()];
+    }
+    
+    return normalized;
+  }
+
+  showBrandView(brandName, paths) {
+    document.body.setAttribute('data-page-type', 'brand');
+    this.resetScrollPosition();
+    
+    // Update hero for brand view
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    
+    if (heroTitle) heroTitle.textContent = `${brandName} Collection`;
+    if (heroSubtitle) {
+      heroSubtitle.textContent = `Explore all ${brandName} products across our categories`;
+      heroSubtitle.style.display = 'block';
+    }
+    
+    // Add breadcrumb
+    const hero = document.querySelector('.hero .hero-content');
+    if (hero) {
+      const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
+      if (existingBreadcrumbs) existingBreadcrumbs.remove();
+      
+      const breadcrumbNav = document.createElement('nav');
+      breadcrumbNav.className = 'breadcrumb-nav';
+      
+      const homeLink = document.createElement('a');
+      homeLink.href = '#';
+      homeLink.textContent = 'Home';
+      homeLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.navigateToHome();
+      });
+      
+      breadcrumbNav.appendChild(homeLink);
+      
+      const separator = document.createElement('span');
+      separator.textContent = ' / ';
+      separator.style.color = 'var(--color-text-muted)';
+      breadcrumbNav.appendChild(separator);
+      
+      const current = document.createElement('span');
+      current.textContent = brandName;
+      current.style.cssText = `
+        font-weight: 600;
+        color: var(--color-text-primary);
+        padding: var(--space-1) var(--space-2);
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: var(--radius-sm);
+      `;
+      breadcrumbNav.appendChild(current);
+      
+      if (heroSubtitle) {
+        heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
+      } else if (heroTitle) {
+        heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
+      }
+    }
+    
+    // Hide sections
+    const brandsSection = document.querySelector('.brands-section');
+    const slideshowSection = document.querySelector('.slideshow-section');
+    if (brandsSection) brandsSection.style.display = 'none';
+    if (slideshowSection) slideshowSection.style.display = 'none';
+    
+    // Collect all items from all brand paths
+    const allItems = [];
+    
+    paths.forEach(pathStr => {
+      const segments = pathStr.split('/').filter(Boolean);
+      let node = this.data.catalog.tree;
+      
+      for (const seg of segments) {
+        if (node[seg]) {
+          node = node[seg].children || {};
+        }
+      }
+      
+      // Get all products from this node
+      const collectProducts = (currentNode, currentPath = []) => {
+        for (const [key, item] of Object.entries(currentNode)) {
+          const fullPath = [...currentPath, key].join('/');
+          
+          if (item.isProduct) {
+            allItems.push({
+              key,
+              title: key,
+              description: `Premium ${brandName} product`,
+              count: 1,
+              thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+              isProduct: true,
+              driveLink: item.driveLink,
+              topOrder: item.topOrder || 999,
+              fullPath: pathStr + '/' + fullPath,
+              alignment: item.alignment,
+              fitting: item.fitting,
+              scaling: item.scaling
+            });
+          } else if (item.children) {
+            collectProducts(item.children, [...currentPath, key]);
+          }
+        }
+      };
+      
+      collectProducts(node);
+    });
+    
+    // Sort by topOrder
+    allItems.sort((a, b) => a.topOrder - b.topOrder);
+    
+    // Render brand products
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
+    
+    const gridClass = this.getGridClass(allItems.length);
+    const containerId = `brand-${Math.random().toString(36).substr(2, 9)}`;
+    
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="cards-grid ${gridClass}" id="${containerId}">
+            ${allItems.map(item => this.createCardHTML(item)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+    
+    if (gridClass === 'grid-smart') {
+      setTimeout(() => {
+        const gridContainer = document.getElementById(containerId);
+        if (gridContainer) this.addSmartCentering(gridContainer, allItems.length);
+      }, 10);
+    }
+  }
+
+  setupReviewSlideshow() {
+    const viewport = document.getElementById('slideshowViewport');
+    const image = document.getElementById('slideshowImage');
+    const counter = document.getElementById('slideshowCounter');
+    const caption = document.getElementById('slideshowCaption');
+    const prevBtn = document.getElementById('slideshowPrev');
+    const nextBtn = document.getElementById('slideshowNext');
+    
+    if (!viewport || !image) return;
+    
+    const folders = ['Reviews', 'Payment', 'Delivered'];
+    let allImages = [];
+    let currentIndex = 0;
+    let isLoading = false;
+    
+    // Preload 15 images (5 from each folder)
+    const preloadImages = async () => {
+      console.log('🎬 Preloading slideshow images...');
+      viewport.classList.add('loading');
+      
+      for (const folder of folders) {
+        for (let i = 1; i <= 5; i++) {
+          const imgPath = `${folder}/image${i}.webp`;
+          
+          // Test if image exists
+          const exists = await new Promise((resolve) => {
+            const testImg = new Image();
+            const timeout = setTimeout(() => resolve(false), 1000);
+            
+            testImg.onload = () => {
+              clearTimeout(timeout);
+              resolve(true);
+            };
+            testImg.onerror = () => {
+              clearTimeout(timeout);
+              resolve(false);
+            };
+            
+            testImg.src = imgPath;
+          });
+          
+          if (exists) {
+            allImages.push({
+              src: imgPath,
+              caption: folder,
+              index: allImages.length + 1
+            });
+          }
+        }
+      }
+      
+      viewport.classList.remove('loading');
+      console.log(`✅ Preloaded ${allImages.length} images`);
+      
+      if (allImages.length > 0) {
+        showImage(0);
+      } else {
+        image.src = 'data:image/svg+xml,' + encodeURIComponent(`
+          <svg width="400" height="600" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#f8f9fa"/>
+            <text x="50%" y="50%" font-family="Arial" font-size="18" fill="#666" text-anchor="middle">No images found</text>
+          </svg>
+        `);
+      }
+    };
+    
+    const loadMoreImages = async (startIndex) => {
+      console.log(`📥 Loading more images from index ${startIndex}...`);
+      
+      for (const folder of folders) {
+        for (let i = startIndex; i < startIndex + 5; i++) {
+          const imgPath = `${folder}/image${i}.webp`;
+          
+          const exists = await new Promise((resolve) => {
+            const testImg = new Image();
+            const timeout = setTimeout(() => resolve(false), 1000);
+            
+            testImg.onload = () => {
+              clearTimeout(timeout);
+              resolve(true);
+            };
+            testImg.onerror = () => {
+              clearTimeout(timeout);
+              resolve(false);
+            };
+            
+            testImg.src = imgPath;
+          });
+          
+          if (exists) {
+            allImages.push({
+              src: imgPath,
+              caption: folder,
+              index: allImages.length + 1
+            });
+          }
+        }
+      }
+      
+      console.log(`✅ Now have ${allImages.length} total images`);
+    };
+    
+    const showImage = (index) => {
+      if (allImages.length === 0) return;
+      
+      currentIndex = (index + allImages.length) % allImages.length;
+      const current = allImages[currentIndex];
+      
+      viewport.classList.add('loading');
+      
+      const newImg = new Image();
+      newImg.onload = () => {
+        image.src = current.src;
+        if (counter) counter.textContent = `${currentIndex + 1} / ${allImages.length}`;
+        if (caption) caption.textContent = current.caption;
+        viewport.classList.remove('loading');
+      };
+      newImg.onerror = () => {
+        viewport.classList.remove('loading');
+      };
+      newImg.src = current.src;
+    };
+    
+    const showNext = async () => {
+      if (isLoading) return;
+      
+      // If approaching end and not fully loaded, load more
+      if (currentIndex >= allImages.length - 3 && allImages.length % 15 === 0) {
+        isLoading = true;
+        const nextBatch = Math.floor(allImages.length / 5) + 1;
+        await loadMoreImages(nextBatch * 5 + 1);
+        isLoading = false;
+      }
+      
+      showImage(currentIndex + 1);
+    };
+    
+    const showPrev = () => {
+      showImage(currentIndex - 1);
+    };
+    
+    // Event listeners
+    if (prevBtn) prevBtn.addEventListener('click', showPrev);
+    if (nextBtn) nextBtn.addEventListener('click', showNext);
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (document.body.getAttribute('data-page-type') !== 'category') {
+        if (e.key === 'ArrowRight') showNext();
+        if (e.key === 'ArrowLeft') showPrev();
+      }
+    });
+    
+    // Touch swipe
+    let touchStartX = 0;
+    viewport.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    viewport.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      
+      if (Math.abs(swipeDistance) > 50) {
+        if (swipeDistance > 0) showNext();
+        else showPrev();
+      }
+    }, { passive: true });
+    
+    // Initialize
+    preloadImages();
   }
 
   setupFooter() {
@@ -2027,10 +2402,11 @@ resetScrollPosition() {
     `;
     
     // Hide taxonomy section during search
-    const taxonomySection = document.querySelector('.taxonomy-section');
-    if (taxonomySection) {
-      taxonomySection.style.display = 'none';
-    }
+    // Show brands and slideshow sections
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) brandsSection.style.display = 'block';
+  if (slideshowSection) slideshowSection.style.display = 'block';
   }
 
 // REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
