@@ -5,6 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "node tools/build-data.mjs",
+    "build:previews": "node tools/build-drive-previews.mjs",
+    "build:all": "npm run build && npm run build:previews",
     "serve": "npx http-server public -c-1 -p 5173"
+  },
+  "devDependencies": {
+    "googleapis": "^140.0.0"
   }
 }
