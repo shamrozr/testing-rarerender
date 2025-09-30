@@ -1691,17 +1691,34 @@ getScaleTransform(scaling) {
           if (!brandMap.has(normalizedName)) {
             brandMap.set(normalizedName, {
               displayName: normalizedName,
-              categories: new Set(),
+              categories: new Map(), // Changed to Map to store category data
               totalCount: 0,
-              paths: []
+              paths: [],
+              thumbnail: '' // For brand card thumbnail
             });
           }
           
           const brandData = brandMap.get(normalizedName);
           const categoryName = parentPath[0] || 'Other';
-          brandData.categories.add(categoryName);
+          
+          // Store category with its data
+          if (!brandData.categories.has(categoryName)) {
+            brandData.categories.set(categoryName, {
+              count: 0,
+              thumbnail: this.data.catalog.tree[categoryName]?.thumbnail || ''
+            });
+          }
+          
+          const catData = brandData.categories.get(categoryName);
+          catData.count += item.count || 0;
+          
           brandData.totalCount += item.count || 0;
           brandData.paths.push([...parentPath, key].join('/'));
+          
+          // Set brand thumbnail from Cards/{brandname}.webp if not set
+          if (!brandData.thumbnail) {
+            brandData.thumbnail = `/Cards/${normalizedName.replace(/\s+/g, '')}.webp`;
+          }
           
           // Recursively check children
           extractBrands(item.children, [...parentPath, key]);
@@ -1715,16 +1732,20 @@ getScaleTransform(scaling) {
     const brands = Array.from(brandMap.entries())
       .map(([name, data]) => ({
         name,
-        categories: Array.from(data.categories),
+        categories: data.categories,
         count: data.totalCount,
-        paths: data.paths
+        paths: data.paths,
+        thumbnail: data.thumbnail
       }))
       .sort((a, b) => b.count - a.count);
 
     brandsGrid.innerHTML = brands.map(brand => `
-      <div class="brand-item" data-brand="${brand.name}" data-paths='${JSON.stringify(brand.paths)}' role="button" tabindex="0">
+      <div class="brand-item" data-brand="${brand.name}" data-paths='${JSON.stringify(brand.paths)}' data-categories='${JSON.stringify(Array.from(brand.categories.entries()))}' role="button" tabindex="0">
+        <div class="brand-image">
+          <img src="${brand.thumbnail}" alt="${brand.name}" loading="lazy" onerror="this.parentElement.innerHTML='${this.getEmojiForCategory('BAGS')}'">
+        </div>
         <div class="brand-name-display">${brand.name}</div>
-        <div class="brand-count">${brand.count} items across ${brand.categories.length} ${brand.categories.length === 1 ? 'category' : 'categories'}</div>
+        <div class="brand-count">${brand.count} items</div>
       </div>
     `).join('');
 
@@ -1733,11 +1754,11 @@ getScaleTransform(scaling) {
       item.addEventListener('click', () => {
         const brandName = item.dataset.brand;
         const paths = JSON.parse(item.dataset.paths);
-        this.showBrandView(brandName, paths);
+        const categories = new Map(JSON.parse(item.dataset.categories));
+        this.showBrandView(brandName, paths, categories);
       });
     });
   }
-
   normalizeBrandName(name) {
     // Remove common suffixes
     let normalized = name
@@ -1764,7 +1785,7 @@ getScaleTransform(scaling) {
     return normalized;
   }
 
-  showBrandView(brandName, paths) {
+  showBrandView(brandName, paths, categories) {
     document.body.setAttribute('data-page-type', 'brand');
     this.resetScrollPosition();
     
@@ -1774,7 +1795,7 @@ getScaleTransform(scaling) {
     
     if (heroTitle) heroTitle.textContent = `${brandName} Collection`;
     if (heroSubtitle) {
-      heroSubtitle.textContent = `Explore all ${brandName} products across our categories`;
+      heroSubtitle.textContent = `Explore ${brandName} products across ${categories.size} ${categories.size === 1 ? 'category' : 'categories'}`;
       heroSubtitle.style.display = 'block';
     }
     
@@ -1826,63 +1847,43 @@ getScaleTransform(scaling) {
     if (brandsSection) brandsSection.style.display = 'none';
     if (slideshowSection) slideshowSection.style.display = 'none';
     
-    // Collect all items from all brand paths
-    const allItems = [];
+    // Create category cards
+    const categoryCards = [];
+    const brandThumbnail = `/Cards/${brandName.replace(/\s+/g, '')}.webp`;
     
-    paths.forEach(pathStr => {
-      const segments = pathStr.split('/').filter(Boolean);
-      let node = this.data.catalog.tree;
-      
-      for (const seg of segments) {
-        if (node[seg]) {
-          node = node[seg].children || {};
-        }
-      }
-      
-      // Get all products from this node
-      const collectProducts = (currentNode, currentPath = []) => {
-        for (const [key, item] of Object.entries(currentNode)) {
-          const fullPath = [...currentPath, key].join('/');
-          
-          if (item.isProduct) {
-            allItems.push({
-              key,
-              title: key,
-              description: `Premium ${brandName} product`,
-              count: 1,
-              thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-              isProduct: true,
-              driveLink: item.driveLink,
-              topOrder: item.topOrder || 999,
-              fullPath: pathStr + '/' + fullPath,
-              alignment: item.alignment,
-              fitting: item.fitting,
-              scaling: item.scaling
-            });
-          } else if (item.children) {
-            collectProducts(item.children, [...currentPath, key]);
-          }
-        }
-      };
-      
-      collectProducts(node);
+    categories.forEach((catData, categoryName) => {
+      categoryCards.push({
+        key: categoryName,
+        title: `${brandName} ${categoryName}`,
+        description: `${catData.count} ${brandName} products in ${categoryName}`,
+        count: catData.count,
+        thumbnail: brandThumbnail,
+        isProduct: false,
+        topOrder: 999,
+        brandName: brandName,
+        categoryName: categoryName,
+        // Use contain for brand logo as cover
+        alignment: 'center center',
+        fitting: 'contain',
+        scaling: ''
+      });
     });
     
-    // Sort by topOrder
-    allItems.sort((a, b) => a.topOrder - b.topOrder);
+    // Sort by count
+    categoryCards.sort((a, b) => b.count - a.count);
     
-    // Render brand products
+    // Render brand categories
     const container = document.getElementById('dynamicSections');
     if (!container) return;
     
-    const gridClass = this.getGridClass(allItems.length);
-    const containerId = `brand-${Math.random().toString(36).substr(2, 9)}`;
+    const gridClass = this.getGridClass(categoryCards.length);
+    const containerId = `brand-categories-${Math.random().toString(36).substr(2, 9)}`;
     
     container.innerHTML = `
       <section class="content-section">
         <div class="container">
           <div class="cards-grid ${gridClass}" id="${containerId}">
-            ${allItems.map(item => this.createCardHTML(item)).join('')}
+            ${categoryCards.map(item => this.createBrandCategoryCardHTML(item)).join('')}
           </div>
         </div>
       </section>
@@ -1891,9 +1892,77 @@ getScaleTransform(scaling) {
     if (gridClass === 'grid-smart') {
       setTimeout(() => {
         const gridContainer = document.getElementById(containerId);
-        if (gridContainer) this.addSmartCentering(gridContainer, allItems.length);
+        if (gridContainer) this.addSmartCentering(gridContainer, categoryCards.length);
       }, 10);
     }
+  }
+
+navigateToBrandCategory(brandName, categoryName) {
+    this.resetScrollPosition();
+    
+    // Find the path to this brand in this category
+    const brandKey = Object.keys(this.data.catalog.tree[categoryName]?.children || {})
+      .find(key => this.normalizeBrandName(key) === brandName);
+    
+    if (!brandKey) {
+      this.showNotification(`${brandName} not found in ${categoryName}`);
+      return;
+    }
+    
+    const path = `${categoryName}/${brandKey}`;
+    this.currentPath = path.split('/').filter(Boolean);
+    
+    // Update URL
+    const params = new URLSearchParams(window.location.search);
+    params.set('path', path);
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ 
+      path: this.currentPath, 
+      brand: this.currentBrand 
+    }, '', newURL);
+    
+    // Show category view
+    this.showCategoryView();
+  }
+
+  
+  createBrandCategoryCardHTML(item) {
+    const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
+    
+    let imageContent = '';
+    
+    if (imageSrc) {
+      // Use contain fitting for brand logos
+      imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
+           style="width: 100%; height: 100%; object-fit: contain; object-position: center center; background: #ffffff;" 
+           class="card-image-enhanced"
+           onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.categoryName)}'">`;
+    } else {
+      imageContent = this.getEmojiForCategory(item.categoryName);
+    }
+
+    return `
+      <div class="content-card" data-brand="${item.brandName}" data-category="${item.categoryName}" role="button" tabindex="0">
+        <div class="card-image card-image-container">
+          ${imageContent}
+          <div class="card-overlay"></div>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">${item.title}</h3>
+          <p class="card-description">${item.description}</p>
+          <div class="card-footer">
+            <span class="card-badge">${item.count} Items</span>
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   setupReviewSlideshow() {
@@ -2107,10 +2176,18 @@ getScaleTransform(scaling) {
     document.addEventListener('click', (e) => {
       const card = e.target.closest('.content-card, .taxonomy-item');
       if (card) {
+        const brand = card.dataset.brand;
         const category = card.dataset.category;
         const isProduct = card.dataset.isProduct === 'true';
         const driveLink = card.dataset.driveLink;
         const searchPath = card.dataset.searchPath;
+        
+        // Check if this is a brand category card
+        if (brand && category && !isProduct) {
+          // Navigate to brand's category
+          this.navigateToBrandCategory(brand, category);
+          return;
+        }
         
         if (isProduct && driveLink) {
           // Open product link
