@@ -49,17 +49,6 @@ function normPath(p) {
   return parts.join("/");
 }
 
-function toThumbSitePath(rel) {
-  if (!rel) return "";
-  let p = rel.replace(/\\/g, "/").replace(/^\/+/, "");
-  
-  if (!p.startsWith("thumbs/")) {
-    p = "thumbs/" + p;
-  }
-  
-  return "/" + p;
-}
-
 function normalizeBrandName(brandName) {
   if (!brandName) return '';
   
@@ -126,6 +115,17 @@ function getBrandSlug(brandName) {
 }
 
 
+function toThumbSitePath(rel) {
+  if (!rel) return "";
+  let p = rel.replace(/\\/g, "/").replace(/^\/+/, "");
+  
+  if (!p.startsWith("thumbs/")) {
+    p = "thumbs/" + p;
+  }
+  
+  return "/" + p;
+}
+
 async function fileExists(relFromPublic) {
   try {
     await fs.access(path.join(PUBLIC_DIR, relFromPublic.replace(/^\//, "")));
@@ -144,6 +144,15 @@ function ensureFolderNode(tree, segs) {
   return node;
 }
 
+function setCounts(node) {
+  if (node.isProduct) return 1;
+  let sum = 0;
+  for (const k of Object.keys(node.children || {})) {
+    sum += setCounts(node.children[k]);
+  }
+  node.count = sum;
+  return sum;
+}
 
 function propagateThumbsFromChildren(node, currentDepth = 0) {
   for (const k of Object.keys(node)) {
@@ -320,17 +329,12 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
   const folderMeta = new Map();
   const sectionStats = new Map();
 
-  console.log("📝 Processing enhanced catalog entries with image rendering...");
-console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
-
 console.log("📝 Processing enhanced catalog entries with brand normalization...");
 
 // Track brand mappings
 const brandNormalizationMap = new Map(); // originalName → normalizedName
 const brandCategoryMap = new Map(); // normalizedBrandSlug → Set of categories
-  
 
-  
 let processedCount = 0;
 
 for (const r of masterRows) {
@@ -338,8 +342,6 @@ for (const r of masterRows) {
   const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-  
-
   
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
@@ -404,8 +406,6 @@ for (const r of masterRows) {
       brandCategoryMap.set(brandSlug, new Set());
     }
     brandCategoryMap.get(brandSlug).add(categoryName);
-    
-
     
     // Replace the brand name in segments with normalized version
     segs[1] = normalizedBrandName;
@@ -483,6 +483,7 @@ for (const [brandSlug, categories] of brandCategoryMap.entries()) {
   console.log(`   ${brandSlug}: ${Array.from(categories).join(', ')}`);
 }
 
+
 console.log(`📊 BUILD Processed ${totalProducts} products across all depths`);
 console.log(`📊 BUILD Created ${folderMeta.size} folder entries across all depths`);
 
@@ -501,11 +502,6 @@ function attachFolderMeta(node, prefix = []) {
       if (meta?.driveLink) n.driveLink = meta.driveLink;
       if (meta?.section) n.section = meta.section;
       if (meta?.category) n.category = meta.category;
-
-      if (typeof n.count === 'undefined') {
-        n.count = 0;
-      }
-      
       
       // CRITICAL: Apply TopOrder and image config to folders only
       if (typeof meta?.TopOrder !== "undefined") {
@@ -534,7 +530,10 @@ function attachFolderMeta(node, prefix = []) {
     }
   }
 }
-console.log("🖼️  Applying brand logos to tree structure...");
+
+attachFolderMeta(tree);
+// ✅ APPLY BRAND LOGOS - Add this AFTER attachFolderMeta(tree);
+console.log("🖼️  Applying brand logos to tree...");
 
 function applyBrandLogosToTree(node, prefix = []) {
   for (const k of Object.keys(node)) {
@@ -542,12 +541,12 @@ function applyBrandLogosToTree(node, prefix = []) {
     const currentPath = [...prefix, k];
     const pathStr = currentPath.join("/");
     
-    // Check if this is brand level (depth 2: Category/Brand)
+    // Brand level is at depth 2
     if (currentPath.length === 2 && !n.isProduct) {
       const meta = folderMeta.get(pathStr);
       if (meta?.thumbnail && !n.thumbnail) {
         n.thumbnail = meta.thumbnail;
-        console.log(`  ✅ Applied brand logo to ${pathStr}: ${meta.thumbnail}`);
+        console.log(`  ✅ Logo applied: ${pathStr}`);
       }
     }
     
@@ -560,30 +559,7 @@ function applyBrandLogosToTree(node, prefix = []) {
 applyBrandLogosToTree(tree);
 
 
-
-console.log("🔍 Setting all brands to visible...");
-
-function setAllBrandsVisible(node, prefix = []) {
-  for (const k of Object.keys(node)) {
-    const n = node[k];
-    const currentPath = [...prefix, k];
-    
-    if (currentPath.length === 2 && !n.isProduct) {
-      n.browseBrands = true;
-      console.log(`  ✅ ${k} (${n.count || 0} items)`);
-    }
-    
-    if (n.children && !n.isProduct) {
-      setAllBrandsVisible(n.children, currentPath);
-    }
-  }
-}
-
-setAllBrandsVisible(tree);
-attachFolderMeta(tree);
-
   // Convert empty folders with drive links to products
-// Convert empty folders with drive links to products
   console.log("🔄 Optimizing catalog structure...");
   function convertEmpty(node) {
     for (const k of Object.keys(node)) {
@@ -602,44 +578,18 @@ attachFolderMeta(tree);
   }
   convertEmpty(tree);
 
-  // CRITICAL: Calculate counts IMMEDIATELY after structure is finalized
-  console.log("🧮 Calculating item counts...");
-  function setCounts(node) {
-    if (node.isProduct) return 1;
-    
-    let sum = 0;
-    const children = node.children || {};
-    
-    for (const k of Object.keys(children)) {
-      sum += setCounts(children[k]);
-    }
-    
-    node.count = sum;
-    return sum;
-  }
-
-  // Calculate for entire tree
-  for (const top of Object.keys(tree)) {
-    const count = setCounts(tree[top]);
-    console.log(`  ${top}: ${count} items`);
-  }
-
+  // Enhance catalog with visual and section data
   // Enhance catalog with visual and section data
   console.log("🖼️  Enhancing visual and section elements with inherited config...");
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
   console.log("✅ Image config inheritance complete");
 
-console.log("✅ Counts calculated for all categories and brands");
+  console.log("🧮 Calculating enhanced catalog metrics...");
+  for (const top of Object.keys(tree)) {
+    setCounts(tree[top]);
+  }
 
-console.log("🔍 Debug: Sample brand counts from tree:");
-if (tree.BAGS && tree.BAGS.children) {
-  Object.entries(tree.BAGS.children).forEach(([name, data]) => {
-    console.log(`  ${name}: ${data.count} items`);
-  });
-}
-
-  
   // Enhanced health checks including image rendering
   console.log("🔍 Running enhanced quality assurance with image rendering checks...");
   const missingThumbFiles = [];
@@ -901,32 +851,27 @@ console.log("✅ BUILD TopOrder verification complete");
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
+
   // ✅ BRAND VERIFICATION - Add this BEFORE the catch block
-// ✅ BRAND VERIFICATION - Add this BEFORE the catch block
 console.log("\n" + "=".repeat(70));
 console.log("🔍 BRAND STRUCTURE VERIFICATION:\n");
 
 let totalBrands = 0;
 let brandsWithLogos = 0;
-let brandsWithZeroItems = 0;
 
 Object.entries(tree).forEach(([categoryKey, categoryData]) => {
-  console.log(`📂 ${categoryKey} (Category count: ${categoryData.count || 0})`);
+  console.log(`📂 ${categoryKey}`);
   
   if (categoryData.children) {
     Object.entries(categoryData.children).forEach(([brandKey, brandData]) => {
       totalBrands++;
       const hasLogo = brandData.thumbnail && brandData.thumbnail !== PLACEHOLDER_THUMB;
-      const itemCount = brandData.count || 0;
       
-      if (itemCount === 0) {
-        brandsWithZeroItems++;
-        console.log(`   ❌ ${brandKey} (${itemCount} items) - ZERO COUNT!`);
-      } else if (hasLogo) {
+      if (hasLogo) {
         brandsWithLogos++;
-        console.log(`   ✅ ${brandKey} (${itemCount} items) 🖼️`);
+        console.log(`   ✅ ${brandKey} (${brandData.count} items) 🖼️`);
       } else {
-        console.log(`   ⚠️  ${brandKey} (${itemCount} items) NO LOGO`);
+        console.log(`   ⚠️  ${brandKey} (${brandData.count} items) NO LOGO`);
       }
     });
   }
@@ -935,19 +880,12 @@ Object.entries(tree).forEach(([categoryKey, categoryData]) => {
 console.log("\n" + "=".repeat(70));
 console.log(`📊 Total Brands: ${totalBrands}`);
 console.log(`🖼️  With Logos: ${brandsWithLogos}/${totalBrands} (${totalBrands > 0 ? ((brandsWithLogos/totalBrands)*100).toFixed(0) : 0}%)`);
-console.log(`⚠️  With Zero Items: ${brandsWithZeroItems}/${totalBrands}`);
-
-if (brandsWithZeroItems > 0) {
-  console.log(`\n❌ WARNING: ${brandsWithZeroItems} brands have 0 items - check CSV data!`);
-}
-
-console.log("\n" + "=".repeat(70));
-console.log(`📊 Total Brands: ${totalBrands}`);
-console.log(`🖼️  With Logos: ${brandsWithLogos}/${totalBrands} (${totalBrands > 0 ? ((brandsWithLogos/totalBrands)*100).toFixed(0) : 0}%)`);
 
 if (totalBrands - brandsWithLogos > 0) {
   console.log(`\n⚠️  ${totalBrands - brandsWithLogos} brands missing logos - check CSV "Thumbs Path" column!`);
 }
+
+
 })().catch(err => {
   console.error("💥 Enhanced build failed:", err);
   process.exit(1);
