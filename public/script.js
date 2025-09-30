@@ -1780,31 +1780,109 @@ getScaleTransform(scaling) {
 
   
   normalizeBrandName(name) {
-    // Remove common suffixes
+    if (!name) return '';
+    
+    // Step 1: Remove ALL category/product type suffixes (case-insensitive)
     let normalized = name
-      .replace(/\s+bags?$/i, '')
-      .replace(/\s+shoes?$/i, '')
-      .replace(/\s+accessories?$/i, '')
-      .replace(/\s+clothing?$/i, '')
-      .replace(/\s+watches?$/i, '')
-      .replace(/\s+jewelry?$/i, '')
+      .replace(/\s+(bags?|handbags?|purses?)$/i, '')
+      .replace(/\s+(shoes?|footwear|sneakers?)$/i, '')
+      .replace(/\s+(accessories?|accessory)$/i, '')
+      .replace(/\s+(clothing?|clothes|apparel)$/i, '')
+      .replace(/\s+(watches?|timepieces?)$/i, '')
+      .replace(/\s+(jewelry?|jewellery)$/i, '')
+      .replace(/\s+(wallets?|wallet)$/i, '')
+      .replace(/\s+(belts?)$/i, '')
+      .replace(/\s+(glasses?|sunglasses?|eyewear)$/i, '')
+      .replace(/\s+(hats?|caps?)$/i, '')
+      .replace(/\s+(shirts?|dresses?)$/i, '')
       .trim();
     
-    // Handle special cases
-    const specialCases = {
-      'LV': 'Louis Vuitton',
-      'YSL': 'Yves Saint Laurent',
-      'D&G': 'Dolce & Gabbana',
-      'MK': 'Michael Kors'
+    // Step 2: Normalize spacing and case
+    normalized = normalized
+      .replace(/\s+/g, ' ')  // Multiple spaces to single space
+      .trim();
+    
+    // Step 3: Handle common typos and variations
+    const typoMap = {
+      'guccii': 'gucci',
+      'chanell': 'chanel',
+      'pradaa': 'prada',
+      'diorr': 'dior',
+      'fendii': 'fendi',
+      'hermes': 'hermès',
+      'louie vuitton': 'louis vuitton',
+      'luis vuitton': 'louis vuitton',
+      'saint laurent': 'yves saint laurent',
+      'bottega': 'bottega veneta',
+      'bottegaveneta': 'bottega veneta',
+      'dolce gabbana': 'dolce & gabbana',
+      'dolce and gabbana': 'dolce & gabbana',
+      'd and g': 'dolce & gabbana',
+      'bvlgari': 'bulgari',
+      'bvulgari': 'bulgari'
     };
     
-    if (specialCases[normalized.toUpperCase()]) {
-      return specialCases[normalized.toUpperCase()];
+    const lowerNormalized = normalized.toLowerCase();
+    for (const [typo, correct] of Object.entries(typoMap)) {
+      if (lowerNormalized === typo) {
+        normalized = correct;
+        break;
+      }
     }
     
-    return normalized;
+    // Step 4: Handle special abbreviations
+    const abbreviations = {
+      'lv': 'Louis Vuitton',
+      'ysl': 'Yves Saint Laurent',
+      'd&g': 'Dolce & Gabbana',
+      'mk': 'Michael Kors',
+      'ck': 'Calvin Klein',
+      'dg': 'Dolce & Gabbana',
+      'mcm': 'MCM'
+    };
+    
+    const upperNormalized = normalized.toUpperCase();
+    if (abbreviations[lowerNormalized]) {
+      return abbreviations[lowerNormalized];
+    }
+    
+    // Step 5: Proper title case for multi-word brands
+    const properCaseExceptions = {
+      'louis vuitton': 'Louis Vuitton',
+      'yves saint laurent': 'Yves Saint Laurent',
+      'dolce & gabbana': 'Dolce & Gabbana',
+      'bottega veneta': 'Bottega Veneta',
+      'marc jacobs': 'Marc Jacobs',
+      'tory burch': 'Tory Burch',
+      'michael kors': 'Michael Kors',
+      'jimmy choo': 'Jimmy Choo',
+      'alexander mcqueen': 'Alexander McQueen',
+      'ralph lauren': 'Ralph Lauren',
+      'tom ford': 'Tom Ford',
+      'calvin klein': 'Calvin Klein',
+      'kate spade': 'Kate Spade',
+      'coach': 'Coach',
+      'mont blanc': 'Mont Blanc',
+      'montblanc': 'Mont Blanc',
+      'the marcus and jacob': 'The Marcus And Jacob'
+    };
+    
+    const finalLower = normalized.toLowerCase();
+    if (properCaseExceptions[finalLower]) {
+      return properCaseExceptions[finalLower];
+    }
+    
+    // Step 6: Default title case for remaining brands
+    return normalized
+      .split(' ')
+      .map(word => {
+        // Keep & as is
+        if (word === '&') return '&';
+        // Capitalize first letter
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(' ');
   }
-
   showBrandView(brandName, paths, categories) {
     document.body.setAttribute('data-page-type', 'brand');
     this.resetScrollPosition();
@@ -1972,17 +2050,18 @@ navigateToBrandCategory(brandName, categoryName) {
     let imageContent = '';
     
     if (imageSrc) {
-      // Use contain fitting for brand logos
+      // CRITICAL: Use contain fitting for brand logos on category cards
+      // This ensures the full logo is visible without cropping
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
-           style="width: 100%; height: 100%; object-fit: contain; object-position: center center; background: #ffffff;" 
-           class="card-image-enhanced"
+           style="width: 100% !important; height: 100% !important; object-fit: contain !important; object-position: center center !important; background: #ffffff !important; padding: var(--space-4);" 
+           class="card-image-brand-logo"
            onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.categoryName)}'">`;
     } else {
       imageContent = this.getEmojiForCategory(item.categoryName);
     }
 
     return `
-      <div class="content-card" data-brand="${item.brandName}" data-category="${item.categoryName}" role="button" tabindex="0">
+      <div class="content-card brand-category-card" data-brand="${item.brandName}" data-category="${item.categoryName}" role="button" tabindex="0">
         <div class="card-image card-image-container">
           ${imageContent}
           <div class="card-overlay"></div>
