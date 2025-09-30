@@ -337,7 +337,9 @@ console.log("📝 Processing enhanced catalog entries with brand normalization..
 // Track brand mappings
 const brandNormalizationMap = new Map(); // originalName → normalizedName
 const brandCategoryMap = new Map(); // normalizedBrandSlug → Set of categories
-
+  
+const brandBrowseStatus = new Map();
+  
 let processedCount = 0;
 
 for (const r of masterRows) {
@@ -345,6 +347,8 @@ for (const r of masterRows) {
   const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+  
+  const browseBrands = (r["Browse Brands"] || r["browse brands"] || r["Browse_Brands"] || "").trim().toLowerCase();
   
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
@@ -409,6 +413,11 @@ for (const r of masterRows) {
       brandCategoryMap.set(brandSlug, new Set());
     }
     brandCategoryMap.get(brandSlug).add(categoryName);
+    
+    const shouldShowInBrowse = ['on', 'yes', 'true', '1'].includes(browseBrands);
+if (!brandBrowseStatus.has(brandSlug) || shouldShowInBrowse) {
+  brandBrowseStatus.set(brandSlug, shouldShowInBrowse);
+}
     
     // Replace the brand name in segments with normalized version
     segs[1] = normalizedBrandName;
@@ -556,6 +565,24 @@ function applyBrandLogosToTree(node, prefix = []) {
 }
 
 applyBrandLogosToTree(tree);
+  
+function applyBrowseBrandsFilter(node, prefix = []) {
+  for (const k of Object.keys(node)) {
+    const n = node[k];
+    const currentPath = [...prefix, k];
+    
+    if (currentPath.length === 2 && !n.isProduct) {
+      const brandSlug = k.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      n.browseBrands = brandBrowseStatus.get(brandSlug) || false;
+    }
+    
+    if (n.children && !n.isProduct) {
+      applyBrowseBrandsFilter(n.children, currentPath);
+    }
+  }
+}
+
+applyBrowseBrandsFilter(tree);
   
 attachFolderMeta(tree);
 
