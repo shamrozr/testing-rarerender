@@ -1,4 +1,4 @@
-// tools/build-r2-previews.mjs - CSV-BASED VIDEO PREVIEW BUILDER
+// tools/build-r2-previews.mjs - FIXED PATH MATCHING
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,6 +33,12 @@ function parseCSV(text) {
   });
 }
 
+// Normalize path for comparison (convert all to forward slashes, lowercase)
+function normalizePath(p) {
+  if (!p) return '';
+  return p.replace(/\\/g, '/').toLowerCase().trim();
+}
+
 class CSVVideoPreviewBuilder {
   constructor() {
     this.stats = {
@@ -40,10 +46,13 @@ class CSVVideoPreviewBuilder {
       productsWithVideos: 0,
       totalVideos: 0,
       csvRowsProcessed: 0,
+      csvRowsWithVideos: 0,
+      pathMatchAttempts: 0,
+      pathMatchSuccesses: 0,
       errors: [],
       startTime: Date.now()
     };
-    this.videoMap = new Map();
+    this.videoMap = new Map(); // Normalized path -> video data
   }
 
   async buildVideoPreviewsData() {
@@ -56,7 +65,17 @@ class CSVVideoPreviewBuilder {
       
       // Build video map
       this.buildVideoMap(videoData);
-      console.log(`🗺️  Built video map with ${this.videoMap.size} product folders\n`);
+      console.log(`🗺️  Built video map with ${this.videoMap.size} product folders`);
+      console.log(`   CSV rows with videos: ${this.stats.csvRowsWithVideos}\n`);
+      
+      // Debug: Show first 5 paths in map
+      console.log('🔍 Sample paths in video map:');
+      let count = 0;
+      for (const [path, videos] of this.videoMap) {
+        if (count++ >= 5) break;
+        console.log(`   - "${path}" (${videos.length} video(s))`);
+      }
+      console.log('');
       
       // Load data.json
       const data = await this.loadDataJson();
@@ -66,6 +85,13 @@ class CSVVideoPreviewBuilder {
       const products = [];
       this.collectProducts(data.catalog.tree, [], products);
       console.log(`   Found ${products.length} products\n`);
+      
+      // Debug: Show first 5 product paths
+      console.log('🔍 Sample product paths from catalog:');
+      for (let i = 0; i < Math.min(5, products.length); i++) {
+        console.log(`   - "${products[i].path}"`);
+      }
+      console.log('');
       
       // Match products with videos
       console.log('🔍 Matching products with videos...\n');
@@ -77,6 +103,10 @@ class CSVVideoPreviewBuilder {
           console.log(`   📊 Progress: ${i + 1}/${products.length} products checked`);
         }
       }
+      
+      console.log(`\n🎯 Path matching stats:`);
+      console.log(`   Attempts: ${this.stats.pathMatchAttempts}`);
+      console.log(`   Successes: ${this.stats.pathMatchSuccesses}`);
       
       await this.saveDataJson(data);
       this.printStats();
@@ -118,27 +148,31 @@ class CSVVideoPreviewBuilder {
       const hasVideo = row.Video_Found?.toLowerCase() === 'yes';
       if (!hasVideo) continue;
       
-      // Get the relative path (product folder path)
+      this.stats.csvRowsWithVideos++;
+      
+      // Get the folder relative path (this is the product path)
       const folderPath = (row.Folder_Relative_Path || '').trim();
       if (!folderPath || folderPath === 'root') continue;
       
-      // Get video filename
-      const videoName = (row.Source_Video_Name || 'video.mp4').trim();
-      
-      // Get destination relative path
+      // Get destination relative path (the video file path in R2)
       const videoRelativePath = (row.Destination_Relative_Path || '').trim();
-      
       if (!videoRelativePath) continue;
       
-      // Store video info
-      if (!this.videoMap.has(folderPath)) {
-        this.videoMap.set(folderPath, []);
+      // Get video filename
+      const videoName = path.basename(videoRelativePath);
+      
+      // Normalize the folder path for matching
+      const normalizedPath = normalizePath(folderPath);
+      
+      // Store video info with normalized path as key
+      if (!this.videoMap.has(normalizedPath)) {
+        this.videoMap.set(normalizedPath, []);
       }
       
-      this.videoMap.get(folderPath).push({
+      this.videoMap.get(normalizedPath).push({
         name: videoName,
         relativePath: videoRelativePath,
-        folderPath: folderPath
+        originalFolderPath: folderPath
       });
     }
   }
@@ -165,29 +199,20 @@ class CSVVideoPreviewBuilder {
   }
 
   processProduct(product, productPath) {
+    this.stats.pathMatchAttempts++;
+    
     try {
-      // Try multiple path format variations
-      const pathVariants = [
-        productPath,
-        productPath.replace(/\//g, '\\'),
-        productPath.replace(/\\/g, '/'),
-        // Also try with normalized slashes
-        productPath.split(/[\/\\]/).join('\\'),
-        productPath.split(/[\/\\]/).join('/')
-      ];
+      // Normalize the product path for matching
+      const normalizedProductPath = normalizePath(productPath);
       
-      let videos = null;
-      for (const variant of pathVariants) {
-        videos = this.videoMap.get(variant);
-        if (videos) {
-          console.log(`   🔗 Matched path variant: ${variant}`);
-          break;
-        }
-      }
+      // Look up videos by normalized path
+      const videos = this.videoMap.get(normalizedProductPath);
       
       if (!videos || videos.length === 0) {
         return;
       }
+      
+      this.stats.pathMatchSuccesses++;
       
       // Embed video preview data
       product.videoPreview = {
@@ -221,6 +246,8 @@ class CSVVideoPreviewBuilder {
       productsWithVideos: this.stats.productsWithVideos,
       totalVideos: this.stats.totalVideos,
       csvRowsProcessed: this.stats.csvRowsProcessed,
+      csvRowsWithVideos: this.stats.csvRowsWithVideos,
+      pathMatchSuccesses: this.stats.pathMatchSuccesses,
       method: 'csv-from-r2',
       csvUrl: VIDEO_CSV_URL,
       buildTime: `${((Date.now() - this.stats.startTime) / 1000).toFixed(1)}s`
@@ -237,9 +264,12 @@ class CSVVideoPreviewBuilder {
     console.log('═'.repeat(60));
     console.log(`   ⏱️  Build time:               ${buildTime}s`);
     console.log(`   📋 CSV rows processed:        ${this.stats.csvRowsProcessed}`);
+    console.log(`   🎬 CSV rows with videos:      ${this.stats.csvRowsWithVideos}`);
     console.log(`   📦 Total products:            ${this.stats.productsFound}`);
-    console.log(`   🎬 Products with videos:      ${this.stats.productsWithVideos}`);
-    console.log(`   🎥 Total videos:              ${this.stats.totalVideos}`);
+    console.log(`   🔗 Path match attempts:       ${this.stats.pathMatchAttempts}`);
+    console.log(`   ✅ Path match successes:      ${this.stats.pathMatchSuccesses}`);
+    console.log(`   🎥 Products with videos:      ${this.stats.productsWithVideos}`);
+    console.log(`   📹 Total videos:              ${this.stats.totalVideos}`);
     console.log(`   ❌ Errors:                    ${this.stats.errors.length}`);
     console.log('═'.repeat(60));
     
