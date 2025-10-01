@@ -3418,68 +3418,52 @@ div#drivePreviewModal .preview-nav:hover:not(:disabled) {
   -ms-user-select: none;
 }
 
-/* Video Play Button - FIXED SELECTOR */
-/* =================================== */
+/* Video Play Button - NUCLEAR FIX */
+/* ================================ */
 
 .video-play-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 70px;
-  height: 70px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-  z-index: 10;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 70px !important;
+  height: 70px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  transition: all 0.3s ease !important;
+  pointer-events: none !important;
+  z-index: 100 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
 }
 
 .video-play-overlay svg {
-  width: 32px;
-  height: 32px;
-  color: var(--color-primary);
-  margin-left: 4px;
-  transition: transform 0.3s ease;
+  width: 32px !important;
+  height: 32px !important;
+  color: var(--color-primary) !important;
+  margin-left: 4px !important;
 }
 
-/* FIXED: Show on hover - using attribute selector */
+/* Show on hover */
 .content-card[data-has-video="true"]:hover .video-play-overlay {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.05);
+  opacity: 1 !important;
+  transform: translate(-50%, -50%) scale(1.1) !important;
 }
 
-.content-card[data-has-video="true"]:hover .video-play-overlay svg {
-  transform: scale(1.1);
-}
-
-/* FIXED: Mobile - always show */
+/* Mobile - always show */
 @media (max-width: 768px) {
   .content-card[data-has-video="true"] .video-play-overlay {
-    opacity: 0.9;
-    background: rgba(255, 255, 255, 0.92);
-  }
-  
-  .content-card[data-has-video="true"]:active .video-play-overlay {
-    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.9 !important;
   }
 }
 
-/* Enhanced hover overlay */
-.content-card[data-has-video="true"]:hover .card-overlay {
-  opacity: 0.3;
-}
-
-/* DEBUG: Temporary red border to see if selector works */
-.content-card[data-has-video="true"] {
-  /* Uncomment to debug: */
-  /* border: 2px solid red !important; */
+/* Ensure card-image is positioned */
+.card-image-container {
+  position: relative !important;
 }
   
 }
