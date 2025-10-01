@@ -3418,52 +3418,63 @@ div#drivePreviewModal .preview-nav:hover:not(:disabled) {
   -ms-user-select: none;
 }
 
-/* Video Play Button - NUCLEAR FIX */
-/* ================================ */
+/* ============================================================================
+   VIDEO PLAY BUTTON - COMPLETE WORKING VERSION
+   ============================================================================ */
 
-.video-play-overlay {
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 70px !important;
-  height: 70px !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(10px) !important;
-  border-radius: 50% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  opacity: 0 !important;
-  transition: all 0.3s ease !important;
-  pointer-events: none !important;
-  z-index: 100 !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+/* Ensure container has position */
+.content-card[data-has-video="true"] .card-image-container {
+  position: relative;
+  overflow: visible;
 }
 
-.video-play-overlay svg {
-  width: 32px !important;
-  height: 32px !important;
-  color: var(--color-primary) !important;
-  margin-left: 4px !important;
+/* Play button overlay */
+.content-card[data-has-video="true"] .video-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  z-index: 500;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Show on hover */
-.content-card[data-has-video="true"]:hover .video-play-overlay {
-  opacity: 1 !important;
-  transform: translate(-50%, -50%) scale(1.1) !important;
+/* Play icon */
+.content-card[data-has-video="true"] .video-play-overlay svg {
+  width: 30px;
+  height: 30px;
+  color: #6366f1;
+  margin-left: 3px;
 }
 
-/* Mobile - always show */
-@media (max-width: 768px) {
-  .content-card[data-has-video="true"] .video-play-overlay {
-    opacity: 0.9 !important;
+/* Show on hover - Desktop */
+@media (hover: hover) {
+  .content-card[data-has-video="true"]:hover .video-play-overlay {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
   }
 }
 
-/* Ensure card-image is positioned */
-.card-image-container {
-  position: relative !important;
+/* Always show on mobile */
+@media (hover: none) {
+  .content-card[data-has-video="true"] .video-play-overlay {
+    opacity: 0.85;
+  }
 }
+
+/* Active state */
+.content-card[data-has-video="true"]:active .video-play-overlay {
+  transform: translate(-50%, -50%) scale(0.95);
+}
+
   
 }
