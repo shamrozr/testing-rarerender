@@ -136,7 +136,7 @@ if (this.currentPath.length > 0) {
     this.setupFooter();
     this.setupEventListeners();
     this.setupPreviewModal();
-    this.setupVideoPreviewModal();
+
     this.setupFABFunctionality();
     
     // NEW: Setup scroll behavior
@@ -838,260 +838,6 @@ sortItemsEnhanced(items, isHomepage = false) {
 }
 
 
-// ADD AFTER setupPreviewModal() method
-
-setupVideoPreviewModal() {
-  const existingModal = document.getElementById('videoPreviewModal');
-  if (existingModal) {
-    existingModal.remove();
-  }
-  
-  console.log('🎬 Creating video preview modal...');
-  
-  const modal = document.createElement('div');
-  modal.id = 'videoPreviewModal';
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 10000;
-    display: none;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(10px);
-    align-items: center;
-    justify-content: center;
-  `;
-  
-  modal.innerHTML = `
-    <div id="videoOverlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; cursor: pointer;"></div>
-    
-    <div class="video-wrapper" style="
-      position: relative;
-      z-index: 10001;
-      width: 90%;
-      max-width: 1200px;
-      height: 90%;
-      display: flex;
-      flex-direction: column;
-      background: rgba(0, 0, 0, 0.9);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-    ">
-      
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1.5rem 2rem;
-        background: rgba(0, 0, 0, 0.95);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        flex-shrink: 0;
-      ">
-        <div id="videoTitle" style="
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: white;
-          flex: 1;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        ">Product Video</div>
-        
-        <button id="videoClose" style="
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.15);
-          border: 2px solid rgba(255, 255, 255, 0.2);
-          color: white;
-          font-size: 2rem;
-          font-weight: 300;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          line-height: 1;
-          flex-shrink: 0;
-        " title="Close">×</button>
-      </div>
-      
-      <div id="videoContent" style="
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem;
-        overflow: hidden;
-        position: relative;
-        background: #000;
-        min-height: 0;
-      ">
-        <video id="videoPlayer" controls autoplay style="
-          max-width: 100%;
-          max-height: 100%;
-          width: auto;
-          height: auto;
-          border-radius: 8px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        "></video>
-        
-        <div class="video-loading" style="
-          position: absolute;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1rem;
-          color: white;
-        ">
-          <div style="
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          "></div>
-          <span>Loading video...</span>
-        </div>
-      </div>
-      
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-  console.log('✅ Video modal created');
-  
-  this.bindVideoEvents();
-}
-
-bindVideoEvents() {
-  const modal = document.getElementById('videoPreviewModal');
-  const overlay = document.getElementById('videoOverlay');
-  const closeBtn = document.getElementById('videoClose');
-  
-  console.log('🔗 Binding video events...');
-  
-  closeBtn?.addEventListener('click', () => {
-    console.log('❌ Close clicked');
-    this.closeVideoPreview();
-  });
-  
-  overlay?.addEventListener('click', () => {
-    console.log('❌ Overlay clicked');
-    this.closeVideoPreview();
-  });
-  
-  document.addEventListener('keydown', (e) => {
-    if (modal?.style.display !== 'flex') return;
-    if (e.key === 'Escape') this.closeVideoPreview();
-  });
-  
-  console.log('✅ Video events bound');
-}
-
-openVideoPreview(product, productTitle) {
-  console.log('🎬 Opening video preview for:', productTitle);
-  console.log('📦 Product data:', product);
-  
-  if (!product?.videoPreview?.videos?.length) {
-    console.log('⚠️ No videos available');
-    if (product?.preview?.images?.length > 0) {
-      this.openPreview(product, productTitle);
-    }
-    return;
-  }
-  
-  if (!document.getElementById('videoPreviewModal')) {
-    this.setupVideoPreviewModal();
-  }
-  
-  console.log(`✅ Video data set: ${product.videoPreview.videos.length} video(s)`);
-  
-  document.getElementById('videoTitle').textContent = productTitle;
-  
-  const modal = document.getElementById('videoPreviewModal');
-  modal.style.display = 'flex';
-  
-  document.body.style.overflow = 'hidden';
-  document.body.style.position = 'fixed';
-  document.body.style.width = '100%';
-  
-  console.log('✅ Modal visible');
-  
-  setTimeout(() => this.showVideo(product.videoPreview.videos[0]), 100);
-}
-
-showVideo(videoData) {
-  console.log(`🎬 Loading video: ${videoData.name}`);
-  
-  const content = document.getElementById('videoContent');
-  const videoPlayer = document.getElementById('videoPlayer');
-  const loading = content.querySelector('.video-loading');
-  
-  if (loading) loading.style.display = 'flex';
-  if (videoPlayer) videoPlayer.style.display = 'none';
-  
-  videoPlayer.src = videoData.url;
-  
-  videoPlayer.onloadedmetadata = () => {
-    console.log('✅ Video loaded successfully');
-    if (loading) loading.style.display = 'none';
-    videoPlayer.style.display = 'block';
-    videoPlayer.play().catch(err => {
-      console.log('⚠️ Autoplay blocked, user must click play');
-    });
-  };
-  
-  videoPlayer.onerror = () => {
-    console.error('❌ Video failed to load');
-    if (loading) {
-      loading.innerHTML = `
-        <div style="text-align: center; color: white;">
-          <div style="font-size: 4rem; margin-bottom: 1rem;">🎬</div>
-          <h3 style="margin-bottom: 0.5rem;">Video unavailable</h3>
-          <p style="opacity: 0.8; margin-bottom: 1rem;">${videoData.name}</p>
-          <button onclick="window.catalogApp.closeVideoPreview()" style="
-            padding: 0.75rem 1.5rem;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-          ">Close</button>
-        </div>
-      `;
-    }
-  };
-}
-
-closeVideoPreview() {
-  console.log('🔓 Closing video preview...');
-  
-  const modal = document.getElementById('videoPreviewModal');
-  if (modal) {
-    modal.style.display = 'none';
-  }
-  
-  const videoPlayer = document.getElementById('videoPlayer');
-  if (videoPlayer) {
-    videoPlayer.pause();
-    videoPlayer.src = '';
-  }
-  
-  document.body.style.overflow = '';
-  document.body.style.position = '';
-  document.body.style.width = '';
-  
-  console.log('✅ Video preview closed');
-}
-
-
 
 
 
@@ -1203,7 +949,7 @@ openPreview(product, productTitle) {
   }, 100);
 }
 
-// NEW: Build priority-ordered media array
+// Build priority-ordered media array
 buildPriorityMedia(product) {
   const media = [];
   
@@ -1217,7 +963,7 @@ buildPriorityMedia(product) {
         source: 'r2'
       });
     });
-    console.log(`🎬 Added ${media.length} R2 video(s) to priority queue`);
+    console.log(`🎬 Added ${product.videoPreview.videos.length} R2 video(s) as priority 1`);
   }
   
   // 2. First 3 Drive Photos - SECOND PRIORITY
@@ -1233,7 +979,7 @@ buildPriorityMedia(product) {
         source: 'drive'
       });
     });
-    console.log(`📸 Added first ${first3Photos.length} photo(s) to priority queue`);
+    console.log(`📸 Added ${first3Photos.length} photo(s) as priority 2`);
   }
   
   // 3. All Drive Videos (alphabetically sorted) - THIRD PRIORITY
@@ -1251,7 +997,7 @@ buildPriorityMedia(product) {
         source: 'drive'
       });
     });
-    console.log(`🎥 Added ${sortedVideos.length} Drive video(s) to priority queue`);
+    console.log(`🎥 Added ${sortedVideos.length} Drive video(s) as priority 3`);
   }
   
   // 4. Remaining Drive Photos (after first 3) - LOWEST PRIORITY
@@ -1267,8 +1013,16 @@ buildPriorityMedia(product) {
         source: 'drive'
       });
     });
-    console.log(`📸 Added ${remainingPhotos.length} remaining photo(s) to priority queue`);
+    console.log(`📸 Added ${remainingPhotos.length} remaining photo(s) as priority 4`);
   }
+  
+  console.log(`\n🎯 FINAL PRIORITY ORDER (${media.length} total):`);
+  media.forEach((item, i) => {
+    const priority = i === 0 && item.type === 'r2-video' ? '🥇' :
+                    i < 4 && item.type === 'image' ? '🥈' :
+                    item.type === 'drive-video' ? '🥉' : '4️⃣';
+    console.log(`   ${priority} ${i + 1}. [${item.type}] ${item.name}`);
+  });
   
   return media;
 }
@@ -1332,7 +1086,6 @@ preloadVideo(videoItem, index) {
   console.log(`✅ Marked video ${index + 1} for preload: ${videoItem.name}`);
 }
 
-// NEW: Show current media (handles images + videos)
 showCurrentMedia() {
   if (!this.currentPreview?.media) {
     console.error('❌ No preview data');
@@ -1342,7 +1095,10 @@ showCurrentMedia() {
   const { media, currentIndex } = this.currentPreview;
   const currentItem = media[currentIndex];
   
-  console.log(`🖼️ Showing item ${currentIndex + 1}/${media.length}: ${currentItem.name} (${currentItem.type})`);
+  console.log(`\n🎬 Showing item ${currentIndex + 1}/${media.length}:`);
+  console.log(`   Type: ${currentItem.type}`);
+  console.log(`   Name: ${currentItem.name}`);
+  console.log(`   Source: ${currentItem.source}`);
   
   // Update UI
   document.getElementById('previewCurrent').textContent = currentIndex + 1;
@@ -1366,10 +1122,14 @@ showCurrentMedia() {
   
   // Show loading
   const content = document.getElementById('previewContent');
+  const mediaTypeLabel = currentItem.type === 'r2-video' ? 'R2 Video' :
+                         currentItem.type === 'drive-video' ? 'Drive Video' :
+                         'Photo';
+  
   content.innerHTML = `
     <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; color: white;">
       <div style="width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-      <span>Loading ${currentItem.type}...</span>
+      <span>Loading ${mediaTypeLabel}...</span>
     </div>
   `;
   
@@ -3410,8 +3170,7 @@ navigateToBrandCategory(brandName, categoryName) {
     }
 
     // Card clicks
-    // Card clicks
-// FIXED CARD CLICK HANDLER - REPLACE ENTIRE SECTION
+// Card clicks - UNIFIED PREVIEW
 document.addEventListener('click', (e) => {
   const card = e.target.closest('.content-card, .taxonomy-item');
   if (!card) return;
@@ -3442,48 +3201,33 @@ document.addEventListener('click', (e) => {
     const productData = app.findProductByPath(productPath);
     const productTitle = card.querySelector('.card-title')?.textContent || category;
     
-    // CRITICAL: Check if click was on IMAGE (top half) or TEXT (bottom half)
-    const clickedImage = e.target.closest('.card-image, .card-image-container, .card-image-background, img');
-    const clickedText = e.target.closest('.card-content, .card-title, .card-description, .card-footer, .card-badge, .card-arrow');
+    // UNIFIED: Always show unified preview (R2 video + Drive photos/videos)
+    // No matter where user clicks on the card
+    console.log('🎬 Opening unified preview with priority order');
     
-    console.log('🖱️ Click detection:', {
-      clickedImage: !!clickedImage,
-      clickedText: !!clickedText,
-      targetElement: e.target.className,
-      hasVideo: !!(productData?.videoPreview?.videos?.length),
-      hasPhotos: !!(productData?.preview?.images?.length)
-    });
-    
-    if (clickedImage && !clickedText) {
-      // IMAGE CLICK (and NOT text) → Try video preview first
-      console.log('🖼️ Image area clicked - checking for video');
+    if (productData) {
+      // Check if there's ANY media available
+      const hasR2Video = productData?.videoPreview?.videos?.length > 0;
+      const hasDrivePhotos = productData?.preview?.images?.length > 0;
+      const hasDriveVideos = productData?.preview?.videos?.length > 0;
       
-      if (productData?.videoPreview?.videos?.length > 0) {
-        console.log('🎬 Opening video preview');
-        app.openVideoPreview(productData, productTitle);
-      } else {
-        console.log('📸 No video, trying photo preview');
-        if (productData?.preview?.images?.length > 0) {
-          app.openPreview(productData, productTitle);
-        } else {
-          console.log('🔗 No preview, opening Drive');
-          window.open(driveLink, '_blank', 'noopener,noreferrer');
-        }
-      }
-    } else if (clickedText) {
-      // TEXT CLICK → Photo gallery
-      console.log('📝 Text area clicked - opening photo gallery');
-      
-      if (productData?.preview?.images?.length > 0) {
-        console.log('📸 Opening photo preview');
+      if (hasR2Video || hasDrivePhotos || hasDriveVideos) {
+        console.log('✅ Media available:', {
+          r2Videos: hasR2Video ? productData.videoPreview.videos.length : 0,
+          drivePhotos: hasDrivePhotos ? productData.preview.images.length : 0,
+          driveVideos: hasDriveVideos ? productData.preview.videos.length : 0
+        });
+        
+        // Open unified preview (handles all media types in priority order)
         app.openPreview(productData, productTitle);
       } else {
-        console.log('🔗 No preview, opening Drive');
+        // No media at all, open Drive folder
+        console.log('⚠️ No media available, opening Drive');
         window.open(driveLink, '_blank', 'noopener,noreferrer');
       }
     } else {
-      // FALLBACK: Clicked somewhere else on card
-      console.log('🔗 Generic card click - opening Drive');
+      // Product data not found, open Drive folder
+      console.log('⚠️ Product data not found, opening Drive');
       window.open(driveLink, '_blank', 'noopener,noreferrer');
     }
   } else if (searchPath) {
