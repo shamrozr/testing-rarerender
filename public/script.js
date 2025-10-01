@@ -3047,10 +3047,17 @@ navigateToBrandCategory(brandName, categoryName) {
 
     // Card clicks
     // Card clicks
-// CARD CLICK HANDLER - REPLACE ENTIRE SECTION (around line 1100)
+// FIXED CARD CLICK HANDLER - REPLACE ENTIRE SECTION
 document.addEventListener('click', (e) => {
   const card = e.target.closest('.content-card, .taxonomy-item');
   if (!card) return;
+  
+  // Get the app instance
+  const app = window.catalogApp;
+  if (!app) {
+    console.warn('⚠️ App instance not available');
+    return;
+  }
   
   const brand = card.dataset.brand;
   const category = card.dataset.category;
@@ -3062,30 +3069,38 @@ document.addEventListener('click', (e) => {
   
   // Check if this is a brand category card
   if (brand && category && !isProduct) {
-    this.navigateToBrandCategory(brand, category);
+    app.navigateToBrandCategory(brand, category);
     return;
   }
   
   if (isProduct && driveLink) {
     const productPath = searchPath || category;
-    const productData = this.findProductByPath(productPath);
+    const productData = app.findProductByPath(productPath);
     const productTitle = card.querySelector('.card-title')?.textContent || category;
     
     // CRITICAL: Check if click was on IMAGE (top half) or TEXT (bottom half)
     const clickedImage = e.target.closest('.card-image, .card-image-container, .card-image-background, img');
-    const clickedText = e.target.closest('.card-content, .card-title, .card-description, .card-footer, .card-badge');
+    const clickedText = e.target.closest('.card-content, .card-title, .card-description, .card-footer, .card-badge, .card-arrow');
     
-    if (clickedImage) {
-      // IMAGE CLICK → Try video preview first
+    console.log('🖱️ Click detection:', {
+      clickedImage: !!clickedImage,
+      clickedText: !!clickedText,
+      targetElement: e.target.className,
+      hasVideo: !!(productData?.videoPreview?.videos?.length),
+      hasPhotos: !!(productData?.preview?.images?.length)
+    });
+    
+    if (clickedImage && !clickedText) {
+      // IMAGE CLICK (and NOT text) → Try video preview first
       console.log('🖼️ Image area clicked - checking for video');
       
       if (productData?.videoPreview?.videos?.length > 0) {
         console.log('🎬 Opening video preview');
-        this.openVideoPreview(productData, productTitle);
+        app.openVideoPreview(productData, productTitle);
       } else {
         console.log('📸 No video, trying photo preview');
         if (productData?.preview?.images?.length > 0) {
-          this.openPreview(productData, productTitle);
+          app.openPreview(productData, productTitle);
         } else {
           console.log('🔗 No preview, opening Drive');
           window.open(driveLink, '_blank', 'noopener,noreferrer');
@@ -3097,7 +3112,7 @@ document.addEventListener('click', (e) => {
       
       if (productData?.preview?.images?.length > 0) {
         console.log('📸 Opening photo preview');
-        this.openPreview(productData, productTitle);
+        app.openPreview(productData, productTitle);
       } else {
         console.log('🔗 No preview, opening Drive');
         window.open(driveLink, '_blank', 'noopener,noreferrer');
@@ -3109,10 +3124,10 @@ document.addEventListener('click', (e) => {
     }
   } else if (searchPath) {
     console.log('📁 Navigating to folder:', searchPath);
-    this.navigateToPath(searchPath);
+    app.navigateToPath(searchPath);
   } else {
     console.log('📂 Navigating to category:', category);
-    this.navigateToCategory(category);
+    app.navigateToCategory(category);
   }
 });
 
