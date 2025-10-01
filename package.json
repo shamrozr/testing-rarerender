@@ -11,7 +11,6 @@
     "serve": "npx http-server public -c-1 -p 5173"
   },
   "devDependencies": {
-    "googleapis": "^140.0.0",
-    "@aws-sdk/client-s3": "^3.0.0"
+    "googleapis": "^140.0.0"
   }
 }
