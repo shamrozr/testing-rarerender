@@ -1817,6 +1817,7 @@ groupItemsBySection() {
 
   // REPLACE the createCardHTML function in public/script.js:
 
+// REPLACE createCardHTML method
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
@@ -1862,18 +1863,23 @@ createCardHTML(item) {
   }
 
   const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
+  
+  // ADD: Check if this product has video (for play button overlay)
+  const hasVideo = item.isProduct && item.videoPreview && item.videoPreview.videoCount > 0;
 
   return `
-    <div class="content-card" 
+    <div class="content-card ${hasVideo ? 'has-video' : ''}" 
          data-category="${item.key}" 
          data-is-product="${item.isProduct || false}" 
          data-drive-link="${item.driveLink || ''}" 
          data-search-path="${item.fullPath || ''}"
+         data-has-video="${hasVideo}"
          role="button" 
          tabindex="0">
       <div class="card-image card-image-container">
         ${imageContent}
         <div class="card-overlay"></div>
+        ${hasVideo ? '<div class="video-play-button"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' : ''}
       </div>
       <div class="card-content">
         <h3 class="card-title">${item.title}</h3>
@@ -1888,6 +1894,7 @@ createCardHTML(item) {
     </div>
   `;
 }
+
 
 extractImageConfig(item) {
   console.log('Item data for image config:', item);
