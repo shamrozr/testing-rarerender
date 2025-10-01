@@ -6,10 +6,12 @@
   "scripts": {
     "build": "node tools/build-data.mjs",
     "build:previews": "node tools/build-drive-previews.mjs",
-    "build:all": "npm run build && npm run build:previews",
+    "build:videos": "node tools/build-r2-previews.mjs",
+    "build:all": "npm run build && npm run build:previews && npm run build:videos",
     "serve": "npx http-server public -c-1 -p 5173"
   },
   "devDependencies": {
-    "googleapis": "^140.0.0"
+    "googleapis": "^140.0.0",
+    "@aws-sdk/client-s3": "^3.0.0"
   }
 }
