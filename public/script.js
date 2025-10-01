@@ -1096,7 +1096,6 @@ closeVideoPreview() {
 
 
   
-// NEW SIMPLE EVENT BINDING
 bindPreviewEventsSimple() {
   const modal = document.getElementById('drivePreviewModal');
   const overlay = document.getElementById('previewOverlay');
@@ -1117,15 +1116,15 @@ bindPreviewEventsSimple() {
     this.closePreview();
   });
   
-  // Navigation events
+  // Navigation events - UPDATED to use new method names
   prevBtn?.addEventListener('click', () => {
     console.log('⬅️ Prev clicked, current index:', this.currentPreview?.currentIndex);
-    this.showPreviousImage();
+    this.showPreviousMedia(); // CHANGED
   });
   
   nextBtn?.addEventListener('click', () => {
     console.log('➡️ Next clicked, current index:', this.currentPreview?.currentIndex);
-    this.showNextImage();
+    this.showNextMedia(); // CHANGED
   });
   
   // Keyboard
@@ -1135,8 +1134,8 @@ bindPreviewEventsSimple() {
     console.log('⌨️ Key:', e.key);
     
     if (e.key === 'Escape') this.closePreview();
-    if (e.key === 'ArrowLeft') this.showPreviousImage();
-    if (e.key === 'ArrowRight') this.showNextImage();
+    if (e.key === 'ArrowLeft') this.showPreviousMedia(); // CHANGED
+    if (e.key === 'ArrowRight') this.showNextMedia(); // CHANGED
   });
   
   console.log('✅ Events bound');
@@ -1150,11 +1149,14 @@ isPreviewActive() {
 }
 
 openPreview(product, productTitle) {
-  console.log('🎯 Opening preview for:', productTitle);
+  console.log('🎯 Opening UNIFIED preview for:', productTitle);
   console.log('📦 Product data:', product);
   
-  if (!product?.preview?.images?.length) {
-    console.log('⚠️ No preview images, opening Drive');
+  // Build priority-ordered media array
+  const priorityMedia = this.buildPriorityMedia(product);
+  
+  if (priorityMedia.length === 0) {
+    console.log('⚠️ No media available, opening Drive');
     if (product?.driveLink) {
       window.open(product.driveLink, '_blank', 'noopener,noreferrer');
     }
@@ -1166,12 +1168,19 @@ openPreview(product, productTitle) {
   
   // Set data
   this.currentPreview = {
-    images: product.preview.images,
+    media: priorityMedia,
     currentIndex: 0,
-    title: productTitle
+    title: productTitle,
+    preloadedIndices: new Set() // Track preloaded items
   };
   
-  console.log(`✅ Preview data set: ${product.preview.images.length} images`);
+  console.log(`✅ Priority media order: ${priorityMedia.length} items`);
+  console.log('Priority breakdown:', {
+    r2Videos: priorityMedia.filter(m => m.type === 'r2-video').length,
+    firstPhotos: priorityMedia.filter((m, i) => m.type === 'image' && i < 4).length,
+    otherVideos: priorityMedia.filter(m => m.type === 'drive-video').length,
+    remainingPhotos: priorityMedia.filter((m, i) => m.type === 'image' && i >= 4).length
+  });
   
   // Update title
   document.getElementById('previewTitle').textContent = productTitle;
@@ -1187,8 +1196,363 @@ openPreview(product, productTitle) {
   
   console.log('✅ Modal visible');
   
-  // Show first image
-  setTimeout(() => this.showCurrentImage(), 100);
+  // Show first item and preload initial batch
+  setTimeout(() => {
+    this.showCurrentMedia();
+    this.preloadInitialBatch();
+  }, 100);
+}
+
+// NEW: Build priority-ordered media array
+buildPriorityMedia(product) {
+  const media = [];
+  
+  // 1. R2 Video (if exists) - HIGHEST PRIORITY
+  if (product?.videoPreview?.videos?.length > 0) {
+    product.videoPreview.videos.forEach(video => {
+      media.push({
+        type: 'r2-video',
+        url: video.url,
+        name: video.name,
+        source: 'r2'
+      });
+    });
+    console.log(`🎬 Added ${media.length} R2 video(s) to priority queue`);
+  }
+  
+  // 2. First 3 Drive Photos - SECOND PRIORITY
+  if (product?.preview?.images?.length > 0) {
+    const first3Photos = product.preview.images.slice(0, 3);
+    first3Photos.forEach(img => {
+      media.push({
+        type: 'image',
+        id: img.id,
+        name: img.name,
+        viewUrl: img.viewUrl,
+        driveUrl: img.driveUrl,
+        source: 'drive'
+      });
+    });
+    console.log(`📸 Added first ${first3Photos.length} photo(s) to priority queue`);
+  }
+  
+  // 3. All Drive Videos (alphabetically sorted) - THIRD PRIORITY
+  if (product?.preview?.videos?.length > 0) {
+    const sortedVideos = [...product.preview.videos].sort((a, b) => 
+      a.name.localeCompare(b.name)
+    );
+    sortedVideos.forEach(video => {
+      media.push({
+        type: 'drive-video',
+        id: video.id,
+        name: video.name,
+        embedUrl: video.embedUrl,
+        driveUrl: video.driveUrl,
+        source: 'drive'
+      });
+    });
+    console.log(`🎥 Added ${sortedVideos.length} Drive video(s) to priority queue`);
+  }
+  
+  // 4. Remaining Drive Photos (after first 3) - LOWEST PRIORITY
+  if (product?.preview?.images?.length > 3) {
+    const remainingPhotos = product.preview.images.slice(3);
+    remainingPhotos.forEach(img => {
+      media.push({
+        type: 'image',
+        id: img.id,
+        name: img.name,
+        viewUrl: img.viewUrl,
+        driveUrl: img.driveUrl,
+        source: 'drive'
+      });
+    });
+    console.log(`📸 Added ${remainingPhotos.length} remaining photo(s) to priority queue`);
+  }
+  
+  return media;
+}
+
+// NEW: Preload initial batch (first 5 photos + 1 R2 video)
+preloadInitialBatch() {
+  if (!this.currentPreview?.media) return;
+  
+  console.log('🚀 Preloading initial batch...');
+  
+  let photosPreloaded = 0;
+  let r2VideoPreloaded = false;
+  
+  this.currentPreview.media.forEach((item, index) => {
+    // Preload first R2 video
+    if (item.type === 'r2-video' && !r2VideoPreloaded) {
+      this.preloadVideo(item, index);
+      r2VideoPreloaded = true;
+      return;
+    }
+    
+    // Preload first 5 photos
+    if (item.type === 'image' && photosPreloaded < 5) {
+      this.preloadImage(item, index);
+      photosPreloaded++;
+      return;
+    }
+  });
+  
+  console.log(`✅ Preloaded: ${photosPreloaded} photos + ${r2VideoPreloaded ? 1 : 0} R2 video`);
+}
+
+// NEW: Preload individual image
+preloadImage(imageItem, index) {
+  if (this.currentPreview.preloadedIndices.has(index)) return;
+  
+  const img = new Image();
+  img.onload = () => {
+    this.currentPreview.preloadedIndices.add(index);
+    console.log(`✅ Preloaded image ${index + 1}: ${imageItem.name}`);
+  };
+  img.onerror = () => {
+    console.log(`⚠️ Failed to preload image ${index + 1}: ${imageItem.name}`);
+  };
+  
+  const imageUrls = [
+    `https://lh3.googleusercontent.com/d/${imageItem.id}=w2000`,
+    `https://lh3.googleusercontent.com/d/${imageItem.id}`,
+    `https://drive.google.com/uc?export=view&id=${imageItem.id}`
+  ];
+  
+  img.src = imageUrls[0];
+}
+
+// NEW: Preload individual video
+preloadVideo(videoItem, index) {
+  if (this.currentPreview.preloadedIndices.has(index)) return;
+  
+  // For videos, just mark as "attempted"
+  this.currentPreview.preloadedIndices.add(index);
+  console.log(`✅ Marked video ${index + 1} for preload: ${videoItem.name}`);
+}
+
+// NEW: Show current media (handles images + videos)
+showCurrentMedia() {
+  if (!this.currentPreview?.media) {
+    console.error('❌ No preview data');
+    return;
+  }
+  
+  const { media, currentIndex } = this.currentPreview;
+  const currentItem = media[currentIndex];
+  
+  console.log(`🖼️ Showing item ${currentIndex + 1}/${media.length}: ${currentItem.name} (${currentItem.type})`);
+  
+  // Update UI
+  document.getElementById('previewCurrent').textContent = currentIndex + 1;
+  document.getElementById('previewTotal').textContent = media.length;
+  
+  // Update buttons
+  const prevBtn = document.getElementById('previewPrev');
+  const nextBtn = document.getElementById('previewNext');
+  
+  if (prevBtn) {
+    prevBtn.disabled = currentIndex === 0;
+    prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
+    prevBtn.style.cursor = currentIndex === 0 ? 'not-allowed' : 'pointer';
+  }
+  
+  if (nextBtn) {
+    nextBtn.disabled = currentIndex === media.length - 1;
+    nextBtn.style.opacity = currentIndex === media.length - 1 ? '0.3' : '1';
+    nextBtn.style.cursor = currentIndex === media.length - 1 ? 'not-allowed' : 'pointer';
+  }
+  
+  // Show loading
+  const content = document.getElementById('previewContent');
+  content.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; color: white;">
+      <div style="width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <span>Loading ${currentItem.type}...</span>
+    </div>
+  `;
+  
+  // Render based on type
+  if (currentItem.type === 'image') {
+    this.renderImage(currentItem, content);
+  } else if (currentItem.type === 'r2-video') {
+    this.renderR2Video(currentItem, content);
+  } else if (currentItem.type === 'drive-video') {
+    this.renderDriveVideo(currentItem, content);
+  }
+  
+  // Lazy load next item if not preloaded
+  this.lazyLoadNext();
+}
+
+// NEW: Render image
+renderImage(imageItem, container) {
+  const img = new Image();
+  const imageUrls = [
+    `https://lh3.googleusercontent.com/d/${imageItem.id}=w2000`,
+    `https://lh3.googleusercontent.com/d/${imageItem.id}`,
+    `https://drive.google.com/uc?export=view&id=${imageItem.id}`
+  ];
+  
+  let urlIndex = 0;
+  
+  const tryNext = () => {
+    if (urlIndex >= imageUrls.length) {
+      console.error('❌ All image URLs failed');
+      container.innerHTML = `
+        <div style="text-align: center; color: white;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">🖼️</div>
+          <h3 style="margin-bottom: 0.5rem;">Image unavailable</h3>
+          <p style="opacity: 0.8; margin-bottom: 1rem;">${imageItem.name}</p>
+          <button onclick="window.open('${imageItem.driveUrl}', '_blank')" style="
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+          ">Open in Drive</button>
+        </div>
+      `;
+      return;
+    }
+    
+    console.log(`🔄 Trying image URL ${urlIndex + 1}/${imageUrls.length}`);
+    img.src = imageUrls[urlIndex];
+    urlIndex++;
+  };
+  
+  img.onload = () => {
+    console.log('✅ Image loaded successfully');
+    container.innerHTML = `
+      <img src="${img.src}" 
+           alt="${imageItem.name}"
+           onclick="window.catalogApp.showNextMedia()"
+           style="
+             max-width: 100%;
+             max-height: 100%;
+             width: auto;
+             height: auto;
+             object-fit: contain;
+             object-position: center center;
+             border-radius: 8px;
+             cursor: pointer;
+             display: block;
+             margin: 0 auto;
+           ">
+    `;
+  };
+  
+  img.onerror = () => {
+    console.warn(`⚠️ Image URL ${urlIndex} failed`);
+    tryNext();
+  };
+  
+  tryNext();
+}
+
+// NEW: Render R2 video
+renderR2Video(videoItem, container) {
+  console.log(`🎬 Rendering R2 video: ${videoItem.name}`);
+  
+  container.innerHTML = `
+    <video 
+      controls 
+      autoplay 
+      style="
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      "
+      onloadedmetadata="console.log('✅ R2 video loaded')"
+      onerror="console.error('❌ R2 video failed to load')">
+      <source src="${videoItem.url}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  `;
+  
+  const video = container.querySelector('video');
+  video.play().catch(err => {
+    console.log('⚠️ Autoplay blocked, user must click play');
+  });
+}
+
+// NEW: Render Drive video
+renderDriveVideo(videoItem, container) {
+  console.log(`🎥 Rendering Drive video: ${videoItem.name}`);
+  
+  container.innerHTML = `
+    <iframe 
+      src="${videoItem.embedUrl}" 
+      style="
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 8px;
+      "
+      allow="autoplay"
+      onload="console.log('✅ Drive video embedded')"
+      onerror="console.error('❌ Drive video embed failed')">
+    </iframe>
+  `;
+}
+
+// NEW: Lazy load next item
+lazyLoadNext() {
+  if (!this.currentPreview?.media) return;
+  
+  const nextIndex = this.currentPreview.currentIndex + 1;
+  if (nextIndex >= this.currentPreview.media.length) return;
+  
+  const nextItem = this.currentPreview.media[nextIndex];
+  
+  // Only preload if not already done
+  if (!this.currentPreview.preloadedIndices.has(nextIndex)) {
+    if (nextItem.type === 'image') {
+      this.preloadImage(nextItem, nextIndex);
+    } else if (nextItem.type === 'r2-video' || nextItem.type === 'drive-video') {
+      this.preloadVideo(nextItem, nextIndex);
+    }
+  }
+}
+
+// REPLACE showPreviousImage with this:
+showPreviousMedia() {
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex <= 0) {
+    console.log('⚠️ Already at first item');
+    return;
+  }
+  
+  this.currentPreview.currentIndex--;
+  console.log(`⬅️ Previous: Moving to item ${this.currentPreview.currentIndex + 1}/${this.currentPreview.media.length}`);
+  this.showCurrentMedia();
+}
+
+// REPLACE showNextImage with this:
+showNextMedia() {
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex >= this.currentPreview.media.length - 1) {
+    console.log('⚠️ Already at last item');
+    return;
+  }
+  
+  this.currentPreview.currentIndex++;
+  console.log(`➡️ Next: Moving to item ${this.currentPreview.currentIndex + 1}/${this.currentPreview.media.length}`);
+  this.showCurrentMedia();
 }
 
 showCurrentImage() {
