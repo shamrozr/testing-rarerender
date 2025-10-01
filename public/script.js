@@ -1817,7 +1817,7 @@ groupItemsBySection() {
 
   // REPLACE the createCardHTML function in public/script.js:
 
-// REPLACE createCardHTML method - CLEAN VERSION
+// REPLACE createCardHTML method - FIXED VIDEO CHECK
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
@@ -1851,8 +1851,22 @@ createCardHTML(item) {
 
   const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
   
-  // Check if product has video
-  const hasVideo = item.isProduct && item.videoPreview && item.videoPreview.videoCount > 0;
+  // FIXED: Properly check if product has video
+  const hasVideo = !!(
+    item.isProduct && 
+    item.videoPreview && 
+    item.videoPreview.videos && 
+    item.videoPreview.videos.length > 0
+  );
+  
+  // DEBUG LOG
+  if (item.isProduct) {
+    console.log(`🔍 Card render for ${item.title || item.key}:`, {
+      hasVideoPreview: !!item.videoPreview,
+      videoCount: item.videoPreview?.videoCount,
+      hasVideo: hasVideo
+    });
+  }
 
   return `
     <div class="content-card" 
