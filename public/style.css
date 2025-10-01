@@ -3385,4 +3385,37 @@ div#drivePreviewModal .preview-nav:hover:not(:disabled) {
     padding: 1rem !important;
   }
 }
+/* Card Click Area Enhancements */
+/* ============================ */
+
+.card-image,
+.card-image-container,
+.card-image-background {
+  cursor: pointer;
+  position: relative;
+}
+
+.card-content {
+  cursor: pointer;
+  position: relative;
+}
+
+/* Visual feedback for different click areas */
+.content-card:hover .card-image {
+  opacity: 0.95;
+}
+
+.content-card:hover .card-content {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Prevent text selection on rapid clicks */
+.card-image,
+.card-content {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+  
 }
