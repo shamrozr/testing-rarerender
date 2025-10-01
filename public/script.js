@@ -95,6 +95,7 @@ class CSVCatalogApp {
     // Check if we need to show category view or homepage
     // Check if we need to show category view or homepage
     // Check if we need to show category view or homepage
+// Check if we need to show category view or homepage
 if (this.currentPath.length > 0) {
   this.showCategoryView();
 } else {
@@ -1134,14 +1135,8 @@ debugModalState() {
   // Re-render homepage
   this.setupDynamicSections();
   
-  // Show taxonomy section
-  const taxonomySection = document.querySelector('.taxonomy-section');
-  if (taxonomySection) {
-    taxonomySection.style.display = 'block';
-  }
-
-  // HIDE brands and slideshow sections on brand view pages
-  this.updateSectionVisibility(false);
+  // FIXED: SHOW brands and slideshow sections on homepage
+  this.updateSectionVisibility(true);
   
   // Reset hero
   this.setupBrandInfo();
@@ -2794,6 +2789,7 @@ navigateToBrandCategory(brandName, categoryName) {
     // Card clicks
     // Card clicks
 // Card clicks - ENHANCED with proper preview support
+// Card clicks - ENHANCED with proper preview support and search fixes
 document.addEventListener('click', (e) => {
   const card = e.target.closest('.content-card, .taxonomy-item');
   if (card) {
@@ -2812,13 +2808,14 @@ document.addEventListener('click', (e) => {
     }
     
     if (isProduct && driveLink) {
-      // FIXED: Properly find product with preview data
-      const productData = this.findProductByPath(searchPath || category);
+      // FIXED: Use searchPath if available, otherwise use category
+      const productPath = searchPath || category;
+      const productData = this.findProductByPath(productPath);
       const productTitle = card.querySelector('.card-title')?.textContent || category;
       
-      console.log('🎯 Opening product with preview data:', productData);
+      console.log('🎯 Opening product:', { productPath, hasData: !!productData, hasPreview: !!(productData?.preview) });
       
-      // Open with preview support
+      // FIXED: Check if product has preview data
       if (productData && productData.preview && productData.preview.images && productData.preview.images.length > 0) {
         console.log('✅ Opening preview modal with', productData.preview.images.length, 'images');
         this.openPreview(productData, productTitle);
@@ -2827,8 +2824,12 @@ document.addEventListener('click', (e) => {
         window.open(driveLink, '_blank', 'noopener,noreferrer');
       }
     } else if (searchPath) {
+      // FIXED: For folders from search results, navigate to path
+      console.log('📁 Navigating to folder:', searchPath);
       this.navigateToPath(searchPath);
     } else {
+      // Default category navigation
+      console.log('📂 Navigating to category:', category);
       this.navigateToCategory(category);
     }
   }
@@ -3109,54 +3110,54 @@ resetScrollPosition() {
   }
 
   displaySearchResults(results, query) {
-    const container = document.getElementById('dynamicSections');
-    if (!container) return;
-    
-    if (results.length === 0) {
-      container.innerHTML = `
-        <section class="content-section">
-          <div class="container">
-            <div class="section-header">
-              <h2 class="section-title">No Results Found</h2>
-              <p class="section-description">No items found for "${query}". Try different keywords.</p>
-            </div>
-          </div>
-        </section>
-      `;
-      return;
-    }
-    
-    const gridClass = this.getGridClass(results.length);
-    const resultsHTML = results.map(result => ({
-      key: result.name,
-      title: result.name.replace(/_/g, ' '),
-      description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
-      count: result.count || (result.isProduct ? 1 : 0),
-      thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
-      isProduct: result.isProduct,
-      searchPath: result.path,
-      driveLink: result.driveLink
-    }));
-    
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
+  
+  if (results.length === 0) {
     container.innerHTML = `
       <section class="content-section">
         <div class="container">
           <div class="section-header">
-            <h2 class="section-title">Search Results</h2>
-            <p class="section-description">Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query}"</p>
-          </div>
-          <div class="cards-grid ${gridClass}">
-            ${resultsHTML.map(item => this.createCardHTML(item)).join('')}
+            <h2 class="section-title">No Results Found</h2>
+            <p class="section-description">No items found for "${query}". Try different keywords.</p>
           </div>
         </div>
       </section>
     `;
-    
+    return;
+  }
+  
+  const gridClass = this.getGridClass(results.length);
+  
+  // FIXED: Map results with correct data structure
+  const resultsHTML = results.map(result => ({
+    key: result.name,
+    title: result.name.replace(/_/g, ' '),
+    description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
+    count: result.count || (result.isProduct ? 1 : 0),
+    thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
+    isProduct: result.isProduct,
+    fullPath: result.path, // FIXED: Use full path for proper navigation
+    driveLink: result.driveLink
+  }));
+  
+  container.innerHTML = `
+    <section class="content-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Search Results</h2>
+          <p class="section-description">Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query}"</p>
+        </div>
+        <div class="cards-grid ${gridClass}">
+          ${resultsHTML.map(item => this.createCardHTML(item)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
 
   // HIDE brands and slideshow sections during search
   this.updateSectionVisibility(false);
-
-  }
+}
 
 // REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
 
