@@ -3418,60 +3418,62 @@ div#drivePreviewModal .preview-nav:hover:not(:disabled) {
   -ms-user-select: none;
 }
 
-/* Video Play Button Overlay - MINIMAL VERSION */
-/* =========================================== */
+/* Video Play Button - CLEAN VERSION */
+/* ================================== */
 
-.video-play-button {
+.video-play-overlay {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 64px;
-  height: 64px;
+  width: 70px;
+  height: 70px;
   background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  z-index: 5;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
-.video-play-button svg {
+.video-play-overlay svg {
   width: 32px;
   height: 32px;
   color: var(--color-primary);
-  margin-left: 4px;
+  margin-left: 4px; /* Optical centering */
+  transition: transform 0.3s ease;
 }
 
-/* Show on hover */
-.content-card.has-video:hover .video-play-button {
+/* Show on hover - desktop */
+.content-card[data-has-video="true"]:hover .video-play-overlay {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.05);
 }
 
-/* Mobile: Show always but subtle */
+.content-card[data-has-video="true"]:hover .video-play-overlay svg {
+  transform: scale(1.1);
+}
+
+/* Mobile - always show but subtle */
 @media (max-width: 768px) {
-  .content-card.has-video .video-play-button {
-    opacity: 0.85;
-    background: rgba(255, 255, 255, 0.9);
+  .content-card[data-has-video="true"] .video-play-overlay {
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.92);
+  }
+  
+  .content-card[data-has-video="true"]:active .video-play-overlay {
+    transform: translate(-50%, -50%) scale(0.95);
   }
 }
 
-/* Small video indicator badge in corner */
-.content-card.has-video::before {
-  content: '🎬';
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 20px;
-  z-index: 6;
-  opacity: 0.8;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+/* Smooth overlay darkening on hover */
+.content-card[data-has-video="true"]:hover .card-overlay {
+  opacity: 0.3;
 }
-
   
 }
