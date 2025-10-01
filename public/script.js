@@ -428,7 +428,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
   console.log('🗂️ BREADCRUMBS:', breadcrumbs.map(b => b.name).join(' > '));
 
   const items = Object.entries(currentNode).map(([key, item]) => {
-   const currentPath = breadcrumbs.length > 0 ? breadcrumbs.map(b => b.name).join('/') + '/' + key : key;
+    const currentPath = breadcrumbs.length > 0 ? breadcrumbs.map(b => b.name).join('/') + '/' + key : key;
     
     // COMPREHENSIVE DEBUG: Check ALL possible TopOrder variations
     console.log(`🔍 DEEP ITEM DEBUG for ${key} at path ${currentPath}:`, {
@@ -480,38 +480,38 @@ renderCategoryContents(currentNode, breadcrumbs) {
     const topOrder = extractTopOrder(item, key, currentPath);
 
     if (item.isProduct) {
-    return {
-      key,
-      title: key,
-      description: 'Premium product from our luxury collection',
-      count: 1,
-      thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
-      isProduct: true,
-      driveLink: item.driveLink,
-      topOrder: topOrder,
-      fullPath: currentPath,
-      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
-      fitting: item.fitting || item.Fitting || item.FITTING,
-      scaling: item.scaling || item.Scaling || item.SCALING,
-      // ADD THIS LINE - PASS VIDEO DATA
-      videoPreview: item.videoPreview // ← ADD THIS
-    };
-  } else {
-    return {
-      key,
-      title: key.replace(/_/g, ' '),
-      description: `Explore ${item.count || 0} items in this collection`,
-      count: item.count || 0,
-      thumbnail: item.thumbnail || this.getEmojiForCategory(key),
-      isProduct: false,
-      topOrder: topOrder,
-      fullPath: currentPath,
-      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
-      fitting: item.fitting || item.Fitting || item.FITTING,
-      scaling: item.scaling || item.Scaling || item.SCALING
-    };
-  }
-});
+      return {
+        key,
+        title: key,
+        description: 'Premium product from our luxury collection',
+        count: 1,
+        thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+        isProduct: true,
+        driveLink: item.driveLink,
+        topOrder: topOrder,
+        fullPath: currentPath,
+        fullPath: currentPath,
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
+    } else {
+      return {
+        key,
+        title: key.replace(/_/g, ' '),
+        description: `Explore ${item.count || 0} items in this collection`,
+        count: item.count || 0,
+        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+        isProduct: false,
+        topOrder: topOrder,
+        fullPath: currentPath,
+        fullPath: currentPath,
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
+    }
+  });
 
   if (items.length === 0) {
     container.innerHTML = `
@@ -1718,7 +1718,6 @@ groupItemsBySection() {
       return 999;
     };
     
-    // FIND THIS SECTION in groupItemsBySection
     this.sections.get(section).push({
       key,
       title: key.replace(/_/g, ' '),
@@ -1726,11 +1725,10 @@ groupItemsBySection() {
       count: item.count || 0,
       thumbnail: item.thumbnail || this.getEmojiForCategory(key),
       topOrder: getTopOrder(item),
+      // Pass through image configuration
       alignment: item.alignment || item.Alignment || item.ALIGNMENT,
       fitting: item.fitting || item.Fitting || item.FITTING,
-      scaling: item.scaling || item.Scaling || item.SCALING,
-      // ADD THIS LINE - PASS VIDEO DATA
-      videoPreview: item.videoPreview // ← ADD THIS
+      scaling: item.scaling || item.Scaling || item.SCALING
     });
   });
 
@@ -1819,25 +1817,36 @@ groupItemsBySection() {
 
   // REPLACE the createCardHTML function in public/script.js:
 
-// REPLACE createCardHTML method - FIXED VIDEO CHECK
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
   // Extract image config
   const imageConfig = this.extractImageConfig(item);
+  console.log('🔍 Image config for', item.title, ':', imageConfig);
   
   let imageContent = '';
   
   if (imageSrc) {
+    // Check if using background-image method
     const isBackgroundMethod = this.isBackgroundImageMethod(imageConfig.fitting);
     
     if (isBackgroundMethod) {
+      console.log('🖼️ Using background-image method for', item.title);
+      
+      // Generate background-image styles
       const backgroundStyles = this.generateBackgroundImageStyles(imageSrc, imageConfig);
+      
+      // Create div with background-image instead of img tag
       imageContent = `<div class="card-image-background" style="${backgroundStyles}" data-method="background"></div>`;
+      
     } else {
+      console.log('📐 Using standard img tag method for', item.title);
+      
+      // Generate standard img styles
       const imageStyles = this.generateImageStyles(imageConfig);
       
       if (imageStyles === 'BACKGROUND_METHOD') {
+        // Fallback: shouldn't happen but just in case
         imageContent = this.getEmojiForCategory(item.key);
       } else {
         imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
@@ -1848,27 +1857,11 @@ createCardHTML(item) {
       }
     }
   } else {
+    // No image - show emoji placeholder
     imageContent = this.getEmojiForCategory(item.key);
   }
 
   const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
-  
-  // FIXED: Properly check if product has video
-  const hasVideo = !!(
-    item.isProduct && 
-    item.videoPreview && 
-    item.videoPreview.videos && 
-    item.videoPreview.videos.length > 0
-  );
-  
-  // DEBUG LOG
-  if (item.isProduct) {
-    console.log(`🔍 Card render for ${item.title || item.key}:`, {
-      hasVideoPreview: !!item.videoPreview,
-      videoCount: item.videoPreview?.videoCount,
-      hasVideo: hasVideo
-    });
-  }
 
   return `
     <div class="content-card" 
@@ -1876,19 +1869,11 @@ createCardHTML(item) {
          data-is-product="${item.isProduct || false}" 
          data-drive-link="${item.driveLink || ''}" 
          data-search-path="${item.fullPath || ''}"
-         data-has-video="${hasVideo}"
          role="button" 
          tabindex="0">
       <div class="card-image card-image-container">
         ${imageContent}
         <div class="card-overlay"></div>
-        ${hasVideo ? `
-          <div class="video-play-overlay">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-          </div>
-        ` : ''}
       </div>
       <div class="card-content">
         <h3 class="card-title">${item.title}</h3>
@@ -1903,7 +1888,6 @@ createCardHTML(item) {
     </div>
   `;
 }
-
 
 extractImageConfig(item) {
   console.log('Item data for image config:', item);
@@ -3390,11 +3374,11 @@ resetScrollPosition() {
   performSearch(query) {
     const results = [];
     
-    // FIND THIS SECTION in performSearch
     function searchNode(node, path = []) {
       for (const [key, item] of Object.entries(node)) {
         const currentPath = [...path, key];
         
+        // Check if current item matches search
         if (key.toLowerCase().includes(query) || 
             (item.title && item.title.toLowerCase().includes(query))) {
           results.push({
@@ -3403,12 +3387,11 @@ resetScrollPosition() {
             isProduct: item.isProduct,
             count: item.count,
             thumbnail: item.thumbnail,
-            driveLink: item.driveLink,
-            // ADD THIS LINE - CAPTURE VIDEO DATA
-            videoPreview: item.videoPreview // ← ADD THIS
+            driveLink: item.driveLink
           });
         }
         
+        // Search in children
         if (item.children && !item.isProduct) {
           searchNode(item.children, currentPath);
         }
@@ -3442,19 +3425,17 @@ resetScrollPosition() {
   
   const gridClass = this.getGridClass(results.length);
   
-  // FIND THIS SECTION in displaySearchResults
-    const resultsHTML = results.map(result => ({
-      key: result.name,
-      title: result.name.replace(/_/g, ' '),
-      description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
-      count: result.count || (result.isProduct ? 1 : 0),
-      thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
-      isProduct: result.isProduct,
-      fullPath: result.path,
-      driveLink: result.driveLink,
-      // ADD THIS LINE - PASS VIDEO DATA
-      videoPreview: result.videoPreview // ← ADD THIS
-    }));
+  // FIXED: Map results with correct data structure
+  const resultsHTML = results.map(result => ({
+    key: result.name,
+    title: result.name.replace(/_/g, ' '),
+    description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
+    count: result.count || (result.isProduct ? 1 : 0),
+    thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
+    isProduct: result.isProduct,
+    fullPath: result.path, // FIXED: Use full path for proper navigation
+    driveLink: result.driveLink
+  }));
   
   container.innerHTML = `
     <section class="content-section">
