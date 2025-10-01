@@ -1,4 +1,4 @@
-// tools/build-drive-previews.mjs - SUPER FAST OPTIMIZED VERSION
+// tools/build-drive-previews.mjs - ENHANCED: Photos + Videos
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,8 +9,9 @@ const ROOT = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
 const DATA_JSON_PATH = path.join(PUBLIC_DIR, "data.json");
 
-// Image file extensions we care about
+// ENHANCED: Support both images AND videos
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'];
+const VIDEO_EXTENSIONS = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'm4v', 'wmv'];
 
 class FastDrivePreviewBuilder {
   constructor(serviceAccountKey) {
@@ -27,32 +28,31 @@ class FastDrivePreviewBuilder {
       productsWithDriveLinks: 0,
       productsProcessed: 0,
       totalImages: 0,
+      totalVideos: 0,
       errors: [],
       startTime: Date.now()
     };
   }
 
   async buildPreviews() {
-    console.log('🚀 Starting SUPER FAST Drive Preview Build...\n');
+    console.log('🚀 Starting ENHANCED Drive Preview Build (Photos + Videos)...\n');
     
     try {
       const data = await this.loadDataJson();
       await this.testConnection();
       
-      // Collect all products with Drive links
       const productsToProcess = [];
       this.collectProducts(data.catalog.tree, [], productsToProcess);
       
       console.log(`📦 Found ${productsToProcess.length} products with Drive links`);
       console.log('⚡ Processing in parallel batches of 10...\n');
       
-      // Process in batches of 10 for maximum speed
       await this.processInBatches(productsToProcess, 10);
       
       await this.saveDataJson(data);
       this.printStats();
       
-      console.log('\n✅ Drive Preview Build Complete!');
+      console.log('\n✅ Enhanced Drive Preview Build Complete!');
       
     } catch (error) {
       console.error('\n❌ Build failed:', error);
@@ -116,12 +116,10 @@ class FastDrivePreviewBuilder {
       const progress = Math.round(((i + 1) / batches.length) * 100);
       console.log(`📦 Batch ${i + 1}/${batches.length} (${progress}% complete)`);
       
-      // Process batch in parallel with Promise.allSettled for better error handling
       const results = await Promise.allSettled(
         batch.map(product => this.processProduct(product.item, product.path, product.folderId))
       );
       
-      // Count successes
       const successes = results.filter(r => r.status === 'fulfilled').length;
       console.log(`   ✅ ${successes}/${batch.length} successful\n`);
     }
@@ -133,14 +131,14 @@ class FastDrivePreviewBuilder {
         throw new Error('Invalid Drive link');
       }
       
-      const images = await this.fetchFolderImages(folderId);
+      const { images, videos } = await this.fetchFolderMedia(folderId);
       
-      if (images.length === 0) {
-        console.log(`   ⚠️  ${productPath}: No images found`);
+      if (images.length === 0 && videos.length === 0) {
+        console.log(`   ⚠️  ${productPath}: No media found`);
         return;
       }
       
-      // Embed comprehensive preview data
+      // ENHANCED: Store both images and videos separately
       product.preview = {
         folderId: folderId,
         images: images.map(img => ({
@@ -148,20 +146,34 @@ class FastDrivePreviewBuilder {
           name: img.name,
           mimeType: img.mimeType,
           size: img.size,
+          type: 'image',
           thumbnailUrl: `https://lh3.googleusercontent.com/d/${img.id}=s400`,
           viewUrl: `https://lh3.googleusercontent.com/d/${img.id}=w2000`,
           driveUrl: `https://drive.google.com/file/d/${img.id}/view`,
           directDownload: `https://drive.google.com/uc?export=download&id=${img.id}`
         })),
+        videos: videos.map(vid => ({
+          id: vid.id,
+          name: vid.name,
+          mimeType: vid.mimeType,
+          size: vid.size,
+          type: 'video',
+          driveUrl: `https://drive.google.com/file/d/${vid.id}/view`,
+          directDownload: `https://drive.google.com/uc?export=download&id=${vid.id}`,
+          embedUrl: `https://drive.google.com/file/d/${vid.id}/preview`
+        })),
         imageCount: images.length,
+        videoCount: videos.length,
+        totalMedia: images.length + videos.length,
         lastUpdated: new Date().toISOString(),
         folderUrl: `https://drive.google.com/drive/folders/${folderId}`
       };
       
       this.stats.productsProcessed++;
       this.stats.totalImages += images.length;
+      this.stats.totalVideos += videos.length;
       
-      console.log(`   ✅ ${productPath}: ${images.length} images embedded`);
+      console.log(`   ✅ ${productPath}: ${images.length} images + ${videos.length} videos`);
       
     } catch (error) {
       console.log(`   ❌ ${productPath}: ${error.message}`);
@@ -185,8 +197,7 @@ class FastDrivePreviewBuilder {
     return null;
   }
 
-  async fetchFolderImages(folderId) {
-    // Check cache first
+  async fetchFolderMedia(folderId) {
     if (this.cache.has(folderId)) {
       return this.cache.get(folderId);
     }
@@ -194,21 +205,30 @@ class FastDrivePreviewBuilder {
     this.apiCallCount++;
     
     try {
-      // Optimized query - only fetch images
+      // ENHANCED: Query for both images AND videos
       const imageQuery = IMAGE_EXTENSIONS.map(ext => 
         `(name contains '.${ext}' or mimeType contains 'image/${ext}')`
       ).join(' or ');
       
+      const videoQuery = VIDEO_EXTENSIONS.map(ext => 
+        `(name contains '.${ext}' or mimeType contains 'video/${ext}')`
+      ).join(' or ');
+      
+      const mediaQuery = `(${imageQuery}) or (${videoQuery})`;
+      
       const response = await this.drive.files.list({
-        q: `'${folderId}' in parents and trashed=false and (${imageQuery})`,
+        q: `'${folderId}' in parents and trashed=false and (${mediaQuery})`,
         fields: 'files(id,name,mimeType,size,thumbnailLink,webViewLink)',
-        pageSize: 100,
+        pageSize: 1000, // Increased to fetch all media
         orderBy: 'name',
         supportsAllDrives: true,
         includeItemsFromAllDrives: true
       });
       
-      const imageFiles = (response.data.files || [])
+      const allFiles = response.data.files || [];
+      
+      // Separate images and videos
+      const images = allFiles
         .filter(f => f.mimeType?.startsWith('image/'))
         .map(f => ({
           id: f.id,
@@ -219,29 +239,42 @@ class FastDrivePreviewBuilder {
           webViewLink: f.webViewLink
         }));
       
-      // Cache for future use
-      this.cache.set(folderId, imageFiles);
+      const videos = allFiles
+        .filter(f => f.mimeType?.startsWith('video/'))
+        .map(f => ({
+          id: f.id,
+          name: f.name,
+          mimeType: f.mimeType,
+          size: f.size,
+          webViewLink: f.webViewLink
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)); // Sort videos alphabetically
       
-      return imageFiles;
+      const result = { images, videos };
+      this.cache.set(folderId, result);
+      
+      return result;
       
     } catch (error) {
-      console.error(`   ❌ Error fetching images for folder ${folderId}:`, error.message);
-      return [];
+      console.error(`   ❌ Error fetching media for folder ${folderId}:`, error.message);
+      return { images: [], videos: [] };
     }
   }
 
   async saveDataJson(data) {
     console.log('\n💾 Saving updated data.json...');
     
-    // Add build metadata
     data.meta = data.meta || {};
     data.meta.previewBuild = {
       timestamp: new Date().toISOString(),
       productsProcessed: this.stats.productsProcessed,
       totalImages: this.stats.totalImages,
+      totalVideos: this.stats.totalVideos,
+      totalMedia: this.stats.totalImages + this.stats.totalVideos,
       apiCalls: this.apiCallCount,
       buildTime: `${((Date.now() - this.stats.startTime) / 1000).toFixed(1)}s`,
-      cacheHits: this.cache.size
+      cacheHits: this.cache.size,
+      features: ['images', 'videos', 'alphabetical-sort']
     };
     
     await fs.writeFile(DATA_JSON_PATH, JSON.stringify(data, null, 2), 'utf8');
@@ -262,6 +295,8 @@ class FastDrivePreviewBuilder {
     console.log(`   🔗 With Drive links:          ${this.stats.productsWithDriveLinks}`);
     console.log(`   ✅ Successfully processed:    ${this.stats.productsProcessed}`);
     console.log(`   🖼️  Total images embedded:     ${this.stats.totalImages}`);
+    console.log(`   🎬 Total videos embedded:     ${this.stats.totalVideos}`);
+    console.log(`   📹 Total media files:         ${this.stats.totalImages + this.stats.totalVideos}`);
     console.log(`   📞 API calls:                 ${this.apiCallCount}`);
     console.log(`   💾 Cache entries:             ${this.cache.size}`);
     console.log(`   ❌ Errors:                    ${this.stats.errors.length}`);
@@ -278,7 +313,7 @@ class FastDrivePreviewBuilder {
 
 async function main() {
   console.log('╔═══════════════════════════════════════════════════════════╗');
-  console.log('║   🚀 SUPER FAST Google Drive Preview Builder            ║');
+  console.log('║   🚀 ENHANCED Drive Preview Builder (Photos + Videos)   ║');
   console.log('╚═══════════════════════════════════════════════════════════╝\n');
   
   const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
