@@ -54,9 +54,6 @@ jobs:
           if [ "${{ inputs.rebuild_drive_previews }}" == "true" ]; then
             npm install googleapis
           fi
-          if [ "${{ inputs.rebuild_video_previews }}" == "true" ]; then
-            npm install @aws-sdk/client-s3
-          fi
 
       - name: Build data.json (merge + validate + health report)
         env:
@@ -77,13 +74,9 @@ jobs:
       - name: Build R2 Video Preview Database
         if: inputs.rebuild_video_previews == 'true'
         env:
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME: brand-videos
           R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
         run: |
-          echo "🎬 Building R2 video preview database..."
+          echo "🎬 Building video preview database from R2 CSV..."
           node tools/build-r2-previews.mjs
           echo "✅ Video preview database build complete"
 
