@@ -3353,4 +3353,36 @@ div#drivePreviewModal .preview-nav:hover:not(:disabled) {
     max-width: 900px !important;
   }
 }
+  /* Video Preview Modal Styles */
+/* ========================== */
+
+#videoPreviewModal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 10000 !important;
+}
+
+#videoPlayer {
+  cursor: pointer;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  #videoPreviewModal .video-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+  }
+  
+  #videoContent {
+    padding: 1rem !important;
+  }
+}
 }
