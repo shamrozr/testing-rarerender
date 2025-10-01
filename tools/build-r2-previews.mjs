@@ -1,60 +1,79 @@
-// tools/build-r2-previews.mjs
+// tools/build-r2-previews.mjs - CSV-BASED VIDEO PREVIEW BUILDER
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
 const DATA_JSON_PATH = path.join(PUBLIC_DIR, "data.json");
 
-// R2 Configuration from environment variables
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || "660c5d6b5866a6cb7fa1cb5d3dc4ec74";
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || "brand-videos";
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL; // Your pub-xxxxx.r2.dev URL
+// R2 Configuration
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || "https://pub-473157af2ec948f98aff1f3ce756662b.r2.dev";
+const VIDEO_CSV_URL = `${R2_PUBLIC_URL}/video_mirror_log.csv`;
 
-class R2VideoPreviewBuilder {
-  constructor() {
-    this.client = new S3Client({
-      region: "auto",
-      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId: R2_ACCESS_KEY_ID,
-        secretAccessKey: R2_SECRET_ACCESS_KEY,
-      },
-    });
+function parseCSV(text) {
+  const lines = text.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
+  const headers = lines[0].split(",").map(h => h.trim());
+  
+  return lines.slice(1).filter(Boolean).map(line => {
+    const cells = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === "," && !inQ) { cells.push(cur); cur = ""; continue; }
+      cur += ch;
+    }
+    cells.push(cur);
     
+    const obj = {};
+    headers.forEach((h, i) => (obj[h] = (cells[i] ?? "").trim()));
+    return obj;
+  });
+}
+
+class CSVVideoPreviewBuilder {
+  constructor() {
     this.stats = {
       productsFound: 0,
       productsWithVideos: 0,
       totalVideos: 0,
+      csvRowsProcessed: 0,
       errors: [],
       startTime: Date.now()
     };
+    this.videoMap = new Map();
   }
 
   async buildVideoPreviewsData() {
-    console.log('🎬 Starting R2 Video Preview Build...\n');
+    console.log('🎬 Starting CSV-Based Video Preview Build...\n');
     
     try {
+      // Fetch video CSV from R2
+      const videoData = await this.fetchVideoCSV();
+      console.log(`📊 Loaded ${videoData.length} rows from video CSV\n`);
+      
+      // Build video map
+      this.buildVideoMap(videoData);
+      console.log(`🗺️  Built video map with ${this.videoMap.size} product folders\n`);
+      
+      // Load data.json
       const data = await this.loadDataJson();
       
+      // Collect all products
       console.log('📦 Scanning catalog for products...');
       const products = [];
       this.collectProducts(data.catalog.tree, [], products);
-      
       console.log(`   Found ${products.length} products\n`);
-      console.log('🔍 Checking R2 for videos...\n');
       
-      // Process products in batches of 50
+      // Match products with videos
+      console.log('🔍 Matching products with videos...\n');
       for (let i = 0; i < products.length; i++) {
         const product = products[i];
-        await this.processProduct(product.item, product.path);
+        this.processProduct(product.item, product.path);
         
-        if ((i + 1) % 50 === 0) {
+        if ((i + 1) % 100 === 0) {
           console.log(`   📊 Progress: ${i + 1}/${products.length} products checked`);
         }
       }
@@ -67,6 +86,60 @@ class R2VideoPreviewBuilder {
     } catch (error) {
       console.error('\n❌ Build failed:', error);
       throw error;
+    }
+  }
+
+  async fetchVideoCSV() {
+    console.log(`📥 Fetching video CSV from: ${VIDEO_CSV_URL}`);
+    
+    try {
+      const response = await fetch(VIDEO_CSV_URL);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const csvContent = await response.text();
+      console.log(`✅ CSV fetched successfully (${csvContent.length} bytes)`);
+      
+      return parseCSV(csvContent);
+    } catch (error) {
+      console.error(`❌ Failed to fetch CSV from R2: ${error.message}`);
+      console.error(`   URL: ${VIDEO_CSV_URL}`);
+      throw error;
+    }
+  }
+
+  buildVideoMap(videoData) {
+    for (const row of videoData) {
+      this.stats.csvRowsProcessed++;
+      
+      // Check if video exists
+      const hasVideo = row.Video_Found?.toLowerCase() === 'yes';
+      if (!hasVideo) continue;
+      
+      // Get the relative path (product folder path)
+      const folderPath = (row.Folder_Relative_Path || '').trim();
+      if (!folderPath || folderPath === 'root') continue;
+      
+      // Get video filename
+      const videoName = (row.Source_Video_Name || 'video.mp4').trim();
+      
+      // Get destination relative path
+      const videoRelativePath = (row.Destination_Relative_Path || '').trim();
+      
+      if (!videoRelativePath) continue;
+      
+      // Store video info
+      if (!this.videoMap.has(folderPath)) {
+        this.videoMap.set(folderPath, []);
+      }
+      
+      this.videoMap.get(folderPath).push({
+        name: videoName,
+        relativePath: videoRelativePath,
+        folderPath: folderPath
+      });
     }
   }
 
@@ -91,29 +164,41 @@ class R2VideoPreviewBuilder {
     }
   }
 
-  async processProduct(product, productPath) {
+  processProduct(product, productPath) {
     try {
-      // R2 path matches catalog path exactly (backslashes converted to forward slashes)
-      const r2Path = productPath.replace(/\\/g, '/') + '/';
+      // Try multiple path format variations
+      const pathVariants = [
+        productPath,
+        productPath.replace(/\//g, '\\'),
+        productPath.replace(/\\/g, '/'),
+        // Also try with normalized slashes
+        productPath.split(/[\/\\]/).join('\\'),
+        productPath.split(/[\/\\]/).join('/')
+      ];
       
-      const videos = await this.listVideosInPath(r2Path);
+      let videos = null;
+      for (const variant of pathVariants) {
+        videos = this.videoMap.get(variant);
+        if (videos) {
+          console.log(`   🔗 Matched path variant: ${variant}`);
+          break;
+        }
+      }
       
-      if (videos.length === 0) {
+      if (!videos || videos.length === 0) {
         return;
       }
       
       // Embed video preview data
       product.videoPreview = {
         videos: videos.map(video => ({
-          key: video.Key,
-          name: path.basename(video.Key),
-          size: video.Size,
-          lastModified: video.LastModified,
-          url: `${R2_PUBLIC_URL}/${video.Key}`
+          key: video.relativePath.replace(/\\/g, '/'),
+          name: video.name,
+          url: `${R2_PUBLIC_URL}/${video.relativePath.replace(/\\/g, '/')}`
         })),
         videoCount: videos.length,
         lastUpdated: new Date().toISOString(),
-        r2Path: r2Path
+        sourcePath: productPath
       };
       
       this.stats.productsWithVideos++;
@@ -127,47 +212,6 @@ class R2VideoPreviewBuilder {
     }
   }
 
-  async listVideosInPath(prefix) {
-    try {
-      const command = new ListObjectsV2Command({
-        Bucket: R2_BUCKET_NAME,
-        Prefix: prefix,
-        MaxKeys: 100
-      });
-      
-      const response = await this.client.send(command);
-      
-      // Filter for video files
-      const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.MP4', '.WEBM', '.MOV'];
-      const videos = (response.Contents || []).filter(obj => 
-        videoExtensions.some(ext => obj.Key.toLowerCase().endsWith(ext))
-      );
-      
-      // Sort videos by name (video.mp4 first, then video1.mp4, video2.mp4, etc.)
-      videos.sort((a, b) => {
-        const aName = path.basename(a.Key).toLowerCase();
-        const bName = path.basename(b.Key).toLowerCase();
-        
-        // Match pattern: video.mp4, video1.mp4, video2.mp4
-        const aMatch = aName.match(/video(\d*)\./);
-        const bMatch = bName.match(/video(\d*)\./);
-        
-        if (aMatch && bMatch) {
-          const aNum = aMatch[1] === '' ? 0 : parseInt(aMatch[1]);
-          const bNum = bMatch[1] === '' ? 0 : parseInt(bMatch[1]);
-          return aNum - bNum;
-        }
-        
-        return aName.localeCompare(bName);
-      });
-      
-      return videos;
-    } catch (error) {
-      console.error(`Error listing videos in ${prefix}:`, error.message);
-      return [];
-    }
-  }
-
   async saveDataJson(data) {
     console.log('\n💾 Saving updated data.json...');
     
@@ -176,8 +220,9 @@ class R2VideoPreviewBuilder {
       timestamp: new Date().toISOString(),
       productsWithVideos: this.stats.productsWithVideos,
       totalVideos: this.stats.totalVideos,
-      r2Bucket: R2_BUCKET_NAME,
-      r2PublicUrl: R2_PUBLIC_URL,
+      csvRowsProcessed: this.stats.csvRowsProcessed,
+      method: 'csv-from-r2',
+      csvUrl: VIDEO_CSV_URL,
       buildTime: `${((Date.now() - this.stats.startTime) / 1000).toFixed(1)}s`
     };
     
@@ -191,6 +236,7 @@ class R2VideoPreviewBuilder {
     console.log('\n📊 Video Build Statistics:');
     console.log('═'.repeat(60));
     console.log(`   ⏱️  Build time:               ${buildTime}s`);
+    console.log(`   📋 CSV rows processed:        ${this.stats.csvRowsProcessed}`);
     console.log(`   📦 Total products:            ${this.stats.productsFound}`);
     console.log(`   🎬 Products with videos:      ${this.stats.productsWithVideos}`);
     console.log(`   🎥 Total videos:              ${this.stats.totalVideos}`);
@@ -207,19 +253,13 @@ class R2VideoPreviewBuilder {
 }
 
 async function main() {
-  if (!R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
-    console.error('❌ Missing R2 environment variables');
-    console.error('Required: R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL');
-    process.exit(1);
-  }
-  
   if (!R2_PUBLIC_URL) {
     console.error('❌ Missing R2_PUBLIC_URL environment variable');
-    console.error('Please set your R2 public URL (e.g., https://pub-xxxxx.r2.dev)');
+    console.error('Please set your R2 public URL');
     process.exit(1);
   }
   
-  const builder = new R2VideoPreviewBuilder();
+  const builder = new CSVVideoPreviewBuilder();
   await builder.buildVideoPreviewsData();
 }
 
@@ -227,4 +267,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-export { R2VideoPreviewBuilder };
+export { CSVVideoPreviewBuilder };
