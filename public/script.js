@@ -136,7 +136,7 @@ if (this.currentPath.length > 0) {
     this.setupFooter();
     this.setupEventListeners();
     this.setupPreviewModal();
-    
+    this.setupVideoPreviewModal();
     this.setupFABFunctionality();
     
     // NEW: Setup scroll behavior
@@ -837,6 +837,265 @@ sortItemsEnhanced(items, isHomepage = false) {
   this.bindPreviewEventsSimple();
 }
 
+
+// ADD AFTER setupPreviewModal() method
+
+setupVideoPreviewModal() {
+  const existingModal = document.getElementById('videoPreviewModal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+  
+  console.log('🎬 Creating video preview modal...');
+  
+  const modal = document.createElement('div');
+  modal.id = 'videoPreviewModal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+    display: none;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  modal.innerHTML = `
+    <div id="videoOverlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; cursor: pointer;"></div>
+    
+    <div class="video-wrapper" style="
+      position: relative;
+      z-index: 10001;
+      width: 90%;
+      max-width: 1200px;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(0, 0, 0, 0.9);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    ">
+      
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: rgba(0, 0, 0, 0.95);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+      ">
+        <div id="videoTitle" style="
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: white;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        ">Product Video</div>
+        
+        <button id="videoClose" style="
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.15);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          color: white;
+          font-size: 2rem;
+          font-weight: 300;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        " title="Close">×</button>
+      </div>
+      
+      <div id="videoContent" style="
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow: hidden;
+        position: relative;
+        background: #000;
+        min-height: 0;
+      ">
+        <video id="videoPlayer" controls autoplay style="
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+          border-radius: 8px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        "></video>
+        
+        <div class="video-loading" style="
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          color: white;
+        ">
+          <div style="
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          "></div>
+          <span>Loading video...</span>
+        </div>
+      </div>
+      
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  console.log('✅ Video modal created');
+  
+  this.bindVideoEvents();
+}
+
+bindVideoEvents() {
+  const modal = document.getElementById('videoPreviewModal');
+  const overlay = document.getElementById('videoOverlay');
+  const closeBtn = document.getElementById('videoClose');
+  
+  console.log('🔗 Binding video events...');
+  
+  closeBtn?.addEventListener('click', () => {
+    console.log('❌ Close clicked');
+    this.closeVideoPreview();
+  });
+  
+  overlay?.addEventListener('click', () => {
+    console.log('❌ Overlay clicked');
+    this.closeVideoPreview();
+  });
+  
+  document.addEventListener('keydown', (e) => {
+    if (modal?.style.display !== 'flex') return;
+    if (e.key === 'Escape') this.closeVideoPreview();
+  });
+  
+  console.log('✅ Video events bound');
+}
+
+openVideoPreview(product, productTitle) {
+  console.log('🎬 Opening video preview for:', productTitle);
+  console.log('📦 Product data:', product);
+  
+  if (!product?.videoPreview?.videos?.length) {
+    console.log('⚠️ No videos available');
+    if (product?.preview?.images?.length > 0) {
+      this.openPreview(product, productTitle);
+    }
+    return;
+  }
+  
+  if (!document.getElementById('videoPreviewModal')) {
+    this.setupVideoPreviewModal();
+  }
+  
+  console.log(`✅ Video data set: ${product.videoPreview.videos.length} video(s)`);
+  
+  document.getElementById('videoTitle').textContent = productTitle;
+  
+  const modal = document.getElementById('videoPreviewModal');
+  modal.style.display = 'flex';
+  
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  
+  console.log('✅ Modal visible');
+  
+  setTimeout(() => this.showVideo(product.videoPreview.videos[0]), 100);
+}
+
+showVideo(videoData) {
+  console.log(`🎬 Loading video: ${videoData.name}`);
+  
+  const content = document.getElementById('videoContent');
+  const videoPlayer = document.getElementById('videoPlayer');
+  const loading = content.querySelector('.video-loading');
+  
+  if (loading) loading.style.display = 'flex';
+  if (videoPlayer) videoPlayer.style.display = 'none';
+  
+  videoPlayer.src = videoData.url;
+  
+  videoPlayer.onloadedmetadata = () => {
+    console.log('✅ Video loaded successfully');
+    if (loading) loading.style.display = 'none';
+    videoPlayer.style.display = 'block';
+    videoPlayer.play().catch(err => {
+      console.log('⚠️ Autoplay blocked, user must click play');
+    });
+  };
+  
+  videoPlayer.onerror = () => {
+    console.error('❌ Video failed to load');
+    if (loading) {
+      loading.innerHTML = `
+        <div style="text-align: center; color: white;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">🎬</div>
+          <h3 style="margin-bottom: 0.5rem;">Video unavailable</h3>
+          <p style="opacity: 0.8; margin-bottom: 1rem;">${videoData.name}</p>
+          <button onclick="window.catalogApp.closeVideoPreview()" style="
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+          ">Close</button>
+        </div>
+      `;
+    }
+  };
+}
+
+closeVideoPreview() {
+  console.log('🔓 Closing video preview...');
+  
+  const modal = document.getElementById('videoPreviewModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  
+  const videoPlayer = document.getElementById('videoPlayer');
+  if (videoPlayer) {
+    videoPlayer.pause();
+    videoPlayer.src = '';
+  }
+  
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  
+  console.log('✅ Video preview closed');
+}
+
+
+
+
+
+  
 // NEW SIMPLE EVENT BINDING
 bindPreviewEventsSimple() {
   const modal = document.getElementById('drivePreviewModal');
@@ -2788,50 +3047,72 @@ navigateToBrandCategory(brandName, categoryName) {
 
     // Card clicks
     // Card clicks
-// Card clicks - ENHANCED with proper preview support
-// Card clicks - ENHANCED with proper preview support and search fixes
+// CARD CLICK HANDLER - REPLACE ENTIRE SECTION (around line 1100)
 document.addEventListener('click', (e) => {
   const card = e.target.closest('.content-card, .taxonomy-item');
-  if (card) {
-    const brand = card.dataset.brand;
-    const category = card.dataset.category;
-    const isProduct = card.dataset.isProduct === 'true';
-    const driveLink = card.dataset.driveLink;
-    const searchPath = card.dataset.searchPath;
+  if (!card) return;
+  
+  const brand = card.dataset.brand;
+  const category = card.dataset.category;
+  const isProduct = card.dataset.isProduct === 'true';
+  const driveLink = card.dataset.driveLink;
+  const searchPath = card.dataset.searchPath;
+  
+  console.log('🎯 Card clicked', { brand, category, isProduct, driveLink, searchPath });
+  
+  // Check if this is a brand category card
+  if (brand && category && !isProduct) {
+    this.navigateToBrandCategory(brand, category);
+    return;
+  }
+  
+  if (isProduct && driveLink) {
+    const productPath = searchPath || category;
+    const productData = this.findProductByPath(productPath);
+    const productTitle = card.querySelector('.card-title')?.textContent || category;
     
-    console.log('🎯 Card clicked', { brand, category, isProduct, driveLink, searchPath });
+    // CRITICAL: Check if click was on IMAGE (top half) or TEXT (bottom half)
+    const clickedImage = e.target.closest('.card-image, .card-image-container, .card-image-background, img');
+    const clickedText = e.target.closest('.card-content, .card-title, .card-description, .card-footer, .card-badge');
     
-    // Check if this is a brand category card
-    if (brand && category && !isProduct) {
-      this.navigateToBrandCategory(brand, category);
-      return;
-    }
-    
-    if (isProduct && driveLink) {
-      // FIXED: Use searchPath if available, otherwise use category
-      const productPath = searchPath || category;
-      const productData = this.findProductByPath(productPath);
-      const productTitle = card.querySelector('.card-title')?.textContent || category;
+    if (clickedImage) {
+      // IMAGE CLICK → Try video preview first
+      console.log('🖼️ Image area clicked - checking for video');
       
-      console.log('🎯 Opening product:', { productPath, hasData: !!productData, hasPreview: !!(productData?.preview) });
+      if (productData?.videoPreview?.videos?.length > 0) {
+        console.log('🎬 Opening video preview');
+        this.openVideoPreview(productData, productTitle);
+      } else {
+        console.log('📸 No video, trying photo preview');
+        if (productData?.preview?.images?.length > 0) {
+          this.openPreview(productData, productTitle);
+        } else {
+          console.log('🔗 No preview, opening Drive');
+          window.open(driveLink, '_blank', 'noopener,noreferrer');
+        }
+      }
+    } else if (clickedText) {
+      // TEXT CLICK → Photo gallery
+      console.log('📝 Text area clicked - opening photo gallery');
       
-      // FIXED: Check if product has preview data
-      if (productData && productData.preview && productData.preview.images && productData.preview.images.length > 0) {
-        console.log('✅ Opening preview modal with', productData.preview.images.length, 'images');
+      if (productData?.preview?.images?.length > 0) {
+        console.log('📸 Opening photo preview');
         this.openPreview(productData, productTitle);
       } else {
-        console.log('⚠️ No preview data, opening Drive link');
+        console.log('🔗 No preview, opening Drive');
         window.open(driveLink, '_blank', 'noopener,noreferrer');
       }
-    } else if (searchPath) {
-      // FIXED: For folders from search results, navigate to path
-      console.log('📁 Navigating to folder:', searchPath);
-      this.navigateToPath(searchPath);
     } else {
-      // Default category navigation
-      console.log('📂 Navigating to category:', category);
-      this.navigateToCategory(category);
+      // FALLBACK: Clicked somewhere else on card
+      console.log('🔗 Generic card click - opening Drive');
+      window.open(driveLink, '_blank', 'noopener,noreferrer');
     }
+  } else if (searchPath) {
+    console.log('📁 Navigating to folder:', searchPath);
+    this.navigateToPath(searchPath);
+  } else {
+    console.log('📂 Navigating to category:', category);
+    this.navigateToCategory(category);
   }
 });
 
@@ -3580,7 +3861,7 @@ const preloadImages = () => {
     document.body.classList.remove('loading');
   }
 }
-
+window.catalogApp = null;
 // Enhanced initialization
 function initializeApp() {
   const app = new CSVCatalogApp();
@@ -3596,6 +3877,7 @@ function initializeApp() {
       }
     }, 100);
   }).catch(error => {
+    
     // Silent error handling
   });
   
