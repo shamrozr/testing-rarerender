@@ -1817,37 +1817,25 @@ groupItemsBySection() {
 
   // REPLACE the createCardHTML function in public/script.js:
 
-// REPLACE createCardHTML method
+// REPLACE createCardHTML method - CLEAN VERSION
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
   
   // Extract image config
   const imageConfig = this.extractImageConfig(item);
-  console.log('🔍 Image config for', item.title, ':', imageConfig);
   
   let imageContent = '';
   
   if (imageSrc) {
-    // Check if using background-image method
     const isBackgroundMethod = this.isBackgroundImageMethod(imageConfig.fitting);
     
     if (isBackgroundMethod) {
-      console.log('🖼️ Using background-image method for', item.title);
-      
-      // Generate background-image styles
       const backgroundStyles = this.generateBackgroundImageStyles(imageSrc, imageConfig);
-      
-      // Create div with background-image instead of img tag
       imageContent = `<div class="card-image-background" style="${backgroundStyles}" data-method="background"></div>`;
-      
     } else {
-      console.log('📐 Using standard img tag method for', item.title);
-      
-      // Generate standard img styles
       const imageStyles = this.generateImageStyles(imageConfig);
       
       if (imageStyles === 'BACKGROUND_METHOD') {
-        // Fallback: shouldn't happen but just in case
         imageContent = this.getEmojiForCategory(item.key);
       } else {
         imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
@@ -1858,17 +1846,16 @@ createCardHTML(item) {
       }
     }
   } else {
-    // No image - show emoji placeholder
     imageContent = this.getEmojiForCategory(item.key);
   }
 
   const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
   
-  // ADD: Check if this product has video (for play button overlay)
+  // Check if product has video
   const hasVideo = item.isProduct && item.videoPreview && item.videoPreview.videoCount > 0;
 
   return `
-    <div class="content-card ${hasVideo ? 'has-video' : ''}" 
+    <div class="content-card" 
          data-category="${item.key}" 
          data-is-product="${item.isProduct || false}" 
          data-drive-link="${item.driveLink || ''}" 
@@ -1879,7 +1866,13 @@ createCardHTML(item) {
       <div class="card-image card-image-container">
         ${imageContent}
         <div class="card-overlay"></div>
-        ${hasVideo ? '<div class="video-play-button"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' : ''}
+        ${hasVideo ? `
+          <div class="video-play-overlay">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        ` : ''}
       </div>
       <div class="card-content">
         <h3 class="card-title">${item.title}</h3>
