@@ -410,52 +410,127 @@ body {
   color: var(--color-text-muted);
 }
 
-/* Hero Section */
-/* ============ */
+/* ============================================
+   HERO SECTION - CLEAN MINIMAL DESIGN
+   ============================================ */
 
 .hero {
-  background: linear-gradient(135deg, 
-    var(--color-light-gray) 0%, 
-    rgba(99, 102, 241, 0.05) 50%,
-    var(--color-soft-gray) 100%);
-  padding: var(--space-16) 0 var(--space-8) 0; /* Added top padding to account for header */
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  margin-top: 0; /* Reset any margins */
+  background: #9d9d9d;
+  overflow: hidden;
 }
 
-.hero-content {
+/* Slideshow background */
+.hero-slideshow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.hero-slide-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.hero-slide-bg.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+/* Dark overlay */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
+
+/* Content */
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  padding: var(--space-16) var(--space-6);
   max-width: 800px;
   margin: 0 auto;
+}
+
+.hero-brand {
+  margin-bottom: var(--space-8);
+}
+
+.brand-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(212, 175, 106, 0.9);
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  backdrop-filter: blur(10px);
 }
 
 .hero-title {
   font-family: var(--font-display);
   font-size: 3.5rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-6);
+  font-weight: 400;
+  color: #4a4a4a;
   line-height: 1.2;
+  margin-bottom: var(--space-4);
+  letter-spacing: -0.02em;
+}
+
+.hero-year {
+  color: #b8985f;
+  font-weight: 600;
 }
 
 .hero-subtitle {
-  font-size: 1.25rem;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-10);
-  line-height: 1.6;
-}
-/* Reduce spacing between hero and first section */
-.hero + #dynamicSections .content-section:first-child {
-  padding-top: var(--space-5);
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 400;
+  letter-spacing: 0.5px;
 }
 
-/* Remove section header from category pages */
-.content-section .section-header {
-  margin-bottom: var(--space-8);
-}
-
-/* Hide section headers on category pages */
-body[data-page-type="category"] .section-header {
-  display: none;
+@media (max-width: 768px) {
+  .hero {
+    min-height: 350px;
+  }
+  
+  .brand-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 1.4rem;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
 }
 /* ============================================
    HERO SLIDESHOW - AUTO-ROTATING BACKGROUND
@@ -2058,7 +2133,7 @@ body {
 /* ========================= */
 
 /* ============================================
-   BRANDS SECTION - FIXED
+   BRANDS SECTION - ACTUALLY WORKS NOW
    ============================================ */
 
 .brands-section {
@@ -2085,7 +2160,6 @@ body {
 
 .brand-item {
   background: white;
-  padding: 0 !important;
   border-radius: var(--radius-xl);
   border: 2px solid var(--color-border);
   cursor: pointer;
@@ -2093,22 +2167,8 @@ body {
   display: flex !important;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 200px; /* FIXED HEIGHT on mobile */
+  height: 180px;
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-@media (max-width: 768px) {
-  .brand-item {
-    height: 200px !important; /* FORCE height on mobile */
-  }
-}
-
-@media (min-width: 769px) {
-  .brand-item {
-    height: 160px !important;
-  }
 }
 
 .brand-item:hover {
@@ -2118,83 +2178,67 @@ body {
 }
 
 .brand-logo-small {
-  width: 100%;
-  height: 100%;
+  width: 80%;
+  height: 80%;
   display: flex !important;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  padding: 25px; /* Fixed pixel padding */
 }
 
 .brand-logo-small img {
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: contain !important;
   display: block !important;
 }
 
-
-
-/* Fallback emoji - BIGGER */
 .brand-logo-fallback {
-  font-size: 5rem;
-  line-height: 1;
+  font-size: 4rem;
 }
 
-/* Hide text in browse brands section */
 .brand-info,
 .brand-name-display,
 .brand-count {
   display: none !important;
 }
 
-/* Mobile: 2 columns, BIGGER boxes */
 @media (max-width: 768px) {
   .brands-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: var(--space-4);
   }
   
   .brand-item {
-    min-height: 180px; /* Taller on mobile */
+    height: 180px !important;
   }
 }
 
-/* Tablet: 3 columns */
 @media (min-width: 769px) and (max-width: 1024px) {
   .brands-grid {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: var(--space-5);
   }
   
   .brand-item {
-    min-height: 150px;
+    height: 160px !important;
   }
 }
 
-/* Desktop: 5 columns */
 @media (min-width: 1025px) and (max-width: 1399px) {
   .brands-grid {
     grid-template-columns: repeat(5, 1fr) !important;
   }
   
   .brand-item {
-    min-height: 140px;
+    height: 150px !important;
   }
 }
 
-/* Large desktop: 6 columns */
 @media (min-width: 1400px) {
   .brands-grid {
     grid-template-columns: repeat(6, 1fr) !important;
   }
   
   .brand-item {
-    min-height: 130px;
+    height: 140px !important;
   }
 }
 
