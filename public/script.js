@@ -136,7 +136,7 @@ if (this.currentPath.length > 0) {
     this.setupFooter();
     this.setupEventListeners();
     this.setupPreviewModal();
-
+    this.initHeroSlideshow();
     this.setupFABFunctionality();
     
     // NEW: Setup scroll behavior
@@ -1670,7 +1670,71 @@ updateSectionVisibility(showSections) {
       element.textContent = content;
     }
   }
-
+// Initialize hero slideshow
+initHeroSlideshow() {
+  const heroSlideshow = document.getElementById('heroSlideshow');
+  if (!heroSlideshow) return;
+  
+  // Get all items with slideshow enabled
+  const slideshowItems = [];
+  
+  const collectSlideshow = (node) => {
+    for (const [key, item] of Object.entries(node)) {
+      // Check if slideshow is enabled
+      const slideshowValue = (item.slideshow || '').toString().toLowerCase();
+      if (slideshowValue === 'on' || slideshowValue === 'yes' || slideshowValue === '1') {
+        if (item.thumbnail && item.thumbnail !== '') {
+          slideshowItems.push({
+            image: item.thumbnail,
+            title: item.title
+          });
+        }
+      }
+      
+      if (item.children && !item.isProduct) {
+        collectSlideshow(item.children);
+      }
+    }
+  };
+  
+  if (this.data?.catalog?.tree) {
+    collectSlideshow(this.data.catalog.tree);
+  }
+  
+  console.log('🎬 Slideshow items found:', slideshowItems.length);
+  
+  if (slideshowItems.length === 0) {
+    console.log('⚠️ No slideshow items found');
+    return;
+  }
+  
+  // Create slide elements
+  slideshowItems.forEach((item, index) => {
+    const slide = document.createElement('div');
+    slide.className = 'hero-slide-bg';
+    if (index === 0) slide.classList.add('active');
+    slide.style.backgroundImage = `url('${item.image}')`;
+    slide.setAttribute('data-slide', index);
+    heroSlideshow.appendChild(slide);
+  });
+  
+  // Auto-rotate every 5 seconds
+  let currentSlide = 0;
+  const slides = heroSlideshow.querySelectorAll('.hero-slide-bg');
+  
+  setInterval(() => {
+    // Hide current slide
+    slides[currentSlide].classList.remove('active');
+    
+    // Move to next slide
+    currentSlide = (currentSlide + 1) % slides.length;
+    
+    // Show next slide
+    slides[currentSlide].classList.add('active');
+    
+    console.log('🔄 Slide changed to:', currentSlide);
+  }, 5000); // 5 seconds
+}
   applyBrandColors(colors) {
     if (!colors) return;
     
