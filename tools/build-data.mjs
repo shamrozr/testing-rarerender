@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
-
+const slideshow = [];
 const BRANDS_CSV_URL = process.env.BRANDS_CSV_URL;
 const MASTER_CSV_URL = process.env.MASTER_CSV_URL;
 const PLACEHOLDER_THUMB = (process.env.PLACEHOLDER_THUMB || "/thumbs/_placeholder.webp").trim();
@@ -272,7 +272,16 @@ for (const r of masterRows) {
   const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-  
+  // Extract slideshow items in the same pass
+  const slideshowValue = (r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || "").trim().toLowerCase();
+  if ((slideshowValue === 'on' || slideshowValue === 'yes') && thumbRel) {
+    const normalizedThumb = toThumbSitePath(thumbRel);
+    slideshowItems.push({
+      image: normalizedThumb,
+      title: name,
+      path: rel
+    });
+  }
   // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
@@ -603,7 +612,14 @@ console.log("✅ BUILD TopOrder verification complete");
     JSON.stringify(enhancedData, null, 2), 
     "utf8"
   );
-  
+  // NEW: Save slideshow.json
+  await fs.writeFile(
+    path.join(PUBLIC_DIR, "slideshow.json"),
+    JSON.stringify(slideshowItems, null, 2),
+    "utf8"
+  );
+    console.log(`📸 Generated slideshow.json with ${slideshowItems.length} items`);
+
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
   await fs.writeFile(
     path.join(ROOT, "build", "health.json"), 
