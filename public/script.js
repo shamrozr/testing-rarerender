@@ -3313,15 +3313,21 @@ updateHeaderVisibility() {
   if (!header) return;
 
   const currentScrollY = window.pageYOffset;
-  const scrollingDown = currentScrollY > this.lastScrollY;
+  const scrollDelta = currentScrollY - this.lastScrollY;
   const pastThreshold = currentScrollY > this.scrollThreshold;
 
-  if (pastThreshold && scrollingDown && !this.isHeaderCollapsed) {
-    // Scrolling down past threshold - collapse header
+  // FIXED: More sensitive upward scroll detection
+  // Show header on ANY upward movement (scrollDelta < 0)
+  // But require at least 15px of movement to avoid false triggers
+  const isScrollingUp = scrollDelta < -15; // 15px minimum upward movement
+  const isScrollingDown = scrollDelta > 5; // 5px minimum downward movement
+
+  if (pastThreshold && isScrollingDown && !this.isHeaderCollapsed) {
+    // Scrolling down - hide header
     header.classList.add('collapsed');
     this.isHeaderCollapsed = true;
-  } else if (pastThreshold && !scrollingDown && this.isHeaderCollapsed) {
-    // Scrolling up past threshold - show header
+  } else if (isScrollingUp && this.isHeaderCollapsed) {
+    // FIXED: Any clear upward scroll shows header (no threshold check)
     header.classList.remove('collapsed');
     this.isHeaderCollapsed = false;
   } else if (!pastThreshold) {
