@@ -71,6 +71,20 @@
   --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Disable double-tap zoom globally */
+* {
+  touch-action: manipulation;
+}
+
+/* Specifically for images and cards */
+img, .content-card, .brand-item {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+
 /* Reset & Base Styles */
 /* ================== */
 
@@ -1139,6 +1153,20 @@ body[data-page-type="category"] .section-header {
   box-shadow: var(--shadow-xl);
 }
 
+/* FIXED: Reduce height on mobile for better fit */
+@media (max-width: 768px) {
+  .slideshow-container {
+    max-height: 65vh; /* Limit to 65% of viewport height */
+    aspect-ratio: auto; /* Remove aspect ratio constraint */
+  }
+}
+
+@media (max-width: 480px) {
+  .slideshow-container {
+    max-height: 55vh; /* Even smaller on very small screens */
+  }
+}
+
 .slideshow-viewport {
   position: relative;
   width: 100%;
@@ -1242,12 +1270,7 @@ body[data-page-type="category"] .section-header {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-@media (max-width: 768px) {
-  .slideshow-container {
-    max-width: 100%;
-    aspect-ratio: 9/16;
-  }
-  
+@media (max-width: 768px) {  
   .slideshow-nav {
     width: 50px;
     height: 50px;
@@ -1280,42 +1303,58 @@ body[data-page-type="category"] .section-header {
   margin-bottom: var(--space-12);
 }
 
+/* ENHANCED: Modern card-style grid layout */
 .brands-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-6);
+  padding: var(--space-4);
 }
 
+/* ENHANCED: Vertical card layout with prominent logo */
 .brand-item {
   background: var(--color-white);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   cursor: pointer;
-  transition: all var(--transition-base);
+  transition: all var(--transition-smooth);
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: var(--space-4);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
 }
 
 .brand-item:hover {
   border-color: var(--color-primary);
-  transform: translateX(4px);
-  box-shadow: var(--shadow-md);
-  background: rgba(99, 102, 241, 0.02);
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-xl);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.02), var(--color-white));
 }
 
+/* ENHANCED: Large circular logo */
 .brand-logo-small {
-  width: 60px;
-  height: 60px;
+  width: 100px;
+  height: 100px;
   flex-shrink: 0;
-  border-radius: var(--radius-md);
+  border-radius: 50%; /* Perfect circle */
   overflow: hidden;
   background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-border-light);
+  border: 3px solid var(--color-border-light);
+  padding: var(--space-3);
+  transition: all var(--transition-smooth);
+  box-shadow: var(--shadow-sm);
+}
+
+.brand-item:hover .brand-logo-small {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  transform: scale(1.05);
 }
 
 .brand-logo-small img {
@@ -1326,25 +1365,61 @@ body[data-page-type="category"] .section-header {
 }
 
 .brand-logo-fallback {
-  font-size: 2rem;
+  font-size: 2.5rem;
   display: none;
 }
 
+/* ENHANCED: Centered info below logo */
 .brand-info {
   flex: 1;
-  text-align: left;
+  text-align: center;
+  width: 100%;
 }
 
 .brand-name-display {
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: var(--space-1);
-  font-size: 1.1rem;
+  margin-bottom: var(--space-2);
+  font-size: 1rem;
+  line-height: 1.3;
 }
 
 .brand-count {
   color: var(--color-text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--color-surface);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .brands-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-4);
+    padding: var(--space-2);
+  }
+  
+  .brand-item {
+    padding: var(--space-4);
+  }
+  
+  .brand-logo-small {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .brand-name-display {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .brands-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 .brand-image {
   width: 100%;
