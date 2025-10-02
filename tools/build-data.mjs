@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
-const slideshow = [];
+const slideshowItems = [];
 const BRANDS_CSV_URL = process.env.BRANDS_CSV_URL;
 const MASTER_CSV_URL = process.env.MASTER_CSV_URL;
 const PLACEHOLDER_THUMB = (process.env.PLACEHOLDER_THUMB || "/thumbs/_placeholder.webp").trim();
@@ -607,18 +607,25 @@ console.log("✅ BUILD TopOrder verification complete");
     }
   };
 
-  await fs.writeFile(
+await fs.writeFile(
     path.join(PUBLIC_DIR, "data.json"), 
     JSON.stringify(enhancedData, null, 2), 
     "utf8"
   );
-  // NEW: Save slideshow.json
-  await fs.writeFile(
-    path.join(PUBLIC_DIR, "slideshow.json"),
-    JSON.stringify(slideshowItems, null, 2),
-    "utf8"
-  );
+  console.log("✅ Saved data.json");
+  
+  // NEW: Save slideshow.json with error handling
+  try {
+    await fs.writeFile(
+      path.join(PUBLIC_DIR, "slideshow.json"),
+      JSON.stringify(slideshowItems, null, 2),
+      "utf8"
+    );
     console.log(`📸 Generated slideshow.json with ${slideshowItems.length} items`);
+  } catch (err) {
+    console.error("❌ Failed to write slideshow.json:", err.message);
+    // Don't fail the entire build for slideshow
+  }
 
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
   await fs.writeFile(
