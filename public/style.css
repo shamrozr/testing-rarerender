@@ -71,17 +71,50 @@
   --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Disable double-tap zoom globally */
+/* ============================================
+   DISABLE DOUBLE-TAP ZOOM EVERYWHERE
+   ============================================ */
+
 * {
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Specifically for images and cards */
-img, .content-card, .brand-item {
+html, body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Specifically disable on all interactive elements */
+img, 
+a, 
+button, 
+.content-card, 
+.brand-item,
+.taxonomy-item,
+.viewer-image,
+.slideshow-image,
+.preview-image {
   touch-action: manipulation;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection only where needed */
+.card-title,
+.card-description,
+.brand-name,
+p,
+h1, h2, h3, h4, h5, h6 {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 
