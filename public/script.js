@@ -137,6 +137,7 @@ if (this.currentPath.length > 0) {
     this.setupEventListeners();
     this.setupPreviewModal();
     this.initHeroSlideshow();
+    this.setupHeroButtons();
     this.setupFABFunctionality();
     
     // NEW: Setup scroll behavior
@@ -1747,7 +1748,40 @@ initHeroSlideshow() {
   }
 }
 
-
+setupHeroButtons() {
+  // "Explore all Luxury Brands" button
+  const exploreAllBtn = document.querySelector('.hero-btn-primary');
+  if (exploreAllBtn) {
+    exploreAllBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const brandsSection = document.querySelector('.brands-section');
+      if (brandsSection) {
+        brandsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  }
+  
+  // "Explore CHANEL Collection" button
+  const chanelBtn = document.querySelector('.hero-btn-secondary');
+  if (chanelBtn) {
+    chanelBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // Find CHANEL in brands
+      const chanelBrand = Object.keys(this.data?.brands || {}).find(
+        brand => brand.toLowerCase().includes('chanel')
+      );
+      
+      if (chanelBrand) {
+        this.currentBrand = chanelBrand;
+        this.renderCurrentView();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        alert('CHANEL collection not found');
+      }
+    });
+  }
+}
   
   applyBrandColors(colors) {
     if (!colors) return;
