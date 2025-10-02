@@ -3160,104 +3160,121 @@ navigateToBrandCategory(brandName, categoryName) {
     `;
   }
 
-  setupEventListeners() {
-    // Logo click - go to home
-    const logo = document.getElementById('brandLogo');
-    if (logo) {
-      logo.addEventListener('click', () => {
-        this.navigateToHome();
-      });
-    }
-
-    // Card clicks
-// Card clicks - UNIFIED PREVIEW
-document.addEventListener('click', (e) => {
-  const card = e.target.closest('.content-card, .taxonomy-item');
-  if (!card) return;
-  
-  // Get the app instance
-  const app = window.catalogApp;
-  if (!app) {
-    console.warn('⚠️ App instance not available');
-    return;
-  }
-  
-  const brand = card.dataset.brand;
-  const category = card.dataset.category;
-  const isProduct = card.dataset.isProduct === 'true';
-  const driveLink = card.dataset.driveLink;
-  const searchPath = card.dataset.searchPath;
-  
-  console.log('🎯 Card clicked', { brand, category, isProduct, driveLink, searchPath });
-  
-  // Check if this is a brand category card
-  if (brand && category && !isProduct) {
-    app.navigateToBrandCategory(brand, category);
-    return;
-  }
-  
-  if (isProduct && driveLink) {
-    const productPath = searchPath || category;
-    const productData = app.findProductByPath(productPath);
-    const productTitle = card.querySelector('.card-title')?.textContent || category;
-    
-    // UNIFIED: Always show unified preview (R2 video + Drive photos/videos)
-    // No matter where user clicks on the card
-    console.log('🎬 Opening unified preview with priority order');
-    
-    if (productData) {
-      // Check if there's ANY media available
-      const hasR2Video = productData?.videoPreview?.videos?.length > 0;
-      const hasDrivePhotos = productData?.preview?.images?.length > 0;
-      const hasDriveVideos = productData?.preview?.videos?.length > 0;
-      
-      if (hasR2Video || hasDrivePhotos || hasDriveVideos) {
-        console.log('✅ Media available:', {
-          r2Videos: hasR2Video ? productData.videoPreview.videos.length : 0,
-          drivePhotos: hasDrivePhotos ? productData.preview.images.length : 0,
-          driveVideos: hasDriveVideos ? productData.preview.videos.length : 0
-        });
-        
-        // Open unified preview (handles all media types in priority order)
-        app.openPreview(productData, productTitle);
-      } else {
-        // No media at all, open Drive folder
-        console.log('⚠️ No media available, opening Drive');
-        window.open(driveLink, '_blank', 'noopener,noreferrer');
-      }
-    } else {
-      // Product data not found, open Drive folder
-      console.log('⚠️ Product data not found, opening Drive');
-      window.open(driveLink, '_blank', 'noopener,noreferrer');
-    }
-  } else if (searchPath) {
-    console.log('📁 Navigating to folder:', searchPath);
-    app.navigateToPath(searchPath);
-  } else {
-    console.log('📂 Navigating to category:', category);
-    app.navigateToCategory(category);
-  }
-});
-
-
-
-
-    // Search functionality - only on Enter press
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-      searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.handleSearch(e.target.value);
-        }
-      });
-    }
-
-    // Browser back/forward navigation
-    window.addEventListener('popstate', (e) => {
-      this.handleBrowserNavigation();
+setupEventListeners() {
+  // Logo click - go to home
+  const logo = document.getElementById('brandLogo');
+  if (logo) {
+    logo.addEventListener('click', () => {
+      this.navigateToHome();
     });
   }
+
+  // Card clicks - UNIFIED PREVIEW
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.content-card, .taxonomy-item');
+    if (!card) return;
+    
+    const app = window.catalogApp;
+    if (!app) {
+      console.warn('⚠️ App instance not available');
+      return;
+    }
+    
+    const brand = card.dataset.brand;
+    const category = card.dataset.category;
+    const isProduct = card.dataset.isProduct === 'true';
+    const driveLink = card.dataset.driveLink;
+    const searchPath = card.dataset.searchPath;
+    
+    console.log('🎯 Card clicked', { brand, category, isProduct, driveLink, searchPath });
+    
+    if (brand && category && !isProduct) {
+      app.navigateToBrandCategory(brand, category);
+      return;
+    }
+    
+    if (isProduct && driveLink) {
+      const productPath = searchPath || category;
+      const productData = app.findProductByPath(productPath);
+      const productTitle = card.querySelector('.card-title')?.textContent || category;
+      
+      console.log('🎬 Opening unified preview with priority order');
+      
+      if (productData) {
+        const hasR2Video = productData?.videoPreview?.videos?.length > 0;
+        const hasDrivePhotos = productData?.preview?.images?.length > 0;
+        const hasDriveVideos = productData?.preview?.videos?.length > 0;
+        
+        if (hasR2Video || hasDrivePhotos || hasDriveVideos) {
+          console.log('✅ Media available:', {
+            r2Videos: hasR2Video ? productData.videoPreview.videos.length : 0,
+            drivePhotos: hasDrivePhotos ? productData.preview.images.length : 0,
+            driveVideos: hasDriveVideos ? productData.preview.videos.length : 0
+          });
+          
+          app.openPreview(productData, productTitle);
+        } else {
+          console.log('⚠️ No media available, opening Drive');
+          window.open(driveLink, '_blank', 'noopener,noreferrer');
+        }
+      } else {
+        console.log('⚠️ Product data not found, opening Drive');
+        window.open(driveLink, '_blank', 'noopener,noreferrer');
+      }
+    } else if (searchPath) {
+      console.log('📁 Navigating to folder:', searchPath);
+      app.navigateToPath(searchPath);
+    } else {
+      console.log('📂 Navigating to category:', category);
+      app.navigateToCategory(category);
+    }
+  });
+
+  // Search functionality - only on Enter press
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.handleSearch(e.target.value);
+      }
+    });
+  }
+
+  // Browser back/forward navigation
+  window.addEventListener('popstate', (e) => {
+    this.handleBrowserNavigation();
+  });
+
+  // ============================================
+  // 👇 Added: Touch/gesture prevention snippet
+  // ============================================
+  
+  // FIXED: Prevent double-tap zoom with JavaScript backup
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+  
+  // Prevent pinch zoom
+  document.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+  });
+  
+  document.addEventListener('gesturechange', (e) => {
+    e.preventDefault();
+  });
+  
+  document.addEventListener('gestureend', (e) => {
+    e.preventDefault();
+  });
+}
+
+  
 // ADD this method after setupEventListeners():
 setupScrollBehavior() {
   const header = document.querySelector('.header');
