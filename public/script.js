@@ -1670,24 +1670,23 @@ updateSectionVisibility(showSections) {
       element.textContent = content;
     }
   }
-// Initialize hero slideshow
 initHeroSlideshow() {
   const heroSlideshow = document.getElementById('heroSlideshow');
   if (!heroSlideshow) return;
   
-  // Get all items with slideshow enabled
   const slideshowItems = [];
   
   const collectSlideshow = (node) => {
     for (const [key, item] of Object.entries(node)) {
-      // Check if slideshow is enabled
-      const slideshowValue = (item.slideshow || '').toString().toLowerCase();
-      if (slideshowValue === 'on' || slideshowValue === 'yes' || slideshowValue === '1') {
+      const slideshowValue = (item.slideshow || '').toString().toLowerCase().trim();
+      
+      if (slideshowValue === 'on' || slideshowValue === 'yes') {
         if (item.thumbnail && item.thumbnail !== '') {
           slideshowItems.push({
             image: item.thumbnail,
             title: item.title
           });
+          console.log('Found slideshow item:', item.title, item.thumbnail);
         }
       }
       
@@ -1701,40 +1700,41 @@ initHeroSlideshow() {
     collectSlideshow(this.data.catalog.tree);
   }
   
-  console.log('🎬 Slideshow items found:', slideshowItems.length);
+  console.log('Slideshow items found:', slideshowItems.length);
   
   if (slideshowItems.length === 0) {
-    console.log('⚠️ No slideshow items found');
+    console.log('No slideshow items - using placeholder');
     return;
   }
   
   // Create slide elements
   slideshowItems.forEach((item, index) => {
     const slide = document.createElement('div');
-    slide.className = 'hero-slide-bg';
+    slide.className = 'hero-slide-image';
     if (index === 0) slide.classList.add('active');
-    slide.style.backgroundImage = `url('${item.image}')`;
-    slide.setAttribute('data-slide', index);
+    
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.title;
+    img.loading = 'lazy';
+    
+    slide.appendChild(img);
     heroSlideshow.appendChild(slide);
   });
   
   // Auto-rotate every 5 seconds
   let currentSlide = 0;
-  const slides = heroSlideshow.querySelectorAll('.hero-slide-bg');
+  const slides = heroSlideshow.querySelectorAll('.hero-slide-image');
   
   setInterval(() => {
-    // Hide current slide
     slides[currentSlide].classList.remove('active');
-    
-    // Move to next slide
     currentSlide = (currentSlide + 1) % slides.length;
-    
-    // Show next slide
     slides[currentSlide].classList.add('active');
-    
-    console.log('🔄 Slide changed to:', currentSlide);
-  }, 5000); // 5 seconds
+  }, 5000);
 }
+
+
+  
   applyBrandColors(colors) {
     if (!colors) return;
     
