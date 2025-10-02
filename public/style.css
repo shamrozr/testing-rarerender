@@ -1979,7 +1979,7 @@ body {
 /* ========================= */
 
 /* ============================================
-   BRANDS SECTION - BIGGER LOGOS ON MOBILE
+   BRANDS SECTION - FIXED
    ============================================ */
 
 .brands-section {
@@ -2004,26 +2004,30 @@ body {
   margin: 0 auto;
 }
 
+/* Square container */
 .brand-item {
   background: white;
-  padding: var(--space-8); /* MORE padding */
+  padding: 0; /* No padding - logo fills space */
   border-radius: var(--radius-xl);
   border: 2px solid var(--color-border);
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* ONLY these animations */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px; /* TALLER on mobile */
+  aspect-ratio: 1; /* Perfect square */
+  min-height: 0; /* Let aspect-ratio control height */
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .brand-item:hover {
   border-color: var(--color-primary);
   transform: translateY(-4px);
-  box-shadow: var(--shadow-md); /* Light shadow only */
+  box-shadow: var(--shadow-md);
 }
 
+/* Logo container fills the card */
 .brand-logo-small {
   width: 100%;
   height: 100%;
@@ -2032,53 +2036,57 @@ body {
   justify-content: center;
   background: transparent;
   border: none;
-  padding: 0;
+  padding: 15%; /* Space around logo */
 }
 
+/* Logo image */
 .brand-logo-small img {
   max-width: 100%;
   max-height: 100%;
   width: auto;
   height: auto;
   object-fit: contain;
+  display: block;
 }
 
+/* Fallback emoji */
 .brand-logo-fallback {
-  font-size: 5rem; /* BIGGER fallback */
+  font-size: 4rem;
+  line-height: 1;
 }
 
+/* Hide text in browse brands section */
 .brand-info,
 .brand-name-display,
 .brand-count {
   display: none !important;
 }
 
-/* Mobile: 2 columns, TALL boxes */
+/* Mobile: 2 columns */
 @media (max-width: 768px) {
   .brands-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: var(--space-4);
   }
-  
-  .brand-item {
-    min-height: 200px; /* Keep tall */
-    padding: var(--space-8);
+}
+
+/* Tablet: 3 columns */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .brands-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: var(--space-5);
   }
 }
 
 /* Desktop: 5 columns */
-@media (min-width: 769px) {
+@media (min-width: 1025px) and (max-width: 1399px) {
   .brands-grid {
     grid-template-columns: repeat(5, 1fr) !important;
   }
-  
-  .brand-item {
-    min-height: 160px;
-    padding: var(--space-6);
-  }
 }
 
-@media (min-width: 1200px) {
+/* Large desktop: 6 columns */
+@media (min-width: 1400px) {
   .brands-grid {
     grid-template-columns: repeat(6, 1fr) !important;
   }
@@ -3369,17 +3377,17 @@ a:focus-visible {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #202124 !important; /* Force dark color */
   line-height: 1.2;
   cursor: pointer;
-  display: block !important; /* FORCE visible */
+  display: block !important; /* Force visible */
+  opacity: 1 !important; /* Force opaque */
 }
 
-/* Show on mobile too */
 @media (max-width: 768px) {
   .brand-name {
-    display: block !important;
     font-size: 1.1rem;
+    display: block !important;
   }
 }
 
