@@ -1671,80 +1671,66 @@ updateSectionVisibility(showSections) {
       element.textContent = content;
     }
   }
-initHeroSlideshow() {
-  const heroSlideshow = document.getElementById('heroSlideshow');
-  if (!heroSlideshow) return;
-  
-  const slideshowItems = [];
-  
-  const collectSlideshow = (node) => {
-    for (const [key, item] of Object.entries(node)) {
-      // Check multiple possible field names
-      const slideshowValue = (
-        item.slideshow || 
-        item.Slideshow || 
-        item.SLIDESHOW || 
-        ''
-      ).toString().toLowerCase().trim();
-      
-      console.log(`Checking ${item.title}: slideshow="${slideshowValue}", thumbnail="${item.thumbnail}"`);
-      
-      if (slideshowValue === 'on' || slideshowValue === 'yes' || slideshowValue === '1') {
-        if (item.thumbnail && item.thumbnail !== '') {
-          slideshowItems.push({
-            image: item.thumbnail,
-            title: item.title
-          });
-          console.log('✅ Added to slideshow:', item.title);
-        } else {
-          console.log('⚠️ Has slideshow=on but no thumbnail:', item.title);
-        }
-      }
-      
-      if (item.children && !item.isProduct) {
-        collectSlideshow(item.children);
-      }
-    }
-  };
-  
-  if (this.data?.catalog?.tree) {
-    collectSlideshow(this.data.catalog.tree);
-  }
-  
-  console.log('📊 Total slideshow items found:', slideshowItems.length);
-  
-  if (slideshowItems.length === 0) {
-    console.log('⚠️ No slideshow items found - check your CSV');
-    // Show placeholder image
-    heroSlideshow.innerHTML = '<div class="hero-slide-image active"><img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop" alt="Luxury Bag"></div>';
+async initHeroSlideshow() {
+  // Only run on homepage
+  if (this.currentBrand || this.breadcrumbs.length > 0) {
     return;
   }
   
-  // Create slide elements
-  slideshowItems.forEach((item, index) => {
-    const slide = document.createElement('div');
-    slide.className = 'hero-slide-image';
-    if (index === 0) slide.classList.add('active');
-    
-    const img = document.createElement('img');
-    img.src = item.image;
-    img.alt = item.title;
-    img.loading = 'lazy';
-    
-    slide.appendChild(img);
-    heroSlideshow.appendChild(slide);
-  });
+  const heroSlideshow = document.getElementById('heroSlideshow');
+  if (!heroSlideshow) return;
   
-  // Auto-rotate
-  if (slideshowItems.length > 1) {
-    let currentSlide = 0;
-    const slides = heroSlideshow.querySelectorAll('.hero-slide-image');
+  try {
+    // Fetch pre-generated slideshow data
+    const response = await fetch('/slideshow.json');
+    if (!response.ok) {
+      throw new Error('Slideshow data not found');
+    }
     
-    setInterval(() => {
-      slides[currentSlide].classList.remove('active');
-      currentSlide = (currentSlide + 1) % slides.length;
-      slides[currentSlide].classList.add('active');
-    }, 5000);
+    const slideshowItems = await response.json();
+    
+    console.log('Loaded slideshow items:', slideshowItems.length);
+    
+    if (slideshowItems.length === 0) {
+      // Fallback placeholder
+      heroSlideshow.innerHTML = '<div class="hero-slide-image active"><img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop" alt="Luxury"></div>';
+      return;
+    }
+    
+    // Clear any existing content
+    heroSlideshow.innerHTML = '';
+    
+    // Create slides
+    slideshowItems.forEach((item, index) => {
+      const slide = document.createElement('div');
+      slide.className = 'hero-slide-image';
+      if (index === 0) slide.classList.add('active');
+      
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.title;
+      img.loading = index === 0 ? 'eager' : 'lazy';
+      
+      slide.appendChild(img);
+      heroSlideshow.appendChild(slide);
+    });
+    
+    // Auto-rotate if multiple slides
+    if (slideshowItems.length > 1) {
+      let currentSlide = 0;
+      const slides = heroSlideshow.querySelectorAll('.hero-slide-image');
+      
+      setInterval(() => {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+      }, 5000);
+    }
+    
+  } catch (error) {
+    console.error('Failed to load slideshow:', error);
+    // Fallback placeholder
+    heroSlideshow.innerHTML = '<div class="hero-slide-image active"><img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop" alt="Luxury"></div>';
   }
 }
 
