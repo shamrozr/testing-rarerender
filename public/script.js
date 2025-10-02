@@ -1678,15 +1678,25 @@ initHeroSlideshow() {
   
   const collectSlideshow = (node) => {
     for (const [key, item] of Object.entries(node)) {
-      const slideshowValue = (item.slideshow || '').toString().toLowerCase().trim();
+      // Check multiple possible field names
+      const slideshowValue = (
+        item.slideshow || 
+        item.Slideshow || 
+        item.SLIDESHOW || 
+        ''
+      ).toString().toLowerCase().trim();
       
-      if (slideshowValue === 'on' || slideshowValue === 'yes') {
+      console.log(`Checking ${item.title}: slideshow="${slideshowValue}", thumbnail="${item.thumbnail}"`);
+      
+      if (slideshowValue === 'on' || slideshowValue === 'yes' || slideshowValue === '1') {
         if (item.thumbnail && item.thumbnail !== '') {
           slideshowItems.push({
             image: item.thumbnail,
             title: item.title
           });
-          console.log('Found slideshow item:', item.title, item.thumbnail);
+          console.log('✅ Added to slideshow:', item.title);
+        } else {
+          console.log('⚠️ Has slideshow=on but no thumbnail:', item.title);
         }
       }
       
@@ -1700,10 +1710,12 @@ initHeroSlideshow() {
     collectSlideshow(this.data.catalog.tree);
   }
   
-  console.log('Slideshow items found:', slideshowItems.length);
+  console.log('📊 Total slideshow items found:', slideshowItems.length);
   
   if (slideshowItems.length === 0) {
-    console.log('No slideshow items - using placeholder');
+    console.log('⚠️ No slideshow items found - check your CSV');
+    // Show placeholder image
+    heroSlideshow.innerHTML = '<div class="hero-slide-image active"><img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&h=600&fit=crop" alt="Luxury Bag"></div>';
     return;
   }
   
@@ -1722,15 +1734,17 @@ initHeroSlideshow() {
     heroSlideshow.appendChild(slide);
   });
   
-  // Auto-rotate every 5 seconds
-  let currentSlide = 0;
-  const slides = heroSlideshow.querySelectorAll('.hero-slide-image');
-  
-  setInterval(() => {
-    slides[currentSlide].classList.remove('active');
-    currentSlide = (currentSlide + 1) % slides.length;
-    slides[currentSlide].classList.add('active');
-  }, 5000);
+  // Auto-rotate
+  if (slideshowItems.length > 1) {
+    let currentSlide = 0;
+    const slides = heroSlideshow.querySelectorAll('.hero-slide-image');
+    
+    setInterval(() => {
+      slides[currentSlide].classList.remove('active');
+      currentSlide = (currentSlide + 1) % slides.length;
+      slides[currentSlide].classList.add('active');
+    }, 5000);
+  }
 }
 
 
