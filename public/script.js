@@ -105,7 +105,7 @@ if (this.currentPath.length > 0) {
 // Setup brands and slideshow FIRST (creates the sections)
 this.setupBrands();
 this.setupReviewSlideshow();
-
+this.setupHeroSlideshow();
 // THEN control visibility based on current view
 if (this.currentPath.length > 0) {
   // On category/brand view - hide brands and slideshow
@@ -3133,6 +3133,95 @@ navigateToBrandCategory(brandName, categoryName) {
     
     // Initialize
     preloadImages();
+  }
+
+
+
+setupHeroSlideshow() {
+    // Check if hero slideshow data exists
+    if (!this.data.heroSlideshow || this.data.heroSlideshow.length === 0) {
+      console.log('ℹ️ No hero slideshow items found');
+      return;
+    }
+    
+    const container = document.getElementById('heroSlideshowContainer');
+    const viewport = document.getElementById('heroSlideshowViewport');
+    const image = document.getElementById('heroSlideshowImage');
+    const counter = document.getElementById('heroSlideshowCounter');
+    const prevBtn = document.getElementById('heroSlideshowPrev');
+    const nextBtn = document.getElementById('heroSlideshowNext');
+    
+    if (!container || !image) {
+      console.log('⚠️ Hero slideshow elements not found');
+      return;
+    }
+    
+    const heroImages = this.data.heroSlideshow;
+    let currentIndex = 0;
+    
+    console.log(`🎬 Hero slideshow: ${heroImages.length} items found`);
+    
+    // Show container
+    container.style.display = 'block';
+    
+    const showImage = (index) => {
+      currentIndex = (index + heroImages.length) % heroImages.length;
+      const current = heroImages[currentIndex];
+      
+      viewport.classList.add('loading');
+      
+      const newImg = new Image();
+      newImg.onload = () => {
+        image.src = current.thumbnail;
+        if (counter) counter.textContent = `${currentIndex + 1} / ${heroImages.length}`;
+        viewport.classList.remove('loading');
+      };
+      newImg.onerror = () => {
+        viewport.classList.remove('loading');
+        console.log(`⚠️ Failed to load hero image: ${current.name}`);
+      };
+      newImg.src = current.thumbnail;
+    };
+    
+    const showNext = () => showImage(currentIndex + 1);
+    const showPrev = () => showImage(currentIndex - 1);
+    
+    // Event listeners
+    if (prevBtn) prevBtn.addEventListener('click', showPrev);
+    if (nextBtn) nextBtn.addEventListener('click', showNext);
+    
+    // Keyboard navigation (only if not in modal)
+    document.addEventListener('keydown', (e) => {
+      if (document.body.getAttribute('data-page-type') === 'category') return;
+      if (document.querySelector('.drive-preview-modal.active')) return;
+      
+      if (e.key === 'ArrowRight') showNext();
+      if (e.key === 'ArrowLeft') showPrev();
+    });
+    
+    // Touch swipe
+    let touchStartX = 0;
+    viewport.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    viewport.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      
+      if (Math.abs(swipeDistance) > 50) {
+        if (swipeDistance > 0) showNext();
+        else showPrev();
+      }
+    }, { passive: true });
+    
+    // Auto-advance every 5 seconds
+    setInterval(showNext, 5000);
+    
+    // Initialize
+    showImage(0);
+    
+    console.log('✅ Hero slideshow initialized');
   }
 
   setupFooter() {
