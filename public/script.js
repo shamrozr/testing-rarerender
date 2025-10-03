@@ -622,7 +622,6 @@ addBreadcrumbNavigation(breadcrumbs) {
   const breadcrumbNav = document.createElement('nav');
   breadcrumbNav.className = 'breadcrumb-nav';
 
-// FORCE inline styles for visibility
 breadcrumbNav.style.cssText = `
   display: flex !important;
   visibility: visible !important;
@@ -630,7 +629,7 @@ breadcrumbNav.style.cssText = `
   position: relative !important;
   z-index: 100 !important;
   background: rgba(255, 255, 255, 0.98) !important;
-  border: 2px solid rgba(99, 102, 241, 0.3) !important;
+  border: 2px solid var(--color-primary) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   padding: 0.75rem 1.5rem !important;
   border-radius: 50px !important;
@@ -1818,7 +1817,7 @@ debugModalState() {
 }
 
   
-  navigateToHome() {
+navigateToHome() {
   // Show homepage hero layout
   this.showHomepageHero();
   this.showFeaturedHeading();
@@ -1846,14 +1845,55 @@ debugModalState() {
   this.setupDynamicSections();
   
   // FIXED: SHOW brands and slideshow sections on homepage
-this.updateSectionVisibility(true);
-
-// SHOW hero slideshow on homepage
-const heroSlideshow = document.getElementById('heroSlideshowContainer');
-if (heroSlideshow) {
-  heroSlideshow.style.display = 'block';
-  console.log('👁️ Showing hero slideshow (homepage)');
-}
+  this.updateSectionVisibility(true);
+  
+  // SHOW hero slideshow on homepage
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'block';
+    console.log('👁️ Showing hero slideshow (homepage)');
+  }
+  
+  // CRITICAL: Force homepage hero to show properly
+  const homepageHero = document.getElementById('heroHomepage');
+  const innerHero = document.getElementById('heroInner');
+  const heroSection = document.querySelector('.hero');
+  
+  if (innerHero) {
+    innerHero.style.cssText = `
+      display: none !important;
+      height: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    `;
+  }
+  
+  if (homepageHero) {
+    homepageHero.style.cssText = `
+      display: grid !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: var(--space-12) !important;
+      align-items: center !important;
+      max-width: 1400px !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      min-height: 400px !important;
+    `;
+    console.log('✅ Homepage hero restored');
+  }
+  
+  if (heroSection) {
+    heroSection.style.cssText = `
+      background: linear-gradient(135deg, var(--color-light-gray) 0%, rgba(99, 102, 241, 0.05) 50%, var(--color-soft-gray) 100%) !important;
+      padding: var(--space-16) 0 var(--space-8) 0 !important;
+      margin-top: 0 !important;
+      overflow: visible !important;
+      min-height: auto !important;
+    `;
+  }
   
   // Reset hero
   this.setupBrandInfo();
@@ -1864,7 +1904,6 @@ if (heroSlideshow) {
     existingBreadcrumbs.remove();
   }
 }
-
 // Helper function to control section visibility
 updateSectionVisibility(showSections) {
   const brandsSection = document.querySelector('.brands-section');
