@@ -347,15 +347,25 @@ body {
   justify-content: center;
 }
 
-.brand-name {
+.brand-name,
+.brand-name-visible {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: #202124 !important; /* FIXED: Force dark color */
+  color: #202124 !important;
   line-height: 1.2;
   cursor: pointer;
-  display: block !important; /* FIXED: Force visible */
-  opacity: 1 !important; /* FIXED: Force opaque */
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Prevent gradient text fill override */
+.brand-name-visible {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #202124 !important;
+  background-clip: unset !important;
 }
 
 .brand-tagline {
@@ -582,10 +592,27 @@ body {
 }
 
 /* INNER PAGES HERO: Traditional Centered */
+/* INNER PAGES HERO: Traditional Centered */
 .hero-inner {
   max-width: 800px;
   margin: 0 auto;
   text-align: center;
+  display: none; /* Hidden by default */
+}
+
+.hero-inner.active {
+  display: block !important;
+}
+
+/* Ensure hero elements are visible on inner pages */
+body[data-page-type="category"] .hero-inner,
+body[data-page-type="brand"] .hero-inner {
+  display: block !important;
+}
+
+body[data-page-type="category"] .hero-homepage,
+body[data-page-type="brand"] .hero-homepage {
+  display: none !important;
 }
 
 /* Common Hero Styles */
@@ -1041,13 +1068,13 @@ html {
 /* ============================== */
 
 .breadcrumb-nav {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: 0.9rem;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary) !important;
   padding: var(--space-3) var(--space-6);
   background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-full);
@@ -1056,6 +1083,27 @@ html {
   box-shadow: var(--shadow-sm);
   max-width: 600px;
   margin: var(--space-4) auto var(--space-6) auto;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.breadcrumb-nav a {
+  color: var(--color-primary) !important;
+  text-decoration: none;
+  font-weight: 500;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+}
+
+.breadcrumb-nav a:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.breadcrumb-nav span {
+  color: var(--color-text-primary) !important;
 }
 
 .breadcrumb-nav a {
