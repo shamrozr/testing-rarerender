@@ -1901,7 +1901,6 @@ navigateToHome() {
   
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
-  // ... rest of the function
   
   // FIXED: Reset scroll position first
   this.resetScrollPosition();
@@ -1925,7 +1924,7 @@ navigateToHome() {
   // FIXED: SHOW brands and slideshow sections on homepage
   this.updateSectionVisibility(true);
   
-  // SHOW hero slideshow on homepage
+  // SHOW hero slideshow on homepage (MOVED HERE - declare once)
   const heroSlideshow = document.getElementById('heroSlideshowContainer');
   if (heroSlideshow) {
     heroSlideshow.style.display = 'block';
@@ -3283,18 +3282,23 @@ getScaleTransform(scaling) {
       .join(' ');
   }
   showBrandView(brandName, paths, categories) {
-  // HIDE homepage sections when viewing brand
+  // FIXED: HIDE homepage sections when viewing brand
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
   if (brandsSection) brandsSection.style.display = 'none';
   if (slideshowSection) slideshowSection.style.display = 'none';
+  if (heroSlideshow) heroSlideshow.style.display = 'none';
   
   // Show inner hero layout
   this.showInnerHero();
-    this.hideFeaturedHeading();
-    
-    document.body.setAttribute('data-page-type', 'brand');
-    this.resetScrollPosition();
+  this.hideFeaturedHeading();
+  
+  document.body.setAttribute('data-page-type', 'brand');
+  this.resetScrollPosition();
+  
+  // ... rest of function continues
     
     // Update hero for brand view
     const heroTitle = document.getElementById('heroTitle');
@@ -3493,11 +3497,19 @@ if (!brandThumbnail) {
   }
 
 navigateToBrandCategory(brandName, categoryName) {
-    this.resetScrollPosition();
-    
-    // Find the path to this brand in this category
-    const brandKey = Object.keys(this.data.catalog.tree[categoryName]?.children || {})
-      .find(key => this.normalizeBrandName(key) === brandName);
+  this.resetScrollPosition();
+  
+  // FIXED: Ensure sections stay hidden
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) brandsSection.style.display = 'none';
+  if (slideshowSection) slideshowSection.style.display = 'none';
+  
+  // Find the path to this brand in this category
+  const brandKey = Object.keys(this.data.catalog.tree[categoryName]?.children || {})
+    .find(key => this.normalizeBrandName(key) === brandName);
+  
+  // ... rest of function continues
     
     if (!brandKey) {
       this.showNotification(`${brandName} not found in ${categoryName}`);
