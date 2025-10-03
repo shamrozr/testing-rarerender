@@ -802,42 +802,48 @@
     padding-top: var(--space-5);
   }
 
-  /* Mobile Responsive */
-  @media (max-width: 768px) {
-    .hero {
-      padding: var(--space-12) var(--space-4) var(--space-8);
-    }
-    
-    .hero-homepage {
-      grid-template-columns: 1fr;
-      gap: var(--space-8);
-    }
-    
-    .hero-slideshow-side {
-      max-width: 90%;
-      margin: 0 auto;
-    }
-    
-    .hero-content-side {
-      text-align: center;
-      padding: var(--space-4);
-    }
-    
-    .hero-title {
-      font-size: 2.5rem;
-    }
-    
-    .hero-subtitle {
-      font-size: 1.1rem;
-      margin-bottom: var(--space-6);
-    }
-    
-    .hero-slideshow-counter {
-      font-size: 0.8rem;
-      padding: var(--space-1) var(--space-3);
-      bottom: 15px;
-    }
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .hero {
+    padding: var(--space-8) var(--space-4) var(--space-6);
   }
+  
+  .hero-homepage {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: var(--space-6) !important;
+  }
+  
+  /* FIXED: Image on top, full width */
+  .hero-slideshow-side {
+    grid-row: 1 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  
+  /* FIXED: Content below image */
+  .hero-content-side {
+    grid-row: 2 !important;
+    text-align: center;
+    padding: var(--space-4) var(--space-2);
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: var(--space-6);
+  }
+  
+  .hero-slideshow-counter {
+    font-size: 0.8rem;
+    padding: var(--space-1) var(--space-3);
+    bottom: 15px;
+  }
+}
 
   @media (max-width: 480px) {
     .hero {
@@ -2699,12 +2705,13 @@
   object-fit: contain !important;
   object-position: center center !important;
   background: #ffffff !important;
-  padding: var(--space-3) !important;
+  padding: 0 !important; /* FIXED: Remove padding for perfect fit */
   display: block !important;
 }
 
 .brand-category-card .card-image {
   background: #ffffff !important;
+  padding: 0 !important; /* FIXED: Remove container padding */
 }
 
   /* Override any conflicting global styles for brand logos */
