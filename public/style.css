@@ -3912,21 +3912,21 @@ a:focus-visible {
 /* Hero Section - Slideshow with Split Layout */
 /* =========================================== */
 
+/* Hero Section - Slideshow */
+/* ======================== */
+
 .hero {
   position: relative;
   margin-top: 0;
   padding: 0;
   background: transparent;
-  min-height: 70vh;
 }
 
-/* Hero Slideshow Container */
+/* Slideshow Container */
 .hero-slideshow-container {
   position: relative;
   width: 100%;
-  height: 70vh;
-  min-height: 600px;
-  max-height: 800px;
+  min-height: 70vh;
   overflow: hidden;
   background: linear-gradient(135deg, 
     var(--color-light-gray) 0%, 
@@ -3960,14 +3960,14 @@ a:focus-visible {
   display: grid;
   grid-template-columns: 45% 55%;
   align-items: center;
-  height: 100%;
+  min-height: 70vh;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 var(--space-8);
+  padding: var(--space-16) var(--space-8);
   gap: var(--space-12);
 }
 
-/* LEFT SIDE - Product Image */
+/* LEFT - Product Image */
 .hero-slide-image-container {
   display: flex;
   align-items: center;
@@ -3978,12 +3978,11 @@ a:focus-visible {
 
 .hero-slide-image {
   max-width: 100%;
-  max-height: 100%;
+  max-height: 600px;
   width: auto;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 20px 60px rgba(0, 0, 0, 0.15));
-  transition: transform 0.5s ease;
 }
 
 .hero-slide.active .hero-slide-image {
@@ -4001,7 +4000,7 @@ a:focus-visible {
   }
 }
 
-/* RIGHT SIDE - Content */
+/* RIGHT - Content */
 .hero-slide-content {
   display: flex;
   flex-direction: column;
@@ -4085,7 +4084,7 @@ a:focus-visible {
 .hero-slide-cta-label {
   font-size: 0.85rem;
   font-weight: 500;
-  opacity: 0.9;
+  opacity: 0.95;
   white-space: nowrap;
 }
 
@@ -4106,7 +4105,7 @@ a:focus-visible {
   transform: translateX(4px);
 }
 
-/* Slideshow Navigation */
+/* Navigation */
 .hero-slideshow-nav {
   position: absolute;
   top: 50%;
@@ -4143,7 +4142,7 @@ a:focus-visible {
   right: 30px;
 }
 
-/* Dots Indicator */
+/* Dots */
 .hero-slideshow-dots {
   position: absolute;
   bottom: 30px;
@@ -4161,7 +4160,6 @@ a:focus-visible {
   background: rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: all var(--transition-base);
-  border: 2px solid transparent;
 }
 
 .hero-slideshow-dot:hover {
@@ -4173,29 +4171,46 @@ a:focus-visible {
   width: 40px;
   border-radius: var(--radius-full);
   background: var(--color-primary);
-  border-color: white;
 }
 
-/* MOBILE RESPONSIVE - Content First, Image Below */
+/* Static Hero Fallback (when no slideshow) */
+.hero-content {
+  text-align: center;
+  padding: var(--space-16) 0;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-6);
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-10);
+  line-height: 1.6;
+}
+
+/* MOBILE - Content First, Image Below */
 @media (max-width: 1024px) {
   .hero-slide-inner {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    padding: var(--space-6) var(--space-4);
+    grid-template-rows: auto auto;
+    padding: var(--space-8) var(--space-4);
     gap: var(--space-6);
   }
 
-  /* Content on TOP */
   .hero-slide-content {
     order: 1;
-    padding: var(--space-4) 0;
     text-align: center;
   }
 
-  /* Image BELOW */
   .hero-slide-image-container {
     order: 2;
-    padding: var(--space-4);
   }
 
   .hero-slide-title {
@@ -4212,9 +4227,7 @@ a:focus-visible {
   }
 
   .hero-slideshow-container {
-    min-height: 500px;
-    height: auto;
-    max-height: none;
+    min-height: auto;
   }
 
   .hero-slideshow-nav {
@@ -4241,10 +4254,6 @@ a:focus-visible {
     min-width: 180px;
     padding: var(--space-3) var(--space-5);
   }
-
-  .hero-slideshow-dots {
-    bottom: 20px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -4263,7 +4272,6 @@ a:focus-visible {
 
   .hero-slide-cta {
     width: 100%;
-    min-width: auto;
   }
 
   .hero-slideshow-nav {
@@ -4281,9 +4289,14 @@ a:focus-visible {
   }
 }
 
-/* Hide slideshow on non-homepage */
+/* Hide on category pages */
 body[data-page-type="category"] .hero-slideshow-container,
 body[data-page-type="brand"] .hero-slideshow-container {
+  display: none;
+}
+
+body[data-page-type="category"] .hero,
+body[data-page-type="brand"] .hero {
   display: none;
 }
 /* ============================================
