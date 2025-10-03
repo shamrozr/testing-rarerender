@@ -707,7 +707,15 @@ body[data-page-type="brand"] .hero * {
     font-size: 1rem;
   }
 }
-
+/* Hero inner wrapper for proper positioning */
+.hero-inner-wrapper {
+  position: relative !important;
+  z-index: 10 !important;
+  width: 100% !important;
+  max-width: 800px !important;
+  margin: 0 auto !important;
+  padding: 2rem 1rem !important;
+}
 /* Common Hero Styles */
 .hero-title {
   font-family: var(--font-display);
@@ -4381,6 +4389,42 @@ body[data-page-type="category"] .featured-heading-section,
 body[data-page-type="brand"] .featured-heading-section {
   display: none !important;
 }
+/* NUCLEAR OPTION: Force hero visibility on category pages */
+body[data-page-type="category"] .hero,
+body[data-page-type="brand"] .hero {
+  position: relative !important;
+  z-index: 50 !important;
+  background: #f8f9fa !important;
+  border-bottom: 2px solid #e8eaed !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+}
+
+body[data-page-type="category"] .hero-inner,
+body[data-page-type="brand"] .hero-inner {
+  position: relative !important;
+  z-index: 51 !important;
+  transform: translateZ(0) !important;
+  backface-visibility: visible !important;
+  perspective: 1000px !important;
+}
+
+body[data-page-type="category"] .hero-title,
+body[data-page-type="brand"] .hero-title {
+  transform: translateZ(0) !important;
+  backface-visibility: visible !important;
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+body[data-page-type="category"] .breadcrumb-nav,
+body[data-page-type="brand"] .breadcrumb-nav {
+  transform: translateZ(0) !important;
+  backface-visibility: visible !important;
+}
+
+
+
+
 }
 /* ============================================
    SKELETON LOADING SCREENS
