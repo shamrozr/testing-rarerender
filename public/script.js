@@ -104,7 +104,6 @@ if (this.currentPath.length > 0) {
 
 // Setup brands and slideshow FIRST (creates the sections)
 this.setupBrands();
-this.setupHeroSlideshow();
 this.setupReviewSlideshow();
 
 // THEN control visibility based on current view
@@ -142,14 +141,7 @@ if (this.currentPath.length > 0) {
     
     // NEW: Setup scroll behavior
     this.setupScrollBehavior();
-    // In setupEventListeners() or at end of init(), ADD:
-    const lvButton = document.getElementById('exploreLouisVuitton');
-    if (lvButton) {
-      lvButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.navigateToLouisVuitton();
-      });
-    }
+    
   } catch (error) {
       // Silent error handling in production
     }
@@ -283,7 +275,7 @@ if (this.currentPath.length > 0) {
   showCategoryView() {
   // Add body attribute for CSS targeting
   document.body.setAttribute('data-page-type', 'category');
-  this.toggleHomepageOnlySections(false);
+  
   // FIXED: Reset scroll position first
   this.resetScrollPosition();
   
@@ -1503,47 +1495,39 @@ debugModalState() {
 }
 
   
-// Navigate to Louis Vuitton category
-navigateToLouisVuitton() {
-  console.log('🔍 Searching for Louis Vuitton in catalog...');
+  navigateToHome() {
+  // Remove category page attribute
+  document.body.removeAttribute('data-page-type');
   
-  // Search variations
-  const variations = ['louis vuitton', 'louisvuitton', 'louis_vuitton', 'lv'];
-  let foundPath = null;
+  // FIXED: Reset scroll position first
+  this.resetScrollPosition();
   
-  // Search through catalog tree
-  const searchNode = (node, path = []) => {
-    for (const [key, item] of Object.entries(node)) {
-      const normalized = key.toLowerCase().replace(/[_\s-]/g, '');
-      
-      // Check if matches any variation
-      const matches = variations.some(v => 
-        normalized.includes(v.replace(/\s/g, '')) || 
-        v.replace(/\s/g, '').includes(normalized)
-      );
-      
-      if (matches && item.children) {
-        foundPath = [...path, key].join('/');
-        console.log(`✅ Found Louis Vuitton at: ${foundPath}`);
-        return true;
-      }
-      
-      if (item.children && !item.isProduct) {
-        if (searchNode(item.children, [...path, key])) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.delete('path');
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
   
-  searchNode(this.data.catalog.tree);
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ brand: this.currentBrand }, '', newURL);
   
-  if (foundPath) {
-    this.navigateToPath(foundPath);
-  } else {
-    console.log('❌ Louis Vuitton not found in catalog');
-    this.showNotification('Louis Vuitton category not found');
+  // Reset state
+  this.currentPath = [];
+  
+  // Re-render homepage
+  this.setupDynamicSections();
+  
+  // FIXED: SHOW brands and slideshow sections on homepage
+  this.updateSectionVisibility(true);
+  
+  // Reset hero
+  this.setupBrandInfo();
+  
+  // Remove breadcrumbs
+  const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+  if (existingBreadcrumbs) {
+    existingBreadcrumbs.remove();
   }
 }
 
@@ -3151,111 +3135,6 @@ navigateToBrandCategory(brandName, categoryName) {
     preloadImages();
   }
 
-
-
-
-
-
-
-// REPLACE setupReviewSlideshow() with this HERO slideshow version
-async setupHeroSlideshow() {
-  const viewport = document.getElementById('slideshowViewport');
-  const image = document.getElementById('slideshowImage');
-  const counter = document.getElementById('slideshowCounter');
-  const caption = document.getElementById('slideshowCaption');
-  const prevBtn = document.getElementById('slideshowPrev');
-  const nextBtn = document.getElementById('slideshowNext');
-  
-  if (!viewport || !image) return;
-  
-  let allImages = [];
-  let currentIndex = 0;
-  
-  try {
-    console.log('🎬 Loading slideshow from slideshow.json...');
-    const response = await fetch('/slideshow.json?v=' + Date.now());
-    
-    if (!response.ok) {
-      throw new Error('Slideshow data not found');
-    }
-    
-    allImages = await response.json();
-    console.log(`✅ Loaded ${allImages.length} slideshow images`);
-    
-    if (allImages.length === 0) {
-      throw new Error('No slideshow images');
-    }
-    
-  } catch (error) {
-    console.log('⚠️ Slideshow load failed, using fallback:', error.message);
-    // Fallback to Reviews folder
-    allImages = Array.from({length: 15}, (_, i) => ({
-      image: `Reviews/image${i + 1}.webp`,
-      title: 'Customer Reviews',
-      path: 'Reviews'
-    }));
-  }
-  
-  const showImage = (index) => {
-    if (allImages.length === 0) return;
-    
-    currentIndex = (index + allImages.length) % allImages.length;
-    const current = allImages[currentIndex];
-    
-    viewport.classList.add('loading');
-    
-    const newImg = new Image();
-    newImg.onload = () => {
-      image.src = current.image;
-      if (counter) counter.textContent = `${currentIndex + 1} / ${allImages.length}`;
-      if (caption) caption.textContent = current.title || 'Featured';
-      viewport.classList.remove('loading');
-    };
-    newImg.onerror = () => {
-      viewport.classList.remove('loading');
-      console.log(`⚠️ Failed to load: ${current.image}`);
-    };
-    newImg.src = current.image;
-  };
-  
-  const showNext = () => showImage(currentIndex + 1);
-  const showPrev = () => showImage(currentIndex - 1);
-  
-  if (prevBtn) prevBtn.addEventListener('click', showPrev);
-  if (nextBtn) nextBtn.addEventListener('click', showNext);
-  
-  // Keyboard navigation
-  document.addEventListener('keydown', (e) => {
-    if (document.body.getAttribute('data-page-type') !== 'category') {
-      if (e.key === 'ArrowRight') showNext();
-      if (e.key === 'ArrowLeft') showPrev();
-    }
-  });
-  
-  // Touch swipe
-  let touchStartX = 0;
-  viewport.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-  
-  viewport.addEventListener('touchend', (e) => {
-    const touchEndX = e.changedTouches[0].screenX;
-    const swipeDistance = touchStartX - touchEndX;
-    
-    if (Math.abs(swipeDistance) > 50) {
-      if (swipeDistance > 0) showNext();
-      else showPrev();
-    }
-  }, { passive: true });
-  
-  // Initialize
-  showImage(0);
-}
-
-
-
-
-  
   setupFooter() {
     const footerContent = document.getElementById('footerContent');
     if (!footerContent) return;
@@ -3396,39 +3275,6 @@ setupEventListeners() {
 }
 
   
-// ADD after setupEventListeners()
-toggleHomepageOnlySections(show) {
-  const hero = document.querySelector('.hero');
-  const slideshow = document.querySelector('.slideshow-section');
-  const brands = document.querySelector('.brands-section');
-  
-  if (show) {
-    // Homepage - show everything
-    if (hero) hero.style.display = 'block';
-    if (slideshow) slideshow.style.display = 'block';
-    if (brands) brands.style.display = 'block';
-  } else {
-    // Category pages - hide homepage sections completely
-    if (hero) {
-      hero.style.display = 'none';
-      hero.style.margin = '0';
-      hero.style.padding = '0';
-      hero.style.border = 'none';
-    }
-    if (slideshow) {
-      slideshow.style.display = 'none';
-      slideshow.style.margin = '0';
-      slideshow.style.padding = '0';
-    }
-    if (brands) {
-      brands.style.display = 'none';
-      brands.style.margin = '0';
-      brands.style.padding = '0';
-    }
-  }
-}
-
-
 // ADD this method after setupEventListeners():
 setupScrollBehavior() {
   const header = document.querySelector('.header');
