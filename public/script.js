@@ -305,6 +305,7 @@ if (heroSlideshow) {
   }
   
 // Show inner page hero (traditional centered)
+// Show inner page hero (traditional centered)
 showInnerHero() {
   const homepageHero = document.getElementById('heroHomepage');
   const innerHero = document.getElementById('heroInner');
@@ -313,34 +314,71 @@ showInnerHero() {
   
   if (homepageHero) {
     homepageHero.style.display = 'none';
+    homepageHero.style.height = '0';
+    homepageHero.style.overflow = 'hidden';
     console.log('✅ Homepage hero hidden');
   }
   
   if (innerHero) {
+    // CRITICAL: Force dimensions BEFORE display
+    innerHero.style.width = '100%';
+    innerHero.style.maxWidth = '800px';
+    innerHero.style.minHeight = '200px';
+    innerHero.style.padding = '4rem 1rem';
+    innerHero.style.margin = '0 auto';
+    innerHero.style.boxSizing = 'border-box';
+    
+    // Then show it
     innerHero.style.display = 'block';
     innerHero.style.visibility = 'visible';
     innerHero.style.opacity = '1';
-    console.log('✅ Inner hero shown');
+    innerHero.style.position = 'relative';
+    innerHero.style.zIndex = '10';
     
-    // Force title and subtitle visibility
-    const title = innerHero.querySelector('.hero-title');
-    const subtitle = innerHero.querySelector('.hero-subtitle');
+    console.log('✅ Inner hero shown with dimensions');
     
-    if (title) {
-      title.style.display = 'block';
-      title.style.visibility = 'visible';
-      title.style.opacity = '1';
-      title.style.color = 'var(--color-text-primary)';
-      console.log('✅ Inner title visible:', title.textContent);
-    }
-    
-    if (subtitle) {
-      subtitle.style.display = 'block';
-      subtitle.style.visibility = 'visible';
-      subtitle.style.opacity = '1';
-      subtitle.style.color = 'var(--color-text-secondary)';
-      console.log('✅ Inner subtitle visible');
-    }
+    // Force title and subtitle visibility WITH dimensions
+    setTimeout(() => {
+      const title = innerHero.querySelector('.hero-title');
+      const subtitle = innerHero.querySelector('.hero-subtitle');
+      
+      if (title) {
+        title.style.cssText = `
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          color: #202124 !important;
+          font-size: 2.5rem !important;
+          font-weight: 700 !important;
+          margin-bottom: 1rem !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          line-height: 1.2 !important;
+          text-shadow: none !important;
+          -webkit-text-fill-color: #202124 !important;
+          background: transparent !important;
+        `;
+        console.log('✅ Title dimensions:', title.getBoundingClientRect());
+      }
+      
+      if (subtitle) {
+        subtitle.style.cssText = `
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          color: #5f6368 !important;
+          font-size: 1.1rem !important;
+          margin-bottom: 1.5rem !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          line-height: 1.6 !important;
+          text-shadow: none !important;
+          -webkit-text-fill-color: #5f6368 !important;
+          background: transparent !important;
+        `;
+        console.log('✅ Subtitle dimensions:', subtitle.getBoundingClientRect());
+      }
+    }, 10);
   }
 }
 
@@ -426,19 +464,33 @@ showInnerHero() {
 
   // Update hero section for category view
   this.updateHeroForCategory(breadcrumbs);
-  // Debug: Check if hero is visible
+// Debug: Check if hero is visible
 setTimeout(() => {
   const innerHero = document.getElementById('heroInner');
   const heroTitle = document.getElementById('heroTitle');
   const breadcrumb = document.querySelector('.breadcrumb-nav');
   
-  console.log('🔍 Hero visibility check:', {
-    innerHero: innerHero ? window.getComputedStyle(innerHero).display : 'not found',
-    heroTitle: heroTitle ? window.getComputedStyle(heroTitle).display : 'not found',
-    heroTitleText: heroTitle ? heroTitle.textContent : 'N/A',
-    breadcrumb: breadcrumb ? window.getComputedStyle(breadcrumb).display : 'not found'
+  const innerRect = innerHero?.getBoundingClientRect();
+  const titleRect = heroTitle?.getBoundingClientRect();
+  const breadcrumbRect = breadcrumb?.getBoundingClientRect();
+  
+  console.log('🔍 Hero dimensions check:', {
+    innerHero: innerRect ? `${innerRect.width}x${innerRect.height}` : 'not found',
+    heroTitle: titleRect ? `${titleRect.width}x${titleRect.height}` : 'not found',
+    breadcrumb: breadcrumbRect ? `${breadcrumbRect.width}x${breadcrumbRect.height}` : 'not found'
   });
-}, 100);
+  
+  if (innerRect && (innerRect.width === 0 || innerRect.height === 0)) {
+    console.error('❌ Hero inner has no dimensions! Force fixing...');
+    innerHero.style.width = '100%';
+    innerHero.style.minHeight = '200px';
+  }
+  
+  if (titleRect && (titleRect.width === 0 || titleRect.height === 0)) {
+    console.error('❌ Title has no dimensions! Force fixing...');
+    heroTitle.style.width = '100%';
+  }
+}, 200);
   // HIDE brands and slideshow sections on category pages
   this.updateSectionVisibility(false);
 
@@ -534,14 +586,20 @@ breadcrumbNav.style.cssText = `
   padding: 0.75rem 1.5rem !important;
   border-radius: 50px !important;
   margin: 1.5rem auto !important;
+  width: auto !important;
   max-width: 600px !important;
+  min-width: 200px !important;
+  min-height: 40px !important;
   gap: 0.5rem !important;
   align-items: center !important;
   justify-content: center !important;
   flex-wrap: wrap !important;
   color: #202124 !important;
   font-size: 0.9rem !important;
+  box-sizing: border-box !important;
 `;
+
+console.log('✅ Breadcrumb dimensions:', breadcrumbNav.getBoundingClientRect());
 
   // Home link
   const homeLink = document.createElement('a');
