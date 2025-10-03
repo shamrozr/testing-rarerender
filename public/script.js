@@ -545,7 +545,36 @@ showInnerHero() {
     }
   }
 
-
+// Navigate to brand view (showing all categories for that brand)
+navigateToBrandOnly(brandName) {
+  // Find the brand in the data
+  const normalizedBrand = this.normalizeBrandName(brandName);
+  
+  // Find all paths for this brand
+  const tree = this.data.catalog.tree;
+  const paths = [];
+  const categories = new Map();
+  
+  for (const [categoryKey, categoryItem] of Object.entries(tree)) {
+    if (categoryItem.children) {
+      for (const [brandKey, brandItem] of Object.entries(categoryItem.children)) {
+        if (this.normalizeBrandName(brandKey) === normalizedBrand) {
+          paths.push(`${categoryKey}/${brandKey}`);
+          categories.set(categoryKey, {
+            count: brandItem.count || 0,
+            thumbnail: brandItem.thumbnail || ''
+          });
+        }
+      }
+    }
+  }
+  
+  if (paths.length > 0) {
+    this.showBrandView(normalizedBrand, paths, categories);
+  } else {
+    this.showNotification(`${brandName} not found`);
+  }
+}
   
   showCategoryView() {
   // Show inner hero layout
@@ -3287,9 +3316,18 @@ getScaleTransform(scaling) {
   const slideshowSection = document.querySelector('.slideshow-section');
   const heroSlideshow = document.getElementById('heroSlideshowContainer');
   
-  if (brandsSection) brandsSection.style.display = 'none';
-  if (slideshowSection) slideshowSection.style.display = 'none';
-  if (heroSlideshow) heroSlideshow.style.display = 'none';
+  if (brandsSection) {
+    brandsSection.style.display = 'none';
+    console.log('🙈 Hiding brands section (brand view)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'none';
+    console.log('🙈 Hiding slideshow section (brand view)');
+  }
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'none';
+    console.log('🙈 Hiding hero slideshow (brand view)');
+  }
   
   // Show inner hero layout
   this.showInnerHero();
@@ -3297,6 +3335,8 @@ getScaleTransform(scaling) {
   
   document.body.setAttribute('data-page-type', 'brand');
   this.resetScrollPosition();
+  
+  // ... rest of existing code continues
   
   // ... rest of function continues
     
@@ -3499,42 +3539,43 @@ if (!brandThumbnail) {
 navigateToBrandCategory(brandName, categoryName) {
   this.resetScrollPosition();
   
-  // FIXED: Ensure sections stay hidden
+  // FIXED: Keep sections hidden when navigating to brand category
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
   if (brandsSection) brandsSection.style.display = 'none';
   if (slideshowSection) slideshowSection.style.display = 'none';
+  if (heroSlideshow) heroSlideshow.style.display = 'none';
   
   // Find the path to this brand in this category
   const brandKey = Object.keys(this.data.catalog.tree[categoryName]?.children || {})
     .find(key => this.normalizeBrandName(key) === brandName);
   
-  // ... rest of function continues
-    
-    if (!brandKey) {
-      this.showNotification(`${brandName} not found in ${categoryName}`);
-      return;
-    }
-    
-    const path = `${categoryName}/${brandKey}`;
-    this.currentPath = path.split('/').filter(Boolean);
-    
-    // Update URL
-    const params = new URLSearchParams(window.location.search);
-    params.set('path', path);
-    if (this.currentBrand) {
-      params.set('brand', this.currentBrand);
-    }
-    
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({ 
-      path: this.currentPath, 
-      brand: this.currentBrand 
-    }, '', newURL);
-    
-    // Show category view
-    this.showCategoryView();
+  if (!brandKey) {
+    this.showNotification(`${brandName} not found in ${categoryName}`);
+    return;
   }
+  
+  const path = `${categoryName}/${brandKey}`;
+  this.currentPath = path.split('/').filter(Boolean);
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('path', path);
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ 
+    path: this.currentPath, 
+    brand: this.currentBrand 
+  }, '', newURL);
+  
+  // Show category view
+  this.showCategoryView();
+}
 
   
   createBrandCategoryCardHTML(item) {
