@@ -1375,38 +1375,88 @@ html {
   z-index: 10;
 }
 
-/* Breadcrumb navigation styling fix */
 .breadcrumb-nav {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: 0.9rem;
-  color: var(--color-text-primary); /* FIXED: Ensure text is visible */
+  color: #202124 !important;
   padding: var(--space-3) var(--space-6);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98) !important;
   border-radius: var(--radius-full);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--color-primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   max-width: 600px;
-  margin: var(--space-4) auto var(--space-6) auto;
+  margin: var(--space-6) auto var(--space-6) auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 100 !important;
+  min-height: 40px !important;
+}
+
+/* Force all breadcrumb children visible */
+.breadcrumb-nav * {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .breadcrumb-nav a {
-  color: var(--color-primary); /* FIXED: Changed from white to primary color */
+  color: var(--color-primary) !important;
+  -webkit-text-fill-color: var(--color-primary) !important;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600 !important;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   transition: all var(--transition-base);
+  display: inline-block !important;
+  background: transparent !important;
+  text-shadow: none !important;
 }
 
 .breadcrumb-nav a:hover {
-  background: rgba(99, 102, 241, 0.1); /* FIXED: Changed to primary color background */
-  color: var(--color-primary);
+  background: var(--color-primary) !important;
+  color: white !important;
+  -webkit-text-fill-color: white !important;
   transform: translateY(-1px);
+}
+
+/* Breadcrumb separator */
+.breadcrumb-nav span:not([style*="font-weight"]) {
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline !important;
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
+/* Current page in breadcrumb */
+.breadcrumb-nav span[style*="font-weight"] {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+  font-weight: 600 !important;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-primary) !important;
+  border-radius: var(--radius-sm);
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* Mobile breadcrumb */
+@media (max-width: 768px) {
+  .breadcrumb-nav {
+    font-size: 0.85rem;
+    padding: var(--space-2) var(--space-4);
+    max-width: 90%;
+    min-height: 36px !important;
+  }
 }
 
 
