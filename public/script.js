@@ -280,12 +280,20 @@ if (this.currentPath.length > 0) {
 
 
 // Show homepage hero (with slideshow)
+  // Show homepage hero (with slideshow)
   showHomepageHero() {
     const homepageHero = document.getElementById('heroHomepage');
     const innerHero = document.getElementById('heroInner');
     
-    if (homepageHero) homepageHero.style.display = 'grid';
-    if (innerHero) innerHero.style.display = 'none';
+    if (homepageHero) {
+      homepageHero.style.display = 'grid';
+      homepageHero.classList.add('active');
+    }
+    
+    if (innerHero) {
+      innerHero.style.display = 'none';
+      innerHero.classList.remove('active');
+    }
     
     // Update homepage hero content
     const titleHome = document.getElementById('heroTitleHome');
@@ -299,12 +307,24 @@ if (this.currentPath.length > 0) {
   }
   
   // Show inner page hero (traditional centered)
+ // Show inner page hero (traditional centered)
+  // Show inner page hero (traditional centered)
   showInnerHero() {
     const homepageHero = document.getElementById('heroHomepage');
     const innerHero = document.getElementById('heroInner');
     
-    if (homepageHero) homepageHero.style.display = 'none';
-    if (innerHero) innerHero.style.display = 'block';
+    if (homepageHero) {
+      homepageHero.style.display = 'none';
+      homepageHero.classList.remove('active');
+    }
+    
+    if (innerHero) {
+      innerHero.style.display = 'block';
+      innerHero.classList.add('active');
+      console.log('✅ Inner hero shown');
+    } else {
+      console.error('❌ Inner hero element not found');
+    }
   }
 
 
@@ -395,6 +415,11 @@ if (this.currentPath.length > 0) {
 
   // Show category contents
   this.renderCategoryContents(currentNode, breadcrumbs);
+    
+ console.log('🔍 Category view debug:');
+  console.log('  - Inner hero:', document.getElementById('heroInner')?.style.display);
+  console.log('  - Homepage hero:', document.getElementById('heroHomepage')?.style.display);
+  console.log('  - Breadcrumb:', document.querySelector('.breadcrumb-nav') ? 'exists' : 'missing');
 }
 
 
@@ -405,10 +430,15 @@ if (this.currentPath.length > 0) {
     if (heroTitle && breadcrumbs.length > 0) {
       const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
       heroTitle.textContent = `${currentCategory} Collection`;
+      heroTitle.style.display = 'block';
+      console.log('✅ Updated hero title:', heroTitle.textContent);
     }
     
     if (heroSubtitle) {
-      heroSubtitle.style.display = 'none'; // Hide subtitle on category pages
+      heroSubtitle.style.display = 'block'; // Show subtitle
+      const categoryName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : '';
+      heroSubtitle.textContent = `Explore ${categoryName} products across our premium collection`;
+      console.log('✅ Updated hero subtitle');
     }
 
     // Add breadcrumb navigation
@@ -1693,29 +1723,12 @@ updateSectionVisibility(showSections) {
       const element = document.getElementById(id);
       if (element) {
         element.textContent = content;
-        element.style.display = 'block'; // Ensure visible
-        element.style.visibility = 'visible'; // Force visibility
-        element.style.opacity = '1'; // Force opaque
-        element.style.color = id === 'brandName' ? '#202124' : ''; // Force dark color for brand name
         
-        // Triple-check after delay
-        setTimeout(() => {
-          if (element.textContent !== content) {
-            element.textContent = content;
-          }
-          if (id === 'brandName') {
-            element.style.color = '#202124';
-          }
-        }, 50);
-        
-        setTimeout(() => {
-          if (element.textContent !== content) {
-            element.textContent = content;
-          }
-          if (id === 'brandName') {
-            element.style.color = '#202124';
-          }
-        }, 200);
+        // ONLY force brand name specific styles
+        if (id === 'brandName') {
+          element.removeAttribute('style'); // Clear all inline styles
+          element.classList.add('brand-name-visible'); // Add class instead
+        }
       }
     });
 
