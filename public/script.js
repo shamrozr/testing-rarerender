@@ -591,13 +591,15 @@ navigateToBrandOnly(brandName) {
   showCategoryView() {
 
   
-  if (brandsSection) brandsSection.remove();
-  if (slideshowSection) slideshowSection.remove();
+  if (brandsSection) brandsSection.style.display = 'none';
+  if (slideshowSection) slideshowSection.style.display = 'none';
   if (heroSlideshow) heroSlideshow.style.display = 'none';
   
   // Show inner hero layout
   this.showInnerHero();
   this.hideFeaturedHeading();
+  
+  // ... rest of your existing code (keep everything else)
   
   // ... rest of your existing code
   
@@ -1997,11 +1999,28 @@ navigateToHome() {
   // Reset state
   this.currentPath = [];
   
+  // CRITICAL: Recreate sections if they were removed
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  
+  if (!brandsSection || !slideshowSection) {
+    console.log('🔄 Sections were removed, reloading page to restore them');
+    window.location.href = window.location.pathname + '?' + params.toString();
+    return;
+  }
+  
   // Re-render homepage
   this.setupDynamicSections();
   
   // FIXED: SHOW brands and slideshow sections on homepage
-  this.updateSectionVisibility(true);
+  if (brandsSection) {
+    brandsSection.style.display = 'block';
+    console.log('👁️ Restored brands section');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'block';
+    console.log('👁️ Restored slideshow section');
+  }
   
   // SHOW hero slideshow on homepage (MOVED HERE - declare once)
   const heroSlideshow = document.getElementById('heroSlideshowContainer');
@@ -2060,6 +2079,9 @@ navigateToHome() {
     existingBreadcrumbs.remove();
   }
 }
+
+
+
 // Helper function to control section visibility
 updateSectionVisibility(showSections) {
   const brandsSection = document.querySelector('.brands-section');
@@ -3361,21 +3383,22 @@ getScaleTransform(scaling) {
       .join(' ');
   }
   showBrandView(brandName, paths, categories) {
-  // FIXED: FORCE HIDE sections - do this FIRST
+  // FIXED: HIDE sections (don't remove them)
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
   const heroSlideshow = document.getElementById('heroSlideshowContainer');
   
   if (brandsSection) {
-    brandsSection.style.display = 'none !important';
-    brandsSection.remove(); // NUCLEAR: remove from DOM
+    brandsSection.style.display = 'none';
+    console.log('🙈 Hiding brands section (brand view)');
   }
   if (slideshowSection) {
-    slideshowSection.style.display = 'none !important';
-    slideshowSection.remove(); // NUCLEAR: remove from DOM
+    slideshowSection.style.display = 'none';
+    console.log('🙈 Hiding slideshow section (brand view)');
   }
   if (heroSlideshow) {
-    heroSlideshow.style.display = 'none !important';
+    heroSlideshow.style.display = 'none';
+    console.log('🙈 Hiding hero slideshow (brand view)');
   }
   
   // Show inner hero layout
@@ -3384,6 +3407,8 @@ getScaleTransform(scaling) {
   
   document.body.setAttribute('data-page-type', 'brand');
   this.resetScrollPosition();
+  
+  // ... rest of your existing code (keep everything else)
   
   // ... rest of your existing showBrandView code
   
