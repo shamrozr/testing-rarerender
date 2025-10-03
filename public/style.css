@@ -623,14 +623,46 @@ body {
   opacity: 1 !important;
   position: relative;
   z-index: 1;
+  padding: var(--space-8) var(--space-4);
 }
 
-/* Ensure inner hero content is visible */
-.hero-inner .hero-title,
+/* Force inner hero title visibility */
+.hero-inner .hero-title {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  line-height: 1.2;
+}
+
+/* Force inner hero subtitle visibility */
 .hero-inner .hero-subtitle {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: var(--space-6);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .hero-inner {
+    padding: var(--space-6) var(--space-4);
+  }
+  
+  .hero-inner .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-inner .hero-subtitle {
+    font-size: 1rem;
+  }
 }
 
 /* Common Hero Styles */
@@ -750,6 +782,15 @@ body {
   .hero-title-line3 {
     font-size: 1.75rem;
   }
+}
+
+/* Force inner hero to override homepage styles */
+.hero:has(.hero-inner[style*="display: block"]) .hero-homepage {
+  display: none !important;
+}
+
+.hero:has(.hero-homepage[style*="display: grid"]) .hero-inner {
+  display: none !important;
 }
 /* ============================================
    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
@@ -1119,12 +1160,15 @@ html {
 }
 
 .breadcrumb-nav a {
-  color: var(--color-primary);
+  color: var(--color-primary) !important;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600 !important;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   transition: all var(--transition-base);
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .breadcrumb-nav a:hover {
@@ -1137,7 +1181,25 @@ html {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+/* Breadcrumb separator visibility */
+.breadcrumb-nav span:not([style*="font-weight"]) {
+  color: var(--color-text-muted) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline !important;
+}
 
+/* Current page in breadcrumb */
+.breadcrumb-nav span[style*="font-weight"] {
+  color: var(--color-text-primary) !important;
+  font-weight: 600 !important;
+  padding: var(--space-1) var(--space-2);
+  background: rgba(99, 102, 241, 0.15) !important;
+  border-radius: var(--radius-sm);
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
 .breadcrumb-nav span {
   color: var(--color-text-secondary);
   user-select: none;
