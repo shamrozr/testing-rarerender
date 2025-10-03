@@ -69,8 +69,24 @@ class CSVCatalogApp {
   }
 
   async init() {
+  // DEBUG: Monitor sections visibility
+  setInterval(() => {
+    const brands = document.querySelector('.brands-section');
+    const slideshow = document.querySelector('.slideshow-section');
+    const heroSlide = document.getElementById('heroSlideshowContainer');
+    const bodyAttr = document.body.getAttribute('data-page-type');
+    
+    console.log('🔍 VISIBILITY CHECK:', {
+      bodyAttribute: bodyAttr || 'homepage',
+      brandsDisplay: brands?.style.display || 'not set',
+      slideshowDisplay: slideshow?.style.display || 'not set',
+      heroSlideDisplay: heroSlide?.style.display || 'not set'
+    });
+  }, 2000);
+  
   try {
     await this.loadData();
+    // ... rest of init code
     
     if (!this.data) {
       return;
@@ -168,7 +184,7 @@ if (heroSlideshow) {
     
     // NEW: Setup scroll behavior
     this.setupScrollBehavior();
-    
+    this.setupSectionVisibilityEnforcer(); // ADD THIS LINE
   } catch (error) {
       // Silent error handling in production
     }
@@ -3976,6 +3992,16 @@ setupEventListeners() {
     this.handleBrowserNavigation();
   });
 
+
+
+
+
+
+
+
+
+
+  
   // ============================================
   // 👇 Added: Touch/gesture prevention snippet
   // ============================================
@@ -4004,7 +4030,55 @@ setupEventListeners() {
   });
 }
 
-  
+    // ADD THIS COMPLETE FUNCTION RIGHT HERE (inside the class)
+  setupSectionVisibilityEnforcer() {
+    const enforceVisibility = () => {
+      const pageType = document.body.getAttribute('data-page-type');
+      const brands = document.querySelector('.brands-section');
+      const slideshow = document.querySelector('.slideshow-section');
+      const heroSlide = document.getElementById('heroSlideshowContainer');
+      
+      if (pageType === 'category' || pageType === 'brand') {
+        // FORCE HIDE on category pages
+        if (brands && brands.style.display !== 'none') {
+          brands.style.display = 'none';
+          console.log('⚡ ENFORCER: Hiding brands');
+        }
+        if (slideshow && slideshow.style.display !== 'none') {
+          slideshow.style.display = 'none';
+          console.log('⚡ ENFORCER: Hiding slideshow');
+        }
+        if (heroSlide && heroSlide.style.display !== 'none') {
+          heroSlide.style.display = 'none';
+          console.log('⚡ ENFORCER: Hiding hero slideshow');
+        }
+      } else {
+        // FORCE SHOW on homepage
+        if (brands && brands.style.display !== 'block') {
+          brands.style.display = 'block';
+          console.log('⚡ ENFORCER: Showing brands');
+        }
+        if (slideshow && slideshow.style.display !== 'block') {
+          slideshow.style.display = 'block';
+          console.log('⚡ ENFORCER: Showing slideshow');
+        }
+        if (heroSlide && heroSlide.style.display !== 'block') {
+          heroSlide.style.display = 'block';
+          console.log('⚡ ENFORCER: Showing hero slideshow');
+        }
+      }
+    };
+    
+    // Run every 100ms to catch any changes
+    setInterval(enforceVisibility, 100);
+    
+    // Also watch for body attribute changes
+    const observer = new MutationObserver(enforceVisibility);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-page-type'] });
+    
+    console.log('⚡ Section visibility enforcer activated');
+  }
+
 // ADD this method after setupEventListeners():
 setupScrollBehavior() {
   const header = document.querySelector('.header');
