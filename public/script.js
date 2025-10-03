@@ -316,7 +316,6 @@ if (heroSlideshow) {
 
 
 
-/// Show homepage hero (with slideshow)
 showHomepageHero() {
   const homepageHero = document.getElementById('heroHomepage');
   const innerHero = document.getElementById('heroInner');
@@ -349,22 +348,74 @@ showHomepageHero() {
     `;
   }
   
-  // Show homepage hero with proper grid
+  // MOBILE-FIRST: Check screen size
+  const isMobile = window.innerWidth <= 768;
+  
+  // Show homepage hero with proper layout based on screen size
   if (homepageHero) {
-    homepageHero.style.cssText = `
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 3rem !important;
-      align-items: center !important;
-      max-width: 1400px !important;
-      margin: 0 auto !important;
-      width: 100% !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      position: relative !important;
-      min-height: 400px !important;
-    `;
-    console.log('✅ Homepage hero restored with grid');
+    if (isMobile) {
+      // MOBILE: Vertical stack - flex column
+      homepageHero.style.cssText = `
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 3rem !important;
+        align-items: center !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        padding: 0 1rem !important;
+        box-sizing: border-box !important;
+      `;
+      
+      // Force slideshow to top
+      const slideshow = document.getElementById('heroSlideshowContainer');
+      if (slideshow) {
+        slideshow.style.cssText = `
+          order: 1 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 auto !important;
+          display: block !important;
+        `;
+      }
+      
+      // Force content to bottom
+      const content = homepageHero.querySelector('.hero-content-side');
+      if (content) {
+        content.style.cssText = `
+          order: 2 !important;
+          width: 100% !important;
+          text-align: center !important;
+          padding: 0 1rem !important;
+          display: flex !important;
+          flex-direction: column !important;
+          align-items: center !important;
+          gap: 1.5rem !important;
+        `;
+      }
+      
+      console.log('📱 Applied MOBILE vertical layout');
+      
+    } else {
+      // DESKTOP: Grid layout - side by side
+      homepageHero.style.cssText = `
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 3rem !important;
+        align-items: center !important;
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        min-height: 400px !important;
+      `;
+      console.log('🖥️ Applied DESKTOP grid layout');
+    }
   }
   
   // Update homepage hero content
@@ -376,27 +427,18 @@ showHomepageHero() {
     if (titleHome) titleHome.innerHTML = brand.heroTitle || `<span class="hero-title-line1">Establish Yourself</span><span class="hero-title-line2">With <span class="hero-title-highlight">Premium</span></span><span class="hero-title-line3">Accessories</span>`;
     if (subtitleHome) subtitleHome.textContent = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
   }
-  // SHOW review slideshow on homepage
-  const reviewSlideshow = document.querySelector('.slideshow-section');
-  if (reviewSlideshow) {
-    reviewSlideshow.style.display = 'block';
-    console.log('👁️ Showing review slideshow (homepage)');
-  }
   
-  // SHOW browse brands on homepage
-  const brandsSection = document.querySelector('.brands-section');
-  if (brandsSection) {
-    brandsSection.style.display = 'block';
-    console.log('👁️ Showing brands section (homepage)');
-  }
+  // Re-apply on window resize
+  const handleResize = () => {
+    if (homepageHero && homepageHero.style.display !== 'none') {
+      this.showHomepageHero();
+    }
+  };
   
-  // SHOW hero slideshow on homepage
-  const heroSlideshow = document.getElementById('heroSlideshowContainer');
-  if (heroSlideshow) {
-    heroSlideshow.style.display = 'block';
-    console.log('👁️ Showing hero slideshow (homepage)');
-  }
+  window.removeEventListener('resize', handleResize);
+  window.addEventListener('resize', handleResize);
 }
+
 // Show inner page hero (traditional centered)
 // Show inner page hero (traditional centered)
 showInnerHero() {
