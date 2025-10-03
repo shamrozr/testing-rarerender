@@ -2081,7 +2081,36 @@ updateSectionVisibility(showSections) {
         element.style.webkitTextFillColor = '#202124';
       }
     }, 200);
-  }
+
+
+    
+  // FINAL NUCLEAR OPTION: Force brand name after everything
+  setTimeout(() => {
+    const brandNameEl = document.getElementById('brandName');
+    const brandTaglineEl = document.getElementById('brandTagline');
+    
+    if (brandNameEl) {
+      brandNameEl.innerHTML = brandName;
+      brandNameEl.style.display = 'block';
+      brandNameEl.style.visibility = 'visible';
+      brandNameEl.style.opacity = '1';
+      brandNameEl.style.color = '#202124';
+      brandNameEl.style.fontSize = '1.3rem';
+      brandNameEl.style.fontWeight = '600';
+      brandNameEl.style.webkitTextFillColor = '#202124';
+      
+      console.log('FINAL brand name force:', brandNameEl.textContent);
+    }
+    
+    if (brandTaglineEl) {
+      brandTaglineEl.innerHTML = tagline;
+      brandTaglineEl.style.display = 'block';
+      brandTaglineEl.style.visibility = 'visible';
+      brandTaglineEl.style.opacity = '1';
+      brandTaglineEl.style.color = '#5f6368';
+    }
+  }, 500);
+}
 });
 
     // Update logo with initials
