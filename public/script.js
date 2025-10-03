@@ -384,11 +384,17 @@ addBreadcrumbNavigation(breadcrumbs) {
   const heroTitle = hero.querySelector('.hero-title');
   const heroSubtitle = hero.querySelector('.hero-subtitle');
   
-// FIXED: Insert breadcrumbs in dedicated container instead of hero
-  const breadcrumbContainer = this.ensureBreadcrumbContainer();
-  breadcrumbContainer.innerHTML = ''; // Clear existing
-  breadcrumbContainer.appendChild(breadcrumbNav);
-}
+// Insert breadcrumbs back into content area
+  const dynamicSections = document.getElementById('dynamicSections');
+  if (dynamicSections) {
+    const existingBreadcrumbs = dynamicSections.querySelector('.breadcrumb-nav');
+    if (existingBreadcrumbs) {
+      existingBreadcrumbs.remove();
+    }
+    
+    // Insert at the very top of content
+    dynamicSections.insertBefore(breadcrumbNav, dynamicSections.firstChild);
+  }
 
   // LOCATION: public/script.js
 // REPLACE: The entire renderCategoryContents function (around line 600) with this ENHANCED version:
@@ -1522,57 +1528,22 @@ updateSectionVisibility(showSections) {
   }
 }
 
-// FIXED: Toggle homepage-only sections (slideshow, brands, hero slideshow)
-// FIXED: Toggle homepage-only sections - HIDE ENTIRE HERO
 toggleHomepageOnlySections(show) {
-  const sections = [
-    '.slideshow-section',        // Review gallery
-    '.brands-section',           // Brand grid
-    '.hero'                      // ENTIRE HERO SECTION
-  ];
+  // Hide review gallery and brand grid on category pages
+  const slideshow = document.querySelector('.slideshow-section');
+  const brands = document.querySelector('.brands-section');
+  const hero = document.querySelector('.hero');
   
   const displayValue = show ? 'block' : 'none';
   
-  sections.forEach(selector => {
-    const section = document.querySelector(selector);
-    if (section) {
-      section.style.display = displayValue;
-      console.log(`${show ? '👁️ Showing' : '🙈 Hiding'} ${selector}`);
-    }
-  });
+  if (slideshow) slideshow.style.display = displayValue;
+  if (brands) brands.style.display = displayValue;
+  if (hero) hero.style.display = displayValue;
   
-  // SPECIAL: On category pages, need breadcrumbs somewhere
-  // Add a breadcrumb container at the top
-  if (!show) {
-    this.ensureBreadcrumbContainer();
-  }
+  console.log(`${show ? '👁️ Homepage' : '🙈 Category'} sections toggled`);
 }
 
-ensureBreadcrumbContainer() {
-  // Check if breadcrumb container exists
-  let breadcrumbContainer = document.querySelector('.breadcrumb-container-fixed');
-  
-  if (!breadcrumbContainer) {
-    breadcrumbContainer = document.createElement('div');
-    breadcrumbContainer.className = 'breadcrumb-container-fixed';
-    breadcrumbContainer.style.cssText = `
-      padding: var(--space-4) 0;
-      background: var(--color-white);
-      border-bottom: 1px solid var(--color-border);
-      position: sticky;
-      top: 60px;
-      z-index: 90;
-    `;
-    
-    // Insert after header
-    const header = document.querySelector('.header');
-    if (header && header.nextSibling) {
-      header.parentNode.insertBefore(breadcrumbContainer, header.nextSibling);
-    }
-  }
-  
-  return breadcrumbContainer;
-}
+
   setupBrandInfo() {
     // Get brand from URL first - THIS IS CRITICAL
     const urlParams = new URLSearchParams(window.location.search);
@@ -2145,8 +2116,7 @@ groupItemsBySection() {
 
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
-  const loadingStrategy = this.currentPath.length > 0 ? 'lazy' : 
-                         (item.topOrder && item.topOrder < 5) ? 'eager' : 'lazy';
+
   // Extract image config
   const imageConfig = this.extractImageConfig(item);
   console.log('🔍 Image config for', item.title, ':', imageConfig);
@@ -2176,14 +2146,13 @@ createCardHTML(item) {
         // Fallback: shouldn't happen but just in case
         imageContent = this.getEmojiForCategory(item.key);
       } else {
-        imageContent = `<img src="${imageSrc}" 
-     alt="${item.title}" 
-     loading="${loadingStrategy}"
-     decoding="async"
-     style="${imageStyles}" 
-     class="card-image-enhanced"
-     data-method="img-tag"
-     onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'; console.error('Image failed:', '${imageSrc}')">`;
+          imageContent = `<img src="${imageSrc}" 
+               alt="${item.title}" 
+               loading="lazy"
+               style="${imageStyles}" 
+               class="card-image-enhanced"
+               data-method="img-tag"
+               onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
       }
     }
   } else {
