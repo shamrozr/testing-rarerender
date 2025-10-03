@@ -1029,6 +1029,16 @@ renderCategoryContents(currentNode, breadcrumbs) {
       if (gridContainer) this.addSmartCentering(gridContainer, items.length);
     }, 10);
   }
+   // ADD THIS AT THE VERY END:
+  // FORCE hide sections after rendering
+  setTimeout(() => {
+    const brandsSection = document.querySelector('.brands-section');
+    const slideshowSection = document.querySelector('.slideshow-section');
+    if (brandsSection) brandsSection.style.display = 'none';
+    if (slideshowSection) slideshowSection.style.display = 'none';
+    console.log('🔒 Locked sections hidden in renderCategoryContents');
+  }, 50);
+
 }
 
   
