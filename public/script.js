@@ -3249,8 +3249,14 @@ getScaleTransform(scaling) {
       .join(' ');
   }
   showBrandView(brandName, paths, categories) {
-    // Show inner hero layout
-    this.showInnerHero();
+  // HIDE homepage sections when viewing brand
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) brandsSection.style.display = 'none';
+  if (slideshowSection) slideshowSection.style.display = 'none';
+  
+  // Show inner hero layout
+  this.showInnerHero();
     this.hideFeaturedHeading();
     
     document.body.setAttribute('data-page-type', 'brand');
@@ -3494,8 +3500,7 @@ navigateToBrandCategory(brandName, categoryName) {
       // CRITICAL: Use contain fitting for brand logos on category cards
       // This ensures the full logo is visible without cropping
       imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
-           style="width: 100% !important; height: 100% !important; object-fit: contain !important; object-position: center center !important; background: #ffffff !important; padding: var(--space-4);" 
-           class="card-image-brand-logo"
+     class="card-image-brand-logo"
            onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.categoryName)}'">`;
     } else {
       imageContent = this.getEmojiForCategory(item.categoryName);
