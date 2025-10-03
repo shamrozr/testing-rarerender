@@ -125,6 +125,12 @@ if (this.currentPath.length > 0) {
     slideshowSection.style.display = 'none';
     console.log('🙈 Hiding slideshow section (category view)');
   }
+  // HIDE hero slideshow on category pages
+const heroSlideshow = document.getElementById('heroSlideshowContainer');
+if (heroSlideshow) {
+  heroSlideshow.style.display = 'none';
+  console.log('🙈 Hiding hero slideshow (category view)');
+}
 } else {
   // On homepage - show brands and slideshow
   const brandsSection = document.querySelector('.brands-section');
@@ -1613,7 +1619,14 @@ debugModalState() {
   this.setupDynamicSections();
   
   // FIXED: SHOW brands and slideshow sections on homepage
-  this.updateSectionVisibility(true);
+this.updateSectionVisibility(true);
+
+// SHOW hero slideshow on homepage
+const heroSlideshow = document.getElementById('heroSlideshowContainer');
+if (heroSlideshow) {
+  heroSlideshow.style.display = 'block';
+  console.log('👁️ Showing hero slideshow (homepage)');
+}
   
   // Reset hero
   this.setupBrandInfo();
