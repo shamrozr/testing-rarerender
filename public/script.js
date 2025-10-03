@@ -97,11 +97,14 @@ class CSVCatalogApp {
     // Check if we need to show category view or homepage
 // Check if we need to show category view or homepage
 // Check if we need to show category view or homepage
+    // Check if we need to show category view or homepage
     if (this.currentPath.length > 0) {
-      this.showInnerHero(); // Show traditional hero for inner pages
+      this.showInnerHero();
+      this.hideFeaturedHeading();
       this.showCategoryView();
     } else {
-      this.showHomepageHero(); // Show slideshow hero for homepage
+      this.showHomepageHero();
+      this.showFeaturedHeading();
       this.setupDynamicSections();
     }
 
@@ -303,10 +306,62 @@ if (this.currentPath.length > 0) {
     if (homepageHero) homepageHero.style.display = 'none';
     if (innerHero) innerHero.style.display = 'block';
   }
+
+
+  // Show featured heading (homepage only)
+  showFeaturedHeading() {
+    const heading = document.getElementById('featuredHeadingSection');
+    if (heading) heading.style.display = 'block';
+  }
+  
+  // Hide featured heading (inner pages)
+  hideFeaturedHeading() {
+    const heading = document.getElementById('featuredHeadingSection');
+    if (heading) heading.style.display = 'none';
+  }
+  
+  // Navigate to all brands section
+  navigateToAllBrands() {
+    const brandsSection = document.querySelector('.brands-section');
+    if (brandsSection) {
+      brandsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  
+  // Navigate to specific brand
+  navigateToBrand(brandName) {
+    // Find the brand in the data
+    const normalizedBrand = this.normalizeBrandName(brandName);
+    
+    // Find the brand's first category
+    const tree = this.data.catalog.tree;
+    let foundPath = null;
+    
+    for (const [categoryKey, categoryItem] of Object.entries(tree)) {
+      if (categoryItem.children) {
+        for (const [brandKey, brandItem] of Object.entries(categoryItem.children)) {
+          if (this.normalizeBrandName(brandKey) === normalizedBrand) {
+            foundPath = `${categoryKey}/${brandKey}`;
+            break;
+          }
+        }
+      }
+      if (foundPath) break;
+    }
+    
+    if (foundPath) {
+      this.navigateToPath(foundPath);
+    } else {
+      this.showNotification(`${brandName} not found`);
+    }
+  }
+
+
   
   showCategoryView() {
   // Show inner hero layout
   this.showInnerHero();
+  this.hideFeaturedHeading();
   
   // Add body attribute for CSS targeting
   document.body.setAttribute('data-page-type', 'category');
@@ -1533,6 +1588,7 @@ debugModalState() {
   navigateToHome() {
   // Show homepage hero layout
   this.showHomepageHero();
+  this.showFeaturedHeading();
   
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
@@ -2830,6 +2886,7 @@ getScaleTransform(scaling) {
   showBrandView(brandName, paths, categories) {
     // Show inner hero layout
     this.showInnerHero();
+    this.hideFeaturedHeading();
     
     document.body.setAttribute('data-page-type', 'brand');
     this.resetScrollPosition();
@@ -3231,7 +3288,7 @@ setupHeroSlideshow() {
       const newImg = new Image();
       newImg.onload = () => {
         image.src = current.thumbnail;
-        if (counter) counter.textContent = `${currentIndex + 1} / ${heroImages.length}`;
+        // Counter removed
         viewport.classList.remove('loading');
       };
       newImg.onerror = () => {
