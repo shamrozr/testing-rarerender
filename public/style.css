@@ -91,14 +91,8 @@ body {
 
 .hero-title {
   font-weight: 700;
-  background: linear-gradient(
-    135deg,
-    var(--color-text-primary) 0%,
-    var(--color-primary) 100%
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-text-primary);
+  /* REMOVED gradient that was making text transparent */
 }
 
 /* Card titles with better hierarchy */
@@ -348,15 +342,34 @@ body {
 }
 
 .brand-name {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #202124 !important; /* FIXED: Force dark visible color */
-  line-height: 1.2;
-  cursor: pointer;
-  opacity: 1 !important; /* FIXED: Ensure fully opaque */
-  display: block !important; /* FIXED: Ensure visible */
-  -webkit-text-fill-color: #202124 !important; /* FIXED: Override any gradient fills */
+  font-family: var(--font-display) !important;
+  font-size: 1.3rem !important;
+  font-weight: 600 !important;
+  /* NUCLEAR FIX: Multiple fallbacks for visibility */
+  color: #000000 !important;
+  background: none !important;
+  background-clip: initial !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: #000000 !important;
+  text-fill-color: #000000 !important;
+  line-height: 1.2 !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  /* Remove any potential gradient interference */
+  background-image: none !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  isolation: isolate !important;
+}
+
+/* ALSO FIX: Remove any gradient from hero title that might interfere */
+.hero-title {
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: inherit !important;
+  color: var(--color-text-primary) !important;
 }
 
 .brand-tagline {
@@ -4089,6 +4102,32 @@ a:focus-visible {
   .preview-close {
     transition: none;
   }
+  /* ============================================
+   BREADCRUMB CONTAINER FOR CATEGORY PAGES
+   ============================================ */
+
+.breadcrumb-container-fixed {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px;
+}
+
+.breadcrumb-container-fixed .breadcrumb-nav {
+  margin: 0; /* Remove default margins when in fixed container */
+}
+
+/* Hide hero completely on category pages */
+body[data-page-type="category"] .hero,
+body[data-page-type="brand"] .hero {
+  display: none !important;
+}
+
+/* Ensure main content flows properly */
+body[data-page-type="category"] #dynamicSections,
+body[data-page-type="brand"] #dynamicSections {
+  padding-top: 0;
+}
 }
 /* ============================================
    SKELETON LOADING SCREENS
