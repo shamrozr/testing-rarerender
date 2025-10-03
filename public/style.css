@@ -3906,6 +3906,204 @@ a:focus-visible {
   .preview-close {
     transition: none;
   }
+  /* Homepage Hero Slideshow */
+/* ====================== */
+
+.hero-slideshow-container {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  min-height: 500px;
+  max-height: 800px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: var(--space-12);
+}
+
+.hero-slideshow {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+  pointer-events: none;
+}
+
+.hero-slide.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.hero-slide-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hero-slide-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    transparent 100%
+  );
+  padding: var(--space-12) var(--space-6) var(--space-8);
+  color: white;
+}
+
+.hero-slide-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero-slide-category {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-2);
+  opacity: 0.9;
+}
+
+.hero-slide-title {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: var(--space-4);
+  line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.hero-slide-cta {
+  display: inline-block;
+  padding: var(--space-3) var(--space-6);
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all var(--transition-smooth);
+  backdrop-filter: blur(10px);
+}
+
+.hero-slide-cta:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Slideshow Controls */
+.hero-slideshow-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+  line-height: 1;
+}
+
+.hero-slideshow-nav:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.hero-slideshow-nav.prev {
+  left: 20px;
+}
+
+.hero-slideshow-nav.next {
+  right: 20px;
+}
+
+/* Dots Indicator */
+.hero-slideshow-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-2);
+  z-index: 10;
+}
+
+.hero-slideshow-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.hero-slideshow-dot.active {
+  width: 30px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .hero-slideshow-container {
+    height: 60vh;
+    min-height: 400px;
+  }
+
+  .hero-slide-title {
+    font-size: 2rem;
+  }
+
+  .hero-slideshow-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
+
+  .hero-slideshow-nav.prev {
+    left: 10px;
+  }
+
+  .hero-slideshow-nav.next {
+    right: 10px;
+  }
+
+  .hero-slide-overlay {
+    padding: var(--space-8) var(--space-4) var(--space-6);
+  }
+}
+
+/* Hide slideshow on non-homepage */
+body[data-page-type="category"] .hero-slideshow-container,
+body[data-page-type="brand"] .hero-slideshow-container {
+  display: none;
+}
 }
 /* ============================================
    SKELETON LOADING SCREENS
