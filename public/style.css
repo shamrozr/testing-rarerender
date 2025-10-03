@@ -745,6 +745,35 @@ body[data-page-type="brand"] .hero {
   .hero-title-line3 {
     font-size: 1.75rem;
   }
+
+
+  
+}
+
+
+/* Force hero visibility on category pages */
+body[data-page-type="category"] .hero,
+body[data-page-type="brand"] .hero {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 300px !important;
+}
+
+body[data-page-type="category"] .hero-inner,
+body[data-page-type="brand"] .hero-inner {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+body[data-page-type="category"] .hero-title,
+body[data-page-type="category"] .hero-subtitle,
+body[data-page-type="brand"] .hero-title,
+body[data-page-type="brand"] .hero-subtitle {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 /* ============================================
    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
