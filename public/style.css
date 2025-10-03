@@ -412,32 +412,32 @@ body {
   color: var(--color-text-muted);
 }
 
-/* Hero Section - Side by Side Layout */
-/* =================================== */
+/* Hero Section - Dual Layout (Homepage + Inner Pages) */
+/* ==================================================== */
 
 .hero {
   background: linear-gradient(135deg, 
     var(--color-light-gray) 0%, 
     rgba(99, 102, 241, 0.05) 50%,
     var(--color-soft-gray) 100%);
-  padding: var(--space-16) 0 var(--space-12) 0;
+  padding: var(--space-16) 0 var(--space-8) 0;
   margin-top: 0;
 }
 
-.hero-layout {
+/* HOMEPAGE HERO: Side by Side */
+.hero-homepage {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 50/50 split */
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-12);
   align-items: center;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-/* LEFT SIDE: Slideshow */
 .hero-slideshow-side {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1; /* Square */
+  aspect-ratio: 1 / 1;
   background: #fff;
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -500,12 +500,19 @@ body {
   z-index: 10;
 }
 
-/* RIGHT SIDE: Content */
 .hero-content-side {
   text-align: left;
   padding: var(--space-8);
 }
 
+/* INNER PAGES HERO: Traditional Centered */
+.hero-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Common Hero Styles */
 .hero-title {
   font-family: var(--font-display);
   font-size: 3.5rem;
@@ -518,12 +525,22 @@ body {
 .hero-subtitle {
   font-size: 1.25rem;
   color: var(--color-text-secondary);
+  margin-bottom: var(--space-10);
   line-height: 1.6;
 }
 
-/* MOBILE: Stack vertically */
+/* Reduce spacing between hero and first section */
+.hero + #dynamicSections .content-section:first-child {
+  padding-top: var(--space-5);
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
-  .hero-layout {
+  .hero {
+    padding: var(--space-12) var(--space-4) var(--space-8);
+  }
+  
+  .hero-homepage {
     grid-template-columns: 1fr;
     gap: var(--space-8);
   }
@@ -544,6 +561,7 @@ body {
   
   .hero-subtitle {
     font-size: 1.1rem;
+    margin-bottom: var(--space-6);
   }
   
   .hero-slideshow-counter {
@@ -554,6 +572,10 @@ body {
 }
 
 @media (max-width: 480px) {
+  .hero {
+    padding: var(--space-8) var(--space-3) var(--space-6);
+  }
+  
   .hero-slideshow-side {
     max-width: 95%;
   }
@@ -565,12 +587,6 @@ body {
   .hero-subtitle {
     font-size: 1rem;
   }
-}
-
-/* Hide hero on category pages */
-body[data-page-type="category"] .hero,
-body[data-page-type="brand"] .hero {
-  display: none;
 }
 /* ============================================
    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
