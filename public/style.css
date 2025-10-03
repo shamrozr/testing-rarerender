@@ -234,13 +234,14 @@
 
 
   /* Fix container for hero section */
-  .hero .container {
-    max-width: 1200px !important;
-    margin: 0 auto !important;
-    padding: 0 var(--space-4) !important;
-    width: 100% !important;
-    overflow: visible !important;
-  }
+  /* Fix container for hero section */
+.hero .container {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 var(--space-4) !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
   /* Header Styles */
   /* ============= */
 
@@ -471,13 +472,13 @@
   /* ==================================================== */
 
   .hero {
-    background: #ffffff !important;
-    padding: var(--space-16) 0 var(--space-8) 0;
-    margin-top: 0;
-    overflow: visible !important;
-    min-height: 300px !important;
-    position: relative !important;
-  }
+  background: #ffffff !important;
+  padding: var(--space-16) 0 var(--space-8) 0; /* NO horizontal padding */
+  margin-top: 0;
+  overflow: hidden !important; /* ADD THIS */
+  min-height: 300px !important;
+  position: relative !important;
+}
 
   /* Remove gray background on category pages too */
   body[data-page-type="category"] .hero,
@@ -805,15 +806,20 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .hero {
-    padding: var(--space-8) 0 var(--space-6); /* Changed: removed horizontal padding */
+    padding: var(--space-8) 0 var(--space-6) 0; /* NO horizontal padding */
     overflow: hidden;
+  }
+  
+  .hero .container {
+    padding: 0 var(--space-4) !important; /* Container handles padding */
   }
   
   .hero-homepage {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto auto !important;
     gap: var(--space-6) !important;
-    padding: 0 var(--space-4) !important; /* Keep container padding */
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
   /* FIXED: Image on top, full width */
@@ -828,7 +834,7 @@
   .hero-content-side {
     grid-row: 2 !important;
     text-align: center;
-    padding: var(--space-4) 0;
+    padding: 0 !important;
   }
   
   .hero-title {
