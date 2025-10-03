@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
-const slideshowItems = [];
+
 const BRANDS_CSV_URL = process.env.BRANDS_CSV_URL;
 const MASTER_CSV_URL = process.env.MASTER_CSV_URL;
 const PLACEHOLDER_THUMB = (process.env.PLACEHOLDER_THUMB || "/thumbs/_placeholder.webp").trim();
@@ -267,44 +267,12 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
 console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
 let processedCount = 0;
 
-// CRITICAL: Extract slideshow FIRST before any filtering
-  const slideshowValue = (
-    r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || ""
-  ).trim().toLowerCase();
-  
-  const thumbRel = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-  
-  if ((slideshowValue === 'yes' || slideshowValue === 'on') && thumbRel) {
-    const normalizedThumb = toThumbSitePath(thumbRel);
-    slideshowItems.push({
-      image: normalizedThumb,
-      title: name || 'Slideshow Image',
-      path: rel || 'unknown'
-    });
-    console.log(`📸 SLIDESHOW ADDED: ${name} → ${normalizedThumb}`);
-  }
-  
-  // Now continue with existing logic
+for (const r of masterRows) {
+  const name = (r["Name"] || r["Folder/Product"] || "").trim();
+  const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-  // Extract slideshow items in the same pass
-  // FIXED: Extract slideshow items - support more variations
-  const slideshowValue = (
-    r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || 
-    r["Slideshow Image"] || r["slideshow_image"] || ""
-  ).trim().toLowerCase();
   
-  const isSlideshow = slideshowValue === 'on' || slideshowValue === 'yes' || slideshowValue === '1' || slideshowValue === 'true';
-  
-  if (isSlideshow && thumbRel) {
-    const normalizedThumb = toThumbSitePath(thumbRel);
-    console.log(`📸 SLIDESHOW: Adding ${name} with thumb: ${normalizedThumb}`);
-    slideshowItems.push({
-      image: normalizedThumb,
-      title: name,
-      path: rel
-    });
-  }
   // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
@@ -630,30 +598,12 @@ console.log("✅ BUILD TopOrder verification complete");
     }
   };
 
-await fs.writeFile(
+  await fs.writeFile(
     path.join(PUBLIC_DIR, "data.json"), 
     JSON.stringify(enhancedData, null, 2), 
     "utf8"
   );
-  console.log("✅ Saved data.json");
   
-  // SLIDESHOW: Save slideshow.json
-  console.log(`\n📸 Slideshow: ${slideshowItems.length} items collected`);
-  
-  if (slideshowItems.length > 0) {
-    slideshowItems.forEach((item, i) => {
-      console.log(`   ${i + 1}. ${item.title}: ${item.image}`);
-    });
-  }
-  
-  await fs.writeFile(
-    path.join(PUBLIC_DIR, "slideshow.json"),
-    JSON.stringify(slideshowItems, null, 2),
-    "utf8"
-  );
-  
-  console.log(`✅ Saved slideshow.json (${slideshowItems.length} items)`);
-
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
   await fs.writeFile(
     path.join(ROOT, "build", "health.json"), 
