@@ -330,16 +330,22 @@
     }
   }
 
-  /* FORCE brand info visibility */
-  .brand-info {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 10 !important;
-  }
+.brand-info {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+/* FORCE brand info to always show */
+.header .brand-info,
+.brand-section .brand-info {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
 
   .brand-info * {
     visibility: visible !important;
