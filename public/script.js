@@ -309,31 +309,43 @@ if (this.currentPath.length > 0) {
   // Show inner page hero (traditional centered)
  // Show inner page hero (traditional centered)
   // Show inner page hero (traditional centered)
-  showInnerHero() {
-    const homepageHero = document.getElementById('heroHomepage');
-    const innerHero = document.getElementById('heroInner');
-    
-    if (homepageHero) {
-      homepageHero.style.display = 'none';
-      homepageHero.classList.remove('active');
-    }
-    
-    if (innerHero) {
-      innerHero.style.display = 'block';
-      
-      innerHero.classList.add('active');
-      console.log('✅ Inner hero shown');
-    } else {
-      console.error('❌ Inner hero element not found');
-    }
-    // After setting innerHero.style.display = 'block'
-const innerHeroContainer = innerHero.closest('.hero');
-if (innerHeroContainer) {
-  innerHeroContainer.style.display = 'block';
-  innerHeroContainer.style.visibility = 'visible';
-  innerHeroContainer.style.minHeight = '300px';
-}
+showInnerHero() {
+  const homepageHero = document.getElementById('heroHomepage');
+  const innerHero = document.getElementById('heroInner');
+  
+  if (homepageHero) {
+    homepageHero.style.display = 'none';
+    homepageHero.classList.remove('active');
   }
+  
+  if (innerHero) {
+    innerHero.style.display = 'block';
+    innerHero.classList.add('active');
+    
+    // Force visibility
+    innerHero.style.visibility = 'visible';
+    innerHero.style.opacity = '1';
+    innerHero.style.position = 'relative';
+    innerHero.style.zIndex = '1';
+    
+    console.log('✅ Inner hero shown with forced visibility');
+  }
+  
+  // Force parent container visibility
+  const heroContainer = document.querySelector('.hero');
+  if (heroContainer) {
+    heroContainer.style.display = 'block';
+    heroContainer.style.visibility = 'visible';
+    heroContainer.style.minHeight = '300px';
+    heroContainer.style.position = 'relative';
+  }
+  
+  // Force browser repaint
+  setTimeout(() => {
+    if (innerHero) innerHero.style.transform = 'translateZ(0)';
+    setTimeout(() => { if (innerHero) innerHero.style.transform = ''; }, 10);
+  }, 50);
+}
 
 
   // Show featured heading (homepage only)
