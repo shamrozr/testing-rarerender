@@ -320,11 +320,19 @@ if (this.currentPath.length > 0) {
     
     if (innerHero) {
       innerHero.style.display = 'block';
+      
       innerHero.classList.add('active');
       console.log('✅ Inner hero shown');
     } else {
       console.error('❌ Inner hero element not found');
     }
+    // After setting innerHero.style.display = 'block'
+const innerHeroContainer = innerHero.closest('.hero');
+if (innerHeroContainer) {
+  innerHeroContainer.style.display = 'block';
+  innerHeroContainer.style.visibility = 'visible';
+  innerHeroContainer.style.minHeight = '300px';
+}
   }
 
 
@@ -420,6 +428,14 @@ if (this.currentPath.length > 0) {
   console.log('  - Inner hero:', document.getElementById('heroInner')?.style.display);
   console.log('  - Homepage hero:', document.getElementById('heroHomepage')?.style.display);
   console.log('  - Breadcrumb:', document.querySelector('.breadcrumb-nav') ? 'exists' : 'missing');
+    // Force browser repaint
+setTimeout(() => {
+  const innerHero = document.getElementById('heroInner');
+  if (innerHero) {
+    innerHero.style.transform = 'translateZ(0)';
+    setTimeout(() => innerHero.style.transform = '', 10);
+  }
+}, 50);
 }
 
 
