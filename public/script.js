@@ -3370,31 +3370,34 @@ if (!brandThumbnail) {
   // Get category-specific thumbnail from its first child
   let categoryThumbnail = '';
   
-  const categoryNode = this.data.catalog.tree[categoryName];
-  if (categoryNode && categoryNode.children) {
-    // Find this specific brand in this category
-    const brandNodeInCategory = categoryNode.children[brandKey] || 
-                                 Object.values(categoryNode.children).find(child => 
-                                   this.normalizeBrandName(Object.keys(categoryNode.children).find(k => categoryNode.children[k] === child)) === brandName
-                                 );
+  // Navigate through the data structure to find this brand in this category
+  if (this.data.catalog.tree[categoryName]?.children) {
+    // Find the brand node within this category
+    const categoryChildren = this.data.catalog.tree[categoryName].children;
+    let brandNodeInCategory = null;
     
+    // Search for the brand by normalized name
+    for (const [key, child] of Object.entries(categoryChildren)) {
+      if (this.normalizeBrandName(key) === brandName) {
+        brandNodeInCategory = child;
+        break;
+      }
+    }
+    
+    // If we found the brand in this category, get its first child's thumbnail
     if (brandNodeInCategory && brandNodeInCategory.children) {
-      // Get first child from THIS specific category
-      const firstChildInCategory = Object.values(brandNodeInCategory.children)[0];
+      const firstChild = Object.values(brandNodeInCategory.children)[0];
       
-      if (firstChildInCategory) {
-        if (firstChildInCategory.isProduct && firstChildInCategory.thumbnail) {
-          categoryThumbnail = firstChildInCategory.thumbnail;
-          console.log(`✅ ${categoryName}: Using first product thumbnail:`, categoryThumbnail);
-        } else if (firstChildInCategory.children) {
-          const nestedFirst = Object.values(firstChildInCategory.children)[0];
+      if (firstChild) {
+        if (firstChild.isProduct && firstChild.thumbnail) {
+          categoryThumbnail = firstChild.thumbnail;
+        } else if (firstChild.children) {
+          const nestedFirst = Object.values(firstChild.children)[0];
           if (nestedFirst?.thumbnail) {
             categoryThumbnail = nestedFirst.thumbnail;
-            console.log(`✅ ${categoryName}: Using nested first child thumbnail:`, categoryThumbnail);
           }
-        } else if (firstChildInCategory.thumbnail) {
-          categoryThumbnail = firstChildInCategory.thumbnail;
-          console.log(`✅ ${categoryName}: Using first folder thumbnail:`, categoryThumbnail);
+        } else if (firstChild.thumbnail) {
+          categoryThumbnail = firstChild.thumbnail;
         }
       }
     }
@@ -3403,7 +3406,6 @@ if (!brandThumbnail) {
   // Fallback to generic brand thumbnail
   if (!categoryThumbnail) {
     categoryThumbnail = brandThumbnail;
-    console.log(`⚠️ ${categoryName}: Using fallback thumbnail`);
   }
   
   categoryCards.push({
@@ -3411,7 +3413,7 @@ if (!brandThumbnail) {
     title: `${brandName} ${categoryName}`,
     description: `${catData.count} ${brandName} products in ${categoryName}`,
     count: catData.count,
-    thumbnail: categoryThumbnail, // FIXED: Use category-specific thumbnail
+    thumbnail: categoryThumbnail,
     isProduct: false,
     topOrder: 999,
     brandName: brandName,
