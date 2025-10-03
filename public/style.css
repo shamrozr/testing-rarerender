@@ -597,22 +597,35 @@ body {
   max-width: 800px;
   margin: 0 auto;
   text-align: center;
-  display: none; /* Hidden by default */
+  display: none;
+  position: relative !important;
+  z-index: 1 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .hero-inner.active {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-/* Ensure hero elements are visible on inner pages */
+/* Force visibility on category pages */
 body[data-page-type="category"] .hero-inner,
 body[data-page-type="brand"] .hero-inner {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 200px !important;
 }
 
-body[data-page-type="category"] .hero-homepage,
-body[data-page-type="brand"] .hero-homepage {
-  display: none !important;
+/* Ensure hero container is visible */
+body[data-page-type="category"] .hero,
+body[data-page-type="brand"] .hero {
+  display: block !important;
+  visibility: visible !important;
+  min-height: 300px !important;
+  position: relative !important;
 }
 
 /* Common Hero Styles */
@@ -1066,7 +1079,6 @@ html {
 
 /* Breadcrumb Navigation - FIXED */
 /* ============================== */
-
 .breadcrumb-nav {
   display: flex !important;
   align-items: center;
@@ -1085,6 +1097,8 @@ html {
   margin: var(--space-4) auto var(--space-6) auto;
   visibility: visible !important;
   opacity: 1 !important;
+  position: relative !important;
+  z-index: 100 !important; /* Above everything */
 }
 
 .breadcrumb-nav a {
@@ -4248,6 +4262,7 @@ body[data-page-type="brand"] #heroInner {
 }
 
   /* Ensure hero text elements are visible on inner pages */
+/* Force hero text visibility on inner pages */
 body[data-page-type="category"] .hero-title,
 body[data-page-type="category"] .hero-subtitle,
 body[data-page-type="brand"] .hero-title,
@@ -4256,6 +4271,8 @@ body[data-page-type="brand"] .hero-subtitle {
   visibility: visible !important;
   opacity: 1 !important;
   color: var(--color-text-primary) !important;
+  position: relative !important;
+  z-index: 10 !important;
 }
 }
 /* ============================================
