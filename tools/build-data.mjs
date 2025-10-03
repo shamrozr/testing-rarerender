@@ -273,9 +273,17 @@ for (const r of masterRows) {
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   // Extract slideshow items in the same pass
-  const slideshowValue = (r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || "").trim().toLowerCase();
-  if ((slideshowValue === 'on' || slideshowValue === 'yes') && thumbRel) {
+  // FIXED: Extract slideshow items - support more variations
+  const slideshowValue = (
+    r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || 
+    r["Slideshow Image"] || r["slideshow_image"] || ""
+  ).trim().toLowerCase();
+  
+  const isSlideshow = slideshowValue === 'on' || slideshowValue === 'yes' || slideshowValue === '1' || slideshowValue === 'true';
+  
+  if (isSlideshow && thumbRel) {
     const normalizedThumb = toThumbSitePath(thumbRel);
+    console.log(`📸 SLIDESHOW: Adding ${name} with thumb: ${normalizedThumb}`);
     slideshowItems.push({
       image: normalizedThumb,
       title: name,
@@ -614,17 +622,39 @@ await fs.writeFile(
   );
   console.log("✅ Saved data.json");
   
-  // NEW: Save slideshow.json with error handling
-  try {
+  // FIXED: Save slideshow.json with better validation
+  console.log(`\n📸 Processing slideshow items...`);
+  console.log(`   Found ${slideshowItems.length} items marked for slideshow`);
+  
+  if (slideshowItems.length === 0) {
+    console.log("⚠️  No slideshow items found. Add 'slideshow = yes' to Master CSV rows.");
+    // Create empty slideshow.json as fallback
     await fs.writeFile(
       path.join(PUBLIC_DIR, "slideshow.json"),
-      JSON.stringify(slideshowItems, null, 2),
+      JSON.stringify([], null, 2),
       "utf8"
     );
-    console.log(`📸 Generated slideshow.json with ${slideshowItems.length} items`);
-  } catch (err) {
-    console.error("❌ Failed to write slideshow.json:", err.message);
-    // Don't fail the entire build for slideshow
+  } else {
+    // Verify images exist
+    const validItems = [];
+    for (const item of slideshowItems) {
+      const imagePath = path.join(PUBLIC_DIR, item.image.replace(/^\//, ''));
+      const exists = await fs.access(imagePath).then(() => true).catch(() => false);
+      
+      if (exists) {
+        validItems.push(item);
+        console.log(`   ✅ ${item.title}: ${item.image}`);
+      } else {
+        console.log(`   ⚠️  ${item.title}: Image not found at ${item.image}`);
+      }
+    }
+    
+    await fs.writeFile(
+      path.join(PUBLIC_DIR, "slideshow.json"),
+      JSON.stringify(validItems, null, 2),
+      "utf8"
+    );
+    console.log(`\n✅ Generated slideshow.json with ${validItems.length} valid items`);
   }
 
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
