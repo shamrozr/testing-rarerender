@@ -96,11 +96,14 @@ class CSVCatalogApp {
     // Check if we need to show category view or homepage
     // Check if we need to show category view or homepage
 // Check if we need to show category view or homepage
-if (this.currentPath.length > 0) {
-  this.showCategoryView();
-} else {
-  this.setupDynamicSections();
-}
+// Check if we need to show category view or homepage
+    if (this.currentPath.length > 0) {
+      this.showInnerHero(); // Show traditional hero for inner pages
+      this.showCategoryView();
+    } else {
+      this.showHomepageHero(); // Show slideshow hero for homepage
+      this.setupDynamicSections();
+    }
 
 // Setup brands and slideshow FIRST (creates the sections)
 this.setupBrands();
@@ -271,8 +274,40 @@ if (this.currentPath.length > 0) {
     }
   }
 
-  // Show category view
+
+
+// Show homepage hero (with slideshow)
+  showHomepageHero() {
+    const homepageHero = document.getElementById('heroHomepage');
+    const innerHero = document.getElementById('heroInner');
+    
+    if (homepageHero) homepageHero.style.display = 'grid';
+    if (innerHero) innerHero.style.display = 'none';
+    
+    // Update homepage hero content
+    const titleHome = document.getElementById('heroTitleHome');
+    const subtitleHome = document.getElementById('heroSubtitleHome');
+    
+    if (this.data && this.data.brands && this.currentBrand) {
+      const brand = this.data.brands[this.currentBrand];
+      if (titleHome) titleHome.textContent = brand.heroTitle || 'Discover Luxury Collections';
+      if (subtitleHome) subtitleHome.textContent = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
+    }
+  }
+  
+  // Show inner page hero (traditional centered)
+  showInnerHero() {
+    const homepageHero = document.getElementById('heroHomepage');
+    const innerHero = document.getElementById('heroInner');
+    
+    if (homepageHero) homepageHero.style.display = 'none';
+    if (innerHero) innerHero.style.display = 'block';
+  }
+  
   showCategoryView() {
+  // Show inner hero layout
+  this.showInnerHero();
+  
   // Add body attribute for CSS targeting
   document.body.setAttribute('data-page-type', 'category');
   
@@ -1496,6 +1531,9 @@ debugModalState() {
 
   
   navigateToHome() {
+  // Show homepage hero layout
+  this.showHomepageHero();
+  
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
   
@@ -1583,11 +1621,15 @@ updateSectionVisibility(showSections) {
     const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || brand['Hero Subtitle'] || 'Curated premium products from the world\'s finest brands.';
 
     // FORCE immediate DOM updates
+    // FORCE immediate DOM updates with MAXIMUM VISIBILITY
+    // FORCE immediate DOM updates with MAXIMUM VISIBILITY - UPDATE BOTH HEROES
     const elements = [
       { id: 'brandName', content: brandName },
       { id: 'brandTagline', content: tagline },
-      { id: 'heroTitle', content: heroTitle },
-      { id: 'heroSubtitle', content: heroSubtitle },
+      { id: 'heroTitle', content: heroTitle }, // Inner hero title
+      { id: 'heroSubtitle', content: heroSubtitle }, // Inner hero subtitle
+      { id: 'heroTitleHome', content: heroTitle }, // Homepage hero title
+      { id: 'heroSubtitleHome', content: heroSubtitle }, // Homepage hero subtitle
       { id: 'footerBrandName', content: brandName }
     ];
 
@@ -1595,14 +1637,29 @@ updateSectionVisibility(showSections) {
       const element = document.getElementById(id);
       if (element) {
         element.textContent = content;
-        element.style.display = 'block'; // Ensure it's visible
+        element.style.display = 'block'; // Ensure visible
+        element.style.visibility = 'visible'; // Force visibility
+        element.style.opacity = '1'; // Force opaque
+        element.style.color = id === 'brandName' ? '#202124' : ''; // Force dark color for brand name
         
-        // Double-check after a brief delay
+        // Triple-check after delay
         setTimeout(() => {
           if (element.textContent !== content) {
             element.textContent = content;
           }
+          if (id === 'brandName') {
+            element.style.color = '#202124';
+          }
         }, 50);
+        
+        setTimeout(() => {
+          if (element.textContent !== content) {
+            element.textContent = content;
+          }
+          if (id === 'brandName') {
+            element.style.color = '#202124';
+          }
+        }, 200);
       }
     });
 
@@ -2771,6 +2828,9 @@ getScaleTransform(scaling) {
       .join(' ');
   }
   showBrandView(brandName, paths, categories) {
+    // Show inner hero layout
+    this.showInnerHero();
+    
     document.body.setAttribute('data-page-type', 'brand');
     this.resetScrollPosition();
     
