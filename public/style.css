@@ -806,6 +806,9 @@
 /* ============================================
    MOBILE HERO - VERTICAL STACK LAYOUT
    ============================================ */
+/* ============================================
+   MOBILE HERO - VERTICAL STACK LAYOUT
+   ============================================ */
 
 @media (max-width: 768px) {
   .hero {
@@ -814,28 +817,33 @@
   }
   
   .hero .container {
-    padding: 0 var(--space-4) !important;
+    padding: 0 !important;
     max-width: 100% !important;
+    width: 100% !important;
   }
   
-  /* CRITICAL: Override grid with flexbox vertical stack */
-  .hero-homepage {
+  /* CRITICAL: Force flexbox vertical stack - override grid completely */
+  .hero-layout.hero-homepage,
+  .hero-homepage,
+  #heroHomepage {
     display: flex !important;
     flex-direction: column !important;
     grid-template-columns: none !important;
     grid-template-rows: none !important;
     gap: var(--space-8) !important;
     align-items: center !important;
+    justify-content: flex-start !important;
     max-width: 100% !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
     width: 100% !important;
   }
 
-  /* Image first - full width */
+  /* Image container - TOP - full width */
   .hero-slideshow-side {
     position: relative !important;
     width: 100% !important;
-    max-width: 600px !important;
+    max-width: 100% !important;
     aspect-ratio: 1 / 1 !important;
     background: #fff !important;
     border-radius: var(--radius-xl) !important;
@@ -843,10 +851,12 @@
     box-shadow: var(--shadow-xl) !important;
     border: 2px solid rgba(0, 0, 0, 0.05) !important;
     order: 1 !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
+    padding: 0 var(--space-4) !important;
+    box-sizing: border-box !important;
   }
 
-  /* Content second - centered, full width */
+  /* Content container - BOTTOM - full width, centered */
   .hero-content-side {
     text-align: center !important;
     padding: 0 var(--space-4) !important;
@@ -854,21 +864,25 @@
     flex-direction: column !important;
     gap: var(--space-6) !important;
     align-items: center !important;
+    justify-content: center !important;
     order: 2 !important;
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    margin: 0 !important;
   }
   
   .hero-title {
     font-size: 2.5rem !important;
     text-align: center !important;
+    width: 100% !important;
   }
   
   .hero-subtitle {
     font-size: 1.1rem !important;
     margin-bottom: var(--space-6) !important;
     text-align: center !important;
+    width: 100% !important;
   }
   
   .hero-actions {
@@ -876,6 +890,8 @@
     width: 100% !important;
     gap: var(--space-3) !important;
     align-items: stretch !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
   .hero-btn {
@@ -894,13 +910,18 @@
   }
 }
 
+/* Extra small mobile */
 @media (max-width: 480px) {
   .hero {
-    padding: var(--space-8) var(--space-3) var(--space-6) !important;
+    padding: var(--space-6) 0 var(--space-4) 0 !important;
   }
   
   .hero-slideshow-side {
-    max-width: 95% !important;
+    padding: 0 var(--space-3) !important;
+  }
+  
+  .hero-content-side {
+    padding: 0 var(--space-3) !important;
   }
   
   .hero-title {
@@ -916,9 +937,11 @@
     padding: var(--space-3) var(--space-4) !important;
     min-height: 65px !important;
   }
+  
+  .hero-btn-text-small {
+    font-size: 0.7rem !important;
+  }
 }
-
-
 
 
 /* Mobile Responsive for Hero Buttons */
