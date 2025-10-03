@@ -456,18 +456,43 @@ setTimeout(() => {
   if (heroTitle && breadcrumbs.length > 0) {
     const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
     heroTitle.textContent = `${currentCategory} Collection`;
-    heroTitle.style.display = 'block';
-    heroTitle.style.visibility = 'visible';
-    heroTitle.style.opacity = '1';
-    heroTitle.style.color = 'var(--color-text-primary)';
+    
+    // FORCE inline styles
+    heroTitle.style.cssText = `
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      color: #202124 !important;
+      font-size: 2.5rem !important;
+      font-weight: 700 !important;
+      margin-bottom: 1rem !important;
+      text-shadow: none !important;
+      -webkit-text-fill-color: #202124 !important;
+      background: transparent !important;
+      position: relative !important;
+      z-index: 11 !important;
+    `;
+    
     console.log('✅ Hero title updated:', heroTitle.textContent);
+    console.log('✅ Hero title computed color:', window.getComputedStyle(heroTitle).color);
   }
   
   if (heroSubtitle) {
-    heroSubtitle.style.display = 'block';
-    heroSubtitle.style.visibility = 'visible';
-    heroSubtitle.style.opacity = '1';
-    heroSubtitle.style.color = 'var(--color-text-secondary)';
+    // FORCE inline styles
+    heroSubtitle.style.cssText = `
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      color: #5f6368 !important;
+      font-size: 1.1rem !important;
+      margin-bottom: 1.5rem !important;
+      text-shadow: none !important;
+      -webkit-text-fill-color: #5f6368 !important;
+      background: transparent !important;
+      position: relative !important;
+      z-index: 11 !important;
+    `;
+    
     console.log('✅ Hero subtitle visible');
   }
 
@@ -495,6 +520,28 @@ addBreadcrumbNavigation(breadcrumbs) {
   // Create breadcrumb navigation
   const breadcrumbNav = document.createElement('nav');
   breadcrumbNav.className = 'breadcrumb-nav';
+
+// FORCE inline styles for visibility
+breadcrumbNav.style.cssText = `
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 100 !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 2px solid rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 50px !important;
+  margin: 1.5rem auto !important;
+  max-width: 600px !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  color: #202124 !important;
+  font-size: 0.9rem !important;
+`;
 
   // Home link
   const homeLink = document.createElement('a');
