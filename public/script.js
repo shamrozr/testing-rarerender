@@ -2056,37 +2056,12 @@ navigateToHome() {
     existingBreadcrumbs.remove();
   }
   
-  // Force homepage hero display
-  const homepageHero = document.getElementById('heroHomepage');
-  const innerHero = document.getElementById('heroInner');
-  
-  if (innerHero) {
-    innerHero.style.cssText = `
-      display: none !important;
-      height: 0 !important;
-      overflow: hidden !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-    `;
-  }
-  
-  if (homepageHero) {
-    homepageHero.style.cssText = `
-      display: grid !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: var(--space-12) !important;
-      align-items: center !important;
-      max-width: 1400px !important;
-      margin: 0 auto !important;
-      width: 100% !important;
-      min-height: 400px !important;
-    `;
-    console.log('✅ Homepage hero restored');
-  }
+  // CRITICAL: Re-apply homepage hero layout after a brief delay
+  setTimeout(() => {
+    this.showHomepageHero();
+    console.log('✅ Homepage hero layout re-applied after navigation');
+  }, 100);
 }
-
 
 // Helper function to control section visibility
 updateSectionVisibility(showSections) {
@@ -4326,17 +4301,26 @@ resetScrollPosition() {
     }
   }
 
-  handleBrowserNavigation() {
+handleBrowserNavigation() {
   // Re-initialize from URL
   this.initializeFromURL();
   
-  // FIXED: Reset scroll position for browser navigation
+  // Reset scroll position for browser navigation
   this.resetScrollPosition();
   
   // Force brand refresh
   this.handleBrandNavigation();
+  
+  // CRITICAL: Re-apply hero layout after navigation
+  setTimeout(() => {
+    const pathFromURL = new URLSearchParams(window.location.search).get('path');
+    if (!pathFromURL) {
+      // We're on homepage - ensure proper layout
+      this.showHomepageHero();
+      console.log('✅ Re-applied homepage hero on browser navigation');
+    }
+  }, 150);
 }
-
   // Enhanced search functionality
   handleSearch(query) {
     if (!query.trim()) return;
