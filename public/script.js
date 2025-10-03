@@ -1810,40 +1810,67 @@ updateSectionVisibility(showSections) {
 }
 
 
-
 setupHeroSlideshow() {
   const slideshowItems = this.data.catalog?.slideshow || [];
   
   if (slideshowItems.length === 0) {
     console.log('⚠️ No slideshow items found');
+    // Fallback to static hero
+    this.setupStaticHero();
     return;
   }
 
   console.log(`🎬 Setting up hero slideshow with ${slideshowItems.length} items`);
 
-  // Get hero section
   const hero = document.querySelector('.hero');
   if (!hero) return;
 
-  // Create slideshow HTML
   const slideshowHTML = `
     <div class="hero-slideshow-container">
       <div class="hero-slideshow" id="heroSlideshow">
         ${slideshowItems.map((item, index) => `
           <div class="hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
-            <img 
-              src="${item.thumbnail}" 
-              alt="${item.name}" 
-              class="hero-slide-image"
-              loading="${index === 0 ? 'eager' : 'lazy'}"
-            >
-            <div class="hero-slide-overlay">
+            <div class="hero-slide-inner">
+              <!-- LEFT: Image -->
+              <div class="hero-slide-image-container">
+                <img 
+                  src="${item.thumbnail}" 
+                  alt="${item.name}" 
+                  class="hero-slide-image"
+                  loading="${index === 0 ? 'eager' : 'lazy'}"
+                >
+              </div>
+              
+              <!-- RIGHT: Content -->
               <div class="hero-slide-content">
-                <div class="hero-slide-category">${item.category}</div>
-                <h2 class="hero-slide-title">${item.name}</h2>
-                <a href="#" class="hero-slide-cta" data-path="${item.path}">
-                  Explore ${item.name.split(' ')[0]}
-                </a>
+                <h1 class="hero-slide-title">
+                  Establish Yourself<br>With <span class="highlight">Premium</span><br>Accessories
+                </h1>
+                <p class="hero-slide-description">
+                  Premium accessories can include items like luxury Watches, Leather goods, 
+                  Designer handbags, Fine jewellery and High-end Footwear. Choose premium 
+                  accessories that reflect your personality and lifestyle is essential.
+                </p>
+                <div class="hero-slide-actions">
+                  <a href="#" class="hero-slide-cta" data-path="">
+                    <div class="hero-slide-cta-text">
+                      <span class="hero-slide-cta-label">Explore all</span>
+                      <span class="hero-slide-cta-brand">Luxury Brands</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                  </a>
+                  <a href="#" class="hero-slide-cta" data-path="${item.path}">
+                    <div class="hero-slide-cta-text">
+                      <span class="hero-slide-cta-label">Explore</span>
+                      <span class="hero-slide-cta-brand">${item.name.split(' ')[0]}</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -1861,11 +1888,26 @@ setupHeroSlideshow() {
     </div>
   `;
 
-  // Insert before hero content
-  hero.insertAdjacentHTML('afterbegin', slideshowHTML);
-
-  // Setup slideshow functionality
+  hero.innerHTML = slideshowHTML;
   this.initHeroSlideshowControls(slideshowItems.length);
+}
+
+setupStaticHero() {
+  const hero = document.querySelector('.hero');
+  if (!hero) return;
+  
+  const brand = this.data.brands[this.currentBrand];
+  const heroTitle = brand?.heroTitle || 'Discover Luxury Collections';
+  const heroSubtitle = brand?.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
+  
+  hero.innerHTML = `
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-title">${heroTitle}</h1>
+        <p class="hero-subtitle">${heroSubtitle}</p>
+      </div>
+    </div>
+  `;
 }
 
 initHeroSlideshowControls(totalSlides) {
@@ -1897,16 +1939,13 @@ initHeroSlideshowControls(totalSlides) {
     goToSlide(prev);
   };
 
-  // Auto-advance every 5 seconds
   let autoplay = setInterval(nextSlide, 5000);
 
-  // Reset autoplay on interaction
   const resetAutoplay = () => {
     clearInterval(autoplay);
     autoplay = setInterval(nextSlide, 5000);
   };
 
-  // Navigation buttons
   if (prevBtn) {
     prevBtn.addEventListener('click', () => {
       prevSlide();
@@ -1921,7 +1960,6 @@ initHeroSlideshowControls(totalSlides) {
     });
   }
 
-  // Dots navigation
   dots.forEach((dot, index) => {
     dot.addEventListener('click', () => {
       goToSlide(index);
@@ -1929,7 +1967,6 @@ initHeroSlideshowControls(totalSlides) {
     });
   });
 
-  // CTA click handlers
   const ctas = slideshow.querySelectorAll('.hero-slide-cta');
   ctas.forEach(cta => {
     cta.addEventListener('click', (e) => {
@@ -1937,13 +1974,15 @@ initHeroSlideshowControls(totalSlides) {
       const path = cta.dataset.path;
       if (path) {
         this.navigateToPath(path);
+      } else {
+        // Scroll to brands section
+        document.querySelector('.brands-section')?.scrollIntoView({ behavior: 'smooth' });
       }
     });
   });
 
-  // Keyboard navigation
   document.addEventListener('keydown', (e) => {
-    if (this.currentPath.length === 0) { // Only on homepage
+    if (this.currentPath.length === 0) {
       if (e.key === 'ArrowLeft') {
         prevSlide();
         resetAutoplay();
@@ -1954,7 +1993,6 @@ initHeroSlideshowControls(totalSlides) {
     }
   });
 
-  // Touch swipe support
   let touchStartX = 0;
   slideshow.addEventListener('touchstart', (e) => {
     touchStartX = e.changedTouches[0].screenX;
