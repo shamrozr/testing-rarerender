@@ -805,13 +805,15 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .hero {
-    padding: var(--space-8) var(--space-4) var(--space-6);
+    padding: var(--space-8) 0 var(--space-6); /* Changed: removed horizontal padding */
+    overflow: hidden;
   }
   
   .hero-homepage {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto auto !important;
     gap: var(--space-6) !important;
+    padding: 0 var(--space-4) !important; /* Keep container padding */
   }
   
   /* FIXED: Image on top, full width */
@@ -826,7 +828,7 @@
   .hero-content-side {
     grid-row: 2 !important;
     text-align: center;
-    padding: var(--space-4) var(--space-2);
+    padding: var(--space-4) 0;
   }
   
   .hero-title {
@@ -844,7 +846,6 @@
     bottom: 15px;
   }
 }
-
   @media (max-width: 480px) {
     .hero {
       padding: var(--space-8) var(--space-3) var(--space-6);
