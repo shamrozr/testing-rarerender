@@ -1,4785 +1,4875 @@
-    /* Professional CSV-Driven Catalog Styles with Enhanced Navigation */
-  /* ================================================================= */
+// Complete Working CSV-Driven Catalog App with Smart Grid and Enhanced Features
+// ============================================================================
 
-  /* CSS Custom Properties (Variables) */
-  :root {
-    /* Light Color Palette */
-    --color-white: #ffffff;
-    --color-light-gray: #f8f9fa;
-    --color-soft-gray: #f1f3f4;
-    --color-medium-gray: #e8eaed;
-    --color-border-light: #dadce0;
-    --color-text-primary: #202124;
-    --color-text-secondary: #5f6368;
-    --color-text-muted: #9aa0a6;
-    
-    /* Dynamic Brand Colors (updated from CSV) */
-  --color-primary: #6366f1;
-  --color-accent: #8b5cf6;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-
-  /* Ensure minimum contrast ratios for accessibility */
-  --color-primary-light: color-mix(in srgb, var(--color-primary) 80%, white);
-  --color-primary-dark: color-mix(in srgb, var(--color-primary) 60%, black);
-  --color-text-on-primary: white;
-    
-    /* Semantic Colors */
-    --color-bg: var(--color-white);
-    --color-surface: var(--color-light-gray);
-    --color-surface-elevated: var(--color-white);
-    --color-border: var(--color-border-light);
-    --color-shadow: rgba(0, 0, 0, 0.1);
-    --color-shadow-light: rgba(0, 0, 0, 0.05);
-    --color-overlay: rgba(0, 0, 0, 0.4);
-    
-    /* Typography */
-    --font-primary: 'Inter', system-ui, sans-serif;
-    --font-display: 'Playfair Display', serif;
-    --font-heading: 'Poppins', sans-serif;
-    
-    /* Spacing Scale */
-    --space-1: 0.25rem;   /* 4px */
-    --space-2: 0.5rem;    /* 8px */
-    --space-3: 0.75rem;   /* 12px */
-    --space-4: 1rem;      /* 16px */
-    --space-5: 1.25rem;   /* 20px */
-    --space-6: 1.5rem;    /* 24px */
-    --space-8: 2rem;      /* 32px */
-    --space-10: 2.5rem;   /* 40px */
-    --space-12: 3rem;     /* 48px */
-    --space-16: 4rem;     /* 64px */
-    --space-20: 5rem;     /* 80px */
-    
-    /* Border Radius */
-    --radius-sm: 6px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-    --radius-full: 50px;
-    
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    
-    /* Transitions */
-    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* ============================================
-    QUICK WIN 5: REFINED TYPOGRAPHY
-    ============================================ */
-
-  /* Improved readability */
-  body {
-    line-height: 1.65;
-    letter-spacing: -0.01em;
-  }
-
-  /* Headers with subtle shadow for depth */
-  .hero-title,
-  .section-title,
-  .brands-title {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
-    letter-spacing: -0.02em;
-  }
-
-  .hero-title {
-    font-weight: 700;
-    background: linear-gradient(
-      135deg,
-      var(--color-text-primary) 0%,
-      var(--color-primary) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Card titles with better hierarchy */
-  .card-title {
-    letter-spacing: -0.01em;
-    line-height: 1.35;
-  }
-
-  /* Subtle number styling */
-  .card-badge,
-  .brand-count,
-  .viewer-counter,
-  .slideshow-counter {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-  }
-
-
-  /* ============================================
-    DISABLE DOUBLE-TAP ZOOM EVERYWHERE
-    ============================================ */
-
-  * {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  html, body {
-    touch-action: manipulation;
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-  }
-
-  /* Specifically disable on all interactive elements */
-  img, 
-  a, 
-  button, 
-  .content-card, 
-  .brand-item,
-  .taxonomy-item,
-  .viewer-image,
-  .slideshow-image,
-  .preview-image {
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* Allow text selection only where needed */
-  .card-title,
-  .card-description,
-  .brand-name,
-  p,
-  h1, h2, h3, h4, h5, h6 {
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
-  }
-
-
-  /* Reset & Base Styles */
-  /* ================== */
-
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-
-  html {
-    font-size: 16px;
-    scroll-behavior: smooth;
-  }
-
-  body {
-    padding-top: 80px; /* INCREASED for better mobile spacing */
-    font-family: var(--font-primary);
-    color: var(--color-text-primary);
-    background: var(--color-bg);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    min-height: 100vh;
-    position: relative;
-  }
-
-  /* Mobile body padding adjustment */
-  @media (max-width: 768px) {
-    body {
-      padding-top: 90px; /* More space on mobile */
-    }
-  }
-
-  @media (max-width: 480px) {
-    body {
-      padding-top: 100px; /* Even more on small mobile */
-    }
-  }
-
-  /* Container System */
-  /* ================ */
-
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 var(--space-4);
-  }
-
-  @media (min-width: 768px) {
-    .container {
-      padding: 0 var(--space-6);
-    }
-  }
-
-  /* ADDED: Desktop header height specification */
-  @media (min-width: 769px) {
-    .header-content {
-      height: 60px;
-    }
-  }
-
-  @media (min-width: 1200px) {
-    .container {
-      padding: 0 var(--space-8);
-    }
-  }
-
-
-
-  /* Fix container for hero section */
-  /* Fix container for hero section */
-.hero .container {
-  max-width: 1200px !important;
-  margin: 0 auto !important;
-  padding: 0 var(--space-4) !important;
-  width: 100% !important;
-  overflow: visible !important;
-}
-  /* Header Styles */
-  /* ============= */
-
-  .header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background: rgba(255, 255, 255, 0.98); /* More opaque */
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12); /* DARKER border */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Stronger shadow */
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateY(0);
-  }
-  /* Collapsed state - hide entire header */
-  .header.collapsed {
-    transform: translateY(-100%);
-  }
-  /* FIXED: Header content spacing */
-  .header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px; /* FIXED: Updated base height */
-    gap: var(--space-4);
-    padding: 0 var(--space-4);
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  /* FIXED: Mobile responsive adjustments */
-  @media (max-width: 768px) {
-    body {
-      padding-top: 75px; /* FIXED: Increased mobile body padding */
-    }
-    
-    .header-content {
-      height: 70px; /* FIXED: Increased mobile header height */
-    }
-    
-    .hero {
-      padding: 120px var(--space-4) var(--space-6) var(--space-4); /* FIXED: Reduced top padding from 160px to 120px */
-    }
-    
-    .hero-title {
-      font-size: 2.2rem; /* Slightly smaller on mobile */
-    }
-    
-    .breadcrumb-nav {
-      margin-top: var(--space-1);
-      margin-bottom: var(--space-3);
-      font-size: 0.8rem;
-      padding: var(--space-2) var(--space-4);
-      max-width: 90%;
-    }
-  }
-
-  @media (max-width: 480px) {
-    body {
-      padding-top: 90px; /* FIXED: Increased from 85px to 90px */
-    }
-    
-    .header-content {
-      height: auto; /* FIXED: Changed to auto */
-      min-height: 80px; /* FIXED: Added min-height */
-    }
-    
-    .hero {
-      padding: 100px var(--space-3) var(--space-4) var(--space-3); /* FIXED: Reduced top padding from 170px to 100px */
-    }
-    
-    .hero-title {
-      font-size: 1.9rem;
-    }
-    
-    .hero-subtitle {
-      font-size: 1.1rem;
-      margin-bottom: var(--space-6); /* Reduced spacing */
-    }
-    
-    .breadcrumb-nav {
-      font-size: 0.75rem;
-      margin-top: 0;
-      margin-bottom: var(--space-2);
-    }
-  }
-
-.brand-info {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  position: relative !important;
-  z-index: 10 !important;
-}
-/* FORCE brand info to always show */
-.header .brand-info,
-.brand-section .brand-info {
-  display: flex !important;
-  flex-direction: column !important;
+class CSVCatalogApp {
+  constructor() {
+  this.data = null;
+  this.currentBrand = null;
+  this.currentPath = [];
+  this.sections = new Map();
+  this.isLoading = false;
+  
+  // Scroll behavior properties
+  this.lastScrollY = 0;
+  this.scrollThreshold = 100;
+  this.isHeaderCollapsed = false;
+  
+  // Initialize navigation state from URL
+  this.initializeFromURL();
 }
 
-
-  .brand-info * {
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  /* Brand Section */
-  /* ============= */
-
-  .brand-section {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    flex-shrink: 0;
-  }
-
-  .brand-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1rem;
-    color: white;
-    cursor: pointer;
-    transition: all var(--transition-smooth);
-    box-shadow: var(--shadow-md);
-    filter: contrast(1.2) saturate(1.3);
-  }
-
-  .brand-logo:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    filter: contrast(1.3) saturate(1.4);
-  }
-
-  .brand-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  /* NUCLEAR: Override everything for brand name */
-  #brandName {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    color: #202124 !important;
-    font-size: 1.3rem !important;
-    font-weight: 600 !important;
-    line-height: 1.2 !important;
-    -webkit-text-fill-color: #202124 !important;
-    text-shadow: none !important;
-    background: none !important;
-    position: relative !important;
-    z-index: 999 !important;
-    width: auto !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  #brandTagline {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    color: #5f6368 !important;
-    font-size: 0.75rem !important;
-    -webkit-text-fill-color: #5f6368 !important;
-  }
-
-  /* Search Section */
-  /* ============== */
-
-  .search-section {
-    flex: 1;
-    max-width: 400px;
-    margin-left: var(--space-4);
-  }
-
-  .search-container {
-    position: relative;
-    width: 100%;
-  }
-
-  .search-input {
-    width: 100%;
-    height: 40px;
-    background: var(--color-surface);
-    border: 2px solid var(--color-border);
-    border-radius: var(--radius-full);
-    padding: 0 var(--space-4) 0 40px;
-    font-size: 0.9rem;
-    color: var(--color-text-primary);
-    outline: none;
-    transition: all var(--transition-base);
-  }
-
-  .search-input:focus {
-    border-color: var(--color-primary);
-    background: var(--color-white);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  }
-
-  .search-input::placeholder {
-    color: var(--color-text-muted);
-  }
-
-  .search-icon {
-    position: absolute;
-    left: var(--space-3);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    color: var(--color-text-muted);
-  }
-
-  /* Hero Section - Dual Layout (Homepage + Inner Pages) */
-  /* ==================================================== */
-
-  .hero {
-  background: #ffffff !important;
-  padding: var(--space-16) 0 var(--space-8) 0; /* NO horizontal padding */
-  margin-top: 0;
-  overflow: hidden !important; /* ADD THIS */
-  min-height: 300px !important;
-  position: relative !important;
-}
-
-  /* Remove gray background on category pages too */
-  body[data-page-type="category"] .hero,
-  body[data-page-type="brand"] .hero {
-    background: #ffffff !important;
-    min-height: 350px !important;
-    padding: 4rem 0 3rem 0 !important;
-  }
-
-
-
-  /* Remove text shadow/gradient interference on inner hero */
-  body[data-page-type="category"] .hero,
-  body[data-page-type="brand"] .hero {
-    background: linear-gradient(135deg, 
-      rgba(248, 249, 250, 1) 0%, 
-      rgba(255, 255, 255, 1) 100%) !important;
-  }
-
-  body[data-page-type="category"] .hero *,
-  body[data-page-type="brand"] .hero * {
-    text-shadow: none !important;
-    -webkit-text-fill-color: initial !important;
-  }
-
-
-
-
-
-
-
-
-  /* Prevent grid collapse when switching views */
-  .hero-homepage[style*="display: none"] {
-    display: none !important;
-    height: 0 !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .hero-inner[style*="display: block"] {
-    display: block !important;
-    height: auto !important;
-    min-height: 200px !important;
-  } 
-  .hero-slideshow-side {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    background: #fff;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    border: 2px solid rgba(0, 0, 0, 0.05);
-  }
-
-  .hero-slideshow-viewport {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-  }
-
-  .hero-slideshow-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #fff;
-    transition: opacity 0.5s ease;
-  }
-
-  .hero-slideshow-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--color-text-muted);
-    font-size: 1rem;
-    font-weight: 500;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .hero-slideshow-viewport.loading .hero-slideshow-loading {
-    opacity: 1;
-  }
-
-  .hero-slideshow-viewport.loading .hero-slideshow-image {
-    opacity: 0.3;
-  }
-
-
-
-  .hero-content-side {
-  text-align: left;
-  padding: var(--space-8) 0; /* CHANGED: removed horizontal padding */
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-  /* Hero Title - Multi-line styling */
-  .hero-title-line1,
-  .hero-title-line2,
-  .hero-title-line3 {
-    display: block;
-    line-height: 1.1;
-  }
-
-  .hero-title-highlight {
-    color: #B8956A; /* Gold/tan color from photo */
-    font-style: normal;
-  }
-
-  .hero-actions {
-  display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-  margin-top: var(--space-2);
-  padding: 0; /* ADD THIS */
-}
-
-  .hero-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4) var(--space-6);
-    border-radius: var(--radius-lg);
-    border: none;
-    cursor: pointer;
-    font-family: var(--font-primary);
-    font-size: 0.95rem;
-    line-height: 1.3;
-    transition: all var(--transition-smooth);
-    position: relative;
-    overflow: hidden;
-    min-height: 80px;
-  }
-
-  .hero-btn strong {
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-  }
-
-  .hero-btn-text-small {
-    font-size: 0.75rem;
-    opacity: 0.9;
-    position: absolute;
-    bottom: 8px;
-    left: 20px;
-  }
-
-  .hero-btn svg {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-    transition: transform var(--transition-base);
-  }
-
-  .hero-btn:hover svg {
-    transform: translateX(4px);
-  }
-
-  .hero-btn-primary {
-    background: #B8956A;
-    color: white;
-    box-shadow: 0 4px 12px rgba(184, 149, 106, 0.3);
-  }
-
-  .hero-btn-primary:hover {
-    background: #A67F54;
-    box-shadow: 0 6px 20px rgba(184, 149, 106, 0.4);
-    transform: translateY(-2px);
-  }
-
-  .hero-btn-secondary {
-    background: #8B9470;
-    color: white;
-    box-shadow: 0 4px 12px rgba(139, 148, 112, 0.3);
-  }
-
-  .hero-btn-secondary:hover {
-    background: #7A8360;
-    box-shadow: 0 6px 20px rgba(139, 148, 112, 0.4);
-    transform: translateY(-2px);
-  }
-
-  /* INNER PAGES HERO: Traditional Centered */
-  /* INNER PAGES HERO: Traditional Centered */
-  .hero-inner {
-    max-width: 800px;
-    margin: 0 auto;
-    text-align: center;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative;
-    z-index: 1;
-    padding: var(--space-8) var(--space-4);
-  }
-
-  /* Force inner hero title visibility */
-  .hero-inner .hero-title {
-    display: block !important;
-    visibility: visible !important;/* INNER PAGES HERO: Traditional Centered */
-  .hero-inner {
-    max-width: 800px;
-    width: 100% !important;
-    margin: 0 auto;
-    text-align: center;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 10 !important;
-    padding: var(--space-8) var(--space-4) !important;
-    min-height: 200px !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Force inner hero title visibility */
-  .hero-inner .hero-title {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    color: var(--color-text-primary) !important;
-    -webkit-text-fill-color: var(--color-text-primary) !important;
-    font-family: var(--font-display);
-    font-size: 2.5rem !important;
-    font-weight: 700 !important;
-    margin-bottom: var(--space-4) !important;
-    line-height: 1.2 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    text-shadow: none !important;
-    background: transparent !important;
-  }
-
-  /* Force inner hero subtitle visibility */
-  .hero-inner .hero-subtitle {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    color: var(--color-text-secondary) !important;
-    -webkit-text-fill-color: var(--color-text-secondary) !important;
-    font-size: 1.1rem !important;
-    line-height: 1.6 !important;
-    margin-bottom: var(--space-6) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    text-shadow: none !important;
-    background: transparent !important;
-  }
-    opacity: 1 !important;
-    color: var(--color-text-primary) !important;
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: var(--space-4);
-    line-height: 1.2;
-  }
-
-  /* Force inner hero subtitle visibility */
-  .hero-inner .hero-subtitle {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    color: var(--color-text-secondary) !important;
-    font-size: 1.1rem;
-    line-height: 1.6;
-    margin-bottom: var(--space-6);
-  }
-
-  /* Mobile adjustments */
-  @media (max-width: 768px) {
-    .hero-inner {
-      padding: var(--space-6) var(--space-4);
+  initializeFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const brandFromURL = urlParams.get('brand');
+    const pathFromURL = urlParams.get('path');
+    
+    // CRITICAL: Set brand immediately from URL
+    if (brandFromURL) {
+      this.currentBrand = brandFromURL;
+      
+      // Force immediate display update
+      this.updateBrandDisplay(brandFromURL);
     }
     
-    .hero-inner .hero-title {
-      font-size: 2rem;
+    // Set path
+    if (pathFromURL) {
+      this.currentPath = pathFromURL.split('/').filter(Boolean);
+    } else {
+      this.currentPath = [];
+    }
+  }
+
+  updateBrandDisplay(brandFromURL) {
+    // Update brand name immediately from URL
+    const brandNameElement = document.getElementById('brandName');
+    const brandLogoElement = document.getElementById('brandLogo');
+    
+    if (brandNameElement) {
+      const displayName = this.slugToDisplayName(brandFromURL);
+      brandNameElement.textContent = displayName;
     }
     
-    .hero-inner .hero-subtitle {
-      font-size: 1rem;
+    if (brandLogoElement) {
+      const initials = this.getInitials(this.slugToDisplayName(brandFromURL));
+      brandLogoElement.textContent = initials;
     }
-  }
-  /* Hero inner wrapper for proper positioning */
-  .hero-inner-wrapper {
-    position: relative !important;
-    z-index: 10 !important;
-    width: 100% !important;
-    max-width: 800px !important;
-    margin: 0 auto !important;
-    padding: 2rem 1rem !important;
-  }
-  /* Common Hero Styles */
-  .hero-title {
-    font-family: var(--font-display);
-    font-size: 3.5rem;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-6);
-    line-height: 1.2;
+    
+    // Also update page title
+    const title = this.slugToDisplayName(brandFromURL);
+    document.title = title + ' - Luxury Collection';
   }
 
-  .hero-subtitle {
-    font-size: 1.25rem;
-    color: var(--color-text-secondary);
-    margin-bottom: var(--space-10);
-    line-height: 1.6;
+  slugToDisplayName(slug) {
+    return slug
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^bags$/i, 'Bags')
+      .replace(/bags$/i, ' Bags')
+      .trim()
+      .replace(/^\w/, c => c.toUpperCase());
   }
 
-  /* Reduce spacing between hero and first section */
-  .hero + #dynamicSections .content-section:first-child {
-    padding-top: var(--space-5);
+  async init() {
+  // DEBUG: Monitor sections visibility
+  setInterval(() => {
+    const brands = document.querySelector('.brands-section');
+    const slideshow = document.querySelector('.slideshow-section');
+    const heroSlide = document.getElementById('heroSlideshowContainer');
+    const bodyAttr = document.body.getAttribute('data-page-type');
+    
+    console.log('🔍 VISIBILITY CHECK:', {
+      bodyAttribute: bodyAttr || 'homepage',
+      brandsDisplay: brands?.style.display || 'not set',
+      slideshowDisplay: slideshow?.style.display || 'not set',
+      heroSlideDisplay: heroSlide?.style.display || 'not set'
+    });
+  }, 2000);
+  
+  try {
+    await this.loadData();
+    // ... rest of init code
+    
+    if (!this.data) {
+      return;
+    }
+
+    // DEBUG: Verify topOrder data is available
+    console.log('🔍 Checking topOrder data after load...');
+    if (this.data.catalog && this.data.catalog.tree) {
+      Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+        const topOrder = item.topOrder || item['Top Order'] || item.top_order;
+        if (topOrder !== undefined) {
+          console.log(`✅ ${key} has topOrder: ${topOrder}`);
+        } else {
+          console.log(`❌ ${key} missing topOrder`);
+        }
+      });
+    }
+
+    this.setupBrandInfo();
+    
+    
+    // Check if we need to show category view or homepage
+    // Check if we need to show category view or homepage
+    // Check if we need to show category view or homepage
+// Check if we need to show category view or homepage
+// Check if we need to show category view or homepage
+    // Check if we need to show category view or homepage
+    if (this.currentPath.length > 0) {
+      this.showInnerHero();
+      this.hideFeaturedHeading();
+      this.showCategoryView();
+    } else {
+      this.showHomepageHero();
+      this.showFeaturedHeading();
+      this.setupDynamicSections();
+    }
+
+// Setup brands and slideshow FIRST (creates the sections)
+this.setupBrands();
+this.setupReviewSlideshow();
+this.setupHeroSlideshow();
+// IMMEDIATELY hide if not on homepage
+if (this.currentPath.length > 0) {
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
+  if (brandsSection) brandsSection.style.display = 'none';
+  if (slideshowSection) slideshowSection.style.display = 'none';
+  if (heroSlideshow) heroSlideshow.style.display = 'none';
+  
+  console.log('🔒 Initial hide: not on homepage');
+}
+// THEN control visibility based on current view
+if (this.currentPath.length > 0) {
+  // On category/brand view - hide brands and slideshow
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'none';
+    console.log('🙈 Hiding brands section (category view)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'none';
+    console.log('🙈 Hiding slideshow section (category view)');
   }
 
-/* ============================================
-   MOBILE HERO - VERTICAL STACK LAYOUT
-   ============================================ */
-/* ============================================
-   MOBILE HERO - VERTICAL STACK LAYOUT
-   ============================================ */
 
-@media (max-width: 768px) {
-  .hero {
-    padding: var(--space-8) 0 var(--space-6) 0 !important;
-    overflow: visible !important;
-  }
   
-  .hero .container {
-    padding: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
+// ALSO hide hero slideshow on category pages
+const heroSlideshow = document.getElementById('heroSlideshowContainer');
+if (heroSlideshow) {
+  heroSlideshow.style.display = 'none';
+  console.log('🙈 Hiding hero slideshow (category view)');
+}
+} else {
+  // On homepage - show brands and slideshow
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'block';
+    console.log('👁️ Showing brands section (homepage)');
   }
-  
-  /* CRITICAL: Force flexbox vertical stack - override grid completely */
-  .hero-layout.hero-homepage,
-  .hero-homepage,
-  #heroHomepage {
-    display: flex !important;
-    flex-direction: column !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
-    gap: var(--space-8) !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Image container - TOP - full width */
-  .hero-slideshow-side {
-    position: relative !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    aspect-ratio: 1 / 1 !important;
-    background: #fff !important;
-    border-radius: var(--radius-xl) !important;
-    overflow: hidden !important;
-    box-shadow: var(--shadow-xl) !important;
-    border: 2px solid rgba(0, 0, 0, 0.05) !important;
-    order: 1 !important;
-    margin: 0 !important;
-    padding: 0 var(--space-4) !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Content container - BOTTOM - full width, centered */
-  .hero-content-side {
-    text-align: center !important;
-    padding: 0 var(--space-4) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: var(--space-6) !important;
-    align-items: center !important;
-    justify-content: center !important;
-    order: 2 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    margin: 0 !important;
-  }
-  
-  .hero-title {
-    font-size: 2.5rem !important;
-    text-align: center !important;
-    width: 100% !important;
-  }
-  
-  .hero-subtitle {
-    font-size: 1.1rem !important;
-    margin-bottom: var(--space-6) !important;
-    text-align: center !important;
-    width: 100% !important;
-  }
-  
-  .hero-actions {
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: var(--space-3) !important;
-    align-items: stretch !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  
-  .hero-btn {
-    width: 100% !important;
-    justify-content: space-between !important;
-    min-height: 70px !important;
-  }
-  
-  /* Center all title lines */
-  .hero-title-line1,
-  .hero-title-line2,
-  .hero-title-line3 {
-    display: block !important;
-    line-height: 1.1 !important;
-    text-align: center !important;
+  if (slideshowSection) {
+    slideshowSection.style.display = 'block';
+    console.log('👁️ Showing slideshow section (homepage)');
   }
 }
+    
+    this.setupFooter();
+    this.setupEventListeners();
+    this.setupPreviewModal();
 
-/* Extra small mobile */
-@media (max-width: 480px) {
-  .hero {
-    padding: var(--space-6) 0 var(--space-4) 0 !important;
+    this.setupFABFunctionality();
+    
+    // NEW: Setup scroll behavior
+    this.setupScrollBehavior();
+    this.setupSectionVisibilityEnforcer(); // ADD THIS LINE
+  } catch (error) {
+      // Silent error handling in production
+    }
   }
+
+  async loadData() {
+  try {
+    this.showLoading();
+    
+    const response = await fetch('/data.json?v=' + Date.now());
+    if (response.ok) {
+      this.data = await response.json();
+      
+      // CRITICAL: Don't override currentBrand if it's already set from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const brandFromURL = urlParams.get('brand');
+      
+      const availableBrands = Object.keys(this.data.brands || {});
+      
+      // ALWAYS prioritize URL brand
+      if (brandFromURL && this.data.brands[brandFromURL]) {
+        this.currentBrand = brandFromURL;
+      } else if (!this.currentBrand && availableBrands.length > 0) {
+        this.currentBrand = availableBrands[0];
+      } else if (availableBrands.length === 0) {
+        throw new Error('No brands available');
+      }
+      
+      // DEBUG: Check if CSV data is properly loaded
+      console.log('🔍 Loaded data from data.json');
+      this.debugCSVData();
+      
+    } else {
+      throw new Error(`Failed to load data: ${response.status}`);
+    }
+  } catch (error) {
+    console.log('⚠️ Loading mock data instead');
+    this.loadMockData();
+  } finally {
+    this.hideLoading();
+    }
+  }
+
+  loadMockData() {
+    this.data = {
+      brands: {
+        'LuxuryEmporium': {
+          name: 'Luxury Emporium',
+          tagline: 'Premium Quality Collection',
+          heroTitle: 'Discover Luxury Collections',
+          heroSubtitle: 'Curated premium products from the world\'s finest brands. Experience elegance, quality, and sophistication in every piece.',
+          footerText: 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.',
+          colors: {
+            primary: '#6366f1',
+            accent: '#8b5cf6',
+            text: '#202124',
+            bg: '#ffffff'
+          },
+          whatsapp: 'https://wa.me/923001234567'
+        },
+        'MeriyaBags': {
+          name: 'Meriya Bags',
+          tagline: 'Luxury Redefined Since 1992',
+          heroTitle: 'Elegance Redefined Since 1992',
+          heroSubtitle: 'Discover Your Perfect Statement with premium handbags designed for women who appreciate the finer details and exquisite quality',
+          footerText: 'Meriya has been creating bespoke luxury handbags with meticulous attention to detail since 1992.',
+          colors: {
+            primary: '#9B59B6',
+            accent: '#BB8FCE',
+            text: '#2C2926',
+            bg: '#FEFDFB'
+          },
+          whatsapp: 'https://wa.me/923001234567'
+        }
+      },
+      catalog: {
+        totalProducts: 547,
+        tree: {
+          'BAGS': { 
+            count: 234, 
+            thumbnail: '', 
+            section: 'Featured',
+            children: {
+              'Chanel': {
+                count: 45,
+                thumbnail: '',
+                children: {
+                  'Chanel Bag 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/1', thumbnail: '' },
+                  'Chanel Bag 2': { isProduct: true, driveLink: 'https://drive.google.com/file/d/2', thumbnail: '' }
+                }
+              },
+              'Gucci': {
+                count: 38,
+                thumbnail: '',
+                children: {
+                  'Gucci Bag 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/3', thumbnail: '' }
+                }
+              }
+            }
+          },
+          'SHOES': { 
+            count: 156, 
+            thumbnail: '', 
+            section: 'Best Sellers',
+            children: {
+              'Nike': {
+                count: 25,
+                thumbnail: '',
+                children: {
+                  'Nike Shoe 1': { isProduct: true, driveLink: 'https://drive.google.com/file/d/4', thumbnail: '' }
+                }
+              }
+            }
+          },
+          'JEWELRY': { count: 89, thumbnail: '', section: 'Premium', children: {} },
+          'WATCHES': { count: 68, thumbnail: '', section: 'Premium', children: {} }
+        }
+      }
+    };
+    
+    if (!this.currentBrand) {
+      this.currentBrand = Object.keys(this.data.brands)[0];
+    }
+    
+    if (!this.data.brands[this.currentBrand]) {
+      this.currentBrand = Object.keys(this.data.brands)[0];
+    }
+  }
+
+
+
+/// Show homepage hero (with slideshow)
+showHomepageHero() {
+  const homepageHero = document.getElementById('heroHomepage');
+  const innerHero = document.getElementById('heroInner');
+  const heroSection = document.querySelector('.hero');
   
-  .hero-slideshow-side {
-    padding: 0 var(--space-3) !important;
-  }
+  console.log('🏠 Switching to homepage hero');
   
-  .hero-content-side {
-    padding: 0 var(--space-3) !important;
-  }
-  
-  .hero-title {
-    font-size: 2rem !important;
-  }
-  
-  .hero-subtitle {
-    font-size: 1rem !important;
-  }
-  
-  .hero-btn {
-    font-size: 0.85rem !important;
-    padding: var(--space-3) var(--space-4) !important;
-    min-height: 65px !important;
-  }
-  
-  .hero-btn-text-small {
-    font-size: 0.7rem !important;
-  }
-}
-
-
-/* Mobile Responsive for Hero Buttons */
-  @media (max-width: 768px) {
-    .hero-actions {
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-    
-    .hero-btn {
-      width: 100%;
-      justify-content: space-between;
-      min-height: 70px;
-    }
-    
-    .hero-title {
-      font-size: 2rem;
-    }
-    
-    .hero-title-line1,
-.hero-title-line2,
-.hero-title-line3 {
-  display: block;
-  line-height: 1.1;
-  text-align: center;
-}
-  }
-
-  @media (max-width: 480px) {
-    .hero-btn {
-      font-size: 0.85rem;
-      padding: var(--space-3) var(--space-4);
-      min-height: 65px;
-    }
-    
-    .hero-btn-text-small {
-      font-size: 0.7rem;
-    }
-    
-    .hero-title-line1,
-    .hero-title-line2,
-    .hero-title-line3 {
-      font-size: 1.75rem;
-    }
-  }
-
-  /* Force inner hero to override homepage styles */
-  .hero:has(.hero-inner[style*="display: block"]) .hero-homepage {
-    display: none !important;
-  }
-
-  .hero:has(.hero-homepage[style*="display: grid"]) .hero-inner {
-    display: none !important;
-  }
-
-  /* CRITICAL: Force inner hero visibility on category pages */
-  body[data-page-type="category"] .hero-inner,
-  body[data-page-type="brand"] .hero-inner {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 10 !important;
-    min-height: 200px !important;
-  }
-
-  body[data-page-type="category"] .hero-inner .hero-title,
-  body[data-page-type="brand"] .hero-inner .hero-title {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    color: #202124 !important;
-    -webkit-text-fill-color: #202124 !important;
-    text-shadow: none !important;
-    background: transparent !important;
-    font-size: 2.5rem !important;
-    font-weight: 700 !important;
-    margin-bottom: 1rem !important;
-    position: relative !important;
-    z-index: 11 !important;
-  }
-
-  body[data-page-type="category"] .hero-inner .hero-subtitle,
-  body[data-page-type="brand"] .hero-inner .hero-subtitle {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    color: #5f6368 !important;
-    -webkit-text-fill-color: #5f6368 !important;
-    text-shadow: none !important;
-    background: transparent !important;
-    font-size: 1.1rem !important;
-    margin-bottom: 1.5rem !important;
-    position: relative !important;
-    z-index: 11 !important;
-  }
-
-
-
-
-
-  /* ============================================
-    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
-    ============================================ */
-
-  /* Warm white background with subtle gradient */
-  body {
-    background: linear-gradient(
-      135deg,
-      #FEFDFB 0%,
-      #FFFFFF 50%,
-      #FAFAFA 100%
-    );
-    background-attachment: fixed;
-  }
-
-  /* Enhanced hero gradient */
-  .hero {
-    background: linear-gradient(
-      135deg,
-      rgba(248, 249, 250, 1) 0%,
-      rgba(99, 102, 241, 0.03) 30%,
-      rgba(139, 92, 246, 0.02) 70%,
-      rgba(241, 243, 244, 1) 100%
-    );
-  }
-
-  /* Subtle card background gradient */
-  .content-card {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 1) 0%,
-      rgba(255, 255, 255, 0.98) 100%
-    );
-  }
-
-  .content-card:hover {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 1) 0%,
-      rgba(99, 102, 241, 0.02) 100%
-    );
-  }
-
-  /* ============================================
-    QUICK WIN 3: SMOOTH ANIMATIONS & INTERACTIONS
-    ============================================ */
-
-  /* Smooth easing for all transitions */
-  * {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Card entrance animation */
-  @keyframes cardSlideUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .content-card {
-    animation: cardSlideUp 0.5s ease-out;
-    animation-fill-mode: both;
-  }
-
-  /* Stagger card animations */
-  .content-card:nth-child(1) { animation-delay: 0.05s; }
-  .content-card:nth-child(2) { animation-delay: 0.1s; }
-  .content-card:nth-child(3) { animation-delay: 0.15s; }
-  .content-card:nth-child(4) { animation-delay: 0.2s; }
-  .content-card:nth-child(5) { animation-delay: 0.25s; }
-  .content-card:nth-child(6) { animation-delay: 0.3s; }
-
-  /* Smooth hover scale with spring effect */
-  .content-card,
-  .brand-item {
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .content-card:hover,
-  .brand-item:hover {
-    transform: translateY(-8px) scale(1.02);
-  }
-
-  /* Active state - press down effect */
-  .content-card:active,
-  .brand-item:active {
-    transform: translateY(-2px) scale(0.98);
-    transition-duration: 0.1s;
-  }
-
-  /* Arrow slide animation with bounce */
-  .card-arrow {
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .content-card:hover .card-arrow {
-    transform: translateX(8px);
-    animation: arrowBounce 0.6s ease-in-out;
-  }
-
-  @keyframes arrowBounce {
-    0%, 100% { transform: translateX(8px); }
-    50% { transform: translateX(12px); }
-  }
-
-  /* Badge pop animation */
-  .card-badge {
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .content-card:hover .card-badge {
-    transform: scale(1.08);
-  }
-
-  /* Image zoom with smooth ease */
-  .card-image img {
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .content-card:hover .card-image img {
-    transform: scale(1.08);
-  }
-
-  /* Brand logo rotation on hover */
-  .brand-logo-small {
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .brand-item:hover .brand-logo-small {
-    transform: scale(1.1) rotate(5deg);
-  }
-
-  /* Header brand logo pulse */
-  .brand-logo {
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .brand-logo:hover {
-    animation: logoPulse 0.6s ease-in-out;
-  }
-
-  @keyframes logoPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-  }
-
-  /* Search input smooth expand */
-  .search-input {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .search-input:focus {
-    transform: scale(1.02);
-  }
-  /* KEEP - Shimmer for skeleton screens */
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-  }
-
-  /* Button ripple effect */
-  button,
-  .fab-action,
-  .menu-button {
-    position: relative;
-    overflow: hidden;
-  }
-
-  button::after,
-  .fab-action::after,
-  .menu-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
-
-  button:active::after,
-  .fab-action:active::after,
-  .menu-button:active::after {
-    width: 300px;
-    height: 300px;
-  }
-
-  /* FAB bounce on appearance */
-  .whatsapp-fab-solo,
-  .three-dot-menu {
-    animation: fabBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  @keyframes fabBounceIn {
-    from {
-      opacity: 0;
-      transform: scale(0) translateY(100px);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  /* FAB pulse animation */
-  .whatsapp-fab-solo {
-    animation: fabBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-              fabPulse 2s infinite;
-  }
-
-  @keyframes fabPulse {
-    0%, 100% { 
-      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.35);
-    }
-    50% { 
-      box-shadow: 0 6px 30px rgba(37, 211, 102, 0.5);
-    }
-  }
-
-  /* Menu items cascade animation */
-  .three-dot-menu.expanded .menu-item:nth-child(1) {
-    animation: menuSlideIn 0.3s ease-out 0.05s both;
-  }
-
-  .three-dot-menu.expanded .menu-item:nth-child(2) {
-    animation: menuSlideIn 0.3s ease-out 0.1s both;
-  }
-
-  .three-dot-menu.expanded .menu-item:nth-child(3) {
-    animation: menuSlideIn 0.3s ease-out 0.15s both;
-  }
-
-  @keyframes menuSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px) scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  /* Smooth section fade in on scroll */
-  .content-section {
-    animation: sectionFadeIn 0.6s ease-out;
-  }
-
-  @keyframes sectionFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Image loading skeleton animation */
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
-  }
-
-  .card-image:empty,
-  .brand-logo-small:empty {
-    background: linear-gradient(
-      90deg,
-      #f0f0f0 0%,
-      #e0e0e0 20%,
-      #f0f0f0 40%,
-      #f0f0f0 100%
-    );
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite linear;
-  }
-
-  /* Smooth overlay fade */
-  .card-overlay {
-    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Hero title word-by-word reveal */
-  .hero-title {
-    animation: titleReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  @keyframes titleReveal {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-      letter-spacing: 0.2em;
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-      letter-spacing: -0.02em;
-    }
-  }
-
-  /* Smooth scroll behavior */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Reduce motion for accessibility */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-
-
-
-  .breadcrumb-nav {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    font-size: 0.9rem;
-    color: #202124 !important;
-    padding: var(--space-3) var(--space-6);
-    background: rgba(255, 255, 255, 0.98) !important;
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(99, 102, 241, 0.3) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    max-width: 600px;
-    margin: var(--space-6) auto var(--space-6) auto !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 100 !important;
-    min-height: 40px !important;
-  }
-
-  /* Force all breadcrumb children visible */
-  .breadcrumb-nav * {
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  .breadcrumb-nav a {
-    color: #6366f1 !important;
-    -webkit-text-fill-color: #6366f1 !important;
-    text-decoration: none;
-    font-weight: 600 !important;
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-base);
-    display: inline-block !important;
-    background: transparent !important;
-    text-shadow: none !important;
-  }
-
-  .breadcrumb-nav a:hover {
-    background: rgba(99, 102, 241, 0.1) !important;
-    color: #6366f1 !important;
-    transform: translateY(-1px);
-  }
-
-  /* Breadcrumb separator */
-  .breadcrumb-nav span:not([style*="font-weight"]) {
-    color: #9aa0a6 !important;
-    -webkit-text-fill-color: #9aa0a6 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: inline !important;
-    background: transparent !important;
-    text-shadow: none !important;
-  }
-
-  /* Current page in breadcrumb */
-  .breadcrumb-nav span[style*="font-weight"] {
-    color: #202124 !important;
-    -webkit-text-fill-color: #202124 !important;
-    font-weight: 600 !important;
-    padding: var(--space-1) var(--space-2);
-    background: rgba(99, 102, 241, 0.15) !important;
-    border-radius: var(--radius-sm);
-    display: inline-block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    text-shadow: none !important;
-  }
-
-  /* Mobile breadcrumb */
-  @media (max-width: 768px) {
-    .breadcrumb-nav {
-      font-size: 0.85rem;
-      padding: var(--space-2) var(--space-4);
-      max-width: 90%;
-      min-height: 36px !important;
-    }
-  }
-
-  /* ALSO ADD: Ensure search section doesn't overlap */
-  .search-section {
-    padding: var(--space-3) var(--space-4); /* FIXED: Reduced from space-8 to space-4 */
-    background: var(--color-bg);
-    border-bottom: 1px solid var(--color-border);
-    /* Add top margin if search is positioned near header */
-    position: relative;
-    z-index: 10;
-  }
-
-  .breadcrumb-nav {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    font-size: 0.9rem;
-    color: #202124 !important;
-    padding: var(--space-3) var(--space-6);
-    background: rgba(255, 255, 255, 0.98) !important;
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(10px);
-    border: 2px solid var(--color-primary) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    max-width: 600px;
-    margin: var(--space-6) auto var(--space-6) auto !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 100 !important;
-    min-height: 40px !important;
-  }
-
-  /* Force all breadcrumb children visible */
-  .breadcrumb-nav * {
-    visibility: visible !important;
-    opacity: 1 !important;
-  }
-
-  .breadcrumb-nav a {
-    color: var(--color-primary) !important;
-    -webkit-text-fill-color: var(--color-primary) !important;
-    text-decoration: none;
-    font-weight: 600 !important;
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    transition: all var(--transition-base);
-    display: inline-block !important;
-    background: transparent !important;
-    text-shadow: none !important;
-  }
-
-  .breadcrumb-nav a:hover {
-    background: var(--color-primary) !important;
-    color: white !important;
-    -webkit-text-fill-color: white !important;
-    transform: translateY(-1px);
-  }
-
-  /* Breadcrumb separator */
-  .breadcrumb-nav span:not([style*="font-weight"]) {
-    color: #9aa0a6 !important;
-    -webkit-text-fill-color: #9aa0a6 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: inline !important;
-    background: transparent !important;
-    text-shadow: none !important;
-  }
-
-  /* Current page in breadcrumb */
-  .breadcrumb-nav span[style*="font-weight"] {
-    color: white !important;
-    -webkit-text-fill-color: white !important;
-    font-weight: 600 !important;
-    padding: var(--space-1) var(--space-2);
-    background: var(--color-primary) !important;
-    border-radius: var(--radius-sm);
-    display: inline-block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    text-shadow: none !important;
-  }
-
-  /* Mobile breadcrumb */
-  @media (max-width: 768px) {
-    .breadcrumb-nav {
-      font-size: 0.85rem;
-      padding: var(--space-2) var(--space-4);
-      max-width: 90%;
-      min-height: 36px !important;
-    }
-  }
-
-
-  /* Content Sections */
-  /* ================ */
-
-  .content-section {
-    padding: var(--space-12) 0;
-  }
-
-  .section-header {
-    text-align: center;
-    margin-bottom: var(--space-10);
-  }
-
-  .section-title {
-    font-family: var(--font-display);
-    font-size: 2.5rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-4);
-  }
-
-  .section-description {
-    font-size: 1.1rem;
-    color: var(--color-text-secondary);
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.6;
-  }
-  /* Alternating Section Colors */
-  /* ========================== */
-
-  /* Alternating Section Colors - More specific selector */
-  #dynamicSections .content-section:nth-child(odd) {
-    background: var(--color-light-gray);
-  }
-
-  #dynamicSections .content-section:nth-child(even) {
-    background: var(--color-white);
-  }
-
-  /* Ensure hero doesn't get alternating colors */
-  .hero {
-    background: linear-gradient(135deg, 
-      var(--color-light-gray) 0%, 
-      rgba(99, 102, 241, 0.05) 50%,
-      var(--color-soft-gray) 100%) !important;
-  }
-  /* Smart Mathematical Grid System */
-  /* =============================== */
-
-  .cards-grid {
-    display: grid;
-    gap: var(--space-6);
-  }
-
-  /* Fixed layouts for small counts */
-  .cards-grid.grid-1 { 
-    grid-template-columns: 1fr; 
-    max-width: 400px; 
-    margin: 0 auto; 
-  }
-
-  .cards-grid.grid-2 { 
-    grid-template-columns: repeat(2, 1fr); 
-  }
-
-  .cards-grid.grid-3 { 
-    grid-template-columns: repeat(3, 1fr); 
-  }
-
-  /* Smart grid for 4-12 items using mathematical centering */
-  .cards-grid.grid-smart {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6);
-    align-items: start;
-  }
-
-  /* Smart centering classes applied by JavaScript */
-  .cards-grid.grid-smart .content-card.center-item {
-    grid-column: 2 / 3;
-    justify-self: center;
-  }
-
-  .cards-grid.grid-smart .content-card.partial-row-left {
-    justify-self: end;
-    margin-right: 12%;
-  }
-
-  .cards-grid.grid-smart .content-card.partial-row-right {
-    justify-self: start;  
-    margin-left: 12%;
-  }
-
-  /* Responsive auto-fit for many items (13+) */
-  .cards-grid.grid-many {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    justify-items: stretch;
-  }
-
-  /* Mobile: All grids become single column */
-  @media (max-width: 768px) {
-    .cards-grid.grid-2,
-    .cards-grid.grid-3,
-    .cards-grid.grid-smart,
-    .cards-grid.grid-many {
-      grid-template-columns: 1fr !important;
-    }
-    
-    .cards-grid .content-card {
-      grid-column: auto !important;
-      justify-self: stretch !important;
-      margin: 0 !important;
-    }
-  }
-
-  /* Tablet: 2 columns for medium screens */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .cards-grid.grid-smart {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .cards-grid.grid-smart .content-card.center-item {
-      grid-column: 1 / -1;
-      justify-self: center;
-      max-width: 350px;
-    }
-    
-    .cards-grid.grid-smart .content-card.partial-row-left {
-      justify-self: center;
-      margin: 0;
-    }
-    
-    .cards-grid.grid-smart .content-card.partial-row-right {
-      justify-self: center;
-      margin: 0;
-    }
-  }
-
-  /* Large screens: Enhanced spacing */
-  @media (min-width: 1200px) {
-    .cards-grid {
-      gap: var(--space-8);
-    }
-    
-    .cards-grid.grid-smart .content-card.partial-row-left {
-      margin-right: 15%;
-    }
-    
-    .cards-grid.grid-smart .content-card.partial-row-right {
-      margin-left: 15%;
-    }
-  }
-  /* Card Styles */
-  /* =========== */
-
-  .content-card {
-    background: var(--color-surface-elevated);
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    cursor: pointer;
-    transition: all var(--transition-smooth);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--color-border);
-    position: relative;
-  }
-
-  .content-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-xl);
-    border-color: var(--color-primary);
-  }
-
-  .content-card[data-is-product="true"] {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.02), var(--color-surface-elevated));
-  }
-
-  .content-card[data-is-product="true"]:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), var(--color-surface-elevated));
-    border-color: var(--color-primary);
-  }
-
-  .content-card[data-is-product="true"] .card-badge {
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--color-primary);
-  }
-
-  .content-card[data-is-product="true"] .card-arrow {
-    color: var(--color-primary);
-  }
-
-  .content-card[data-is-product="true"] .card-title {
-    color: var(--color-primary-dark, var(--color-primary));
-    font-weight: 600;
-  }
-
-  .content-card[data-is-product="true"]:hover {
-    border-color: var(--color-primary);
-    background: linear-gradient(135deg, 
-      rgba(var(--color-primary-rgb, 99, 102, 241), 0.05), 
-      var(--color-surface-elevated)
-    );
-  }
-
-  .content-card[data-is-product="true"] .card-badge {
-    background: rgba(var(--color-primary-rgb, 99, 102, 241), 0.15);
-    color: var(--color-primary-dark, var(--color-primary));
-    font-weight: 600;
-  }
-
-  .card-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    /* FIXED: Changed to pure white to match website body */
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    position: relative;
-    overflow: hidden;
-    /* Add border to better define the image area */
-    border: 1px solid var(--color-border-light, #f1f3f4);
-  }
-
-  /* FIXED: Ensure ALL images in cards have proper sizing with higher specificity */
-  .card-image img,
-  .card-image .card-image-enhanced,
-  .content-card .card-image img,
-  .content-card .card-image .card-image-enhanced {
-    width: 100% !important;
-    height: 100% !important;
-    display: block !important;
-    object-fit: cover !important; /* Force cover as default */
-    object-position: center center !important; /* Force center as default */
-  }
-  /* Ensure card images have proper dimensions for object-fit */
-  .card-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    background: #ffffff !important; /* FIXED: Pure white background */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--color-border-light, #f1f3f4);
-  }
-  .card-image:not(:has(img)) {
-    background: #ffffff !important;
-  }
-  .card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Default */
-  }
-
-  .card-image-enhanced {
-    width: 100% !important;
-    height: 100% !important;
-    display: block !important;
-  }
-  .content-card:hover .card-image img {
-    transform: scale(1.05);
-  }
-
-  .card-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
-    opacity: 0;
-    transition: opacity var(--transition-base);
-  }
-
-  .content-card:hover .card-overlay {
-    opacity: 1;
-  }
-
-  .card-content {
-    padding: var(--space-6);
-  }
-
-  .card-title {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-2);
-    line-height: 1.3;
-  }
-
-  .card-description {
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    margin-bottom: var(--space-4);
-    line-height: 1.5;
-  }
-
-  .card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--space-4);
-  }
-
-  .card-badge {
-    background: rgba(99, 102, 241, 0.1);
-    color: var(--color-primary);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .content-card[data-is-product="true"] .card-badge {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--color-success);
-  }
-
-  .card-arrow {
-    width: 20px;
-    height: 20px;
-    color: var(--color-primary);
-    transition: transform var(--transition-base);
-  }
-
-  .content-card[data-is-product="true"] .card-arrow {
-    color: var(--color-success);
-  }
-
-  .content-card:hover .card-arrow {
-    transform: translateX(4px);
-  }
-  /* Ensure products use brand colors */
-  .content-card[data-is-product="true"] .card-title {
-    color: var(--color-primary);
-  }
-
-  .content-card[data-is-product="true"]:hover {
-    border-color: var(--color-primary);
-    background: linear-gradient(135deg, 
-      rgba(var(--color-primary-rgb, 99, 102, 241), 0.02), 
-      var(--color-surface-elevated)
-    );
-  }
-  /* ADD this section to public/style.css after existing card styles: */
-
-  /* Complete Background-Image Method Support */
-  /* ======================================== */
-
-  .card-image-background {
-    width: 100%;
-    height: 100%;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    
-    /* Ensure it behaves like an image */
-    display: block;
-    
-    /* Smooth transitions */
-    transition: all var(--transition-smooth);
-    
-    /* Prevent any unwanted scaling initially */
-    transform: scale(1);
-    
-    /* Ensure high-quality rendering */
-    background-attachment: scroll;
-  }
-
-  /* Hover effects for background-image cards */
-  .content-card:hover .card-image-background {
-    /* Slight zoom effect while preserving positioning */
-    transform: scale(1.05);
-  }
-
-  /* Ensure background-image cards have proper container setup */
-  .card-image-container:has(.card-image-background) {
-    overflow: hidden;
-    position: relative;
-    background: #ffffff;
-  }
-
-  /* Loading/error states for background-image method */
-  .card-image-background:not([style*="background-image: url"]) {
-    background: linear-gradient(135deg, var(--color-soft-gray), var(--color-medium-gray));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-  }
-
-  .card-image-background:not([style*="background-image: url"]):before {
-    content: '🖼️';
-  }
-
-  /* Debug helper - shows which method is being used */
-  .card-image-enhanced[data-method="img-tag"]::after {
-    content: 'IMG';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    background: rgba(0, 255, 0, 0.7);
-    color: white;
-    font-size: 8px;
-    padding: 2px 4px;
-    border-radius: 2px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .card-image-background[data-method="background"]::after {
-    content: 'BG';
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    background: rgba(0, 0, 255, 0.7);
-    color: white;
-    font-size: 8px;
-    padding: 2px 4px;
-    border-radius: 2px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  /* Show debug labels on hover (for development) */
-  .content-card:hover .card-image-enhanced::after,
-  .content-card:hover .card-image-background::after {
-    opacity: 1;
-  }
-
-  /* High DPI support */
-  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
-    .card-image-background {
-      /* Ensure crisp rendering on retina displays */
-      image-rendering: -webkit-optimize-contrast;
-    }
-  }
-
-  /* Mobile optimizations */
-  @media (max-width: 768px) {
-    .content-card:hover .card-image-background {
-      /* Reduced hover effect on mobile */
-      transform: scale(1.02);
-    }
-    
-    /* Hide debug labels on mobile */
-    .card-image-enhanced::after,
-    .card-image-background::after {
+  // Hide inner hero completely
+  if (innerHero) {
+    innerHero.style.cssText = `
       display: none !important;
-    }
-  }
-  /* Enhanced Image Rendering System - FIXED VERSION */
-  /* ================================================ */
-
-  /* Enhanced Image Rendering CSS - ADD to style.css */
-  /* ================================================= */
-
-  /* Enhanced Card Image Container */
-  .card-image-container {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    background: #ffffff; /* FIXED: Pure white background */
-    border: 1px solid var(--color-border-light, #f1f3f4);
-  }
-
-  .card-image-enhanced {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-    transition: all var(--transition-smooth);
-    
-    /* FIXED: Force default object-fit values */
-    object-fit: cover !important;
-    object-position: center center !important;
-    
-    /* FIXED: Pure white background for any empty spaces */
-    background: #ffffff !important;
-    
-    /* Ensure image quality */
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: optimizeQuality;
-    
-    /* Prevent image dragging */
-    -webkit-user-drag: none;
-    -khtml-user-drag: none;
-    -moz-user-drag: none;
-    -o-user-drag: none;
-    user-drag: none;
-    
-    /* Smooth scaling and positioning */
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform-style: preserve-3d;
-  }
-
-  /* Hover effects for enhanced images */
-  .content-card:hover .card-image-enhanced {
-    transform: scale(1.05) var(--card-image-transform, scale(1));
-  }
-
-  /* Ensure transformed images don't overflow */
-  .card-image-container {
-    transform: translateZ(0);
-    will-change: transform;
-  }
-
-  /* Responsive image scaling adjustments */
-  @media (max-width: 768px) {
-    .card-image-enhanced {
-      /* Reduce aggressive scaling on mobile */
-      max-width: none;
-      max-height: none;
-    }
-    
-    .content-card:hover .card-image-enhanced {
-      /* Less dramatic hover effect on mobile */
-      transform: scale(1.02) var(--card-image-transform, scale(1));
-    }
-  }
-
-  /* High DPI display optimizations */
-  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
-    .card-image-enhanced {
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-    }
-  }
-
-  /* Fallback for browsers that don't support modern CSS */
-  @supports not (object-fit: cover) {
-    .card-image-enhanced {
-      /* Fallback for older browsers */
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-  }
-
-  /* Loading state for images */
-  .card-image-enhanced[src=""] {
-    background: #ffffff !important; /* Pure white instead of gradient */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-  }
-
-  /* Error state styling */
-  .card-image-enhanced:not([src]),
-  .card-image-enhanced[src=""]:after {
-    content: '🖼️';
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background: var(--color-soft-gray);
-    font-size: 3rem;
-  }
-
-  /* Mobile optimizations */
-  @media (max-width: 768px) {
-    .card-image-enhanced,
-    .card-image-standard {
-      max-width: none;
-      max-height: none;
-    }
-    
-    .content-card:hover .card-image-enhanced,
-    .content-card:hover .card-image-standard {
-      /* Less dramatic hover effect on mobile */
-      transform: scale(1.02);
-    }
-  }
-
-  /* High DPI display optimizations */
-  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
-    .card-image-enhanced,
-    .card-image-standard {
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-    }
-  }
-
-  /* Fallback for browsers that don't support modern CSS */
-  @supports not (object-fit: cover) {
-    .card-image-enhanced {
-      /* Fallback for older browsers */
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-  }
-
-  /* Loading state for images */
-  .card-image-enhanced[src=""] {
-    background: linear-gradient(135deg, var(--color-soft-gray), var(--color-medium-gray));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-  }
-
-  /* Error state styling */
-  .card-image-enhanced:not([src]),
-  .card-image-enhanced[src=""]:after {
-    content: '🖼️';
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background: #ffffff !important; /* Pure white background */
-    font-size: 3rem;
-  }
-
-
-  /* ============================================
-    QUICK WIN 1: ENHANCED SHADOWS & DEPTH
-    ============================================ */
-
-  /* Multi-layer shadow system for cards */
-  .content-card {
-    box-shadow: 
-      0 1px 2px rgba(0, 0, 0, 0.06),
-      0 2px 4px rgba(0, 0, 0, 0.04);
-  }
-
-  .content-card:hover {
-    box-shadow: 
-      0 10px 20px rgba(0, 0, 0, 0.08),
-      0 4px 8px rgba(0, 0, 0, 0.06),
-      0 0 0 1px rgba(99, 102, 241, 0.1);
-  }
-
-  /* Subtle elevation for brand items */
-  .brand-item {
-    box-shadow: 
-      0 2px 4px rgba(0, 0, 0, 0.05),
-      0 1px 2px rgba(0, 0, 0, 0.03);
-  }
-
-  .brand-item:hover {
-    box-shadow: 
-      0 12px 24px rgba(0, 0, 0, 0.1),
-      0 6px 12px rgba(0, 0, 0, 0.06),
-      0 0 0 1px rgba(99, 102, 241, 0.15);
-  }
-
-  /* Header elevation */
-  .header {
-    box-shadow: 
-      0 1px 3px rgba(0, 0, 0, 0.06),
-      0 1px 2px rgba(0, 0, 0, 0.04);
-  }
-
-
-  /* ============================================
-    QUICK WIN 2: ENHANCED COLOR DEPTH
-    ============================================ */
-
-  /* Warm, inviting background */
-  body {
-    background: 
-      linear-gradient(
-        135deg,
-        #FEFDFB 0%,
-        #FFFFFF 40%,
-        #F9FAFB 100%
-      );
-    background-attachment: fixed;
-  }
-
-  /* Hero with subtle brand color influence */
-  .hero {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(248, 249, 250, 1) 0%,
-        rgba(99, 102, 241, 0.015) 25%,
-        rgba(139, 92, 246, 0.01) 50%,
-        rgba(99, 102, 241, 0.015) 75%,
-        rgba(241, 243, 244, 1) 100%
-      );
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* Subtle decorative gradient overlay */
-
-
-  .hero-content {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Enhanced card backgrounds with depth */
-  .content-card {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 1) 0%,
-        rgba(255, 255, 255, 0.98) 50%,
-        rgba(248, 249, 250, 0.95) 100%
-      );
-  }
-
-  .content-card:hover {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 1) 0%,
-        rgba(99, 102, 241, 0.02) 50%,
-        rgba(139, 92, 246, 0.015) 100%
-      );
-  }
-
-  /* Brand items with subtle color */
-  .brand-item {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 1) 0%,
-        rgba(255, 255, 255, 0.97) 100%
-      );
-  }
-
-  .brand-item:hover {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 1) 0%,
-        rgba(99, 102, 241, 0.025) 100%
-      );
-  }
-
-  /* Header with frosted glass depth */
-  .header {
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid rgba(99, 102, 241, 0.08);
-  }
-
-  /* Brand logo with gradient glow */
-  .brand-logo {
-    background: 
-      linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-accent) 100%
-      );
-    box-shadow: 
-      0 4px 12px rgba(99, 102, 241, 0.25),
-      0 0 0 1px rgba(99, 102, 241, 0.1);
-    position: relative;
-  }
-
-
-
-  .brand-logo:hover::before {
-    opacity: 1;
-  }
-
-  /* Search bar with depth */
-  .search-input {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(248, 249, 250, 1) 0%,
-        rgba(255, 255, 255, 1) 100%
-      );
-    border: 2px solid rgba(99, 102, 241, 0.08);
-  }
-
-  .search-input:focus {
-    background: #ffffff;
-    border-color: var(--color-primary);
-    box-shadow: 
-      0 0 0 4px rgba(99, 102, 241, 0.06),
-      0 4px 12px rgba(99, 102, 241, 0.1);
-  }
-
-  /* Section alternating with subtle gradients */
-  #dynamicSections .content-section:nth-child(odd) {
-    background: 
-      linear-gradient(
-        180deg,
-        rgba(248, 249, 250, 0.5) 0%,
-        rgba(248, 249, 250, 1) 50%,
-        rgba(248, 249, 250, 0.5) 100%
-      );
-  }
-
-  #dynamicSections .content-section:nth-child(even) {
-    background: 
-      linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.5) 0%,
-        rgba(255, 255, 255, 1) 50%,
-        rgba(255, 255, 255, 0.5) 100%
-      );
-  }
-
-  /* Badges with gradient backgrounds */
-  .card-badge {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(99, 102, 241, 0.08) 0%,
-        rgba(139, 92, 246, 0.08) 100%
-      );
-    color: var(--color-primary);
-    box-shadow: inset 0 1px 2px rgba(99, 102, 241, 0.1);
-  }
-
-  .content-card:hover .card-badge {
-    background: 
-      linear-gradient(
-        135deg,
-        rgba(99, 102, 241, 0.12) 0%,
-        rgba(139, 92, 246, 0.12) 100%
-      );
-    box-shadow: 
-      inset 0 1px 2px rgba(99, 102, 241, 0.15),
-      0 2px 8px rgba(99, 102, 241, 0.15);
-  }
-
-  /* Footer with gradient */
-  .footer {
-    background: 
-      linear-gradient(
-        135deg,
-        #1a1a1a 0%,
-        var(--color-text-primary) 50%,
-        #1a1a1a 100%
-      );
-  }
-
-  /* FAB buttons with enhanced gradients */
-  .whatsapp-fab-solo {
-    background: 
-      linear-gradient(
-        135deg,
-        #25D366 0%,
-        #128C7E 100%
-      );
-    box-shadow: 
-      0 6px 20px rgba(37, 211, 102, 0.35),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
-
-  .whatsapp-fab-solo:hover {
-    box-shadow: 
-      0 8px 30px rgba(37, 211, 102, 0.45),
-      0 0 0 2px rgba(255, 255, 255, 0.15);
-  }
-
-  .three-dot-toggle {
-    background: 
-      linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-accent) 100%
-      );
-    box-shadow: 
-      0 6px 20px rgba(99, 102, 241, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
-
-  .menu-button {
-    background: 
-      linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-accent) 100%
-      );
-    box-shadow: 
-      0 4px 15px rgba(99, 102, 241, 0.25),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
-
-  .menu-button:hover {
-    background: 
-      linear-gradient(
-        135deg,
-        var(--color-accent) 0%,
-        var(--color-primary) 100%
-      );
-  }
-
-  /* Taxonomy Section */
-  /* ================ */
-
-  /* Review Slideshow Section */
-  /* ======================== */
-
-  .slideshow-section {
-    background: var(--color-white);
-    padding: var(--space-12) 0 var(--space-8);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .slideshow-title {
-    font-family: var(--font-display);
-    font-size: 2rem;
-    font-weight: 600;
-    text-align: center;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-8);
-  }
-
-  .slideshow-container {
-    position: relative;
-    max-width: 600px;
-    margin: 0 auto;
-    aspect-ratio: 9/16;
-    background: #000;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-xl);
-  }
-
-  /* FIXED: Proper mobile sizing - visible but not overwhelming */
-  @media (max-width: 768px) {
-    .slideshow-container {
-      max-width: 90vw;
-      max-height: 70vh;
-      aspect-ratio: 3/4; /* Taller aspect ratio for mobile */
-    }
-  }
-
-  @media (max-width: 480px) {
-    .slideshow-container {
-      max-width: 95vw;
-      max-height: 65vh;
-    }
-  }
-
-  .slideshow-viewport {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .slideshow-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-    transition: opacity 0.3s ease;
-  }
-
-  .slideshow-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 1.2rem;
-    font-weight: 600;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .slideshow-viewport.loading .slideshow-loading {
-    opacity: 1;
-  }
-
-  .slideshow-viewport.loading .slideshow-image {
-    opacity: 0.3;
-  }
-
-  .slideshow-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    font-size: 3rem;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-base);
-    backdrop-filter: blur(10px);
-    font-weight: 300;
-    z-index: 10;
-    line-height: 1;
-  }
-
-  .slideshow-nav:hover {
-    background: rgba(0, 0, 0, 0.7);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-50%) scale(1.1);
-  }
-
-  .slideshow-nav.prev {
-    left: 10px;
-  }
-
-  .slideshow-nav.next {
-    right: 10px;
-  }
-
-  .slideshow-counter {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 0.9rem;
-    background: rgba(0, 0, 0, 0.7);
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(10px);
-    font-weight: 500;
-  }
-
-  .slideshow-caption {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-    background: rgba(0, 0, 0, 0.7);
-    padding: var(--space-3) var(--space-6);
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(10px);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  }
-
-  @media (max-width: 768px) {  
-    .slideshow-nav {
-      width: 50px;
-      height: 50px;
-      font-size: 2rem;
-    }
-    
-    .slideshow-nav.prev {
-      left: 5px;
-    }
-    
-    .slideshow-nav.next {
-      right: 5px;
-    }
-  }
-
-  /* Browse All Brands Section */
-  /* ========================= */
-
-  /* ============================================
-    BRANDS SECTION - FIXED
-    ============================================ */
-
-  .brands-section {
-    background: var(--color-light-gray);
-    padding: var(--space-16) 0;
-  }
-
-  .brands-title {
-    font-family: var(--font-display);
-    font-size: 2rem;
-    font-weight: 600;
-    text-align: center;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-12);
-  }
-
-  .brands-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-5);
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  /* Square container with actual size */
-  .brand-item {
-    background: white;
-    padding: 0;
-    border-radius: var(--radius-xl);
-    border: 2px solid var(--color-border);
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%; /* Fill grid cell */
-    aspect-ratio: 1; /* Square shape */
-    min-height: 160px; /* Minimum size on mobile */
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-  }
-
-  .brand-item:hover {
-    border-color: var(--color-primary);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-  }
-
-  /* Logo container fills the card */
-  .brand-logo-small {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    padding: 20%; /* More space around logo */
-  }
-
-  /* Logo image - BIGGER */
-  .brand-logo-small img {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: cover;
-    display: block;
-  }
-  /* MOBILE BRAND LOGO FIX */
-  @media (max-width: 768px) {
-    .brand-logo-small {
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+    `;
+  }
+  
+  // Reset hero section to homepage state
+  if (heroSection) {
+    heroSection.style.cssText = `
+      background: #ffffff !important;
+      padding: 4rem 0 3rem 0 !important;
+      margin-top: 0 !important;
+      overflow: visible !important;
+      min-height: auto !important;
+      display: block !important;
+    `;
+  }
+  
+  // Show homepage hero with proper grid
+  if (homepageHero) {
+    homepageHero.style.cssText = `
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 3rem !important;
+      align-items: center !important;
+      max-width: 1400px !important;
+      margin: 0 auto !important;
       width: 100% !important;
-      height: 100% !important;
-      padding: 15% !important; /* Adjust padding for mobile */
-    }
-    
-    .brand-logo-small img {
-      max-width: 100% !important;
-      max-height: 100% !important;
-      width: auto !important;
-      height: auto !important;
-      object-fit: contain !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      position: relative !important;
+      min-height: 400px !important;
+    `;
+    console.log('✅ Homepage hero restored with grid');
+  }
+  
+  // Update homepage hero content
+  const titleHome = document.getElementById('heroTitleHome');
+  const subtitleHome = document.getElementById('heroSubtitleHome');
+  
+  if (this.data && this.data.brands && this.currentBrand) {
+    const brand = this.data.brands[this.currentBrand];
+    if (titleHome) titleHome.innerHTML = brand.heroTitle || `<span class="hero-title-line1">Establish Yourself</span><span class="hero-title-line2">With <span class="hero-title-highlight">Premium</span></span><span class="hero-title-line3">Accessories</span>`;
+    if (subtitleHome) subtitleHome.textContent = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
+  }
+  // SHOW review slideshow on homepage
+  const reviewSlideshow = document.querySelector('.slideshow-section');
+  if (reviewSlideshow) {
+    reviewSlideshow.style.display = 'block';
+    console.log('👁️ Showing review slideshow (homepage)');
+  }
+  
+  // SHOW browse brands on homepage
+  const brandsSection = document.querySelector('.brands-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'block';
+    console.log('👁️ Showing brands section (homepage)');
+  }
+  
+  // SHOW hero slideshow on homepage
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'block';
+    console.log('👁️ Showing hero slideshow (homepage)');
+  }
+}
+// Show inner page hero (traditional centered)
+// Show inner page hero (traditional centered)
+showInnerHero() {
+  const homepageHero = document.getElementById('heroHomepage');
+  const innerHero = document.getElementById('heroInner');
+  const heroSection = document.querySelector('.hero');
+  const heroContainer = heroSection?.querySelector('.container');
+  
+  console.log('🔄 Switching to inner hero');
+  
+  // STEP 1: Completely remove homepage hero from flow
+  if (homepageHero) {
+    homepageHero.style.cssText = `
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      position: absolute !important;
+      pointer-events: none !important;
+    `;
+    console.log('✅ Homepage hero completely removed');
+  }
+  
+  // STEP 2: Fix hero section to be normal block
+  if (heroSection) {
+    heroSection.style.cssText = `
       display: block !important;
-    }
+      width: 100% !important;
+      min-height: 350px !important;
+      padding: 4rem 0 3rem 0 !important;
+      overflow: visible !important;
+      position: relative !important;
+      background: linear-gradient(135deg, #f8f9fa 0%, rgba(99, 102, 241, 0.05) 50%, #f1f3f4 100%) !important;
+    `;
+  }
+  
+  // STEP 3: Fix container to be normal block
+  if (heroContainer) {
+    heroContainer.style.cssText = `
+      display: block !important;
+      max-width: 1200px !important;
+      margin: 0 auto !important;
+      padding: 0 1rem !important;
+      width: 100% !important;
+      overflow: visible !important;
+    `;
+  }
+  
+  // STEP 4: Show and force inner hero dimensions
+  if (innerHero) {
+    innerHero.style.cssText = `
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 100% !important;
+      max-width: 800px !important;
+      min-height: 200px !important;
+      padding: 2rem 1rem !important;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+      z-index: 10 !important;
+      text-align: center !important;
+    `;
     
-    .brand-item {
-      min-height: 160px !important; /* Ensure visible size */
-      aspect-ratio: 1 !important;
-    }
-  }
-
-  /* Force image visibility */
-  .brand-logo-small img[src] {
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
-  /* Fallback emoji - BIGGER */
-  .brand-logo-fallback {
-    font-size: 5rem;
-    line-height: 1;
-  }
-
-  /* Hide text in browse brands section */
-  .brand-info,
-  .brand-name-display,
-  .brand-count {
-    display: none !important;
-  }
-
-  /* Mobile: 2 columns, BIGGER boxes */
-  @media (max-width: 768px) {
-    .brands-grid {
-      grid-template-columns: repeat(2, 1fr) !important;
-      gap: var(--space-4);
-    }
+    console.log('✅ Inner hero shown');
+    console.log('Inner hero rect:', innerHero.getBoundingClientRect());
     
-    .brand-item {
-      min-height: 180px; /* Taller on mobile */
-    }
+    // STEP 5: Force title and subtitle visibility
+    setTimeout(() => {
+      const title = innerHero.querySelector('.hero-title');
+      const subtitle = innerHero.querySelector('.hero-subtitle');
+      
+      if (title) {
+        title.style.cssText = `
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          color: #202124 !important;
+          font-size: 2.5rem !important;
+          font-weight: 700 !important;
+          margin: 0 auto 1rem auto !important;
+          padding: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          line-height: 1.2 !important;
+          text-shadow: none !important;
+          -webkit-text-fill-color: #202124 !important;
+          background: transparent !important;
+          text-align: center !important;
+        `;
+        
+        const titleRect = title.getBoundingClientRect();
+        console.log('✅ Title rect:', titleRect);
+        
+        if (titleRect.height === 0) {
+          title.innerHTML = title.textContent; // Force reflow
+        }
+      }
+      
+      if (subtitle) {
+        subtitle.style.cssText = `
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          color: #5f6368 !important;
+          font-size: 1.1rem !important;
+          margin: 0 auto 1.5rem auto !important;
+          padding: 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          line-height: 1.6 !important;
+          text-shadow: none !important;
+          -webkit-text-fill-color: #5f6368 !important;
+          background: transparent !important;
+          text-align: center !important;
+        `;
+        
+        const subtitleRect = subtitle.getBoundingClientRect();
+        console.log('✅ Subtitle rect:', subtitleRect);
+      }
+    }, 50);
   }
-
-  /* Tablet: 3 columns */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .brands-grid {
-      grid-template-columns: repeat(3, 1fr) !important;
-      gap: var(--space-5);
-    }
-    
-    .brand-item {
-      min-height: 150px;
-    }
-  }
-
-  /* Desktop: 5 columns */
-  @media (min-width: 1025px) and (max-width: 1399px) {
-    .brands-grid {
-      grid-template-columns: repeat(5, 1fr) !important;
-    }
-    
-    .brand-item {
-      min-height: 140px;
-    }
-  }
-
-  /* Large desktop: 6 columns */
-  @media (min-width: 1400px) {
-    .brands-grid {
-      grid-template-columns: repeat(6, 1fr) !important;
-    }
-    
-    .brand-item {
-      min-height: 130px;
-    }
-  }
-
-  /* Brand Category Cards - Contain Fit Override */
-  /* =========================================== */
-
-/* Brand Category Cards - Contain Fit Override */
-.brand-category-card .card-image-brand-logo {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  background: #ffffff !important;
-  padding: 0 !important; /* FIXED: Remove padding for perfect fit */
-  display: block !important;
 }
 
-.brand-category-card .card-image {
-  background: #ffffff !important;
-  padding: 0 !important; /* FIXED: Remove container padding */
+
+  // Show featured heading (homepage only)
+  showFeaturedHeading() {
+    const heading = document.getElementById('featuredHeadingSection');
+    if (heading) heading.style.display = 'block';
+  }
+  
+  // Hide featured heading (inner pages)
+  hideFeaturedHeading() {
+    const heading = document.getElementById('featuredHeadingSection');
+    if (heading) heading.style.display = 'none';
+  }
+  
+  // Navigate to all brands section
+  navigateToAllBrands() {
+    const brandsSection = document.querySelector('.brands-section');
+    if (brandsSection) {
+      brandsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+  
+  // Navigate to specific brand
+  navigateToBrand(brandName) {
+    // Find the brand in the data
+    const normalizedBrand = this.normalizeBrandName(brandName);
+    
+    // Find the brand's first category
+    const tree = this.data.catalog.tree;
+    let foundPath = null;
+    
+    for (const [categoryKey, categoryItem] of Object.entries(tree)) {
+      if (categoryItem.children) {
+        for (const [brandKey, brandItem] of Object.entries(categoryItem.children)) {
+          if (this.normalizeBrandName(brandKey) === normalizedBrand) {
+            foundPath = `${categoryKey}/${brandKey}`;
+            break;
+          }
+        }
+      }
+      if (foundPath) break;
+    }
+    
+    if (foundPath) {
+      this.navigateToPath(foundPath);
+    } else {
+      this.showNotification(`${brandName} not found`);
+    }
+  }
+
+// Navigate to brand view (showing all categories for that brand)
+navigateToBrandOnly(brandName) {
+  // Find the brand in the data
+  const normalizedBrand = this.normalizeBrandName(brandName);
+  
+  // Find all paths for this brand
+  const tree = this.data.catalog.tree;
+  const paths = [];
+  const categories = new Map();
+  
+  for (const [categoryKey, categoryItem] of Object.entries(tree)) {
+    if (categoryItem.children) {
+      for (const [brandKey, brandItem] of Object.entries(categoryItem.children)) {
+        if (this.normalizeBrandName(brandKey) === normalizedBrand) {
+          paths.push(`${categoryKey}/${brandKey}`);
+          categories.set(categoryKey, {
+            count: brandItem.count || 0,
+            thumbnail: brandItem.thumbnail || ''
+          });
+        }
+      }
+    }
+  }
+  
+  if (paths.length > 0) {
+    this.showBrandView(normalizedBrand, paths, categories);
+  } else {
+    this.showNotification(`${brandName} not found`);
+  }
+}
+  
+showCategoryView() {
+  // FIXED: Force hide sections IMMEDIATELY when entering category view
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
+  if (brandsSection) {
+    brandsSection.style.display = 'none';
+    console.log('🙈 FORCE HIDING brands in showCategoryView');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'none';
+    console.log('🙈 FORCE HIDING slideshow in showCategoryView');
+  }
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'none';
+    console.log('🙈 FORCE HIDING hero slideshow in showCategoryView');
+  }
+  
+  // Show inner hero layout
+  this.showInnerHero();
+  this.hideFeaturedHeading();
+  
+  // Add body attribute for CSS targeting
+  document.body.setAttribute('data-page-type', 'category');
+  
+  // Reset scroll position
+  this.resetScrollPosition();
+  
+  // Navigate to the current path in the data tree
+  let currentNode = this.data.catalog.tree;
+  let breadcrumbs = [];
+  
+  for (const segment of this.currentPath) {
+    if (currentNode[segment]) {
+      breadcrumbs.push({
+        name: segment,
+        path: breadcrumbs.length === 0 ? segment : breadcrumbs[breadcrumbs.length - 1].path + '/' + segment
+      });
+      currentNode = currentNode[segment].children || {};
+    } else {
+      this.showNotification(`Category "${segment}" not found`);
+      this.navigateToHome();
+      return;
+    }
+  }
+
+  // Update hero section for category view
+  this.updateHeroForCategory(breadcrumbs);
+
+  // Show category contents
+  this.renderCategoryContents(currentNode, breadcrumbs);
+  
+  // FINAL LOCK: Ensure sections stay hidden after rendering
+  setTimeout(() => {
+    if (brandsSection) brandsSection.style.display = 'none';
+    if (slideshowSection) slideshowSection.style.display = 'none';
+    if (heroSlideshow) heroSlideshow.style.display = 'none';
+    console.log('🔒 Final lock: sections hidden');
+  }, 100);
 }
 
-  /* Override any conflicting global styles for brand logos */
-  .card-image-brand-logo {
-    object-fit: contain !important;
-    object-position: center !important;
-  }
-
-
-  @media (max-width: 768px) {
-    .brands-grid {
-      grid-template-columns: 1fr;
-    }
+  updateHeroForCategory(breadcrumbs) {
+  const heroTitle = document.getElementById('heroTitle');
+  const heroSubtitle = document.getElementById('heroSubtitle');
+  
+  console.log('🎯 Updating hero for category:', breadcrumbs);
+  
+  if (heroTitle && breadcrumbs.length > 0) {
+    const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
+    heroTitle.textContent = `${currentCategory} Collection`;
     
-    .brand-item {
-      padding: var(--space-3);
-    }
-    
-    .brand-logo-small {
-      width: 50px;
-      height: 50px;
-    }
-
-  }
-
-
-
-  .taxonomy-title {
-    font-family: var(--font-display);
-    font-size: 2rem;
-    font-weight: 600;
-    text-align: center;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-12);
-  }
-
-  .taxonomy-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--space-4);
-  }
-
-  .taxonomy-item {
-    background: var(--color-white);
-    padding: var(--space-4);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    cursor: pointer;
-    transition: all var(--transition-base);
-    text-align: center;
-  }
-
-  .taxonomy-item:hover {
-    border-color: var(--color-primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .taxonomy-name {
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-1);
-  }
-
-  .taxonomy-count {
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-  }
-
-  /* Footer */
-  /* ====== */
-
-  .footer {
-    background: var(--color-text-primary);
-    color: white;
-    padding: var(--space-16) 0 var(--space-8);
-  }
-
-  .footer-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: var(--space-8);
-    align-items: start;
-    text-align: left;
-  }
-
-  .footer-content .footer-section:first-child {
-    padding-right: var(--space-4);
-  }
-
-  .footer-content .footer-section:first-child p {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    max-width: 90%;
-  }
-
-  @media (max-width: 768px) {
-    .footer-content {
-      grid-template-columns: 1fr;
-      gap: var(--space-6);
-      text-align: center;
-    }
-    
-    .footer-content .footer-section:first-child {
-      padding-right: 0;
-    }
-    
-    .footer-content .footer-section:first-child p {
-      max-width: 100%;
-    }
-  }
-
-  .footer-section h3 {
-    font-family: var(--font-display);
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: var(--space-4);
-  }
-
-  .footer-section p,
-  .footer-section a {
-    color: rgba(255, 255, 255, 0.8);
-    text-decoration: none;
-    line-height: 1.6;
-    margin-bottom: var(--space-2);
-    display: block;
-  }
-
-  .footer-section a:hover {
-    color: white;
-  }
-
-  /* Fix for Footer Copyright Single Line */
-  /* ================================== */
-
-  .footer-bottom {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    margin-top: var(--space-8);
-    padding-top: var(--space-8);
-    text-align: center;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.9rem;
-    
-    /* FORCE single line on all devices */
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-
-  .footer-bottom p {
-    display: inline !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    white-space: nowrap !important;
-  }
-
-  .footer-bottom * {
-    display: inline !important;
-    white-space: nowrap !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    line-height: 1 !important;
-  }
-
-  /* Ensure single line on all screen sizes */
-  @media (max-width: 768px) {
-    .footer-bottom {
-      font-size: 0.8rem !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .footer-bottom {
-      font-size: 0.75rem !important;
-      padding-left: 10px !important;
-      padding-right: 10px !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-    }
-  }
-
-  @media (max-width: 360px) {
-    .footer-bottom {
-      font-size: 0.7rem !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-    }
-  }
-
-  /* ============================================
-    QUICK WIN 4: ENHANCED INTERACTIVE STATES
-    ============================================ */
-
-  /* Better focus states */
-  .content-card:focus-visible,
-  .brand-item:focus-visible,
-  button:focus-visible,
-  a:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 4px;
-    box-shadow: 
-      0 0 0 4px rgba(99, 102, 241, 0.1),
-      0 4px 12px rgba(99, 102, 241, 0.15);
-  }
-
-  /* Smooth brand logo hover */
-  .brand-logo {
-    box-shadow: 
-      0 2px 4px rgba(99, 102, 241, 0.2),
-      0 0 0 1px rgba(99, 102, 241, 0.1);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .brand-logo:hover {
-    box-shadow: 
-      0 6px 16px rgba(99, 102, 241, 0.3),
-      0 0 0 2px rgba(99, 102, 241, 0.2);
-    transform: translateY(-3px) scale(1.05);
-  }
-
-  /* Enhanced search input focus */
-  .search-input:focus {
-    border-color: var(--color-primary);
-    background: var(--color-white);
-    box-shadow: 
-      0 0 0 4px rgba(99, 102, 241, 0.08),
-      0 4px 12px rgba(99, 102, 241, 0.12);
-    transform: scale(1.02);
-  }
-
-
-  /* Separated Floating Action Buttons */
-  /* ================================== */
-
-  /* WhatsApp FAB (Solo) */
-  .whatsapp-fab-solo {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #25D366, #128C7E);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    text-decoration: none;
-    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
-    z-index: 999;
-    transition: all var(--transition-smooth);
-  }
-
-  .whatsapp-fab-solo:hover {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: 0 8px 25px rgba(37, 211, 102, 0.4);
-  }
-
-  .whatsapp-fab-solo svg {
-    width: 30px;
-    height: 30px;
-  }
-
-  /* Updated FAB CSS - Replace the existing FAB section in your style.css */
-
-  /* 3-Dot Menu Container */
-  .three-dot-menu {
-    position: fixed;
-    bottom: 110px; /* Above WhatsApp */
-    right: 30px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .three-dot-items {
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all var(--transition-smooth);
-    pointer-events: none;
-  }
-
-  /* Show menu items when expanded */
-  .three-dot-menu.expanded .three-dot-items {
-    display: flex;
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: all;
-  }
-
-  /* Circular Toggle Button Like WhatsApp */
-  .three-dot-toggle {
-    display: none !important; /* Hide the toggle button */
-    width: 70px;
-    height: 70px;
-    border-radius: 50%; /* Perfect circle */
-    border: none;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    transition: all var(--transition-smooth);
-    position: relative;
-    padding: 8px;
-  }
-
-  .three-dot-toggle:hover {
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  }
-
-  .toggle-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    text-align: center;
-  }
-
-  .toggle-icon {
-    width: 22px;
-    height: 22px;
-    filter: brightness(0) invert(1);
-  }
-
-  .toggle-icon-placeholder {
-    font-size: 22px;
-    line-height: 1;
-  }
-
-  .toggle-label {
-    font-size: 8px;
-    font-weight: 600;
-    line-height: 1.1;
-    white-space: pre-line;
-    max-width: 60px;
-    text-align: center;
-    word-spacing: -1px;
-    letter-spacing: -0.2px;
-  }
-
-  /* Individual Menu Items - Also Circular */
-  .menu-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    transition: all var(--transition-base);
-  }
-
-  .menu-button {
-    width: 55px;
-    height: 55px;
-    border-radius: 50%; /* Perfect circle */
-    border: 2px solid white;
-    background: var(--color-primary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all var(--transition-base);
-    position: relative;
-    padding: 0;
-    /* Enhanced contrast for better visibility */
-    filter: contrast(1.2) saturate(1.3) brightness(0.9);
-  }
-
-  .menu-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    background: var(--color-accent);
-    filter: contrast(1.3) saturate(1.4) brightness(0.85);
-  }
-
-  .menu-icon {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-  }
-
-  .icon-placeholder {
-    font-size: 20px;
-    color: white;
-    line-height: 1;
-  }
-
-  .menu-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    text-align: center;
-    white-space: nowrap;
-    background: rgba(255, 255, 255, 0.95);
-    padding: 4px 8px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-  }
-
-  /* Menu Item Hover Effects */
-  .menu-item:hover .menu-label {
-    background: rgba(255, 255, 255, 1);
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  /* Mobile Responsiveness */
-  @media (max-width: 768px) {
-    .three-dot-menu {
-      bottom: 95px;
-      right: 25px;
-    }
-    
-    .three-dot-toggle {
-      width: 60px;
-      height: 60px;
-      padding: 6px;
-    }
-    
-    .toggle-icon {
-      width: 18px;
-      height: 18px;
-    }
-    
-    .toggle-icon-placeholder {
-      font-size: 18px;
-    }
-    
-    .toggle-label {
-      font-size: 7px;
-      line-height: 1.0;
-      max-width: 50px;
-      word-spacing: -1px;
-      letter-spacing: -0.3px;
-    }
-    
-    .menu-button {
-      width: 50px;
-      height: 50px;
-    }
-    
-    .menu-icon {
-      width: 20px;
-      height: 20px;
-    }
-    
-    .menu-label {
-      font-size: 9px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .three-dot-toggle {
-      width: 55px;
-      height: 55px;
-    }
-    
-    .toggle-icon {
-      width: 16px;
-      height: 16px;
-    }
-    
-    .toggle-icon-placeholder {
-      font-size: 16px;
-    }
-    
-    .toggle-label {
-      font-size: 6px;
-      line-height: 1.0;
-      max-width: 45px;
-    }
-    
-    .menu-button {
-      width: 45px;
-      height: 45px;
-    }
-    
-    .menu-icon {
-      width: 18px;
-      height: 18px;
-    }
-    
-    .menu-label {
-      font-size: 8px;
-    }
-  }
-
-  /* Force 3-dot menu to start collapsed */
-  .three-dot-menu:not(.expanded) .three-dot-items {
-    display: none !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
-
-  .three-dot-menu.expanded .three-dot-items {
-    display: flex !important;
-    opacity: 1 !important;
-    pointer-events: all !important;
-  }
-
-  /* Individual Menu Item */
-  .menu-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    transition: all var(--transition-base);
-  }
-
-  .menu-button {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid white;
-    background: var(--color-primary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all var(--transition-base);
-    position: relative;
-    padding: 0;
-  }
-
-  .menu-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    background: var(--color-accent);
-  }
-
-  .menu-icon {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    filter: brightness(0) invert(1); /* Make icons white */
-  }
-
-  .icon-placeholder {
-    font-size: 20px;
-    color: white;
-    line-height: 1;
-  }
-
-  .menu-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    text-align: center;
-    white-space: nowrap;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 4px 8px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-  }
-
-  /* Menu Item Hover Effects */
-  .menu-item:hover .menu-label {
-    background: rgba(255, 255, 255, 1);
-    transform: scale(1.05);
-  }
-
-  /* Image Viewer Modal (unchanged) */
-  .image-viewer-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
-    display: none;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(15px);
-  }
-
-  .image-viewer-modal.active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .viewer-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-  }
-
-  .viewer-content {
-    position: relative;
-    max-width: 90vw;
-    max-height: 90vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .viewer-image {
-    max-width: 100%;
-    max-height: 90vh;
-    object-fit: contain;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  }
-
-  .viewer-close {
-    position: absolute;
-    top: -60px;
-    right: 0;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    font-size: 30px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-  }
-
-  .viewer-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-  }
-
-  .viewer-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    font-size: 40px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-  }
-
-  .viewer-nav:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-50%) scale(1.1);
-  }
-
-  .viewer-nav.prev {
-    left: -80px;
-  }
-
-  .viewer-nav.next {
-    right: -80px;
-  }
-
-  .viewer-counter {
-    position: absolute;
-    bottom: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 16px;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 8px 16px;
-    border-radius: 25px;
-    font-weight: 500;
-  }
-
-  .viewer-title {
-    position: absolute;
-    top: -60px;
-    left: 0;
-    color: white;
-    font-size: 18px;
-    font-weight: 600;
-  }
-
-  /* Mobile Responsiveness */
-  @media (max-width: 768px) {
-    .whatsapp-fab-solo {
-      bottom: 25px;
-      right: 25px;
-      width: 55px;
-      height: 55px;
-    }
-    
-    .whatsapp-fab-solo svg {
-      width: 26px;
-      height: 26px;
-    }
-    
-    .three-dot-menu {
-      bottom: 95px;
-      right: 25px;
-    }
-    
-    .three-dot-toggle {
-      width: 55px;
-      height: 55px;
-    }
-    
-    .menu-button {
-      width: 45px;
-      height: 45px;
-    }
-    
-    .menu-icon {
-      width: 20px;
-      height: 20px;
-    }
-    
-    .menu-label {
-      font-size: 10px;
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .viewer-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-  }
-
-  .viewer-content {
-    position: relative;
-    max-width: 90vw;
-    max-height: 90vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .viewer-image {
-    max-width: 100%;
-    max-height: 90vh;
-    object-fit: contain;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  }
-
-  .viewer-close {
-    position: absolute;
-    top: -60px;
-    right: 0;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    font-size: 30px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-  }
-
-  .viewer-close:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-  }
-
-  .viewer-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    font-size: 40px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-  }
-
-  .viewer-nav:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-50%) scale(1.1);
-  }
-
-  .viewer-nav.prev {
-    left: -80px;
-  }
-
-  .viewer-nav.next {
-    right: -80px;
-  }
-
-  .viewer-counter {
-    position: absolute;
-    bottom: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 16px;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 8px 16px;
-    border-radius: 25px;
-    font-weight: 500;
-  }
-
-  .viewer-title {
-    position: absolute;
-    top: -60px;
-    left: 0;
-    color: white;
-    font-size: 18px;
-    font-weight: 600;
-  }
-
-  /* Enhanced Floating Action Buttons - Larger and Mobile Optimized */
-  /* ============================================================== */
-
-  .fab-container {
-    position: fixed;
-    bottom: var(--space-8);
-    right: var(--space-8);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-4);
-  }
-
-  .fab-toggle {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    border: none;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    box-shadow: var(--shadow-lg);
-    transition: all var(--transition-smooth);
-    position: relative;
-  }
-
-  .fab-toggle:hover {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: var(--shadow-xl);
-  }
-
-  .fab-toggle:active {
-    transform: scale(0.95);
-  }
-
-  .fab-close {
-    display: none;
-    font-size: 2.5rem;
-    font-weight: 300;
-  }
-
-  .fab-container.expanded .fab-dots {
-    display: none;
-  }
-
-  .fab-container.expanded .fab-close {
-    display: block;
-  }
-
-  .fab-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all var(--transition-smooth);
-    pointer-events: none;
-  }
-
-  .fab-container.expanded .fab-actions {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: all;
-  }
-
-  .fab-action {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: none;
-    background: white;
-    color: var(--color-primary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-base);
-    position: relative;
-    text-decoration: none;
-    overflow: hidden;
-  }
-
-  .fab-action:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-lg);
-    width: auto;
-    padding: 0 var(--space-5);
-    border-radius: var(--radius-full);
-    min-width: 60px;
-  }
-
-  .fab-action:active {
-    transform: scale(0.95);
-  }
-
-  .fab-action svg {
-    width: 28px;
-    height: 28px;
-    transition: all var(--transition-base);
-    flex-shrink: 0;
-  }
-
-  .fab-text {
-    margin-left: var(--space-3);
-    font-weight: 500;
-    white-space: nowrap;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: all var(--transition-base);
-    font-size: 1rem;
-  }
-
-  .fab-action:hover .fab-text {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  .fab-action:hover svg {
-    margin-right: var(--space-2);
-  }
-
-  /* WhatsApp specific styling */
-  .whatsapp-fab {
-    background: linear-gradient(135deg, #25D366, #128C7E) !important;
-    color: white !important;
-  }
-
-  /* Image Viewer Modal - Enhanced */
-  /* ============================= */
-
-  .image-viewer-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
-    display: none;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(15px);
-  }
-
-  .image-viewer-modal.active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .viewer-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-  }
-
-  .viewer-content {
-    position: relative;
-    max-width: 90vw;
-    max-height: 90vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: slideIn 0.3s ease;
-  }
-
-  @keyframes slideIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-
-  .viewer-image {
-    max-width: 100%;
-    max-height: 90vh;
-    object-fit: contain;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
-    cursor: pointer;
-    transition: transform 0.3s ease;
-  }
-
-  .viewer-image:active {
-    transform: scale(0.98);
-  }
-
-  .viewer-close {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    font-size: 2.5rem;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-base);
-    backdrop-filter: blur(10px);
-    font-weight: 300;
-    z-index: 10001;
-    line-height: 1;
-  }
-
-  .viewer-close:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: scale(1.1);
-  }
-
-  .viewer-close:active {
-    transform: scale(0.95);
-  }
-
-  /* Mobile close button */
-  @media (max-width: 768px) {
-    .viewer-close {
-      width: 50px;
-      height: 50px;
-      font-size: 2rem;
-      top: 15px;
-      right: 15px;
-    }
-  }
-
-  .viewer-nav {
-    position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    font-size: 3rem;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-base);
-    backdrop-filter: blur(10px);
-    font-weight: 300;
-    z-index: 10001;
-    line-height: 1;
-  }
-
-  .viewer-nav:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-50%) scale(1.1);
-  }
-
-  .viewer-nav:active {
-    transform: translateY(-50%) scale(0.95);
-  }
-
-  .viewer-nav.prev {
-    left: 20px;
-  }
-
-  .viewer-nav.next {
-    right: 20px;
-  }
-
-  /* Mobile navigation */
-  @media (max-width: 768px) {
-    .viewer-nav.prev {
-      left: 15px;
-    }
-    
-    .viewer-nav.next {
-      right: 15px;
-    }
-    
-    .viewer-nav {
-      width: 50px;
-      height: 50px;
-      font-size: 2rem;
-    }
-  }
-
-  .viewer-counter {
-    position: absolute;
-    bottom: -50px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 1rem;
-    background: rgba(0, 0, 0, 0.6);
-    padding: var(--space-3) var(--space-5);
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(10px);
-    font-weight: 500;
-  }
-
-  .viewer-title {
-    position: absolute;
-    top: -60px;
-    left: 0;
-    color: white;
-    font-size: 1.2rem;
-    font-weight: 600;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  }
-
-  /* Mobile optimizations */
-  @media (max-width: 768px) {
-    .fab-container {
-      bottom: var(--space-6);
-      right: var(--space-6);
-    }
-    
-    .fab-toggle {
-      width: 65px;
-      height: 65px;
-    }
-    
-    .fab-action {
-      width: 55px;
-      height: 55px;
-    }
-    
-    .fab-action svg {
-      width: 24px;
-      height: 24px;
-    }
-    
-    .viewer-nav.prev {
-      left: -50px;
-    }
-    
-    .viewer-nav.next {
-      right: -50px;
-    }
-    
-    .viewer-nav {
-      width: 50px;
-      height: 50px;
-      font-size: 2rem;
-    }
-    
-    .viewer-close {
-    width: 50px;
-    height: 50px;
-    font-size: 2rem;
-    top: 10px;
-    right: 10px;
-    z-index: 10001;
-  }
-    
-    .viewer-content {
-      max-width: 95vw;
-      max-height: 85vh;
-    }
-    
-    .viewer-image {
-      max-height: 85vh;
-      cursor: default;
-    }
-  }
-  /* Loading States */
-  /* ============== */
-
-  .loading-skeleton {
-    background: linear-gradient(90deg, var(--color-soft-gray) 25%, var(--color-medium-gray) 50%, var(--color-soft-gray) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 2s infinite;
-  }
-
-  @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* Responsive Design */
-  /* ================= */
-
-  @media (max-width: 768px) {
-    .container {
-      padding: 0 var(--space-4);
-    }
-
-    .header-content {
-      height: 70px;
-      flex-direction: column;
-      gap: var(--space-3);
-      align-items: stretch;
-    }
-
-    .brand-section {
-      justify-content: center;
-    }
-    
-  .brand-name {
-    font-family: var(--font-display);
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #202124 !important;
-    line-height: 1.2;
-    cursor: pointer;
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    -webkit-text-fill-color: #202124 !important; /* Force color on Safari */
-  }
-
-  /* Force visibility on mobile */
-  @media (max-width: 768px) {
-    .brand-name {
-      font-size: 1.1rem;
+    // NUCLEAR FORCE: Inline styles with !important equivalent
+    heroTitle.setAttribute('style', `
       display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
       color: #202124 !important;
+      font-size: 2.5rem !important;
+      font-weight: 700 !important;
+      margin: 0 auto 1rem auto !important;
+      padding: 0 !important;
+      width: 100% !important;
+      line-height: 1.2 !important;
+      text-shadow: none !important;
       -webkit-text-fill-color: #202124 !important;
-    }
+      background: transparent !important;
+      text-align: center !important;
+      position: relative !important;
+      z-index: 20 !important;
+    `);
+    
+    console.log('✅ Hero title updated:', heroTitle.textContent);
+    console.log('✅ Title display:', window.getComputedStyle(heroTitle).display);
+    console.log('✅ Title color:', window.getComputedStyle(heroTitle).color);
+  }
+  
+  if (heroSubtitle) {
+    heroSubtitle.setAttribute('style', `
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      color: #5f6368 !important;
+      font-size: 1.1rem !important;
+      margin: 0 auto 1.5rem auto !important;
+      padding: 0 !important;
+      width: 100% !important;
+      line-height: 1.6 !important;
+      text-shadow: none !important;
+      -webkit-text-fill-color: #5f6368 !important;
+      background: transparent !important;
+      text-align: center !important;
+      position: relative !important;
+      z-index: 20 !important;
+    `);
+    
+    console.log('✅ Hero subtitle visible');
   }
 
-    .search-section {
-      max-width: none;
-    }
+  // Add breadcrumb navigation
+  this.addBreadcrumbNavigation(breadcrumbs);
+}
 
-    .hero {
-      padding: var(--space-12) 0;
-    }
+  // REPLACE the addBreadcrumbNavigation function in public/script.js:
 
-    .hero-title {
-      font-size: 2.5rem;
-    }
-
-    .breadcrumb-nav {
-      font-size: 0.8rem;
-      padding: var(--space-2) var(--space-4);
-      margin-bottom: var(--space-6);
-      max-width: 90%;
-    }
-
-    .breadcrumb-nav a,
-    .breadcrumb-nav span[style*="font-weight"] {
-      padding: var(--space-1);
-    }
-
-    .content-section {
-      padding: var(--space-12) 0;
-    }
-
-    .section-title {
-      font-size: 2rem;
-    }
-
-    .cards-grid.grid-2,
-    .cards-grid.grid-3,
-    .cards-grid.grid-4,
-    .cards-grid.grid-many {
-      grid-template-columns: 1fr;
-    }
-
-    .stats-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .taxonomy-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+addBreadcrumbNavigation(breadcrumbs) {
+  console.log('🍞 Creating breadcrumb navigation:', breadcrumbs);
+  
+  const hero = document.querySelector('.hero .hero-inner');
+  if (!hero) {
+    console.warn('⚠️ No hero-inner element found');
+    return;
   }
 
-  @media (max-width: 480px) {
-    .header-content {
-      height: auto;
-      padding: var(--space-4) 0;
+  // Remove existing breadcrumbs
+  const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
+  if (existingBreadcrumbs) {
+    existingBreadcrumbs.remove();
+  }
+
+  // Create breadcrumb navigation
+  const breadcrumbNav = document.createElement('nav');
+  breadcrumbNav.className = 'breadcrumb-nav';
+
+breadcrumbNav.style.cssText = `
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 100 !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 2px solid var(--color-primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 50px !important;
+  margin: 1.5rem auto !important;
+  width: auto !important;
+  max-width: 600px !important;
+  min-width: 200px !important;
+  min-height: 40px !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  color: #202124 !important;
+  font-size: 0.9rem !important;
+  box-sizing: border-box !important;
+`;
+
+console.log('✅ Breadcrumb dimensions:', breadcrumbNav.getBoundingClientRect());
+
+  // Home link
+  const homeLink = document.createElement('a');
+  homeLink.href = '#';
+  homeLink.textContent = 'Home';
+  homeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    this.navigateToHome();
+  });
+
+  breadcrumbNav.appendChild(homeLink);
+
+  // Add breadcrumb items
+  breadcrumbs.forEach((crumb, index) => {
+    // Add separator
+    const separator = document.createElement('span');
+    separator.textContent = ' / ';
+    separator.style.color = 'var(--color-text-muted)';
+    breadcrumbNav.appendChild(separator);
+
+    if (index === breadcrumbs.length - 1) {
+      // Current page - no link
+      const current = document.createElement('span');
+      current.textContent = crumb.name;
+      current.style.cssText = `
+        font-weight: 600;
+        color: var(--color-text-primary);
+        padding: var(--space-1) var(--space-2);
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: var(--radius-sm);
+      `;
+      breadcrumbNav.appendChild(current);
+    } else {
+      // Clickable breadcrumb
+      const link = document.createElement('a');
+      link.href = '#';
+      link.textContent = crumb.name;
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        const pathSegments = crumb.path.split('/').filter(Boolean);
+        this.currentPath = pathSegments;
+        
+        const params = new URLSearchParams(window.location.search);
+        params.set('path', crumb.path);
+        if (this.currentBrand) {
+          params.set('brand', this.currentBrand);
+        }
+        
+        const newURL = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({ 
+          path: pathSegments, 
+          brand: this.currentBrand 
+        }, '', newURL);
+        
+        this.showCategoryView();
+      });
+      breadcrumbNav.appendChild(link);
     }
+  });
 
-    .stats-grid,
-    .taxonomy-grid {
-      grid-template-columns: 1fr;
+  // FIXED: Insert breadcrumbs AFTER hero title and subtitle
+  const heroTitle = hero.querySelector('.hero-title');
+  const heroSubtitle = hero.querySelector('.hero-subtitle');
+  
+  // Insert breadcrumb into hero-inner-wrapper if it exists
+const heroWrapper = hero.querySelector('.hero-inner-wrapper');
+const insertTarget = heroWrapper || hero;
+
+if (heroSubtitle) {
+  // Insert after subtitle
+  heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
+} else if (heroTitle) {
+  // Insert after title if no subtitle
+  heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
+} else {
+  // Fallback: append to hero content
+  insertTarget.appendChild(breadcrumbNav);
+}
+
+// Force position after insertion
+setTimeout(() => {
+  if (breadcrumbNav.parentElement) {
+    breadcrumbNav.style.position = 'relative';
+    breadcrumbNav.style.marginTop = '1.5rem';
+    breadcrumbNav.style.marginBottom = '1.5rem';
+    console.log('✅ Breadcrumb positioned in DOM');
+  }
+}, 50);
+}
+
+  // LOCATION: public/script.js
+// REPLACE: The entire renderCategoryContents function (around line 600) with this ENHANCED version:
+
+renderCategoryContents(currentNode, breadcrumbs) {
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
+
+  console.log('🔍 DEEP NESTED DEBUG: Current node structure:', currentNode);
+  console.log('🗂️ BREADCRUMBS:', breadcrumbs.map(b => b.name).join(' > '));
+
+  const items = Object.entries(currentNode).map(([key, item]) => {
+    const currentPath = breadcrumbs.length > 0 ? breadcrumbs.map(b => b.name).join('/') + '/' + key : key;
+    
+    // COMPREHENSIVE DEBUG: Check ALL possible TopOrder variations
+    console.log(`🔍 DEEP ITEM DEBUG for ${key} at path ${currentPath}:`, {
+      fullItem: item,
+      keys: Object.keys(item),
+      TopOrder: item.TopOrder,
+      topOrder: item.topOrder,
+      'Top Order': item['Top Order'],
+      'TOP ORDER': item['TOP ORDER'],
+      Order: item.Order,
+      order: item.order,
+      Priority: item.Priority,
+      priority: item.priority,
+      Rank: item.Rank,
+      rank: item.rank,
+      Sort: item.Sort,
+      sort: item.sort
+      
+    });
+
+    const extractTopOrder = (item, itemKey, fullPath) => {
+      // Check EVERY possible variation
+      const variations = [
+        'TopOrder', 'topOrder', 'Top Order', 'TOP ORDER',
+        'Order', 'order', 'ORDER',
+        'Priority', 'priority', 'PRIORITY',
+        'Rank', 'rank', 'RANK',
+        'Sort', 'sort', 'SORT',
+        'Position', 'position', 'POSITION'
+      ];
+      
+      for (const variation of variations) {
+        const value = item[variation];
+        if (value !== undefined && value !== null && value !== '') {
+          const parsed = parseInt(value);
+          if (!isNaN(parsed)) {
+            console.log(`✅ DEEP SUCCESS: Found ${variation} for ${itemKey} at ${fullPath}: ${value} → ${parsed}`);
+            return parsed;
+          } else {
+            console.log(`⚠️ DEEP Found ${variation} but can't parse: ${value} for ${itemKey}`);
+          }
+        }
+      }
+      
+      console.log(`❌ DEEP NO TopOrder found for ${itemKey} at ${fullPath}, using default 999`);
+      return 999;
+    };
+
+    const topOrder = extractTopOrder(item, key, currentPath);
+
+    if (item.isProduct) {
+      return {
+        key,
+        title: key,
+        description: 'Premium product from our luxury collection',
+        count: 1,
+        thumbnail: item.thumbnail || this.getEmojiForCategory('PRODUCT'),
+        isProduct: true,
+        driveLink: item.driveLink,
+        topOrder: topOrder,
+        fullPath: currentPath,
+        fullPath: currentPath,
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
+    } else {
+      return {
+        key,
+        title: key.replace(/_/g, ' '),
+        description: `Explore ${item.count || 0} items in this collection`,
+        count: item.count || 0,
+        thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+        isProduct: false,
+        topOrder: topOrder,
+        fullPath: currentPath,
+        fullPath: currentPath,
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING
+      };
     }
+  });
 
-    .hero-title {
-      font-size: 2rem;
+  if (items.length === 0) {
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">No Items Found</h2>
+            <p class="section-description">This category is currently empty.</p>
+          </div>
+        </div>
+      </section>
+    `;
+    return;
+  }
+
+  // DEBUG: Show extracted topOrder values with full paths
+  console.log('🎯 DEEP EXTRACTED TopOrder VALUES:');
+  items.forEach(item => {
+    console.log(`   ${item.fullPath}: TopOrder=${item.topOrder} (${item.isProduct ? 'PRODUCT' : 'FOLDER'})`);
+  });
+
+  // ENHANCED SORTING: TopOrder has ABSOLUTE PRIORITY at ANY depth
+  const currentDepth = breadcrumbs.length;
+  console.log(`📊 DEEP SORTING ${items.length} items at depth ${currentDepth} by TopOrder (absolute priority)`);
+
+  items.sort((a, b) => {
+    console.log(`🔄 DEEP Comparing: ${a.title}(${a.topOrder}) vs ${b.title}(${b.topOrder})`);
+    
+    // TopOrder has ABSOLUTE PRIORITY - works at any depth
+    if (a.topOrder !== b.topOrder) {
+      const result = a.topOrder - b.topOrder;
+      console.log(`  → 🏆 DEEP TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
+      return result;
     }
-
-    .section-title {
-      font-size: 1.75rem;
+    
+    // If TopOrder is equal, folders come before products
+    if (a.isProduct !== b.isProduct) {
+      return a.isProduct ? 1 : -1; // Folders first
     }
-
-    .breadcrumb-nav {
-      font-size: 0.75rem;
+    
+    // If same type and folders, sort by count
+    if (!a.isProduct && !b.isProduct && a.count !== b.count) {
+      return b.count - a.count; // Higher count first for folders
     }
+    
+    // Finally alphabetically
+    return a.title.localeCompare(b.title);
+  });
+
+  console.log(`✅ DEEP FINAL SORT ORDER at depth ${currentDepth}:`);
+  items.forEach((item, index) => {
+    console.log(`   ${index + 1}. ${item.title} (TopOrder: ${item.topOrder})`);
+  });
+
+  const gridClass = this.getGridClass(items.length);
+  const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
+  
+  container.innerHTML = `
+    <section class="content-section">
+      <div class="container">
+        <div class="cards-grid ${gridClass}" id="${containerId}">
+          ${items.map(item => this.createCardHTML(item)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+
+  if (gridClass === 'grid-smart') {
+    setTimeout(() => {
+      const gridContainer = document.getElementById(containerId);
+      if (gridContainer) this.addSmartCentering(gridContainer, items.length);
+    }, 10);
   }
+   // ADD THIS AT THE VERY END:
+  // FORCE hide sections after rendering
+  setTimeout(() => {
+    const brandsSection = document.querySelector('.brands-section');
+    const slideshowSection = document.querySelector('.slideshow-section');
+    if (brandsSection) brandsSection.style.display = 'none';
+    if (slideshowSection) slideshowSection.style.display = 'none';
+    console.log('🔒 Locked sections hidden in renderCategoryContents');
+  }, 50);
 
-  /* Focus States for Accessibility */
-  /* =============================== */
+}
 
-  .content-card:focus,
-  .taxonomy-item:focus,
-  .brand-logo:focus,
-  .search-input:focus {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+  
+debugCSVData() {
+  console.log('=== CSV DATA DEBUG ===');
+  console.log('Full data object:', this.data);
+  
+  if (this.data && this.data.catalog && this.data.catalog.tree) {
+    console.log('Catalog tree structure:');
+    
+    // Walk through the tree and log topOrder values
+    const walkTree = (node, path = []) => {
+      Object.entries(node).forEach(([key, item]) => {
+        const currentPath = [...path, key];
+        const topOrder = item.topOrder || item['Top Order'] || item.top_order || 'NOT FOUND';
+        
+        console.log(`${currentPath.join('/')} - topOrder: ${topOrder}`, item);
+        
+        if (item.children && !item.isProduct) {
+          walkTree(item.children, currentPath);
+        }
+      });
+    };
+    
+    walkTree(this.data.catalog.tree);
+  } else {
+    console.log('❌ No catalog tree found in data');
   }
+  console.log('=== END DEBUG ===');
+}
+// ADD this new helper function after renderCategoryContents:
 
-  .content-card:focus-visible,
-  .taxonomy-item:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+/**
+ * Enhanced sorting for any category items
+ * @param {Array} items - Array of items to sort
+ * @param {boolean} isHomepage - Whether this is for homepage (uses existing logic)
+ * @returns {Array} Sorted items
+ */
+sortItemsEnhanced(items, isHomepage = false) {
+  if (isHomepage) {
+    // Homepage: use existing topOrder logic only
+    return items.sort((a, b) => a.topOrder - b.topOrder);
   }
+  
+  // Category pages: enhanced sorting
+  const folders = items.filter(item => !item.isProduct);
+  const products = items.filter(item => item.isProduct);
 
-  /* Utility Classes */
-  /* =============== */
+  // Sort folders: topOrder → count → alphabetical
+  folders.sort((a, b) => {
+    if (a.topOrder !== b.topOrder) {
+      return a.topOrder - b.topOrder;
+    }
+    if (a.count !== b.count) {
+      return b.count - a.count; // Higher count first
+    }
+    return a.title.localeCompare(b.title);
+  });
 
-  .text-center { 
-    text-align: center; 
+  // Sort products: topOrder → alphabetical  
+  products.sort((a, b) => {
+    if (a.topOrder !== b.topOrder) {
+      return a.topOrder - b.topOrder;
+    }
+    return a.title.localeCompare(b.title);
+  });
+
+  return [...folders, ...products];
+}
+
+  setupPreviewModal() {
+  // Remove any existing modal
+  const existingModal = document.getElementById('drivePreviewModal');
+  if (existingModal) {
+    existingModal.remove();
   }
-
-  .hidden { 
-    display: none; 
-  }
-
-  .loading { 
-    opacity: 0.7; 
-  }
-
-
-
-  /* ============================================================================
-    DRIVE PREVIEW MODAL STYLES - FIXED LAYOUT
-    ============================================================================ */
-
-  .drive-preview-modal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 10000 !important;
-    display: none !important;
-    background: rgba(0, 0, 0, 0.95) !important;
-    backdrop-filter: blur(10px);
-  }
-
-  .drive-preview-modal.active {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    animation: fadeIn 0.3s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  .preview-overlay {
-    position: absolute;
+  
+  console.log('🔨 Creating simplified preview modal...');
+  
+  // Create modal with INLINE STYLES for guaranteed rendering
+  const modal = document.createElement('div');
+  modal.id = 'drivePreviewModal';
+  modal.style.cssText = `
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    cursor: pointer;
-  }
-
-  .preview-container {
-    position: relative;
-    width: 100%;
-    max-width: 1400px; /* FIXED: Limit width on large screens */
-    height: 100%;
-    max-height: 95vh; /* FIXED: Limit height */
-    display: flex;
-    flex-direction: column;
-    z-index: 1;
-    margin: 0 auto; /* FIXED: Center horizontally */
-    padding: 0 2rem; /* FIXED: Add padding on sides */
-  }
-
-  .preview-header {
-    padding: 1.5rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.9);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px 12px 0 0; /* FIXED: Rounded top corners */
-    flex-shrink: 0; /* FIXED: Prevent shrinking */
-  }
-
-  .preview-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: white;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 70%;
-    flex: 1;
-  }
-
-  .preview-close {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    font-size: 2rem;
-    font-weight: 300;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-
-  .preview-close:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: scale(1.05);
-  }
-
-  .preview-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    overflow: hidden;
-    position: relative;
-    background: rgba(0, 0, 0, 0.5); /* FIXED: Semi-transparent background */
-    min-height: 0; /* FIXED: Allow flex shrinking */
-  }
-
-  .preview-image {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto; /* FIXED: Auto width for proper scaling */
-    height: auto; /* FIXED: Auto height for proper scaling */
-    object-fit: contain; /* FIXED: Contain entire image */
-    border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    transition: transform 0.3s ease;
-    display: block; /* FIXED: Remove inline spacing */
-    margin: 0 auto; /* FIXED: Center the image */
-  }
-
-  .preview-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    color: white;
-  }
-
-  .preview-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .preview-error {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    color: white;
-    text-align: center;
-    padding: 2rem;
-  }
-
-  .preview-error-icon {
-    font-size: 4rem;
-    opacity: 0.7;
-  }
-
-  .preview-error h3 {
-    font-size: 1.5rem;
-    margin: 0;
-  }
-
-  .preview-error p {
-    font-size: 1rem;
-    opacity: 0.8;
-    margin: 0;
-  }
-
-  .preview-btn {
-    padding: 0.75rem 1.5rem;
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .preview-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: translateY(-2px);
-  }
-
-  .preview-navigation {
-    padding: 1.5rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.9);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0 0 12px 12px; /* FIXED: Rounded bottom corners */
-    flex-shrink: 0; /* FIXED: Prevent shrinking */
-  }
-
-  .preview-nav {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    font-size: 2rem;
-    font-weight: 300;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-
-  .preview-nav:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.25);
-    transform: scale(1.05);
-  }
-
-  .preview-nav:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .preview-counter {
-    font-size: 1rem;
-    font-weight: 500;
-    color: white;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    min-width: 80px;
-    text-align: center;
-  }
-
-  /* MOBILE OPTIMIZATIONS - FIXED */
-  @media (max-width: 768px) {
-    .preview-container {
-      max-width: 100%;
-      padding: 0;
-      max-height: 100vh;
-    }
-    
-    .preview-header {
-      padding: 1rem 1.25rem;
-      border-radius: 0; /* No rounded corners on mobile */
-    }
-    
-    .preview-title {
-      font-size: 1rem;
-      max-width: 60%;
-    }
-    
-    .preview-close {
-      width: 40px;
-      height: 40px;
-      font-size: 1.75rem;
-    }
-    
-    .preview-content {
-      padding: 1rem;
-      background: rgba(0, 0, 0, 0.8); /* Darker on mobile */
-    }
-    
-    .preview-image {
-      max-width: 95%; /* FIXED: Slightly smaller on mobile */
-      max-height: 95%; /* FIXED: Slightly smaller on mobile */
-      border-radius: 4px;
-    }
-    
-    .preview-navigation {
-      padding: 1rem 1.25rem;
-      border-radius: 0; /* No rounded corners on mobile */
-    }
-    
-    .preview-nav {
-      width: 44px;
-      height: 44px;
-      font-size: 1.75rem;
-    }
-    
-    .preview-counter {
-      font-size: 0.9rem;
-      padding: 0.4rem 0.8rem;
-      min-width: 70px;
-    }
-  }
-
-  /* TABLET OPTIMIZATIONS */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .preview-container {
-      max-width: 900px;
-      padding: 0 1rem;
-    }
-    
-    .preview-content {
-      padding: 1.5rem;
-    }
-  }
-
-  /* LARGE DESKTOP OPTIMIZATIONS */
-  @media (min-width: 1440px) {
-    .preview-container {
-      max-width: 1600px;
-    }
-    
-    .preview-content {
-      padding: 3rem;
-    }
-    
-    .preview-image {
-      max-width: 90%; /* Slightly smaller on very large screens */
-      max-height: 90%;
-    }
-  }
-
-  /* ULTRA-WIDE MONITOR SUPPORT */
-  @media (min-width: 1920px) {
-    .preview-container {
-      max-width: 1800px;
-    }
-  }
-
-  /* TOUCH DEVICE OPTIMIZATIONS */
-  @media (hover: none) and (pointer: coarse) {
-    .preview-image {
-      cursor: default; /* Remove pointer cursor on touch devices */
-    }
-    
-    .preview-nav:active:not(:disabled) {
-      transform: scale(0.95); /* Touch feedback */
-    }
-    
-    .preview-close:active {
-      transform: scale(0.95); /* Touch feedback */
-    }
-  }
-
-  /* LANDSCAPE MODE ON MOBILE */
-  @media (max-width: 768px) and (orientation: landscape) {
-    .preview-header {
-      padding: 0.75rem 1rem;
-    }
-    
-    .preview-content {
-      padding: 0.5rem;
-    }
-    
-    .preview-navigation {
-      padding: 0.75rem 1rem;
-    }
-    
-    .preview-image {
-      max-height: 85vh; /* FIXED: Prevent overflow in landscape */
-    }
-  }
-
-  /* HIGH DPI DISPLAYS */
-  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
-    .preview-image {
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-    }
-  }
-
-  /* DARK MODE SUPPORT (if enabled) */
-  @media (prefers-color-scheme: dark) {
-    .drive-preview-modal {
-      background: rgba(0, 0, 0, 0.98) !important;
-    }
-    
-    .preview-header,
-    .preview-navigation {
-      background: rgba(0, 0, 0, 0.95);
-    }
-  }
-
-  /* REDUCED MOTION SUPPORT */
-  @media (prefers-reduced-motion: reduce) {
-    .drive-preview-modal.active {
-      animation: none;
-    }
-    
-    .preview-image {
-      transition: none;
-    }
-    
-    .preview-nav,
-    .preview-close {
-      transition: none;
-    }
-    /* Featured Section Heading */
-  /* ======================== */
-
-  .featured-heading-section {
-    background: var(--color-white);
-    padding: var(--space-8) 0 var(--space-4) 0;
-  }
-
-  body[data-page-type="category"] .featured-heading-section,
-  body[data-page-type="brand"] .featured-heading-section {
-    display: none !important;
-  }
-  /* NUCLEAR OPTION: Force hero visibility on category pages */
-  body[data-page-type="category"] .hero,
-  body[data-page-type="brand"] .hero {
-    position: relative !important;
-    z-index: 50 !important;
-    background: #f8f9fa !important;
-    border-bottom: 2px solid #e8eaed !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
-  }
-
-  body[data-page-type="category"] .hero-inner,
-  body[data-page-type="brand"] .hero-inner {
-    position: relative !important;
-    z-index: 51 !important;
-    transform: translateZ(0) !important;
-    backface-visibility: visible !important;
-    perspective: 1000px !important;
-  }
-
-  body[data-page-type="category"] .hero-title,
-  body[data-page-type="brand"] .hero-title {
-    transform: translateZ(0) !important;
-    backface-visibility: visible !important;
-    text-rendering: optimizeLegibility !important;
-    -webkit-font-smoothing: antialiased !important;
-  }
-
-  body[data-page-type="category"] .breadcrumb-nav,
-  body[data-page-type="brand"] .breadcrumb-nav {
-    transform: translateZ(0) !important;
-    backface-visibility: visible !important;
-  }
-
-  /* CRITICAL: Prevent homepage hero grid from crushing inner hero */
-  body[data-page-type="category"] .hero-homepage,
-  body[data-page-type="brand"] .hero-homepage {
-    display: none !important;
-    height: 0 !important;
-    width: 0 !important;
-    overflow: hidden !important;
-    position: absolute !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-  }
-
-  body[data-page-type="category"] .hero,
-  body[data-page-type="brand"] .hero {
-    display: block !important;
-    grid-template-columns: none !important;
-    grid-template-rows: none !important;
-  }
-
-  body[data-page-type="category"] .hero .container,
-  body[data-page-type="brand"] .hero .container {
-    display: block !important;
-    grid-template-columns: none !important;
-  }
-
-  body[data-page-type="category"] .hero-inner,
-  body[data-page-type="brand"] .hero-inner {
-    display: block !important;
-    position: static !important;
-    width: 100% !important;
-    max-width: 800px !important;
-    margin: 0 auto !important;
-  }
-/* Hide brands and gallery on category pages */
-body[data-page-type="category"] .brands-section,
-body[data-page-type="brand"] .brands-section {
-  display: none !important;
-}
-
-body[data-page-type="category"] .slideshow-section,
-body[data-page-type="brand"] .slideshow-section {
-  display: none !important;
-}
-/* ============================================
-   CRITICAL: Force hide sections on category pages
-   ============================================ */
-
-/* Hide on ALL category/brand pages - HIGHEST PRIORITY */
-body[data-page-type="category"] .brands-section,
-body[data-page-type="category"] .slideshow-section,
-body[data-page-type="category"] #heroSlideshowContainer,
-body[data-page-type="brand"] .brands-section,
-body[data-page-type="brand"] .slideshow-section,
-body[data-page-type="brand"] #heroSlideshowContainer {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  position: absolute !important;
-  pointer-events: none !important;
-}
-
-/* Force show ONLY on homepage (no data-page-type attribute) */
-body:not([data-page-type]) .brands-section,
-body:not([data-page-type]) .slideshow-section,
-body:not([data-page-type]) #heroSlideshowContainer {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  height: auto !important;
-  position: relative !important;
-  pointer-events: auto !important;
-}
-  }
-  /* ============================================
-    SKELETON LOADING SCREENS
-    ============================================ */
-
-  /* Shimmer animation */
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
-  }
-
-  /* Skeleton base */
-  .skeleton {
-    background: linear-gradient(
-      90deg,
-      #f0f0f0 0%,
-      #e0e0e0 20%,
-      #f0f0f0 40%,
-      #f0f0f0 100%
-    );
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite linear;
-    border-radius: var(--radius-sm);
-  }
-
-  /* Skeleton card */
-  .skeleton-card {
-    background: white;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-  }
-
-  .skeleton-image {
-    width: 100%;
-    height: 200px;
-    background: linear-gradient(
-      90deg,
-      #f0f0f0 0%,
-      #e0e0e0 20%,
-      #f0f0f0 40%,
-      #f0f0f0 100%
-    );
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite linear;
-  }
-
-  .skeleton-content {
-    padding: var(--space-6);
-  }
-
-  .skeleton-line {
-    height: 16px;
-    margin-bottom: var(--space-3);
-    background: linear-gradient(
-      90deg,
-      #f0f0f0 0%,
-      #e0e0e0 20%,
-      #f0f0f0 40%,
-      #f0f0f0 100%
-    );
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite linear;
-    border-radius: var(--radius-sm);
-  }
-
-  .skeleton-line:last-child {
-    width: 60%;
-  }
-
-  .skeleton-line.short {
-    width: 40%;
-  }
-
-  /* Hide real content while loading */
-  .loading .content-card {
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
     display: none;
-  }
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  modal.innerHTML = `
+    <div id="previewOverlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; cursor: pointer;"></div>
     
+    <div class="preview-wrapper" style="
+      position: relative;
+      z-index: 10001;
+      width: 90%;
+      max-width: 1200px;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(0, 0, 0, 0.9);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    ">
+      
+      <!-- Header -->
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: rgba(0, 0, 0, 0.95);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+      ">
+        <div id="previewTitle" style="
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: white;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        ">Product Gallery</div>
+        
+        <button id="previewClose" style="
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.15);
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          color: white;
+          font-size: 2rem;
+          font-weight: 300;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        " title="Close">×</button>
+      </div>
+      
+      <!-- Image Container -->
+      <div id="previewContent" style="
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow: hidden;
+        position: relative;
+        background: #000;
+        min-height: 0;
+      ">
+        <div class="preview-loading" style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          color: white;
+        ">
+          <div style="
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          "></div>
+          <span>Loading images...</span>
+        </div>
+      </div>
+      
+      <!-- Navigation -->
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: rgba(0, 0, 0, 0.95);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+      ">
+        <button id="previewPrev" style="
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          font-size: 2rem;
+          font-weight: 300;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        " title="Previous">‹</button>
+        
+        <div style="
+          font-size: 1rem;
+          font-weight: 500;
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          min-width: 80px;
+          text-align: center;
+        ">
+          <span id="previewCurrent">1</span> / <span id="previewTotal">1</span>
+        </div>
+        
+        <button id="previewNext" style="
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          font-size: 2rem;
+          font-weight: 300;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+          flex-shrink: 0;
+        " title="Next">›</button>
+      </div>
+      
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  console.log('✅ Modal created with inline styles');
+  
+  // Bind events
+  this.bindPreviewEventsSimple();
+}
+
+
+
+
+
+  
+bindPreviewEventsSimple() {
+  const modal = document.getElementById('drivePreviewModal');
+  const overlay = document.getElementById('previewOverlay');
+  const closeBtn = document.getElementById('previewClose');
+  const prevBtn = document.getElementById('previewPrev');
+  const nextBtn = document.getElementById('previewNext');
+  
+  console.log('🔗 Binding simple events...');
+  
+  // Close events
+  closeBtn?.addEventListener('click', () => {
+    console.log('❌ Close clicked');
+    this.closePreview();
+  });
+  
+  overlay?.addEventListener('click', () => {
+    console.log('❌ Overlay clicked');
+    this.closePreview();
+  });
+  
+  // Navigation events - UPDATED to use new method names
+  prevBtn?.addEventListener('click', () => {
+    console.log('⬅️ Prev clicked, current index:', this.currentPreview?.currentIndex);
+    this.showPreviousMedia(); // CHANGED
+  });
+  
+  nextBtn?.addEventListener('click', () => {
+    console.log('➡️ Next clicked, current index:', this.currentPreview?.currentIndex);
+    this.showNextMedia(); // CHANGED
+  });
+  
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (modal?.style.display !== 'flex') return;
+    
+    console.log('⌨️ Key:', e.key);
+    
+    if (e.key === 'Escape') this.closePreview();
+    if (e.key === 'ArrowLeft') this.showPreviousMedia(); // CHANGED
+    if (e.key === 'ArrowRight') this.showNextMedia(); // CHANGED
+  });
+  
+  console.log('✅ Events bound');
+}
+
+
+  
+isPreviewActive() {
+  const modal = document.getElementById('drivePreviewModal');
+  return modal && modal.classList.contains('active');
+}
+
+openPreview(product, productTitle) {
+  console.log('🎯 Opening UNIFIED preview for:', productTitle);
+  console.log('📦 Product data:', product);
+  
+  // Build priority-ordered media array
+  const priorityMedia = this.buildPriorityMedia(product);
+  
+  if (priorityMedia.length === 0) {
+    console.log('⚠️ No media available, opening Drive');
+    if (product?.driveLink) {
+      window.open(product.driveLink, '_blank', 'noopener,noreferrer');
+    }
+    return;
+  }
+  
+  // Ensure modal exists
+  this.setupPreviewModal();
+  
+  // Set data
+  this.currentPreview = {
+    media: priorityMedia,
+    currentIndex: 0,
+    title: productTitle,
+    preloadedIndices: new Set() // Track preloaded items
+  };
+  
+  console.log(`✅ Priority media order: ${priorityMedia.length} items`);
+  console.log('Priority breakdown:', {
+    r2Videos: priorityMedia.filter(m => m.type === 'r2-video').length,
+    firstPhotos: priorityMedia.filter((m, i) => m.type === 'image' && i < 4).length,
+    otherVideos: priorityMedia.filter(m => m.type === 'drive-video').length,
+    remainingPhotos: priorityMedia.filter((m, i) => m.type === 'image' && i >= 4).length
+  });
+  
+  // Update title
+  document.getElementById('previewTitle').textContent = productTitle;
+  
+  // Show modal
+  const modal = document.getElementById('drivePreviewModal');
+  modal.style.display = 'flex';
+  
+  // Lock scroll
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  
+  console.log('✅ Modal visible');
+  
+  // Show first item and preload initial batch
+  setTimeout(() => {
+    this.showCurrentMedia();
+    this.preloadInitialBatch();
+  }, 100);
+}
+
+// Build priority-ordered media array
+buildPriorityMedia(product) {
+  const media = [];
+  
+  // 1. R2 Video (if exists) - HIGHEST PRIORITY
+  if (product?.videoPreview?.videos?.length > 0) {
+    product.videoPreview.videos.forEach(video => {
+      media.push({
+        type: 'r2-video',
+        url: video.url,
+        name: video.name,
+        source: 'r2'
+      });
+    });
+    console.log(`🎬 Added ${product.videoPreview.videos.length} R2 video(s) as priority 1`);
+  }
+  
+  // 2. First 3 Drive Photos - SECOND PRIORITY
+  if (product?.preview?.images?.length > 0) {
+    const first3Photos = product.preview.images.slice(0, 3);
+    first3Photos.forEach(img => {
+      media.push({
+        type: 'image',
+        id: img.id,
+        name: img.name,
+        viewUrl: img.viewUrl,
+        driveUrl: img.driveUrl,
+        source: 'drive'
+      });
+    });
+    console.log(`📸 Added ${first3Photos.length} photo(s) as priority 2`);
+  }
+  
+  // 3. All Drive Videos (alphabetically sorted) - THIRD PRIORITY
+  if (product?.preview?.videos?.length > 0) {
+    const sortedVideos = [...product.preview.videos].sort((a, b) => 
+      a.name.localeCompare(b.name)
+    );
+    sortedVideos.forEach(video => {
+      media.push({
+        type: 'drive-video',
+        id: video.id,
+        name: video.name,
+        embedUrl: video.embedUrl,
+        driveUrl: video.driveUrl,
+        source: 'drive'
+      });
+    });
+    console.log(`🎥 Added ${sortedVideos.length} Drive video(s) as priority 3`);
+  }
+  
+  // 4. Remaining Drive Photos (after first 3) - LOWEST PRIORITY
+  if (product?.preview?.images?.length > 3) {
+    const remainingPhotos = product.preview.images.slice(3);
+    remainingPhotos.forEach(img => {
+      media.push({
+        type: 'image',
+        id: img.id,
+        name: img.name,
+        viewUrl: img.viewUrl,
+        driveUrl: img.driveUrl,
+        source: 'drive'
+      });
+    });
+    console.log(`📸 Added ${remainingPhotos.length} remaining photo(s) as priority 4`);
+  }
+  
+  console.log(`\n🎯 FINAL PRIORITY ORDER (${media.length} total):`);
+  media.forEach((item, i) => {
+    const priority = i === 0 && item.type === 'r2-video' ? '🥇' :
+                    i < 4 && item.type === 'image' ? '🥈' :
+                    item.type === 'drive-video' ? '🥉' : '4️⃣';
+    console.log(`   ${priority} ${i + 1}. [${item.type}] ${item.name}`);
+  });
+  
+  return media;
+}
+
+// NEW: Preload initial batch (first 5 photos + 1 R2 video)
+preloadInitialBatch() {
+  if (!this.currentPreview?.media) return;
+  
+  console.log('🚀 Preloading initial batch...');
+  
+  let photosPreloaded = 0;
+  let r2VideoPreloaded = false;
+  
+  this.currentPreview.media.forEach((item, index) => {
+    // Preload first R2 video
+    if (item.type === 'r2-video' && !r2VideoPreloaded) {
+      this.preloadVideo(item, index);
+      r2VideoPreloaded = true;
+      return;
+    }
+    
+    // Preload first 5 photos
+    if (item.type === 'image' && photosPreloaded < 5) {
+      this.preloadImage(item, index);
+      photosPreloaded++;
+      return;
+    }
+  });
+  
+  console.log(`✅ Preloaded: ${photosPreloaded} photos + ${r2VideoPreloaded ? 1 : 0} R2 video`);
+}
+
+// NEW: Preload individual image
+preloadImage(imageItem, index) {
+  if (this.currentPreview.preloadedIndices.has(index)) return;
+  
+  const img = new Image();
+  img.onload = () => {
+    this.currentPreview.preloadedIndices.add(index);
+    console.log(`✅ Preloaded image ${index + 1}: ${imageItem.name}`);
+  };
+  img.onerror = () => {
+    console.log(`⚠️ Failed to preload image ${index + 1}: ${imageItem.name}`);
+  };
+  
+  const imageUrls = [
+    `https://lh3.googleusercontent.com/d/${imageItem.id}=w2000`,
+    `https://lh3.googleusercontent.com/d/${imageItem.id}`,
+    `https://drive.google.com/uc?export=view&id=${imageItem.id}`
+  ];
+  
+  img.src = imageUrls[0];
+}
+
+// NEW: Preload individual video
+preloadVideo(videoItem, index) {
+  if (this.currentPreview.preloadedIndices.has(index)) return;
+  
+  // For videos, just mark as "attempted"
+  this.currentPreview.preloadedIndices.add(index);
+  console.log(`✅ Marked video ${index + 1} for preload: ${videoItem.name}`);
+}
+
+showCurrentMedia() {
+  if (!this.currentPreview?.media) {
+    console.error('❌ No preview data');
+    return;
+  }
+  
+  const { media, currentIndex } = this.currentPreview;
+  const currentItem = media[currentIndex];
+  
+  console.log(`\n🎬 Showing item ${currentIndex + 1}/${media.length}:`);
+  console.log(`   Type: ${currentItem.type}`);
+  console.log(`   Name: ${currentItem.name}`);
+  console.log(`   Source: ${currentItem.source}`);
+  
+  // Update UI
+  document.getElementById('previewCurrent').textContent = currentIndex + 1;
+  document.getElementById('previewTotal').textContent = media.length;
+  
+  // Update buttons
+  const prevBtn = document.getElementById('previewPrev');
+  const nextBtn = document.getElementById('previewNext');
+  
+  if (prevBtn) {
+    prevBtn.disabled = currentIndex === 0;
+    prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
+    prevBtn.style.cursor = currentIndex === 0 ? 'not-allowed' : 'pointer';
+  }
+  
+  if (nextBtn) {
+    nextBtn.disabled = currentIndex === media.length - 1;
+    nextBtn.style.opacity = currentIndex === media.length - 1 ? '0.3' : '1';
+    nextBtn.style.cursor = currentIndex === media.length - 1 ? 'not-allowed' : 'pointer';
+  }
+  
+  // Show loading
+  const content = document.getElementById('previewContent');
+  const mediaTypeLabel = currentItem.type === 'r2-video' ? 'R2 Video' :
+                         currentItem.type === 'drive-video' ? 'Drive Video' :
+                         'Photo';
+  
+  content.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; color: white;">
+      <div style="width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <span>Loading ${mediaTypeLabel}...</span>
+    </div>
+  `;
+  
+  // Render based on type
+  if (currentItem.type === 'image') {
+    this.renderImage(currentItem, content);
+  } else if (currentItem.type === 'r2-video') {
+    this.renderR2Video(currentItem, content);
+  } else if (currentItem.type === 'drive-video') {
+    this.renderDriveVideo(currentItem, content);
+  }
+  
+  // Lazy load next item if not preloaded
+  this.lazyLoadNext();
+}
+
+// NEW: Render image
+renderImage(imageItem, container) {
+  const img = new Image();
+  const imageUrls = [
+    `https://lh3.googleusercontent.com/d/${imageItem.id}=w2000`,
+    `https://lh3.googleusercontent.com/d/${imageItem.id}`,
+    `https://drive.google.com/uc?export=view&id=${imageItem.id}`
+  ];
+  
+  let urlIndex = 0;
+  
+  const tryNext = () => {
+    if (urlIndex >= imageUrls.length) {
+      console.error('❌ All image URLs failed');
+      container.innerHTML = `
+        <div style="text-align: center; color: white;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">🖼️</div>
+          <h3 style="margin-bottom: 0.5rem;">Image unavailable</h3>
+          <p style="opacity: 0.8; margin-bottom: 1rem;">${imageItem.name}</p>
+          <button onclick="window.open('${imageItem.driveUrl}', '_blank')" style="
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+          ">Open in Drive</button>
+        </div>
+      `;
+      return;
+    }
+    
+    console.log(`🔄 Trying image URL ${urlIndex + 1}/${imageUrls.length}`);
+    img.src = imageUrls[urlIndex];
+    urlIndex++;
+  };
+  
+  img.onload = () => {
+    console.log('✅ Image loaded successfully');
+    container.innerHTML = `
+      <img src="${img.src}" 
+           alt="${imageItem.name}"
+           onclick="window.catalogApp.showNextMedia()"
+           style="
+             max-width: 100%;
+             max-height: 100%;
+             width: auto;
+             height: auto;
+             object-fit: contain;
+             object-position: center center;
+             border-radius: 8px;
+             cursor: pointer;
+             display: block;
+             margin: 0 auto;
+           ">
+    `;
+  };
+  
+  img.onerror = () => {
+    console.warn(`⚠️ Image URL ${urlIndex} failed`);
+    tryNext();
+  };
+  
+  tryNext();
+}
+
+// NEW: Render R2 video
+renderR2Video(videoItem, container) {
+  console.log(`🎬 Rendering R2 video: ${videoItem.name}`);
+  
+  container.innerHTML = `
+    <video 
+      controls 
+      autoplay 
+      style="
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      "
+      onloadedmetadata="console.log('✅ R2 video loaded')"
+      onerror="console.error('❌ R2 video failed to load')">
+      <source src="${videoItem.url}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  `;
+  
+  const video = container.querySelector('video');
+  video.play().catch(err => {
+    console.log('⚠️ Autoplay blocked, user must click play');
+  });
+}
+
+// NEW: Render Drive video
+renderDriveVideo(videoItem, container) {
+  console.log(`🎥 Rendering Drive video: ${videoItem.name}`);
+  
+  container.innerHTML = `
+    <iframe 
+      src="${videoItem.embedUrl}" 
+      style="
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 8px;
+      "
+      allow="autoplay"
+      onload="console.log('✅ Drive video embedded')"
+      onerror="console.error('❌ Drive video embed failed')">
+    </iframe>
+  `;
+}
+
+// NEW: Lazy load next item
+lazyLoadNext() {
+  if (!this.currentPreview?.media) return;
+  
+  const nextIndex = this.currentPreview.currentIndex + 1;
+  if (nextIndex >= this.currentPreview.media.length) return;
+  
+  const nextItem = this.currentPreview.media[nextIndex];
+  
+  // Only preload if not already done
+  if (!this.currentPreview.preloadedIndices.has(nextIndex)) {
+    if (nextItem.type === 'image') {
+      this.preloadImage(nextItem, nextIndex);
+    } else if (nextItem.type === 'r2-video' || nextItem.type === 'drive-video') {
+      this.preloadVideo(nextItem, nextIndex);
+    }
+  }
+}
+
+// REPLACE showPreviousImage with this:
+showPreviousMedia() {
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex <= 0) {
+    console.log('⚠️ Already at first item');
+    return;
+  }
+  
+  this.currentPreview.currentIndex--;
+  console.log(`⬅️ Previous: Moving to item ${this.currentPreview.currentIndex + 1}/${this.currentPreview.media.length}`);
+  this.showCurrentMedia();
+}
+
+// REPLACE showNextImage with this:
+showNextMedia() {
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex >= this.currentPreview.media.length - 1) {
+    console.log('⚠️ Already at last item');
+    return;
+  }
+  
+  this.currentPreview.currentIndex++;
+  console.log(`➡️ Next: Moving to item ${this.currentPreview.currentIndex + 1}/${this.currentPreview.media.length}`);
+  this.showCurrentMedia();
+}
+
+showCurrentImage() {
+  if (!this.currentPreview?.images) {
+    console.error('❌ No preview data');
+    return;
+  }
+  
+  const { images, currentIndex } = this.currentPreview;
+  const currentImage = images[currentIndex];
+  
+  console.log(`🖼️ Showing image ${currentIndex + 1}/${images.length}: ${currentImage.name}`);
+  
+  // Update UI
+  document.getElementById('previewCurrent').textContent = currentIndex + 1;
+  document.getElementById('previewTotal').textContent = images.length;
+  
+  // Update buttons
+  const prevBtn = document.getElementById('previewPrev');
+  const nextBtn = document.getElementById('previewNext');
+  
+  if (prevBtn) {
+    prevBtn.disabled = currentIndex === 0;
+    prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
+    prevBtn.style.cursor = currentIndex === 0 ? 'not-allowed' : 'pointer';
+  }
+  
+  if (nextBtn) {
+    nextBtn.disabled = currentIndex === images.length - 1;
+    nextBtn.style.opacity = currentIndex === images.length - 1 ? '0.3' : '1';
+    nextBtn.style.cursor = currentIndex === images.length - 1 ? 'not-allowed' : 'pointer';
+  }
+  
+  // Show loading
+  const content = document.getElementById('previewContent');
+  content.innerHTML = `
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; color: white;">
+      <div style="width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <span>Loading image...</span>
+    </div>
+  `;
+  
+  // Load image
+  const img = new Image();
+  const imageUrls = [
+    `https://lh3.googleusercontent.com/d/${currentImage.id}=w2000`,
+    `https://lh3.googleusercontent.com/d/${currentImage.id}`,
+    `https://drive.google.com/uc?export=view&id=${currentImage.id}`
+  ];
+  
+  let urlIndex = 0;
+  
+  const tryNext = () => {
+    if (urlIndex >= imageUrls.length) {
+      console.error('❌ All URLs failed');
+      content.innerHTML = `
+        <div style="text-align: center; color: white;">
+          <div style="font-size: 4rem; margin-bottom: 1rem;">🖼️</div>
+          <h3 style="margin-bottom: 0.5rem;">Image preview unavailable</h3>
+          <p style="opacity: 0.8; margin-bottom: 1rem;">${currentImage.name}</p>
+          <button onclick="window.open('${currentImage.driveUrl}', '_blank')" style="
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+          ">Open in Google Drive</button>
+        </div>
+      `;
+      return;
+    }
+    
+    console.log(`🔄 Trying URL ${urlIndex + 1}/${imageUrls.length}`);
+    img.src = imageUrls[urlIndex];
+    urlIndex++;
+  };
+  
+  img.onload = () => {
+    console.log('✅ Image loaded successfully');
+    
+    // CRITICAL: Use inline styles for guaranteed centering
+    content.innerHTML = `
+      <img src="${img.src}" 
+           alt="${currentImage.name}"
+           onclick="window.catalogApp.showNextImage()"
+           style="
+             max-width: 100%;
+             max-height: 100%;
+             width: auto;
+             height: auto;
+             object-fit: contain;
+             object-position: center center;
+             border-radius: 8px;
+             cursor: pointer;
+             display: block;
+             margin: 0 auto;
+           ">
+    `;
+  };
+  
+  img.onerror = () => {
+    console.warn(`⚠️ URL ${urlIndex} failed`);
+    tryNext();
+  };
+  
+  tryNext();
+}
+    
+
+
+showPreviousImage() {
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex <= 0) {
+    console.log('⚠️ Already at first image');
+    return;
+  }
+  
+  this.currentPreview.currentIndex--;
+  console.log(`⬅️ Previous: Moving to image ${this.currentPreview.currentIndex + 1}/${this.currentPreview.images.length}`);
+  this.showCurrentImage();
+}
+
+showNextImage() {
+  if (!this.currentPreview) {
+    console.error('❌ No preview data available');
+    return;
+  }
+  
+  if (this.currentPreview.currentIndex >= this.currentPreview.images.length - 1) {
+    console.log('⚠️ Already at last image');
+    return;
+  }
+  
+  this.currentPreview.currentIndex++;
+  console.log(`➡️ Next: Moving to image ${this.currentPreview.currentIndex + 1}/${this.currentPreview.images.length}`);
+  this.showCurrentImage();
+}
+
+closePreview() {
+  console.log('🔓 Closing preview...');
+  
+  const modal = document.getElementById('drivePreviewModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+  
+  // Restore body scroll
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.documentElement.style.overflow = '';
+  
+  this.currentPreview = null;
+  
+  console.log('✅ Preview closed, scroll restored');
+}
+
+
+
+  // Debug function to check modal state
+debugModalState() {
+  const modal = document.getElementById('drivePreviewModal');
+  console.log('🔍 Modal Debug:');
+  console.log('  - Exists:', !!modal);
+  if (modal) {
+    console.log('  - Display:', window.getComputedStyle(modal).display);
+    console.log('  - Visibility:', window.getComputedStyle(modal).visibility);
+    console.log('  - Z-index:', window.getComputedStyle(modal).zIndex);
+    console.log('  - Position:', window.getComputedStyle(modal).position);
+    console.log('  - Classes:', modal.className);
+    console.log('  - Has active class:', modal.classList.contains('active'));
+  }
+}
+
+  
+navigateToHome() {
+  // Show homepage hero layout
+  this.showHomepageHero();
+  this.showFeaturedHeading();
+  
+  // Remove category page attribute
+  document.body.removeAttribute('data-page-type');
+  
+  // Reset scroll position
+  this.resetScrollPosition();
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.delete('path');
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ brand: this.currentBrand }, '', newURL);
+  
+  // Reset state
+  this.currentPath = [];
+  
+  // CRITICAL: Ensure sections exist before showing
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
+  if (!brandsSection || !slideshowSection) {
+    console.log('🔄 Sections were removed, reloading page to restore them');
+    window.location.href = window.location.pathname + '?' + params.toString();
+    return;
+  }
+  
+  // Re-render homepage
+  this.setupDynamicSections();
+  
+  // FORCE SHOW sections on homepage
+  if (brandsSection) {
+    brandsSection.style.display = 'block';
+    console.log('👁️ FORCE SHOWING brands section (homepage)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'block';
+    console.log('👁️ FORCE SHOWING slideshow section (homepage)');
+  }
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'block';
+    console.log('👁️ FORCE SHOWING hero slideshow (homepage)');
+  }
+  
+  // Reset hero
+  this.setupBrandInfo();
+  
+  // Remove breadcrumbs
+  const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+  if (existingBreadcrumbs) {
+    existingBreadcrumbs.remove();
+  }
+  
+  // Force homepage hero display
+  const homepageHero = document.getElementById('heroHomepage');
+  const innerHero = document.getElementById('heroInner');
+  
+  if (innerHero) {
+    innerHero.style.cssText = `
+      display: none !important;
+      height: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    `;
+  }
+  
+  if (homepageHero) {
+    homepageHero.style.cssText = `
+      display: grid !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: var(--space-12) !important;
+      align-items: center !important;
+      max-width: 1400px !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      min-height: 400px !important;
+    `;
+    console.log('✅ Homepage hero restored');
+  }
+}
+
+
+// Helper function to control section visibility
+updateSectionVisibility(showSections) {
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  
+  const displayValue = showSections ? 'block' : 'none';
+  
+  if (brandsSection) {
+    brandsSection.style.display = displayValue;
+    console.log(`${showSections ? '👁️ Showing' : '🙈 Hiding'} brands section`);
+  }
+  
+  if (slideshowSection) {
+    slideshowSection.style.display = displayValue;
+    console.log(`${showSections ? '👁️ Showing' : '🙈 Hiding'} slideshow section`);
+  }
+}
+
+
+  setupBrandInfo() {
+    // Get brand from URL first - THIS IS CRITICAL
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBrand = urlParams.get('brand');
+    
+    // ALWAYS use URL brand if available
+    if (urlBrand) {
+      this.currentBrand = urlBrand;
+    }
+    
+    if (!this.data || !this.data.brands) {
+      return;
+    }
+
+    let brand = this.data.brands[this.currentBrand];
+    if (!brand) {
+      // Use first available brand as fallback
+      const firstBrand = Object.keys(this.data.brands)[0];
+      if (firstBrand) {
+        this.currentBrand = firstBrand;
+        brand = this.data.brands[firstBrand];
+      } else {
+        return;
+      }
+    }
+
+    // Get brand information with multiple fallback patterns
+    const brandName = brand.name || brand.brandName || brand['Brand Name'] || this.slugToDisplayName(this.currentBrand);
+    const tagline = brand.tagline || brand.brandTagline || brand['Brand Tagline'] || 'Premium Quality Collection';
+    const heroTitle = brand.heroTitle || brand.hero_title || brand['Hero Title'] || 'Discover Luxury Collections';
+    const heroSubtitle = brand.heroSubtitle || brand.hero_subtitle || brand['Hero Subtitle'] || 'Curated premium products from the world\'s finest brands.';
+
+    // FORCE immediate DOM updates
+    // FORCE immediate DOM updates with MAXIMUM VISIBILITY
+    // FORCE immediate DOM updates with MAXIMUM VISIBILITY - UPDATE BOTH HEROES
+    const elements = [
+      { id: 'brandName', content: brandName },
+      { id: 'brandTagline', content: tagline },
+      { id: 'heroTitle', content: heroTitle }, // Inner hero title
+      { id: 'heroSubtitle', content: heroSubtitle }, // Inner hero subtitle
+      { id: 'heroTitleHome', content: heroTitle }, // Homepage hero title
+      { id: 'heroSubtitleHome', content: heroSubtitle }, // Homepage hero subtitle
+      { id: 'footerBrandName', content: brandName }
+    ];
+
+    elements.forEach(({ id, content }) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.textContent = content;
+    
+    // NUCLEAR OPTION: Force visibility with inline styles
+    element.style.cssText = `
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      color: ${id === 'brandName' || id === 'footerBrandName' ? '#202124' : '#5f6368'} !important;
+      -webkit-text-fill-color: ${id === 'brandName' || id === 'footerBrandName' ? '#202124' : '#5f6368'} !important;
+      text-shadow: none !important;
+      background: transparent !important;
+      position: relative !important;
+      z-index: 10 !important;
+    `;
+    
+    console.log(`✅ Force-updated ${id}:`, content);
+    
+    // Triple-check after delays
+    setTimeout(() => {
+      if (element.textContent !== content) {
+        element.textContent = content;
+      }
+      if (id === 'brandName' || id === 'footerBrandName') {
+        element.style.color = '#202124';
+        element.style.webkitTextFillColor = '#202124';
+      }
+    }, 50);
+    
+    setTimeout(() => {
+      if (element.textContent !== content) {
+        element.textContent = content;
+      }
+      if (id === 'brandName' || id === 'footerBrandName') {
+        element.style.color = '#202124';
+        element.style.webkitTextFillColor = '#202124';
+      }
+    }, 200);
+
+
+    
+  // FINAL NUCLEAR OPTION: Force brand name after everything
+  setTimeout(() => {
+    const brandNameEl = document.getElementById('brandName');
+    const brandTaglineEl = document.getElementById('brandTagline');
+    
+    if (brandNameEl) {
+      brandNameEl.innerHTML = brandName;
+      brandNameEl.style.display = 'block';
+      brandNameEl.style.visibility = 'visible';
+      brandNameEl.style.opacity = '1';
+      brandNameEl.style.color = '#202124';
+      brandNameEl.style.fontSize = '1.3rem';
+      brandNameEl.style.fontWeight = '600';
+      brandNameEl.style.webkitTextFillColor = '#202124';
+      
+      console.log('FINAL brand name force:', brandNameEl.textContent);
+    }
+    
+    if (brandTaglineEl) {
+      brandTaglineEl.innerHTML = tagline;
+      brandTaglineEl.style.display = 'block';
+      brandTaglineEl.style.visibility = 'visible';
+      brandTaglineEl.style.opacity = '1';
+      brandTaglineEl.style.color = '#5f6368';
+    }
+  }, 500);
+}
+});
+
+    // Update logo with initials
+    const logoEl = document.getElementById('brandLogo');
+    if (logoEl) {
+      const initials = this.getInitials(brandName);
+      logoEl.textContent = initials;
+      logoEl.title = brandName; // Add tooltip
+    }
+
+    // FORCE apply brand colors
+    const colors = brand.colors || {};
+    const brandColors = {
+      primary: colors.primary || colors.primaryColor || colors['Primary Color'] || '#6366f1',
+      accent: colors.accent || colors.accentColor || colors['Accent Color'] || '#8b5cf6',
+      text: colors.text || colors.textColor || colors['Text Color'] || '#202124',
+      bg: colors.bg || colors.bgColor || colors['Background Color'] || '#ffffff'
+    };
+    
+    // Apply colors immediately to root with force
+    const root = document.documentElement;
+    Object.entries(brandColors).forEach(([key, value]) => {
+      const cssVar = `--color-${key === 'text' ? 'text-primary' : key}`;
+      root.style.setProperty(cssVar, value);
+    });
+    
+    // Update theme color meta tag
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute('content', brandColors.primary);
+    }
+
+    // Force repaint by triggering style changes
+    document.body.style.opacity = '0.99';
+    setTimeout(() => {
+      document.body.style.opacity = '1';
+    }, 10);
+
+    // Setup WhatsApp button
+    const whatsApp = document.getElementById('whatsappFab');
+    if (whatsApp) {
+      const whatsappUrl = brand.whatsapp || brand.whatsappUrl || brand['WhatsApp'] || '';
+      if (whatsappUrl) {
+        whatsApp.href = whatsappUrl;
+        whatsApp.style.display = 'flex';
+      }
+    }
+
+    // Update page title
+    document.title = `${brandName} - Luxury Collection`;
+  }
+
+  getInitials(name) {
+    return name.split(' ')
+              .map(word => word.charAt(0))
+              .join('')
+              .toUpperCase()
+              .substring(0, 2);
+  }
+
+  updateElement(id, content) {
+    const element = document.getElementById(id);
+    if (element && content) {
+      element.textContent = content;
+    }
+  }
+
+  applyBrandColors(colors) {
+    if (!colors) return;
+    
+    // More aggressive color enhancement for better visibility
+    const enhanceColor = (color, isForText = false) => {
+      if (!color || !color.startsWith('#')) return color;
+      
+      // Convert hex to RGB
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      
+      // Calculate perceived lightness (weighted for human perception)
+      const lightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      
+      // If color is too light (common issue), make it much darker
+      if (lightness > 0.7) {
+        const factor = isForText ? 0.3 : 0.4; // Even darker for text
+        const newR = Math.floor(r * factor);
+        const newG = Math.floor(g * factor);
+        const newB = Math.floor(b * factor);
+        const enhancedColor = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+        return enhancedColor;
+      }
+      
+      // If color is too dark, lighten it slightly
+      if (lightness < 0.2) {
+        const factor = 1.8;
+        const newR = Math.min(255, Math.floor(r * factor));
+        const newG = Math.min(255, Math.floor(g * factor));
+        const newB = Math.min(255, Math.floor(b * factor));
+        const enhancedColor = `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+        return enhancedColor;
+      }
+      
+      return color;
+    };
+    
+    const root = document.documentElement;
+    
+    // Apply enhanced colors with much better contrast
+    if (colors.primary) {
+      const enhancedPrimary = enhanceColor(colors.primary, true);
+      root.style.setProperty('--color-primary', enhancedPrimary);
+      
+      // Create a darker variant for text
+      const textVariant = enhanceColor(colors.primary, true);
+      root.style.setProperty('--color-primary-dark', textVariant);
+    }
+    
+    if (colors.accent) {
+      const enhancedAccent = enhanceColor(colors.accent, true);
+      root.style.setProperty('--color-accent', enhancedAccent);
+    }
+    
+    // Ensure text colors have good contrast
+    if (colors.text) {
+      const enhancedText = enhanceColor(colors.text, true);
+      root.style.setProperty('--color-text-primary', enhancedText);
+    }
+    
+    if (colors.bg) {
+      root.style.setProperty('--color-bg', colors.bg);
+    }
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme && colors.primary) {
+      metaTheme.setAttribute('content', enhanceColor(colors.primary, true));
+    }
+    
+    // Force a repaint to ensure changes are visible
+    document.body.style.transform = 'translateZ(0)';
+    setTimeout(() => {
+      document.body.style.transform = '';
+    }, 10);
+  }
+
+  setupDynamicSections() {
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
+
+  if (!this.data.catalog || !this.data.catalog.tree) {
+    return;
+  }
+
+  this.groupItemsBySection();
+  
+  const sectionOrder = ['Featured', 'Best Sellers', 'Premium', 'New Arrivals', 'Trending'];
+  
+  container.innerHTML = '';
+  let sectionsCreated = 0;
+  
+  sectionOrder.forEach(sectionName => {
+    if (this.sections.has(sectionName) && this.sections.get(sectionName).length > 0) {
+      const sectionHTML = this.createSectionHTML(sectionName, this.sections.get(sectionName));
+      container.insertAdjacentHTML('beforeend', sectionHTML);
+      sectionsCreated++;
+    }
+  });
+
+  if (sectionsCreated === 0) {
+    const allItems = [];
+    
+    Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+      // DEBUG: Log items as they're processed
+      console.log(`🔍 Processing item ${key}:`, {
+        alignment: item.alignment,
+        fitting: item.fitting, 
+        scaling: item.scaling,
+        fullItem: item
+      });
+      
+      allItems.push({
+        key,
+        title: key.replace(/_/g, ' '),
+        description: `Explore our premium ${key.toLowerCase().replace('_', ' ')} collection`,
+        count: item.count || 0,
+        thumbnail: item.thumbnail || '',
+        topOrder: item.topOrder || 999,
+        // ENSURE all image properties are passed through
+        alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+        fitting: item.fitting || item.Fitting || item.FITTING,
+        scaling: item.scaling || item.Scaling || item.SCALING,
+      });
+    });
+
+    if (allItems.length > 0) {
+      const sectionHTML = this.createSectionHTML('', allItems);
+      container.insertAdjacentHTML('beforeend', sectionHTML);
+    }
+  }
+}
+
+  // LOCATION: public/script.js
+// REPLACE: Find the groupItemsBySection() function (around line 400) and replace it entirely:
+
+groupItemsBySection() {
+  this.sections.clear();
+  
+  Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
+    const section = item.section || 'Featured';
+    
+    if (!this.sections.has(section)) {
+      this.sections.set(section, []);
+    }
+    
+    // FIXED: Extract TopOrder with comprehensive fallback for HOMEPAGE
+    const getTopOrder = (item) => {
+      const variations = [
+        'TopOrder', 'topOrder', 'Top Order', 'TOP ORDER',
+        'Order', 'order', 'ORDER',
+        'Priority', 'priority', 'PRIORITY',
+        'Rank', 'rank', 'RANK',
+        'Sort', 'sort', 'SORT'
+      ];
+      
+      for (const variation of variations) {
+        const value = item[variation];
+        if (value !== undefined && value !== null && value !== '') {
+          const parsed = parseInt(value);
+          if (!isNaN(parsed)) {
+            console.log(`✅ HOMEPAGE TopOrder for ${key}: ${variation} = ${parsed}`);
+            return parsed;
+          }
+        }
+      }
+      
+      console.log(`⚠️ No TopOrder found for ${key} on homepage, using default 999`);
+      return 999;
+    };
+    
+    this.sections.get(section).push({
+      key,
+      title: key.replace(/_/g, ' '),
+      description: `Explore our premium ${key.toLowerCase()} collection with ${item.count || 0} items`,
+      count: item.count || 0,
+      thumbnail: item.thumbnail || this.getEmojiForCategory(key),
+      topOrder: getTopOrder(item),
+      // Pass through image configuration
+      alignment: item.alignment || item.Alignment || item.ALIGNMENT,
+      fitting: item.fitting || item.Fitting || item.FITTING,
+      scaling: item.scaling || item.Scaling || item.SCALING
+    });
+  });
+
+  // FIXED: Sort each section by TopOrder on HOMEPAGE
+  this.sections.forEach((items, sectionName) => {
+    items.sort((a, b) => {
+      console.log(`🏠 HOMEPAGE sorting in ${sectionName}: ${a.title}(${a.topOrder}) vs ${b.title}(${b.topOrder})`);
+      
+      // TopOrder has ABSOLUTE priority on homepage too
+      if (a.topOrder !== b.topOrder) {
+        const result = a.topOrder - b.topOrder;
+        console.log(`  → 🏆 HOMEPAGE TopOrder WINS: ${result > 0 ? b.title : a.title}`);
+        return result;
+      }
+      
+      // Secondary sort by count (higher first)
+      if (a.count !== b.count) {
+        return b.count - a.count;
+      }
+      
+      // Tertiary sort alphabetically
+      return a.title.localeCompare(b.title);
+    });
+    
+    console.log(`📋 Final HOMEPAGE ${sectionName} order:`, items.map(item => `${item.title}(${item.topOrder})`));
+  });
+}  
+  createSectionHTML(sectionName, items) {
+    const gridClass = this.getGridClass(items.length);
+    const shouldShowTitle = sectionName && sectionName !== 'Featured' && sectionName !== '';
+    const sectionId = `section-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const sectionHTML = `
+      <section class="content-section">
+        <div class="container">
+          ${shouldShowTitle ? `
+            <div class="section-header">
+              <h2 class="section-title">${sectionName}</h2>
+              <p class="section-description">Explore our ${sectionName.toLowerCase()} collection</p>
+            </div>
+          ` : ''}
+          <div class="cards-grid ${gridClass}" id="${sectionId}">
+            ${items.map(item => this.createCardHTML(item)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+    
+    // Apply smart centering after DOM insertion
+    if (gridClass === 'grid-smart') {
+      setTimeout(() => {
+        const container = document.getElementById(sectionId);
+        if (container) this.addSmartCentering(container, items.length);
+      }, 10);
+    }
+    
+    return sectionHTML;
+  }
+
+  getGridClass(itemCount) {
+    if (itemCount === 1) return 'grid-1';
+    if (itemCount === 2) return 'grid-2';  
+    if (itemCount === 3) return 'grid-3';
+    if (itemCount <= 12) return 'grid-smart';
+    return 'grid-many'; // For 13+ items, use responsive auto-fit
+  }
+
+  // Add smart centering classes based on item count and position
+  addSmartCentering(containerElement, itemCount) {
+    const cards = containerElement.querySelectorAll('.content-card');
+    const remainder = itemCount % 3;
+    
+    if (remainder === 1) {
+      // Last item should be centered (4,7,10,13... items)
+      const lastCard = cards[cards.length - 1];
+      if (lastCard) lastCard.classList.add('center-item');
+    } else if (remainder === 2) {
+      // Last two items should be spaced (5,8,11,14... items)
+      const secondLast = cards[cards.length - 2];
+      const last = cards[cards.length - 1];
+      if (secondLast) secondLast.classList.add('partial-row-left');
+      if (last) last.classList.add('partial-row-right');
+    }
+    // remainder === 0 means perfect grid (6,9,12... items) - do nothing
+  }
+
+  // REPLACE the createCardHTML function in public/script.js:
+
+createCardHTML(item) {
+  const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
+  
+  // Extract image config
+  const imageConfig = this.extractImageConfig(item);
+  console.log('🔍 Image config for', item.title, ':', imageConfig);
+  
+  let imageContent = '';
+  
+  if (imageSrc) {
+    // Check if using background-image method
+    const isBackgroundMethod = this.isBackgroundImageMethod(imageConfig.fitting);
+    
+    if (isBackgroundMethod) {
+      console.log('🖼️ Using background-image method for', item.title);
+      
+      // Generate background-image styles
+      const backgroundStyles = this.generateBackgroundImageStyles(imageSrc, imageConfig);
+      
+      // Create div with background-image instead of img tag
+      imageContent = `<div class="card-image-background" style="${backgroundStyles}" data-method="background"></div>`;
+      
+    } else {
+      console.log('📐 Using standard img tag method for', item.title);
+      
+      // Generate standard img styles
+      const imageStyles = this.generateImageStyles(imageConfig);
+      
+      if (imageStyles === 'BACKGROUND_METHOD') {
+        // Fallback: shouldn't happen but just in case
+        imageContent = this.getEmojiForCategory(item.key);
+      } else {
+        imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
+             style="${imageStyles}" 
+             class="card-image-enhanced"
+             data-method="img-tag"
+             onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
+      }
+    }
+  } else {
+    // No image - show emoji placeholder
+    imageContent = this.getEmojiForCategory(item.key);
+  }
+
+  const badgeText = item.isProduct ? 'View Product' : `${item.count} Items`;
+
+  return `
+    <div class="content-card" 
+         data-category="${item.key}" 
+         data-is-product="${item.isProduct || false}" 
+         data-drive-link="${item.driveLink || ''}" 
+         data-search-path="${item.fullPath || ''}"
+         role="button" 
+         tabindex="0">
+      <div class="card-image card-image-container">
+        ${imageContent}
+        <div class="card-overlay"></div>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">${item.title}</h3>
+        <p class="card-description">${item.description}</p>
+        <div class="card-footer">
+          <span class="card-badge">${badgeText}</span>
+          <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+extractImageConfig(item) {
+  console.log('Item data for image config:', item);
+  
+  // Extract raw values - only from explicit CSV data
+  const rawAlignment = item.alignment || item.Alignment || item.ALIGNMENT || 
+                      item.image_alignment || item.imageAlignment || item['Image Alignment'];
+  const rawFitting = item.fitting || item.Fitting || item.FITTING || 
+                    item.object_fit || item.objectFit || item['Object Fit'] || 
+                    item.image_fit || item.imageFit || item['Image Fit'];
+  const rawScaling = item.scaling || item.Scaling || item.SCALING || 
+                    item.image_scale || item.imageScale || item['Image Scale'] || 
+                    item.scale || item.Scale;
+  
+  // FIXED: Return explicit config or null (for GLOBAL defaults)
+  // Items get either their explicit CSV config OR global defaults (cover + center)
+  // NEVER inherit from folder - folders only use inheritance for their own display
+  
+  const hasExplicitConfig = (rawAlignment && rawAlignment.trim() !== '') || 
+                           (rawFitting && rawFitting.trim() !== '') || 
+                           (rawScaling && rawScaling.trim() !== '');
+  
+  if (hasExplicitConfig) {
+    console.log(`✅ EXPLICIT config found for ${item.title || item.key}`);
+    return {
+      alignment: (rawAlignment && rawAlignment.trim() !== '') ? rawAlignment : null,
+      fitting: (rawFitting && rawFitting.trim() !== '') ? rawFitting : null,     
+      scaling: (rawScaling && rawScaling.trim() !== '') ? rawScaling : null
+    };
+  } else {
+    console.log(`🌍 GLOBAL defaults will apply for ${item.title || item.key}`);
+    return {
+      alignment: null, // Will get global default (center center)
+      fitting: null,   // Will get global default (cover)
+      scaling: null
+    };
+  }
+}
+getBackgroundPosition(alignment) {
+  if (!alignment) return 'center center';
+  
+  const alignmentStr = String(alignment).trim();
+  console.log(`🔍 Processing alignment: "${alignmentStr}"`);
+  
+  // STEP 1: Check if it's a valid CSS background-position value
+  if (this.isValidCSSPosition(alignmentStr)) {
+    console.log(`✅ Valid CSS position, using as-is: "${alignmentStr}"`);
+    return alignmentStr;
+  }
+  
+  // STEP 2: Handle keyword mappings (center, top-left, etc.)
+  const keywordResult = this.getKeywordPosition(alignmentStr);
+  if (keywordResult) {
+    console.log(`🎯 Keyword mapping: "${alignmentStr}" → "${keywordResult}"`);
+    return keywordResult;
+  }
+  
+  // STEP 3: Fallback to center
+  console.log(`⚠️ Unrecognized alignment "${alignmentStr}" → fallback to "center center"`);
+  return 'center center';
+}
+
+// ADD this helper function - detects ANY valid CSS position:
+isValidCSSPosition(value) {
+  // Patterns that are valid CSS background-position values
+  const validPatterns = [
+    // Two values: percentage, pixel, keyword combinations
+    /^-?\d+(\.\d+)?%\s+-?\d+(\.\d+)?%$/, // "33% 67%", "-10% 120%"
+    /^-?\d+(\.\d+)?px\s+-?\d+(\.\d+)?px$/, // "150px 75px", "-200px -100px"
+    /^-?\d+(\.\d+)?%\s+-?\d+(\.\d+)?px$/, // "33% 150px"
+    /^-?\d+(\.\d+)?px\s+-?\d+(\.\d+)?%$/, // "150px 33%"
+    
+    // Single values: will be expanded to "value center"
+    /^-?\d+(\.\d+)?%$/, // "33%", "-10%"
+    /^-?\d+(\.\d+)?px$/, // "150px", "-200px"
+    
+    // Keyword + value combinations
+    /^(left|right|center)\s+-?\d+(\.\d+)?(px|%)$/, // "left 20px", "center 33%"
+    /^-?\d+(\.\d+)?(px|%)\s+(top|bottom|center)$/, // "20px top", "33% center"
+    /^(top|bottom|center)\s+-?\d+(\.\d+)?(px|%)$/, // "top 20px", "center 33%"
+    /^-?\d+(\.\d+)?(px|%)\s+(left|right|center)$/, // "20px left", "33% center"
+    
+    // Pure keywords (handled separately but included for completeness)
+    /^(left|right|center|top|bottom)(\s+(left|right|center|top|bottom))?$/
+  ];
+  
+  // Check if value matches any valid pattern
+  const isValid = validPatterns.some(pattern => pattern.test(value));
+  
+  if (isValid) {
+    // Special handling for single values - add center for missing axis
+    if (/^-?\d+(\.\d+)?(px|%)$/.test(value)) {
+      console.log(`🔧 Single value detected, expanding: "${value}" → "${value} center"`);
+      return false; // Will be handled in expandSingleValue
+    }
+    return true;
+  }
+  
+  return false;
+}
+
+// ADD this helper function - handles keyword mappings:
+getKeywordPosition(alignmentStr) {
+  const normalized = alignmentStr.toLowerCase().replace(/[_-]/g, '-');
+  
+  // COMPLETE keyword mapping including all edge cases
+  const positionMap = {
+    // Basic positions
+    'center': 'center center',
+    'middle': 'center center',
+    'top': 'center top',
+    'bottom': 'center bottom',
+    'left': 'left center',
+    'right': 'right center',
+    
+    // All corner combinations
+    'top-left': 'left top', 'top_left': 'left top', 'topleft': 'left top',
+    'left-top': 'left top', 'left_top': 'left top', 'lefttop': 'left top',
+    'top-right': 'right top', 'top_right': 'right top', 'topright': 'right top',
+    'right-top': 'right top', 'right_top': 'right top', 'righttop': 'right top',
+    'bottom-left': 'left bottom', 'bottom_left': 'left bottom', 'bottomleft': 'left bottom',
+    'left-bottom': 'left bottom', 'left_bottom': 'left bottom', 'leftbottom': 'left bottom',
+    'bottom-right': 'right bottom', 'bottom_right': 'right bottom', 'bottomright': 'right bottom',
+    'right-bottom': 'right bottom', 'right_bottom': 'right bottom', 'rightbottom': 'right bottom',
+    
+    // All edge center combinations
+    'center-top': 'center top', 'center_top': 'center top', 'centertop': 'center top',
+    'top-center': 'center top', 'top_center': 'center top', 'topcenter': 'center top',
+    'middle-top': 'center top', 'middle_top': 'center top', 'middletop': 'center top',
+    
+    'center-bottom': 'center bottom', 'center_bottom': 'center bottom', 'centerbottom': 'center bottom',
+    'bottom-center': 'center bottom', 'bottom_center': 'center bottom', 'bottomcenter': 'center bottom',
+    'middle-bottom': 'center bottom', 'middle_bottom': 'center bottom', 'middlebottom': 'center bottom',
+    
+    'left-center': 'left center', 'left_center': 'left center', 'leftcenter': 'left center',
+    'center-left': 'left center', 'center_left': 'left center', 'centerleft': 'left center',
+    'middle-left': 'left center', 'middle_left': 'left center', 'middleleft': 'left center',
+    
+    'right-center': 'right center', 'right_center': 'right center', 'rightcenter': 'right center',
+    'center-right': 'right center', 'center_right': 'right center', 'centerright': 'right center',
+    'middle-right': 'right center', 'middle_right': 'right center', 'middleright': 'right center',
+    
+    // CSS logical properties
+    'start': 'left center', 'end': 'right center',
+    'start-start': 'left top', 'start-end': 'left bottom',
+    'end-start': 'right top', 'end-end': 'right bottom',
+    
+    // Space-separated (native CSS format)
+    'left top': 'left top', 'left center': 'left center', 'left bottom': 'left bottom',
+    'center top': 'center top', 'center center': 'center center', 'center bottom': 'center bottom',
+    'right top': 'right top', 'right center': 'right center', 'right bottom': 'right bottom'
+  };
+  
+  // Handle single values that need expansion  
+  if (/^-?\d+(\.\d+)?(px|%)$/.test(alignmentStr)) {
+    const expandedValue = `${alignmentStr} center`;
+    console.log(`🔧 Expanding single value: "${alignmentStr}" → "${expandedValue}"`);
+    return expandedValue;
+  }
+  
+  return positionMap[normalized] || null;
+}
+// 2. REPLACE the generateImageStyles function in public/script.js:
+generateImageStyles(config) {
+  console.log('🎯 Generating styles with config:', config);
+  
+  const styles = [];
+  
+  // Check if user wants background-image method
+  const isBackgroundMethod = this.isBackgroundImageMethod(config.fitting);
+  
+  if (isBackgroundMethod) {
+    console.log('🖼️ Using background-image method');
+    return 'BACKGROUND_METHOD'; // Special flag for createCardHTML
+  } else {
+console.log('📐 Using standard img tag method');
+    
+    // FIXED: Apply explicit config OR let CSS apply global defaults
+    // Never inherit folder config - each item is independent
+    
+    if (config.fitting && config.fitting.trim() !== '') {
+      // Item has explicit fitting from CSV
+      const fitMethod = this.normalizeFitMethod(config.fitting);
+      styles.push(`object-fit: ${fitMethod}`);
+      console.log(`🎯 Applied explicit fitting: ${fitMethod}`);
+    } else {
+      // Item has no explicit fitting - let CSS apply global default (cover)
+      console.log(`🌍 Using global default fitting (cover) via CSS`);
+    }
+
+    if (config.alignment && config.alignment.trim() !== '') {
+      // Item has explicit alignment from CSV
+      const isCustomAlignment = this.isCustomAlignmentValue(config.alignment);
+      if (isCustomAlignment) {
+        const customPos = this.parseSmartAlignment(config.alignment);
+        styles.push(`object-position: ${customPos}`);
+      } else {
+        const objectPosition = this.getObjectPosition(config.alignment);
+        styles.push(`object-position: ${objectPosition}`);
+      }
+      console.log(`🎯 Applied explicit alignment: ${config.alignment}`);
+    } else {
+      // Item has no explicit alignment - let CSS apply global default (center center)
+      console.log(`🌍 Using global default alignment (center center) via CSS`);
+    }
+    
+    // Scaling (if provided) - keep this unchanged
+    const scaleTransform = this.getScaleTransform(config.scaling);
+    if (scaleTransform) {
+      styles.push(`transform: ${scaleTransform}`);
+      styles.push(`transform-origin: center`);
+    }
+  }
+  
+  // Base styles
+// Base styles
+  styles.push(`width: 100%`);
+  styles.push(`height: 100%`);
+  styles.push(`background: #ffffff`);
+  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
+  
+  // FIXED: Add !important to ensure inline styles override CSS
+  const finalStyles = styles.join('; ').replace(/object-fit: ([^;]+)/, 'object-fit: $1 !important').replace(/object-position: ([^;]+)/, 'object-position: $1 !important');
+  
+  return finalStyles;
+}
+
+// ADD this new function AFTER generateImageStyles:
+isBackgroundImageMethod(fitting) {
+  if (!fitting) return false;
+  
+  const fittingStr = String(fitting).toLowerCase();
+  
+  // Triggers for background-image method
+  const backgroundTriggers = [
+    'natural',    // Most common
+    'background', // Explicit
+    'bg',        // Shorthand
+    'overflow',  // Descriptive
+    'window'     // Descriptive
+  ];
+  
+  return backgroundTriggers.some(trigger => fittingStr.includes(trigger));
+}
+
+// ADD this new function for complete background-image implementation:
+generateBackgroundImageStyles(imageSrc, config) {
+  console.log('🖼️ Generating COMPLETE background-image styles:', config);
+  
+  const styles = [];
+  
+  // Set the background image
+  styles.push(`background-image: url('${imageSrc}')`);
+  
+  // Support ALL fitting methods via background-size
+  const backgroundSize = this.getBackgroundSize(config.fitting);
+  styles.push(`background-size: ${backgroundSize}`);
+  console.log('📐 Applied background-size:', backgroundSize);
+  
+  // Support ALL positioning methods
+  const backgroundPosition = this.getBackgroundPosition(config.alignment);
+  styles.push(`background-position: ${backgroundPosition}`);
+  console.log('🎯 Applied background-position:', backgroundPosition);
+  
+  // Never repeat
+  styles.push(`background-repeat: no-repeat`);
+  
+  // Base container styles
+  styles.push(`width: 100%`);
+  styles.push(`height: 100%`);
+  styles.push(`background-color: #ffffff`);
+  styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
+  
+  const finalStyles = styles.join('; ');
+  console.log('🎨 Complete background styles:', finalStyles);
+  
+  return finalStyles;
+}
+
+// ADD this function for fitting to background-size conversion:
+// REPLACE the getBackgroundSize function (around line 380) with this FIXED version:
+
+getBackgroundSize(fitting) {
+
+  const fittingStr = String(fitting).toLowerCase().trim();
+  console.log(`🔍 Processing fitting: "${fittingStr}"`);
+  
+  // Handle "natural" combinations
+  if (fittingStr.includes('natural')) {
+    if (fittingStr.includes('cover')) {
+      console.log('✅ Natural + Cover detected → cover');
+      return 'cover';
+    } else if (fittingStr.includes('contain')) {
+      console.log('✅ Natural + Contain detected → contain');
+      return 'contain';
+    } else {
+      // Pure "natural" = cover (your default behavior)
+      console.log('✅ Pure Natural detected → cover');
+      return 'cover';
+    }
+  }
+  
+  // Standard fit methods (unchanged behavior)
+  const fitMap = {
+    'cover': 'cover',
+    'contain': 'contain', 
+    'fit': 'contain',
+    'fill': '100% 100%',
+    'scale-down': 'contain', // Background doesn't have scale-down, use contain
+    'auto': 'auto'
+  };
+  
+  // Direct mapping
+  if (fitMap[fittingStr]) {
+    console.log(`✅ Direct mapping: "${fittingStr}" → "${fitMap[fittingStr]}"`);
+    return fitMap[fittingStr];
+  }
+  
+  // Partial matching for combined keywords
+  for (const [key, value] of Object.entries(fitMap)) {
+    if (fittingStr.includes(key)) {
+      console.log(`✅ Partial match: "${fittingStr}" contains "${key}" → "${value}"`);
+      return value;
+    }
+  }
+}
+
+
+isCustomAlignmentValue(alignment) {
+  if (!alignment || alignment.trim() === '') {
+    return false;
+  }
+  
+  const alignmentStr = String(alignment).trim().toLowerCase();
+  
+  // ANY percentage or pixel pattern is considered custom for flexible handling
+  const customPatterns = [
+    /^-?\d+(\.\d+)?%(\s+-?\d+(\.\d+)?%)?$/, // Any percentage(s)
+    /^-?\d+(\.\d+)?px(\s+-?\d+(\.\d+)?px)?$/, // Any pixel(s)  
+    /^-?\d+(\.\d+)?(px|%)\s+-?\d+(\.\d+)?(px|%)$/, // Mixed px/% values
+    /^(left|right|center)\s+-?\d+(\.\d+)?(px|%)$/, // Keyword + value
+    /^-?\d+(\.\d+)?(px|%)\s+(top|bottom|center)$/, // Value + keyword
+  ];
+  
+  return customPatterns.some(pattern => pattern.test(alignmentStr));
+}
+
+parseSmartAlignment(alignment) {
+  if (!alignment) {
+    return 'center center';
+  }
+  
+  const alignmentStr = String(alignment).trim().toLowerCase();
+  console.log('🔍 Parsing smart alignment:', alignmentStr);
+  
+  // Handle pixel values (e.g., "50px 30px", "-20px 0px")
+  const pixelMatch = alignmentStr.match(/^(-?\d+px)\s+(-?\d+px)$/);
+  if (pixelMatch) {
+    const result = `${pixelMatch[1]} ${pixelMatch[2]}`;
+    console.log('✅ Matched pixel pattern:', result);
+    return result;
+  }
+  
+  // Handle single pixel value (applies to both x and y)
+  const singlePixelMatch = alignmentStr.match(/^(-?\d+px)$/);
+  if (singlePixelMatch) {
+    const result = `${singlePixelMatch[1]} ${singlePixelMatch[1]}`;
+    console.log('✅ Matched single pixel pattern:', result);
+    return result;
+  }
+  
+  // Handle percentage values (e.g., "30% 70%")
+  const percentMatch = alignmentStr.match(/^(-?\d+%)\s+(-?\d+%)$/);
+  if (percentMatch) {
+    const result = `${percentMatch[1]} ${percentMatch[2]}`;
+    console.log('✅ Matched percentage pattern:', result);
+    return result;
+  }
+  
+  // Handle mixed values (e.g., "50px 30%", "center 20px")
+  const mixedMatch = alignmentStr.match(/^(\S+)\s+(\S+)$/);
+  if (mixedMatch) {
+    const result = `${mixedMatch[1]} ${mixedMatch[2]}`;
+    console.log('✅ Matched mixed pattern:', result);
+    return result;
+  }
+  
+  // Handle preset crop commands
+  const presetMap = {
+    'crop-top': 'center 0%',
+    'crop-bottom': 'center 100%',
+    'crop-left': '0% center',
+    'crop-right': '100% center',
+    'crop-top-left': '0% 0%',
+    'crop-top-right': '100% 0%',
+    'crop-bottom-left': '0% 100%',
+    'crop-bottom-right': '100% 100%'
+  };
+  
+  if (presetMap[alignmentStr]) {
+    const result = presetMap[alignmentStr];
+    console.log('✅ Matched crop preset:', result);
+    return result;
+  }
+  
+  // If no custom pattern matches, fall back to standard alignment
+  console.log('⚠️ No custom pattern matched, using standard alignment');
+  return this.getObjectPosition(alignment);
+}
+// ADD this NEW function to public/script.js (after generateCustomImageStyles):
+
+
+/**
+ * Normalize fit method values
+ */
+normalizeFitMethod(fitting) {
+  // If no fitting specified, default to 'cover'
+  if (!fitting || fitting.trim() === '') {
+    return 'cover';
+  }
+  
+  const fitMap = {
+    'fit': 'contain',
+    'fill': 'fill', 
+    'contain': 'contain',
+    'cover': 'cover',
+    'scale-down': 'scale-down',
+    'scale_down': 'scale-down'
+  };
+  
+  const normalized = fitting.toLowerCase().replace(/[_-]/g, '-');
+  return fitMap[normalized] || 'cover'; // Default to 'cover' for unrecognized values
+}
+
+/**
+ * Convert alignment to CSS object-position
+ */
+getObjectPosition(alignment) {
+  const positionMap = {
+    // Basic positions
+    'center': 'center center',
+    'top': 'center top',
+    'bottom': 'center bottom', 
+    'left': 'left center',
+    'right': 'right center',
+    
+    // Corner positions
+    'top-left': 'left top',
+    'top_left': 'left top',
+    'topleft': 'left top',
+    'top-right': 'right top', 
+    'top_right': 'right top',
+    'topright': 'right top',
+    'bottom-left': 'left bottom',
+    'bottom_left': 'left bottom', 
+    'bottomleft': 'left bottom',
+    'bottom-right': 'right bottom',
+    'bottom_right': 'right bottom',
+    'bottomright': 'right bottom',
+    
+    // Edge centers (the ones you asked about!)
+    'center-top': 'center top',
+    'center_top': 'center top',
+    'centertop': 'center top',
+    'center-bottom': 'center bottom',
+    'center_bottom': 'center bottom', 
+    'centerbottom': 'center bottom',
+    'left-center': 'left center',
+    'left_center': 'left center',
+    'leftcenter': 'left center',
+    'right-center': 'right center',
+    'right_center': 'right center',
+    'rightcenter': 'right center',
+    
+    // Alternative spellings
+    'center top': 'center top',
+    'center bottom': 'center bottom',
+    'left center': 'left center', 
+    'right center': 'right center',
+    'top center': 'center top',
+    'bottom center': 'center bottom'
+  };
+  
+  const normalized = (alignment || '').toLowerCase().replace(/[_-]/g, '-');
+  
+  // Check direct mapping first
+  if (positionMap[normalized]) {
+    return positionMap[normalized];
+  }
+  
+  // Check with spaces normalized
+  const withSpaces = normalized.replace(/-/g, ' ');
+  if (positionMap[withSpaces]) {
+    return positionMap[withSpaces];
+  }
+  
+  // Handle percentage values (e.g., "50% 100%", "center 30%")
+  if (alignment.includes('%') || alignment.includes('center') || alignment.includes('left') || alignment.includes('right')) {
+    return alignment; // Pass through as-is for percentage values
+  }
+  
+  // Default fallback
+  return 'center center';
+}
+
+/**
+ * Generate CSS transform for scaling
+ */
+getScaleTransform(scaling) {
+  if (!scaling) return null;
+  
+  const scalingStr = String(scaling).trim();
+  
+  // Handle percentage scaling (e.g., "120%", "80%")
+  if (scalingStr.includes('%')) {
+    const percentage = parseFloat(scalingStr);
+    if (!isNaN(percentage) && percentage > 0) {
+      const scaleValue = percentage / 100;
+      return `scale(${scaleValue})`;
+    }
+  }
+  
+  // Handle pixel-based scaling (e.g., "300px", "150px")
+  if (scalingStr.includes('px')) {
+    const pixels = parseFloat(scalingStr);
+    if (!isNaN(pixels) && pixels > 0) {
+      // For pixel scaling, we'll use a base reference of 200px (typical card image size)
+      const baseSize = 200;
+      const scaleValue = pixels / baseSize;
+      return `scale(${scaleValue})`;
+    }
+  }
+  
+  // Handle direct scale values (e.g., "1.2", "0.8")
+  const directScale = parseFloat(scalingStr);
+  if (!isNaN(directScale) && directScale > 0) {
+    return `scale(${directScale})`;
+  }
+  
+  return null;
+}
+  getEmojiForCategory(category) {
+    const emojiMap = {
+      'BAGS': '👜',
+      'SHOES': '👠',
+      'JEWELRY': '💎',
+      'WATCHES': '⌚',
+      'ACCESSORIES': '👑',
+      'CLOTHING': '👗',
+      'SUNGLASSES': '🕶️',
+      'PERFUMES': '🌸',
+      'SCARVES': '🧣',
+      'BELTS': '👔',
+      'PRODUCT': '✨'
+    };
+    return emojiMap[category?.toUpperCase()] || '🎁';
+  }
+
+  setupBrands() {
+    const brandsGrid = document.getElementById('brandsGrid');
+    if (!brandsGrid || !this.data.catalog?.tree) return;
+
+    // Extract ONLY brands (not categories) from inside categories
+    const brandMap = new Map();
+    
+    const extractBrands = (categoryNode, categoryName) => {
+      // categoryNode.children contains the actual brands (Chanel, Gucci, etc.)
+      for (const [brandKey, brandItem] of Object.entries(categoryNode.children || {})) {
+        if (!brandItem.isProduct && brandItem.children) {
+          const normalizedName = this.normalizeBrandName(brandKey);
+          
+          if (!brandMap.has(normalizedName)) {
+            brandMap.set(normalizedName, {
+              displayName: normalizedName,
+              categories: new Map(),
+              totalCount: 0,
+              paths: [],
+              thumbnail: brandItem.thumbnail || '' // Get from CSV Thumbs Path
+            });
+          }
+          
+          const brandData = brandMap.get(normalizedName);
+          
+          // Store category with its data
+          if (!brandData.categories.has(categoryName)) {
+            brandData.categories.set(categoryName, {
+              count: 0,
+              thumbnail: categoryNode.thumbnail || ''
+            });
+          }
+          
+          const catData = brandData.categories.get(categoryName);
+          catData.count += brandItem.count || 0;
+          
+          brandData.totalCount += brandItem.count || 0;
+          brandData.paths.push(`${categoryName}/${brandKey}`);
+          
+          // Use thumbnail from CSV if available, fallback to constructed path
+          if (!brandData.thumbnail && brandItem.thumbnail) {
+            brandData.thumbnail = brandItem.thumbnail;
+          } else if (!brandData.thumbnail) {
+            // Fallback to constructed path
+            brandData.thumbnail = `/Cards/${normalizedName.replace(/\s+/g, '-')}.webp`;
+          }
+        }
+      }
+    };
+    
+    // Only iterate through top-level categories (BAGS, SHOES, etc.)
+    for (const [categoryKey, categoryItem] of Object.entries(this.data.catalog.tree)) {
+      if (!categoryItem.isProduct) {
+        extractBrands(categoryItem, categoryKey);
+      }
+    }
+
+    // Convert to array and sort by count
+    const brands = Array.from(brandMap.entries())
+      .map(([name, data]) => ({
+        name,
+        categories: data.categories,
+        count: data.totalCount,
+        paths: data.paths,
+        thumbnail: data.thumbnail
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // Homepage: Small logo on left + text (list style)
+    brandsGrid.innerHTML = brands.map(brand => `
+      <div class="brand-item" data-brand="${brand.name}" data-paths='${JSON.stringify(brand.paths)}' data-categories='${JSON.stringify(Array.from(brand.categories.entries()))}' role="button" tabindex="0">
+        <div class="brand-logo-small">
+          <img src="${brand.thumbnail}" alt="${brand.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="brand-logo-fallback" style="display: none;">${this.getEmojiForCategory('BAGS')}</div>
+        </div>
+        <div class="brand-info">
+          <div class="brand-name-display">${brand.name}</div>
+          <div class="brand-count">${brand.count} items</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Add click handlers for brands
+    document.querySelectorAll('.brand-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const brandName = item.dataset.brand;
+        const paths = JSON.parse(item.dataset.paths);
+        const categories = new Map(JSON.parse(item.dataset.categories));
+        this.showBrandView(brandName, paths, categories);
+      });
+    });
+  }
+
+
+
+  
+  normalizeBrandName(name) {
+    if (!name) return '';
+    
+    // Step 1: Remove ALL category/product type suffixes (case-insensitive)
+    let normalized = name
+      .replace(/\s+(bags?|handbags?|purses?)$/i, '')
+      .replace(/\s+(shoes?|footwear|sneakers?)$/i, '')
+      .replace(/\s+(accessories?|accessory)$/i, '')
+      .replace(/\s+(clothing?|clothes|apparel)$/i, '')
+      .replace(/\s+(watches?|timepieces?)$/i, '')
+      .replace(/\s+(jewelry?|jewellery)$/i, '')
+      .replace(/\s+(wallets?|wallet)$/i, '')
+      .replace(/\s+(belts?)$/i, '')
+      .replace(/\s+(glasses?|sunglasses?|eyewear)$/i, '')
+      .replace(/\s+(hats?|caps?)$/i, '')
+      .replace(/\s+(shirts?|dresses?)$/i, '')
+      .trim();
+    
+    // Step 2: Normalize spacing and case
+    normalized = normalized
+      .replace(/\s+/g, ' ')  // Multiple spaces to single space
+      .trim();
+    
+    // Step 3: Handle common typos and variations
+    const typoMap = {
+      'guccii': 'gucci',
+      'chanell': 'chanel',
+      'pradaa': 'prada',
+      'diorr': 'dior',
+      'fendii': 'fendi',
+      'hermes': 'hermès',
+      'louie vuitton': 'louis vuitton',
+      'luis vuitton': 'louis vuitton',
+      'saint laurent': 'yves saint laurent',
+      'bottega': 'bottega veneta',
+      'bottegaveneta': 'bottega veneta',
+      'dolce gabbana': 'dolce & gabbana',
+      'dolce and gabbana': 'dolce & gabbana',
+      'd and g': 'dolce & gabbana',
+      'bvlgari': 'bulgari',
+      'bvulgari': 'bulgari'
+    };
+    
+    const lowerNormalized = normalized.toLowerCase();
+    for (const [typo, correct] of Object.entries(typoMap)) {
+      if (lowerNormalized === typo) {
+        normalized = correct;
+        break;
+      }
+    }
+    
+    // Step 4: Handle special abbreviations
+    const abbreviations = {
+      'lv': 'Louis Vuitton',
+      'ysl': 'Yves Saint Laurent',
+      'd&g': 'Dolce & Gabbana',
+      'mk': 'Michael Kors',
+      'ck': 'Calvin Klein',
+      'dg': 'Dolce & Gabbana',
+      'mcm': 'MCM'
+    };
+    
+    const upperNormalized = normalized.toUpperCase();
+    if (abbreviations[lowerNormalized]) {
+      return abbreviations[lowerNormalized];
+    }
+    
+    // Step 5: Proper title case for multi-word brands
+    const properCaseExceptions = {
+      'louis vuitton': 'Louis Vuitton',
+      'yves saint laurent': 'Yves Saint Laurent',
+      'dolce & gabbana': 'Dolce & Gabbana',
+      'bottega veneta': 'Bottega Veneta',
+      'marc jacobs': 'Marc Jacobs',
+      'tory burch': 'Tory Burch',
+      'michael kors': 'Michael Kors',
+      'jimmy choo': 'Jimmy Choo',
+      'alexander mcqueen': 'Alexander McQueen',
+      'ralph lauren': 'Ralph Lauren',
+      'tom ford': 'Tom Ford',
+      'calvin klein': 'Calvin Klein',
+      'kate spade': 'Kate Spade',
+      'coach': 'Coach',
+      'mont blanc': 'Mont Blanc',
+      'montblanc': 'Mont Blanc',
+      'the marcus and jacob': 'The Marcus And Jacob'
+    };
+    
+    const finalLower = normalized.toLowerCase();
+    if (properCaseExceptions[finalLower]) {
+      return properCaseExceptions[finalLower];
+    }
+    
+    // Step 6: Default title case for remaining brands
+    return normalized
+      .split(' ')
+      .map(word => {
+        // Keep & as is
+        if (word === '&') return '&';
+        // Capitalize first letter
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
+      .join(' ');
+  }
+  showBrandView(brandName, paths, categories) {
+  // FIXED: HIDE sections (don't remove them)
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
+  if (brandsSection) {
+    brandsSection.style.display = 'none';
+    console.log('🙈 Hiding brands section (brand view)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'none';
+    console.log('🙈 Hiding slideshow section (brand view)');
+  }
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'none';
+    console.log('🙈 Hiding hero slideshow (brand view)');
+  }
+  
+  // Show inner hero layout
+  this.showInnerHero();
+  this.hideFeaturedHeading();
+  
+  document.body.setAttribute('data-page-type', 'brand');
+  this.resetScrollPosition();
+  
+  // ... rest of your existing code (keep everything else)
+  
+  // ... rest of your existing showBrandView code
+  
+  // ... rest of function continues
+    
+    // Update hero for brand view
+    const heroTitle = document.getElementById('heroTitle');
+    const heroSubtitle = document.getElementById('heroSubtitle');
+    
+    if (heroTitle) heroTitle.textContent = `${brandName} Collection`;
+    if (heroSubtitle) {
+      heroSubtitle.textContent = `Explore ${brandName} products across ${categories.size} ${categories.size === 1 ? 'category' : 'categories'}`;
+      heroSubtitle.style.display = 'block';
+    }
+    
+    // Add breadcrumb
+    const hero = document.querySelector('.hero .hero-content');
+    if (hero) {
+      const existingBreadcrumbs = hero.querySelector('.breadcrumb-nav');
+      if (existingBreadcrumbs) existingBreadcrumbs.remove();
+      
+      const breadcrumbNav = document.createElement('nav');
+      breadcrumbNav.className = 'breadcrumb-nav';
+      
+      const homeLink = document.createElement('a');
+      homeLink.href = '#';
+      homeLink.textContent = 'Home';
+      homeLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.navigateToHome();
+      });
+      
+      breadcrumbNav.appendChild(homeLink);
+      
+      const separator = document.createElement('span');
+      separator.textContent = ' / ';
+      separator.style.color = 'var(--color-text-muted)';
+      breadcrumbNav.appendChild(separator);
+      
+      const current = document.createElement('span');
+      current.textContent = brandName;
+      current.style.cssText = `
+        font-weight: 600;
+        color: var(--color-text-primary);
+        padding: var(--space-1) var(--space-2);
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: var(--radius-sm);
+      `;
+      breadcrumbNav.appendChild(current);
+      
+      if (heroSubtitle) {
+        heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
+      } else if (heroTitle) {
+        heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
+      }
+    }
+    
+  // SHOW brands and slideshow sections on homepage
+  this.updateSectionVisibility(true);
+    
+    // Create category cards
+    // Create category cards
+    const categoryCards = [];
+    // Find the actual brand thumbnail from the first path
+    // Get thumbnail from first child (product or subfolder)
+let brandThumbnail = '';
+
+if (paths.length > 0) {
+  const firstPath = paths[0].split('/');
+  const categoryKey = firstPath[0];
+  const brandKey = firstPath[1];
+  
+  const brandNode = this.data.catalog.tree[categoryKey]?.children?.[brandKey];
+  
+  if (brandNode) {
+    // Try to get thumbnail from first child
+    if (brandNode.children) {
+      const firstChild = Object.values(brandNode.children)[0];
+      
+      if (firstChild) {
+        // If first child is a product, use its thumbnail
+        if (firstChild.isProduct && firstChild.thumbnail) {
+          brandThumbnail = firstChild.thumbnail;
+          console.log(`✅ Using first product thumbnail for ${brandName}:`, brandThumbnail);
+        }
+        // If first child is a folder, get its first child's thumbnail
+        else if (firstChild.children) {
+          const nestedFirstChild = Object.values(firstChild.children)[0];
+          if (nestedFirstChild?.thumbnail) {
+            brandThumbnail = nestedFirstChild.thumbnail;
+            console.log(`✅ Using nested first child thumbnail for ${brandName}:`, brandThumbnail);
+          }
+        }
+        // Otherwise use the subfolder's thumbnail if available
+        else if (firstChild.thumbnail) {
+          brandThumbnail = firstChild.thumbnail;
+          console.log(`✅ Using first folder thumbnail for ${brandName}:`, brandThumbnail);
+        }
+      }
+    }
+    
+    // Fallback: Use brand's own thumbnail if no child thumbnail found
+    if (!brandThumbnail && brandNode.thumbnail) {
+      brandThumbnail = brandNode.thumbnail;
+      console.log(`✅ Using brand's own thumbnail for ${brandName}:`, brandThumbnail);
+    }
+  }
+}
+
+// Final fallback: constructed path
+if (!brandThumbnail) {
+  brandThumbnail = `/Cards/${brandName.replace(/\s+/g, '-')}.webp`;
+  console.log(`⚠️ Using fallback thumbnail for ${brandName}:`, brandThumbnail);
+}
+    
+    categories.forEach((catData, categoryName) => {
+  // Get category-specific thumbnail from its first child
+  let categoryThumbnail = '';
+  
+  // Navigate through the data structure to find this brand in this category
+  if (this.data.catalog.tree[categoryName]?.children) {
+    // Find the brand node within this category
+    const categoryChildren = this.data.catalog.tree[categoryName].children;
+    let brandNodeInCategory = null;
+    
+    // Search for the brand by normalized name
+    for (const [key, child] of Object.entries(categoryChildren)) {
+      if (this.normalizeBrandName(key) === brandName) {
+        brandNodeInCategory = child;
+        break;
+      }
+    }
+    
+    // If we found the brand in this category, get its first child's thumbnail
+    if (brandNodeInCategory && brandNodeInCategory.children) {
+      const firstChild = Object.values(brandNodeInCategory.children)[0];
+      
+      if (firstChild) {
+        if (firstChild.isProduct && firstChild.thumbnail) {
+          categoryThumbnail = firstChild.thumbnail;
+        } else if (firstChild.children) {
+          const nestedFirst = Object.values(firstChild.children)[0];
+          if (nestedFirst?.thumbnail) {
+            categoryThumbnail = nestedFirst.thumbnail;
+          }
+        } else if (firstChild.thumbnail) {
+          categoryThumbnail = firstChild.thumbnail;
+        }
+      }
+    }
+  }
+  
+  // Fallback to generic brand thumbnail
+  if (!categoryThumbnail) {
+    categoryThumbnail = brandThumbnail;
+  }
+  
+  categoryCards.push({
+    key: categoryName,
+    title: `${brandName} ${categoryName}`,
+    description: `${catData.count} ${brandName} products in ${categoryName}`,
+    count: catData.count,
+    thumbnail: categoryThumbnail,
+    isProduct: false,
+    topOrder: 999,
+    brandName: brandName,
+    categoryName: categoryName,
+    alignment: 'center center',
+    fitting: 'contain',
+    scaling: ''
+  });
+});
+    
+    // Sort by count
+    categoryCards.sort((a, b) => b.count - a.count);
+    
+    // Render brand categories
+    const container = document.getElementById('dynamicSections');
+    if (!container) return;
+    
+    const gridClass = this.getGridClass(categoryCards.length);
+    const containerId = `brand-categories-${Math.random().toString(36).substr(2, 9)}`;
+    
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="cards-grid ${gridClass}" id="${containerId}">
+            ${categoryCards.map(item => this.createBrandCategoryCardHTML(item)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+    
+    if (gridClass === 'grid-smart') {
+      setTimeout(() => {
+        const gridContainer = document.getElementById(containerId);
+        if (gridContainer) this.addSmartCentering(gridContainer, categoryCards.length);
+      }, 10);
+    }
+  }
+
+navigateToBrandCategory(brandName, categoryName) {
+  this.resetScrollPosition();
+  
+  // FIXED: Keep sections hidden when navigating to brand category
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
+  if (brandsSection) brandsSection.style.display = 'none';
+  if (slideshowSection) slideshowSection.style.display = 'none';
+  if (heroSlideshow) heroSlideshow.style.display = 'none';
+  
+  // Find the path to this brand in this category
+  const brandKey = Object.keys(this.data.catalog.tree[categoryName]?.children || {})
+    .find(key => this.normalizeBrandName(key) === brandName);
+  
+  if (!brandKey) {
+    this.showNotification(`${brandName} not found in ${categoryName}`);
+    return;
+  }
+  
+  const path = `${categoryName}/${brandKey}`;
+  this.currentPath = path.split('/').filter(Boolean);
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('path', path);
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ 
+    path: this.currentPath, 
+    brand: this.currentBrand 
+  }, '', newURL);
+  
+  // Show category view
+  this.showCategoryView();
+}
+
+  
+  createBrandCategoryCardHTML(item) {
+    const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
+    
+    let imageContent = '';
+    
+    if (imageSrc) {
+      // CRITICAL: Use contain fitting for brand logos on category cards
+      // This ensures the full logo is visible without cropping
+      imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
+     class="card-image-brand-logo"
+           onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.categoryName)}'">`;
+    } else {
+      imageContent = this.getEmojiForCategory(item.categoryName);
+    }
+
+    return `
+      <div class="content-card brand-category-card" data-brand="${item.brandName}" data-category="${item.categoryName}" role="button" tabindex="0">
+        <div class="card-image card-image-container">
+          ${imageContent}
+          <div class="card-overlay"></div>
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">${item.title}</h3>
+          <p class="card-description">${item.description}</p>
+          <div class="card-footer">
+            <span class="card-badge">${item.count} Items</span>
+            <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  setupReviewSlideshow() {
+    const viewport = document.getElementById('slideshowViewport');
+    const image = document.getElementById('slideshowImage');
+    const counter = document.getElementById('slideshowCounter');
+    const caption = document.getElementById('slideshowCaption');
+    const prevBtn = document.getElementById('slideshowPrev');
+    const nextBtn = document.getElementById('slideshowNext');
+    
+    if (!viewport || !image) return;
+    
+    const folders = ['Reviews', 'Payment', 'Delivered'];
+    let allImages = [];
+    let currentIndex = 0;
+    let isLoading = false;
+    
+    // Preload 15 images (5 from each folder)
+    const preloadImages = async () => {
+      console.log('🎬 Preloading slideshow images...');
+      viewport.classList.add('loading');
+      
+      for (const folder of folders) {
+        for (let i = 1; i <= 5; i++) {
+          const imgPath = `${folder}/image${i}.webp`;
+          
+          // Test if image exists
+          const exists = await new Promise((resolve) => {
+            const testImg = new Image();
+            const timeout = setTimeout(() => resolve(false), 1000);
+            
+            testImg.onload = () => {
+              clearTimeout(timeout);
+              resolve(true);
+            };
+            testImg.onerror = () => {
+              clearTimeout(timeout);
+              resolve(false);
+            };
+            
+            testImg.src = imgPath;
+          });
+          
+          if (exists) {
+            allImages.push({
+              src: imgPath,
+              caption: folder,
+              index: allImages.length + 1
+            });
+          }
+        }
+      }
+      
+      viewport.classList.remove('loading');
+      console.log(`✅ Preloaded ${allImages.length} images`);
+      
+      if (allImages.length > 0) {
+        showImage(0);
+      } else {
+        image.src = 'data:image/svg+xml,' + encodeURIComponent(`
+          <svg width="400" height="600" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#f8f9fa"/>
+            <text x="50%" y="50%" font-family="Arial" font-size="18" fill="#666" text-anchor="middle">No images found</text>
+          </svg>
+        `);
+      }
+    };
+    
+    const loadMoreImages = async (startIndex) => {
+      console.log(`📥 Loading more images from index ${startIndex}...`);
+      
+      for (const folder of folders) {
+        for (let i = startIndex; i < startIndex + 5; i++) {
+          const imgPath = `${folder}/image${i}.webp`;
+          
+          const exists = await new Promise((resolve) => {
+            const testImg = new Image();
+            const timeout = setTimeout(() => resolve(false), 1000);
+            
+            testImg.onload = () => {
+              clearTimeout(timeout);
+              resolve(true);
+            };
+            testImg.onerror = () => {
+              clearTimeout(timeout);
+              resolve(false);
+            };
+            
+            testImg.src = imgPath;
+          });
+          
+          if (exists) {
+            allImages.push({
+              src: imgPath,
+              caption: folder,
+              index: allImages.length + 1
+            });
+          }
+        }
+      }
+      
+      console.log(`✅ Now have ${allImages.length} total images`);
+    };
+    
+    const showImage = (index) => {
+      if (allImages.length === 0) return;
+      
+      currentIndex = (index + allImages.length) % allImages.length;
+      const current = allImages[currentIndex];
+      
+      viewport.classList.add('loading');
+      
+      const newImg = new Image();
+      newImg.onload = () => {
+        image.src = current.src;
+        if (counter) counter.textContent = `${currentIndex + 1} / ${allImages.length}`;
+        if (caption) caption.textContent = current.caption;
+        viewport.classList.remove('loading');
+      };
+      newImg.onerror = () => {
+        viewport.classList.remove('loading');
+      };
+      newImg.src = current.src;
+    };
+    
+    const showNext = async () => {
+      if (isLoading) return;
+      
+      // If approaching end and not fully loaded, load more
+      if (currentIndex >= allImages.length - 3 && allImages.length % 15 === 0) {
+        isLoading = true;
+        const nextBatch = Math.floor(allImages.length / 5) + 1;
+        await loadMoreImages(nextBatch * 5 + 1);
+        isLoading = false;
+      }
+      
+      showImage(currentIndex + 1);
+    };
+    
+    const showPrev = () => {
+      showImage(currentIndex - 1);
+    };
+    
+    // Event listeners
+    if (prevBtn) prevBtn.addEventListener('click', showPrev);
+    if (nextBtn) nextBtn.addEventListener('click', showNext);
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (document.body.getAttribute('data-page-type') !== 'category') {
+        if (e.key === 'ArrowRight') showNext();
+        if (e.key === 'ArrowLeft') showPrev();
+      }
+    });
+    
+    // Touch swipe
+    let touchStartX = 0;
+    viewport.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    viewport.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      
+      if (Math.abs(swipeDistance) > 50) {
+        if (swipeDistance > 0) showNext();
+        else showPrev();
+      }
+    }, { passive: true });
+    
+    // Initialize
+    preloadImages();
+  }
+
+
+
+setupHeroSlideshow() {
+    // Check if hero slideshow data exists
+    if (!this.data.heroSlideshow || this.data.heroSlideshow.length === 0) {
+      console.log('ℹ️ No hero slideshow items found');
+      return;
+    }
+    
+    const container = document.getElementById('heroSlideshowContainer');
+    const viewport = document.getElementById('heroSlideshowViewport');
+    const image = document.getElementById('heroSlideshowImage');
+    const counter = document.getElementById('heroSlideshowCounter');
+    
+    if (!container || !image) {
+      console.log('⚠️ Hero slideshow elements not found');
+      return;
+    }
+    
+    const heroImages = this.data.heroSlideshow;
+    let currentIndex = 0;
+    
+    console.log(`🎬 Hero slideshow: ${heroImages.length} items found`);
+    
+    // Show container
+    container.style.display = 'block';
+    
+    const showImage = (index) => {
+      currentIndex = (index + heroImages.length) % heroImages.length;
+      const current = heroImages[currentIndex];
+      
+      viewport.classList.add('loading');
+      
+      const newImg = new Image();
+      newImg.onload = () => {
+        image.src = current.thumbnail;
+        // Counter removed
+        viewport.classList.remove('loading');
+      };
+      newImg.onerror = () => {
+        viewport.classList.remove('loading');
+        console.log(`⚠️ Failed to load hero image: ${current.name}`);
+      };
+      newImg.src = current.thumbnail;
+    };
+    
+    // Auto-advance every 5 seconds (NO MANUAL CONTROLS)
+    setInterval(() => {
+      showImage(currentIndex + 1);
+    }, 5000);
+    
+    // Initialize
+    showImage(0);
+    
+    console.log('✅ Hero slideshow initialized (auto-advance only)');
+  }
+
+  setupFooter() {
+    const footerContent = document.getElementById('footerContent');
+    if (!footerContent) return;
+
+    const brand = this.data.brands[this.currentBrand];
+    const footerText = brand?.footerText || 'Your premier destination for luxury goods. We curate only the finest products from the world\'s most prestigious brands.';
+
+    footerContent.innerHTML = `
+      <div class="footer-section">
+        <h3>${brand?.name || 'Luxury Collection'}</h3>
+        <p>${footerText}</p>
+      </div>
+      <div class="footer-section">
+        <h3>Customer Service</h3>
+        <p>24/7 Support Available</p>
+        <p>Premium Customer Care</p>
+        <p>Worldwide Shipping</p>
+      </div>
+      <div class="footer-section">
+        <h3>Connect With Us</h3>
+        <p>Follow us for the latest luxury collections and exclusive offers.</p>
+      </div>
+    `;
+  }
+
+setupEventListeners() {
+  // Logo click - go to home
+  const logo = document.getElementById('brandLogo');
+  if (logo) {
+    logo.addEventListener('click', () => {
+      this.navigateToHome();
+    });
+  }
+
+  // Card clicks - UNIFIED PREVIEW
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.content-card, .taxonomy-item');
+    if (!card) return;
+    
+    const app = window.catalogApp;
+    if (!app) {
+      console.warn('⚠️ App instance not available');
+      return;
+    }
+    
+    const brand = card.dataset.brand;
+    const category = card.dataset.category;
+    const isProduct = card.dataset.isProduct === 'true';
+    const driveLink = card.dataset.driveLink;
+    const searchPath = card.dataset.searchPath;
+    
+    console.log('🎯 Card clicked', { brand, category, isProduct, driveLink, searchPath });
+    
+    if (brand && category && !isProduct) {
+      app.navigateToBrandCategory(brand, category);
+      return;
+    }
+    
+    if (isProduct && driveLink) {
+      const productPath = searchPath || category;
+      const productData = app.findProductByPath(productPath);
+      const productTitle = card.querySelector('.card-title')?.textContent || category;
+      
+      console.log('🎬 Opening unified preview with priority order');
+      
+      if (productData) {
+        const hasR2Video = productData?.videoPreview?.videos?.length > 0;
+        const hasDrivePhotos = productData?.preview?.images?.length > 0;
+        const hasDriveVideos = productData?.preview?.videos?.length > 0;
+        
+        if (hasR2Video || hasDrivePhotos || hasDriveVideos) {
+          console.log('✅ Media available:', {
+            r2Videos: hasR2Video ? productData.videoPreview.videos.length : 0,
+            drivePhotos: hasDrivePhotos ? productData.preview.images.length : 0,
+            driveVideos: hasDriveVideos ? productData.preview.videos.length : 0
+          });
+          
+          app.openPreview(productData, productTitle);
+        } else {
+          console.log('⚠️ No media available, opening Drive');
+          window.open(driveLink, '_blank', 'noopener,noreferrer');
+        }
+      } else {
+        console.log('⚠️ Product data not found, opening Drive');
+        window.open(driveLink, '_blank', 'noopener,noreferrer');
+      }
+    } else if (searchPath) {
+      console.log('📁 Navigating to folder:', searchPath);
+      app.navigateToPath(searchPath);
+    } else {
+      console.log('📂 Navigating to category:', category);
+      app.navigateToCategory(category);
+    }
+  });
+
+  // Search functionality - only on Enter press
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.handleSearch(e.target.value);
+      }
+    });
+  }
+
+  // Browser back/forward navigation
+  window.addEventListener('popstate', (e) => {
+    this.handleBrowserNavigation();
+  });
+
+
+
+
+
+
+
+
+
+
+  
+  // ============================================
+  // 👇 Added: Touch/gesture prevention snippet
+  // ============================================
+  
+  // FIXED: Prevent double-tap zoom with JavaScript backup
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, { passive: false });
+  
+  // Prevent pinch zoom
+  document.addEventListener('gesturestart', (e) => {
+    e.preventDefault();
+  });
+  
+  document.addEventListener('gesturechange', (e) => {
+    e.preventDefault();
+  });
+  
+  document.addEventListener('gestureend', (e) => {
+    e.preventDefault();
+  });
+}
+
+    // ADD THIS COMPLETE FUNCTION RIGHT HERE (inside the class)
+  setupSectionVisibilityEnforcer() {
+    const enforceVisibility = () => {
+      const pageType = document.body.getAttribute('data-page-type');
+      const brands = document.querySelector('.brands-section');
+      const slideshow = document.querySelector('.slideshow-section');
+      const heroSlide = document.getElementById('heroSlideshowContainer');
+      
+      if (pageType === 'category' || pageType === 'brand') {
+        // FORCE HIDE on category pages
+        if (brands && brands.style.display !== 'none') {
+          brands.style.display = 'none';
+          console.log('⚡ ENFORCER: Hiding brands');
+        }
+        if (slideshow && slideshow.style.display !== 'none') {
+          slideshow.style.display = 'none';
+          console.log('⚡ ENFORCER: Hiding slideshow');
+        }
+        if (heroSlide && heroSlide.style.display !== 'none') {
+          heroSlide.style.display = 'none';
+          console.log('⚡ ENFORCER: Hiding hero slideshow');
+        }
+      } else {
+        // FORCE SHOW on homepage
+        if (brands && brands.style.display !== 'block') {
+          brands.style.display = 'block';
+          console.log('⚡ ENFORCER: Showing brands');
+        }
+        if (slideshow && slideshow.style.display !== 'block') {
+          slideshow.style.display = 'block';
+          console.log('⚡ ENFORCER: Showing slideshow');
+        }
+        if (heroSlide && heroSlide.style.display !== 'block') {
+          heroSlide.style.display = 'block';
+          console.log('⚡ ENFORCER: Showing hero slideshow');
+        }
+      }
+    };
+    
+    // Run every 100ms to catch any changes
+    setInterval(enforceVisibility, 100);
+    
+    // Also watch for body attribute changes
+    const observer = new MutationObserver(enforceVisibility);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-page-type'] });
+    
+    console.log('⚡ Section visibility enforcer activated');
+  }
+
+// ADD this method after setupEventListeners():
+setupScrollBehavior() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+
+  let ticking = false;
+
+  const handleScroll = () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        this.updateHeaderVisibility();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  };
+
+  // Throttled scroll listener
+  window.addEventListener('scroll', handleScroll, { passive: true });
+}
+
+    findProductByPath(pathString) {
+  if (!pathString || !this.data || !this.data.catalog) {
+    console.log('❌ findProductByPath: invalid input', pathString);
+    return null;
+  }
+  
+  console.log('🔍 Finding product by path:', pathString);
+  
+  const segments = pathString.split('/').filter(Boolean);
+  let current = this.data.catalog.tree;
+  
+  for (const seg of segments) {
+    if (current[seg]) {
+      if (current[seg].isProduct) {
+        console.log('✅ Found product:', seg);
+        return current[seg];
+      }
+      current = current[seg].children || {};
+    } else {
+      console.log('❌ Segment not found:', seg);
+      return null;
+    }
+  }
+  
+  console.log('❌ Product not found at path:', pathString);
+  return null;
+}
+
+// ADD this method after setupScrollBehavior():
+updateHeaderVisibility() {
+  const header = document.querySelector('.header');
+  if (!header) return;
+
+  const currentScrollY = window.pageYOffset;
+  const scrollDelta = currentScrollY - this.lastScrollY;
+  const pastThreshold = currentScrollY > this.scrollThreshold;
+
+  // FIXED: More sensitive upward scroll detection
+  // Show header on ANY upward movement (scrollDelta < 0)
+  // But require at least 15px of movement to avoid false triggers
+  const isScrollingUp = scrollDelta < -15; // 15px minimum upward movement
+  const isScrollingDown = scrollDelta > 5; // 5px minimum downward movement
+
+  if (pastThreshold && isScrollingDown && !this.isHeaderCollapsed) {
+    // Scrolling down - hide header
+    header.classList.add('collapsed');
+    this.isHeaderCollapsed = true;
+  } else if (isScrollingUp && this.isHeaderCollapsed) {
+    // FIXED: Any clear upward scroll shows header (no threshold check)
+    header.classList.remove('collapsed');
+    this.isHeaderCollapsed = false;
+  } else if (!pastThreshold) {
+    // At top of page - always show header
+    header.classList.remove('collapsed');
+    this.isHeaderCollapsed = false;
+  }
+
+  this.lastScrollY = currentScrollY;
+}
+
+// ADD this method to reset scroll position:
+resetScrollPosition() {
+  // Reset header state
+  const header = document.querySelector('.header');
+  if (header) {
+    header.classList.remove('collapsed');
+  }
+  this.isHeaderCollapsed = false;
+  this.lastScrollY = 0;
+  
+  // Force scroll to top immediately
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: 'auto' // Instant scroll, no smooth animation
+  });
+  
+  // Double-check scroll position after brief delay
+  setTimeout(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, 50);
+}
+
+  navigateToPath(path) {
+  // FIXED: Reset scroll position first
+  this.resetScrollPosition();
+  
+  // Build new path
+  const pathSegments = path.split('/').filter(Boolean);
+  this.currentPath = pathSegments;
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('path', path);
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ 
+    path: pathSegments, 
+    brand: this.currentBrand 
+  }, '', newURL);
+  
+  // Show category view
+  this.showCategoryView();
+}
+
+
+  openProduct(driveLink, product, productTitle) {
+  console.log('🎯 openProduct called', { driveLink, hasProduct: !!product, productTitle });
+  
+  // If product has preview data, open modal
+  if (product && product.preview && product.preview.images && product.preview.images.length > 0) {
+    console.log('✅ Product has preview data, opening modal');
+    this.openPreview(product, productTitle);
+    return;
+  }
+  
+  // Otherwise open Drive link
+  console.log('📂 No preview, opening Drive link');
+  this.showNotification('Opening product...');
+  window.open(driveLink, '_blank', 'noopener,noreferrer');
+}
+
+  navigateToCategory(category) {
+  // FIXED: Reset scroll position first
+  this.resetScrollPosition();
+  
+  // Build new path
+  let newPath;
+  if (this.currentPath.length === 0) {
+    // From homepage
+    newPath = [category];
+  } else {
+    // From current path
+    newPath = [...this.currentPath, category];
+  }
+  
+  // Update state
+  this.currentPath = newPath;
+  
+  // Update URL
+  const params = new URLSearchParams(window.location.search);
+  params.set('path', newPath.join('/'));
+  if (this.currentBrand) {
+    params.set('brand', this.currentBrand);
+  }
+  
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ 
+    category, 
+    brand: this.currentBrand, 
+    path: newPath 
+  }, '', newURL);
+  
+  // Show category view
+  this.showCategoryView();
+}
+  // Force brand refresh when URL changes
+  handleBrandNavigation() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBrand = urlParams.get('brand');
+    
+    if (urlBrand && urlBrand !== this.currentBrand) {
+      this.currentBrand = urlBrand;
+      
+      // Force immediate brand info setup
+      if (this.data && this.data.brands) {
+        this.setupBrandInfo();
+      }
+    }
+    
+    // Handle path changes
+    const pathFromURL = urlParams.get('path');
+    if (pathFromURL) {
+      this.currentPath = pathFromURL.split('/').filter(Boolean);
+      this.showCategoryView();
+    } else {
+      this.currentPath = [];
+      this.navigateToHome();
+    }
+  }
+
+  handleBrowserNavigation() {
+  // Re-initialize from URL
+  this.initializeFromURL();
+  
+  // FIXED: Reset scroll position for browser navigation
+  this.resetScrollPosition();
+  
+  // Force brand refresh
+  this.handleBrandNavigation();
+}
+
+  // Enhanced search functionality
+  handleSearch(query) {
+    if (!query.trim()) return;
+    
+    this.showNotification(`Searching for "${query}"...`);
+    
+    // Actual search implementation
+    const results = this.performSearch(query.toLowerCase());
+    this.displaySearchResults(results, query);
+  }
+
+  performSearch(query) {
+    const results = [];
+    
+    function searchNode(node, path = []) {
+      for (const [key, item] of Object.entries(node)) {
+        const currentPath = [...path, key];
+        
+        // Check if current item matches search
+        if (key.toLowerCase().includes(query) || 
+            (item.title && item.title.toLowerCase().includes(query))) {
+          results.push({
+            name: key,
+            path: currentPath.join('/'),
+            isProduct: item.isProduct,
+            count: item.count,
+            thumbnail: item.thumbnail,
+            driveLink: item.driveLink
+          });
+        }
+        
+        // Search in children
+        if (item.children && !item.isProduct) {
+          searchNode(item.children, currentPath);
+        }
+      }
+    }
+    
+    if (this.data && this.data.catalog && this.data.catalog.tree) {
+      searchNode(this.data.catalog.tree);
+    }
+    
+    return results;
+  }
+
+  displaySearchResults(results, query) {
+  const container = document.getElementById('dynamicSections');
+  if (!container) return;
+  
+  // FIXED: Hide hero and featured heading during search
+  const hero = document.querySelector('.hero');
+  const featuredHeading = document.getElementById('featuredHeadingSection');
+  if (hero) hero.style.display = 'none';
+  if (featuredHeading) featuredHeading.style.display = 'none';
+  
+  if (results.length === 0) {
+    // ... rest of the function
+    container.innerHTML = `
+      <section class="content-section">
+        <div class="container">
+          <div class="section-header">
+            <h2 class="section-title">No Results Found</h2>
+            <p class="section-description">No items found for "${query}". Try different keywords.</p>
+          </div>
+        </div>
+      </section>
+    `;
+    return;
+  }
+  
+  const gridClass = this.getGridClass(results.length);
+  
+  // FIXED: Map results with correct data structure
+  const resultsHTML = results.map(result => ({
+    key: result.name,
+    title: result.name.replace(/_/g, ' '),
+    description: result.isProduct ? 'Premium product' : `${result.count || 0} items`,
+    count: result.count || (result.isProduct ? 1 : 0),
+    thumbnail: result.thumbnail || this.getEmojiForCategory(result.name),
+    isProduct: result.isProduct,
+    fullPath: result.path, // FIXED: Use full path for proper navigation
+    driveLink: result.driveLink
+  }));
+  
+  container.innerHTML = `
+    <section class="content-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Search Results</h2>
+          <p class="section-description">Found ${results.length} result${results.length === 1 ? '' : 's'} for "${query}"</p>
+        </div>
+        <div class="cards-grid ${gridClass}">
+          ${resultsHTML.map(item => this.createCardHTML(item)).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+
+  // HIDE brands and slideshow sections during search
+  this.updateSectionVisibility(false);
+}
+
+// REPLACE THE ENTIRE setupFABFunctionality() method with this fixed version:
+
+// COMPLETE REPLACEMENT - Replace entire setupFABFunctionality() method with this WORKING version:
+
+// SUPER FAST REPLACEMENT - Replace entire setupFABFunctionality() method:
+
+setupFABFunctionality() {
+  const threeDotToggle = document.getElementById('threeDotToggle');
+  const threeDotMenu = document.getElementById('threeDotMenu');
+  const menuItems = document.querySelectorAll('.menu-item');
+
+  // Simple state management
+  let currentImages = [];
+  let currentImageIndex = 0;
+  
+  const modal = document.getElementById('imageViewerModal');
+  const viewerImage = document.getElementById('viewerImage');
+  const viewerCounter = document.getElementById('viewerCounter');
+  const viewerTitle = document.getElementById('viewerTitle');
+  const viewerClose = document.getElementById('viewerClose');
+  const viewerPrev = document.getElementById('viewerPrev');
+  const viewerNext = document.getElementById('viewerNext');
+  const viewerOverlay = document.getElementById('viewerOverlay');
+
+  // Menu functionality
+  if (threeDotToggle && threeDotMenu) {
+    threeDotMenu.classList.remove('expanded');
+    
+    threeDotToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      threeDotMenu.classList.toggle('expanded');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!threeDotMenu.contains(e.target)) {
+        threeDotMenu.classList.remove('expanded');
+      }
+    });
+  }
+
+// REPLACE the entire discoverWebPFiles function with this FIXED version:
+
+// REPLACE the entire discoverWebPFiles function with this FASTER & MORE RELIABLE version:
+
+const discoverWebPFiles = async (folderName) => {
+  console.log(`🎯 FAST scanning ${folderName} for actual .webp files...`);
+  
+  // FASTEST METHOD: Try to load actual image data to verify it exists
+  const testImageExists = async (imagePath) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 1000); // 1 second timeout
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
+      
+      img.src = imagePath;
+    });
+  };
+  
+  const foundImages = [];
+  
+  // PRIORITY 1: Your exact pattern (image1.webp, image2.webp...)
+  console.log(`📋 Testing image*.webp files...`);
+  
+  // Create batch promises for parallel checking (batches of 10 for speed)
+  const batchSize = 10;
+  let consecutiveFailures = 0;
+  
+  for (let startIndex = 1; startIndex <= 50; startIndex += batchSize) {
+    const endIndex = Math.min(startIndex + batchSize - 1, 50);
+    const batch = [];
+    
+    // Create batch of promises
+    for (let i = startIndex; i <= endIndex; i++) {
+      const webpPath = `${folderName}/image${i}.webp`;
+      batch.push(
+        testImageExists(webpPath).then(exists => ({
+          exists,
+          path: webpPath,
+          index: i,
+          name: `image${i}`
+        }))
+      );
+    }
+    
+    // Wait for batch to complete
+    const results = await Promise.all(batch);
+    let batchFoundAny = false;
+    
+    // Process batch results
+    results.forEach(result => {
+      if (result.exists) {
+        foundImages.push({
+          src: result.path,
+          title: `${folderName} Image ${result.index}`,
+          name: result.name,
+          index: result.index
+        });
+        console.log(`✅ FOUND: ${result.name}.webp`);
+        batchFoundAny = true;
+        consecutiveFailures = 0;
+      }
+    });
+    
+    // If no files found in this batch, increment failure count
+    if (!batchFoundAny) {
+      consecutiveFailures++;
+      
+      // Stop if we've had 2 consecutive batches with no files (20 files checked)
+      if (consecutiveFailures >= 2 && foundImages.length > 0) {
+        console.log(`🛑 Stopping early - no files found in last ${consecutiveFailures * batchSize} attempts`);
+        break;
+      }
+    }
+  }
+  
+  if (foundImages.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${foundImages.length} valid image*.webp files`);
+    return foundImages.sort((a, b) => a.index - b.index);
+  }
+  
+  // PRIORITY 2: Try simple numbers (1.webp, 2.webp, etc.)
+  console.log(`📋 No image*.webp found, testing number.webp pattern...`);
+  
+  const numberPromises = [];
+  for (let i = 1; i <= 20; i++) {
+    const webpPath = `${folderName}/${i}.webp`;
+    numberPromises.push(
+      testImageExists(webpPath).then(exists => 
+        exists ? {
+          src: webpPath,
+          title: `${folderName} File ${i}`,
+          name: `${i}`,
+          index: i
+        } : null
+      )
+    );
+  }
+  
+  const numberResults = await Promise.all(numberPromises);
+  const validNumbers = numberResults.filter(img => img !== null);
+  
+  if (validNumbers.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${validNumbers.length} number.webp files`);
+    return validNumbers.sort((a, b) => a.index - b.index);
+  }
+  
+  // PRIORITY 3: Try descriptive names
+  console.log(`📋 Trying descriptive names...`);
+  const descriptiveNames = [
+    'proof', 'payment', 'review', 'delivered', 'customer', 'receipt',
+    'photo', 'pic', 'screenshot', 'scan', 'document', 'file'
+  ];
+  
+  const descriptivePromises = descriptiveNames.map((name, index) => {
+    const webpPath = `${folderName}/${name}.webp`;
+    return testImageExists(webpPath).then(exists =>
+      exists ? {
+        src: webpPath,
+        title: `${folderName} - ${name}`,
+        name: name,
+        index: index + 1000
+      } : null
+    );
+  });
+  
+  const descriptiveResults = await Promise.all(descriptivePromises);
+  const validDescriptive = descriptiveResults.filter(img => img !== null);
+  
+  if (validDescriptive.length > 0) {
+    console.log(`🎯 SUCCESS: Found ${validDescriptive.length} descriptive .webp files`);
+    return validDescriptive.sort((a, b) => a.index - b.index);
+  }
+  
+  // Nothing found
+  console.log(`❌ No .webp files found in ${folderName}`);
+  return [];
+};
+  // Image viewer functions
+  const showCurrentImage = () => {
+    if (currentImages.length === 0) return;
+    
+    const image = currentImages[currentImageIndex];
+    if (viewerImage) viewerImage.src = image.src;
+    if (viewerTitle) viewerTitle.textContent = image.title;
+    if (viewerCounter) viewerCounter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+    preloadImages();
+
+  };
+    // Preload next/previous images for instant display
+const preloadImages = () => {
+  if (currentImages.length <= 1) return;
+  
+  const nextIndex = (currentImageIndex + 1) % currentImages.length;
+  const prevIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+  
+  // Preload next image
+  const nextImg = new Image();
+  nextImg.src = currentImages[nextIndex].src;
+  
+  // Preload previous image  
+  const prevImg = new Image();
+  prevImg.src = currentImages[prevIndex].src;
+};
+  
+  const closeImageViewer = () => {
+    if (modal) modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+  };
+
+  const showNextImage = () => {
+    if (currentImages.length <= 1) return;
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    console.log(`Next: ${currentImageIndex + 1}/${currentImages.length}`);
+    showCurrentImage();
+  };
+
+  const showPrevImage = () => {
+    if (currentImages.length <= 1) return;
+    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+    console.log(`Prev: ${currentImageIndex + 1}/${currentImages.length}`);
+    showCurrentImage();
+  };
+
+  // INSTANT menu click handlers
+  const folderCache = new Map();
+  menuItems.forEach((item) => {
+    item.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const folderName = item.dataset.folder;
+      console.log(`🔄 INSTANT loading ${folderName}...`);
+      
+      // Show modal immediately
+      if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      // Add caching for faster subsequent loads
+      if (folderCache.has(folderName)) {
+        const cachedImages = folderCache.get(folderName);
+        console.log(`📦 Using cached images for ${folderName}`);
+        currentImages = cachedImages;
+        currentImageIndex = 0;
+        showCurrentImage();
+        if (threeDotMenu) threeDotMenu.classList.remove('expanded');
+        return;
+      }
+      }
+    
+      // Show loading state
+      if (viewerImage) {
+        viewerImage.src = 'data:image/svg+xml,' + encodeURIComponent(`
+          <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#f8f9fa"/>
+            <circle cx="200" cy="150" r="25" fill="none" stroke="#6366f1" stroke-width="4">
+              <animateTransform attributeName="transform" type="rotate" values="0 200 150;360 200 150" dur="0.8s" repeatCount="indefinite"/>
+            </circle>
+            <text x="50%" y="75%" font-family="Arial" font-size="16" fill="#6366f1" text-anchor="middle" font-weight="600">Scanning ${folderName}...</text>
+          </svg>
+        `);
+      }
+      if (viewerTitle) viewerTitle.textContent = `Scanning ${folderName}...`;
+      if (viewerCounter) viewerCounter.textContent = 'Finding .webp files...';
+      
+      try {
+        // INSTANT discovery
+        const images = await discoverWebPFiles(folderName);
+        
+        if (images.length === 0) {
+          console.log(`❌ No .webp files found in ${folderName}`);
+          currentImages = [{
+            src: 'data:image/svg+xml,' + encodeURIComponent(`
+              <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#fff5f5"/>
+                <text x="50%" y="40%" font-family="Arial" font-size="48" text-anchor="middle">📂</text>
+                <text x="50%" y="60%" font-family="Arial" font-size="18" fill="#666666" text-anchor="middle" font-weight="600">No .webp files in ${folderName}</text>
+                <text x="50%" y="75%" font-family="Arial" font-size="14" fill="#999999" text-anchor="middle">Add .webp images to public/${folderName}/</text>
+              </svg>
+            `),
+            title: `No images in ${folderName}`
+          }];
+        } else {
+          currentImages = images;
+          console.log(`🎉 INSTANT SUCCESS: ${images.length} .webp files found in ${folderName}!`);
+        }
+        
+        currentImageIndex = 0;
+        showCurrentImage();
+        
+      } catch (error) {
+        console.error(`💥 Error with ${folderName}:`, error);
+        currentImages = [{
+          src: 'data:image/svg+xml,' + encodeURIComponent(`
+            <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100%" height="100%" fill="#fff0f0"/>
+              <text x="50%" y="50%" font-family="Arial" font-size="18" fill="#ff4444" text-anchor="middle">Error loading ${folderName}</text>
+            </svg>
+          `),
+          title: `Error: ${folderName}`
+        }];
+        currentImageIndex = 0;
+        showCurrentImage();
+      }
+      
+      if (threeDotMenu) threeDotMenu.classList.remove('expanded');
+    });
+  });
+
+  // Event listeners - Simple and reliable
+  if (viewerClose) {
+    viewerClose.addEventListener('click', closeImageViewer);
+  }
+  
+  if (viewerOverlay) {
+    viewerOverlay.addEventListener('click', closeImageViewer);
+  }
+  
+  if (viewerNext) {
+    viewerNext.addEventListener('click', showNextImage);
+  }
+  
+  if (viewerPrev) {
+    viewerPrev.addEventListener('click', showPrevImage);
+  }
+  
+  if (viewerImage) {
+    viewerImage.addEventListener('click', showNextImage);
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!modal || !modal.classList.contains('active')) return;
+    
+    switch(e.key) {
+      case 'Escape':
+        closeImageViewer();
+        break;
+      case 'ArrowRight':
+      case ' ':
+        showNextImage();
+        break;
+      case 'ArrowLeft':
+        showPrevImage();
+        break;
+    }
+  });
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  
+  if (modal) {
+    modal.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      const swipeDistance = touchStartX - touchEndX;
+      
+      if (Math.abs(swipeDistance) > 50) {
+        if (swipeDistance > 0) {
+          showNextImage(); // Swipe left = next
+        } else {
+          showPrevImage(); // Swipe right = previous  
+        }
+      }
+    }, { passive: true });
+  }
+
+  console.log('🚀 INSTANT WebP scanner ready!');
+}
+
+
+  showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: var(--color-primary);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+      font-weight: 500;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      max-width: 300px;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+  showLoading() {
+    this.isLoading = true;
+    document.body.classList.add('loading');
+  }
+
+  hideLoading() {
+    this.isLoading = false;
+    document.body.classList.remove('loading');
+  }
+}
+window.catalogApp = null;
+// Enhanced initialization
+function initializeApp() {
+  const app = new CSVCatalogApp();
+  
+  app.init().then(() => {
+    // Force brand refresh after initialization
+    setTimeout(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlBrand = urlParams.get('brand');
+      if (urlBrand) {
+        app.currentBrand = urlBrand;
+        app.setupBrandInfo();
+      }
+    }, 100);
+  }).catch(error => {
+    
+    // Silent error handling
+  });
+  
+  window.catalogApp = app;
+  
+  // Monitor URL changes for brand switching
+  window.addEventListener('popstate', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlBrand = urlParams.get('brand');
+    if (urlBrand && app.data && app.data.brands[urlBrand]) {
+      app.currentBrand = urlBrand;
+      app.setupBrandInfo();
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// Backup initialization
+if (document.readyState === 'loading') {
+  // Wait for DOMContentLoaded
+} else {
+  setTimeout(() => {
+    if (!window.catalogApp) {
+      initializeApp();
+    }
+  }, 100);
+}
+
+// Global error handlers
+window.addEventListener('error', (e) => {
+  // Silent error handling
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  // Silent error handling
+  e.preventDefault();
+});
