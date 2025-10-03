@@ -68,7 +68,7 @@ class CSVCatalogApp {
       .replace(/^\w/, c => c.toUpperCase());
   }
 
-  async init() {
+async init() {
   try {
     await this.loadData();
     
@@ -91,61 +91,62 @@ class CSVCatalogApp {
 
     this.setupBrandInfo();
     
+    // ADDED: Setup hero slideshow on homepage BEFORE sections
+    if (this.currentPath.length === 0) {
+      console.log('🏠 Setting up hero slideshow for homepage');
+      this.setupHeroSlideshow();
+    }
     
     // Check if we need to show category view or homepage
-    // Check if we need to show category view or homepage
-    // Check if we need to show category view or homepage
-// Check if we need to show category view or homepage
-if (this.currentPath.length > 0) {
-  this.showCategoryView();
-} else {
-  this.setupDynamicSections();
-}
+    if (this.currentPath.length > 0) {
+      this.showCategoryView();
+    } else {
+      this.setupDynamicSections();
+    }
 
-// Setup brands and slideshow FIRST (creates the sections)
-this.setupBrands();
-this.setupReviewSlideshow();
+    // Setup brands and slideshow FIRST (creates the sections)
+    this.setupBrands();
+    this.setupReviewSlideshow();
 
-// THEN control visibility based on current view
-if (this.currentPath.length > 0) {
-  // On category/brand view - hide brands and slideshow
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  if (brandsSection) {
-    brandsSection.style.display = 'none';
-    console.log('🙈 Hiding brands section (category view)');
-  }
-  if (slideshowSection) {
-    slideshowSection.style.display = 'none';
-    console.log('🙈 Hiding slideshow section (category view)');
-  }
-} else {
-  // On homepage - show brands and slideshow
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  if (brandsSection) {
-    brandsSection.style.display = 'block';
-    console.log('👁️ Showing brands section (homepage)');
-  }
-  if (slideshowSection) {
-    slideshowSection.style.display = 'block';
-    console.log('👁️ Showing slideshow section (homepage)');
-  }
-}
+    // THEN control visibility based on current view
+    if (this.currentPath.length > 0) {
+      // On category/brand view - hide brands and slideshow
+      const brandsSection = document.querySelector('.brands-section');
+      const slideshowSection = document.querySelector('.slideshow-section');
+      if (brandsSection) {
+        brandsSection.style.display = 'none';
+        console.log('🙈 Hiding brands section (category view)');
+      }
+      if (slideshowSection) {
+        slideshowSection.style.display = 'none';
+        console.log('🙈 Hiding slideshow section (category view)');
+      }
+    } else {
+      // On homepage - show brands and slideshow
+      const brandsSection = document.querySelector('.brands-section');
+      const slideshowSection = document.querySelector('.slideshow-section');
+      if (brandsSection) {
+        brandsSection.style.display = 'block';
+        console.log('👁️ Showing brands section (homepage)');
+      }
+      if (slideshowSection) {
+        slideshowSection.style.display = 'block';
+        console.log('👁️ Showing slideshow section (homepage)');
+      }
+    }
     
     this.setupFooter();
     this.setupEventListeners();
     this.setupPreviewModal();
-
     this.setupFABFunctionality();
     
     // NEW: Setup scroll behavior
     this.setupScrollBehavior();
     
   } catch (error) {
-      // Silent error handling in production
-    }
+    // Silent error handling in production
   }
+}
 
   async loadData() {
   try {
@@ -1756,10 +1757,6 @@ updateSectionVisibility(showSections) {
     return;
   }
 
-  // ADDED: Setup hero slideshow on homepage only
-  if (this.currentPath.length === 0) {
-    this.setupHeroSlideshow();
-  }
 
   this.groupItemsBySection();
   
@@ -1813,18 +1810,66 @@ updateSectionVisibility(showSections) {
 setupHeroSlideshow() {
   const slideshowItems = this.data.catalog?.slideshow || [];
   
-  if (slideshowItems.length === 0) {
-    console.log('⚠️ No slideshow items found');
-    // Fallback to static hero
-    this.setupStaticHero();
+  console.log(`🎬 setupHeroSlideshow called with ${slideshowItems.length} items`);
+  
+  const hero = document.querySelector('.hero');
+  if (!hero) {
+    console.error('❌ Hero element not found!');
     return;
   }
 
-  console.log(`🎬 Setting up hero slideshow with ${slideshowItems.length} items`);
+  // ALWAYS show the new hero layout, even without slideshow items
+  if (slideshowItems.length === 0) {
+    console.log('⚠️ No slideshow items - using static hero with new layout');
+    
+    // Use static content but with slideshow layout
+    const brand = this.data.brands[this.currentBrand];
+    const staticHTML = `
+      <div class="hero-slideshow-container">
+        <div class="hero-slideshow" id="heroSlideshow">
+          <div class="hero-slide active" data-index="0">
+            <div class="hero-slide-inner">
+              <!-- LEFT: Static Image or Placeholder -->
+              <div class="hero-slide-image-container">
+                <div style="font-size: 10rem; opacity: 0.3;">👜</div>
+              </div>
+              
+              <!-- RIGHT: Content -->
+              <div class="hero-slide-content">
+                <h1 class="hero-slide-title">
+                  Establish Yourself<br>With <span class="highlight">Premium</span><br>Accessories
+                </h1>
+                <p class="hero-slide-description">
+                  Premium accessories can include items like luxury Watches, Leather goods, 
+                  Designer handbags, Fine jewellery and High-end Footwear. Choose premium 
+                  accessories that reflect your personality and lifestyle is essential.
+                </p>
+                <div class="hero-slide-actions">
+                  <a href="#" class="hero-slide-cta" onclick="document.querySelector('.brands-section')?.scrollIntoView({behavior:'smooth'}); return false;">
+                    <div class="hero-slide-cta-text">
+                      <span class="hero-slide-cta-label">Explore all</span>
+                      <span class="hero-slide-cta-brand">Luxury Brands</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    hero.innerHTML = staticHTML;
+    console.log('✅ Static hero with new layout applied');
+    return;
+  }
 
-  const hero = document.querySelector('.hero');
-  if (!hero) return;
-
+  // SLIDESHOW VERSION (with items)
+  console.log(`✅ Building slideshow with ${slideshowItems.length} items`);
+  
   const slideshowHTML = `
     <div class="hero-slideshow-container">
       <div class="hero-slideshow" id="heroSlideshow">
@@ -1890,6 +1935,7 @@ setupHeroSlideshow() {
 
   hero.innerHTML = slideshowHTML;
   this.initHeroSlideshowControls(slideshowItems.length);
+  console.log('✅ Hero slideshow initialized');
 }
 
 setupStaticHero() {
