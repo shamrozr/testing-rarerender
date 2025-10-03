@@ -351,9 +351,24 @@ body {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #000000 !important; /* FORCE BLACK */
   line-height: 1.2;
   cursor: pointer;
+  display: inline-block !important; /* FORCE VISIBLE */
+  opacity: 1 !important; /* FORCE OPAQUE */
+  background: none !important; /* REMOVE GRADIENT */
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  background-clip: unset !important;
+  text-fill-color: unset !important;
+}
+
+@media (max-width: 768px) {
+  .brand-name {
+    font-size: 1.1rem;
+    display: inline-block !important;
+    color: #000000 !important;
+  }
 }
 
 .brand-tagline {
