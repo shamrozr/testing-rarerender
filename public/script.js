@@ -1756,6 +1756,11 @@ updateSectionVisibility(showSections) {
     return;
   }
 
+  // ADDED: Setup hero slideshow on homepage only
+  if (this.currentPath.length === 0) {
+    this.setupHeroSlideshow();
+  }
+
   this.groupItemsBySection();
   
   const sectionOrder = ['Featured', 'Best Sellers', 'Premium', 'New Arrivals', 'Trending'];
@@ -1802,6 +1807,174 @@ updateSectionVisibility(showSections) {
       container.insertAdjacentHTML('beforeend', sectionHTML);
     }
   }
+}
+
+
+
+setupHeroSlideshow() {
+  const slideshowItems = this.data.catalog?.slideshow || [];
+  
+  if (slideshowItems.length === 0) {
+    console.log('⚠️ No slideshow items found');
+    return;
+  }
+
+  console.log(`🎬 Setting up hero slideshow with ${slideshowItems.length} items`);
+
+  // Get hero section
+  const hero = document.querySelector('.hero');
+  if (!hero) return;
+
+  // Create slideshow HTML
+  const slideshowHTML = `
+    <div class="hero-slideshow-container">
+      <div class="hero-slideshow" id="heroSlideshow">
+        ${slideshowItems.map((item, index) => `
+          <div class="hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}">
+            <img 
+              src="${item.thumbnail}" 
+              alt="${item.name}" 
+              class="hero-slide-image"
+              loading="${index === 0 ? 'eager' : 'lazy'}"
+            >
+            <div class="hero-slide-overlay">
+              <div class="hero-slide-content">
+                <div class="hero-slide-category">${item.category}</div>
+                <h2 class="hero-slide-title">${item.name}</h2>
+                <a href="#" class="hero-slide-cta" data-path="${item.path}">
+                  Explore ${item.name.split(' ')[0]}
+                </a>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      
+      <button class="hero-slideshow-nav prev" id="heroSlideshowPrev">‹</button>
+      <button class="hero-slideshow-nav next" id="heroSlideshowNext">›</button>
+      
+      <div class="hero-slideshow-dots" id="heroSlideshowDots">
+        ${slideshowItems.map((_, index) => `
+          <div class="hero-slideshow-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // Insert before hero content
+  hero.insertAdjacentHTML('afterbegin', slideshowHTML);
+
+  // Setup slideshow functionality
+  this.initHeroSlideshowControls(slideshowItems.length);
+}
+
+initHeroSlideshowControls(totalSlides) {
+  let currentSlide = 0;
+  const slideshow = document.getElementById('heroSlideshow');
+  if (!slideshow) return;
+
+  const slides = slideshow.querySelectorAll('.hero-slide');
+  const dots = document.querySelectorAll('.hero-slideshow-dot');
+  const prevBtn = document.getElementById('heroSlideshowPrev');
+  const nextBtn = document.getElementById('heroSlideshowNext');
+
+  const goToSlide = (index) => {
+    slides.forEach(slide => slide.classList.remove('active'));
+    dots.forEach(dot => dot.classList.remove('active'));
+    
+    slides[index].classList.add('active');
+    dots[index].classList.add('active');
+    currentSlide = index;
+  };
+
+  const nextSlide = () => {
+    const next = (currentSlide + 1) % totalSlides;
+    goToSlide(next);
+  };
+
+  const prevSlide = () => {
+    const prev = (currentSlide - 1 + totalSlides) % totalSlides;
+    goToSlide(prev);
+  };
+
+  // Auto-advance every 5 seconds
+  let autoplay = setInterval(nextSlide, 5000);
+
+  // Reset autoplay on interaction
+  const resetAutoplay = () => {
+    clearInterval(autoplay);
+    autoplay = setInterval(nextSlide, 5000);
+  };
+
+  // Navigation buttons
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      prevSlide();
+      resetAutoplay();
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      nextSlide();
+      resetAutoplay();
+    });
+  }
+
+  // Dots navigation
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      goToSlide(index);
+      resetAutoplay();
+    });
+  });
+
+  // CTA click handlers
+  const ctas = slideshow.querySelectorAll('.hero-slide-cta');
+  ctas.forEach(cta => {
+    cta.addEventListener('click', (e) => {
+      e.preventDefault();
+      const path = cta.dataset.path;
+      if (path) {
+        this.navigateToPath(path);
+      }
+    });
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (this.currentPath.length === 0) { // Only on homepage
+      if (e.key === 'ArrowLeft') {
+        prevSlide();
+        resetAutoplay();
+      } else if (e.key === 'ArrowRight') {
+        nextSlide();
+        resetAutoplay();
+      }
+    }
+  });
+
+  // Touch swipe support
+  let touchStartX = 0;
+  slideshow.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  slideshow.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+      resetAutoplay();
+    }
+  }, { passive: true });
+
+  console.log('✅ Hero slideshow controls initialized');
 }
 
   // LOCATION: public/script.js
