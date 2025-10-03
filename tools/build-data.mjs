@@ -636,6 +636,7 @@ console.log("✅ BUILD TopOrder verification complete");
     "## 🏆 Enhanced CSV-Driven Catalog Build Summary with Image Rendering",
     "",
     "### 📊 **Performance Metrics**",
+    `- **Hero Slideshow Items:** ${heroSlideshowItems.length}`,
     `- **Enhanced Brands:** ${Object.keys(brands).length}`,
     `- **Premium Products:** ${totalProducts}`,
     `- **Category Collections:** ${Object.keys(tree).length}`,
