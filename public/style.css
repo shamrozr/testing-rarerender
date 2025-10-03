@@ -4117,16 +4117,28 @@ a:focus-visible {
   margin: 0; /* Remove default margins when in fixed container */
 }
 
-/* Hide hero completely on category pages */
+/* ============================================
+   HIDE HERO ON CATEGORY PAGES
+   ============================================ */
+
 body[data-page-type="category"] .hero,
 body[data-page-type="brand"] .hero {
   display: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
 
-/* Ensure main content flows properly */
-body[data-page-type="category"] #dynamicSections,
-body[data-page-type="brand"] #dynamicSections {
-  padding-top: 0;
+/* Ensure breadcrumbs are visible and properly spaced */
+.breadcrumb-nav {
+  margin: var(--space-6) auto;
+}
+
+/* Remove any lingering borders/shadows */
+#dynamicSections {
+  border-top: none !important;
 }
 }
 /* ============================================
