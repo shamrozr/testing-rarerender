@@ -803,11 +803,14 @@
     padding-top: var(--space-5);
   }
 
-/* Mobile Responsive */
+/* ============================================
+   MOBILE HERO - VERTICAL STACK LAYOUT
+   ============================================ */
+
 @media (max-width: 768px) {
   .hero {
-    padding: var(--space-8) 0 var(--space-6) 0;
-    overflow: visible;
+    padding: var(--space-8) 0 var(--space-6) 0 !important;
+    overflow: visible !important;
   }
   
   .hero .container {
@@ -815,33 +818,35 @@
     max-width: 100% !important;
   }
   
-  /* FIXED: Vertical stack on mobile */
+  /* CRITICAL: Override grid with flexbox vertical stack */
   .hero-homepage {
     display: flex !important;
     flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
     gap: var(--space-8) !important;
     align-items: center !important;
-    grid-template-columns: none !important; /* Override grid */
     max-width: 100% !important;
     margin: 0 auto !important;
     width: 100% !important;
   }
 
-  /* FIXED: Image first, full width */
+  /* Image first - full width */
   .hero-slideshow-side {
-    position: relative;
+    position: relative !important;
     width: 100% !important;
-    max-width: 600px;
-    aspect-ratio: 1 / 1;
-    background: #fff;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    border: 2px solid rgba(0, 0, 0, 0.05);
-    order: 1; /* Image first */
+    max-width: 600px !important;
+    aspect-ratio: 1 / 1 !important;
+    background: #fff !important;
+    border-radius: var(--radius-xl) !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow-xl) !important;
+    border: 2px solid rgba(0, 0, 0, 0.05) !important;
+    order: 1 !important;
+    margin: 0 auto !important;
   }
 
-  /* FIXED: Content second, full width, centered */
+  /* Content second - centered, full width */
   .hero-content-side {
     text-align: center !important;
     padding: 0 var(--space-4) !important;
@@ -849,58 +854,74 @@
     flex-direction: column !important;
     gap: var(--space-6) !important;
     align-items: center !important;
-    order: 2; /* Content second */
+    order: 2 !important;
     width: 100% !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2.5rem !important;
+    text-align: center !important;
   }
   
   .hero-subtitle {
-    font-size: 1.1rem;
-    margin-bottom: var(--space-6);
+    font-size: 1.1rem !important;
+    margin-bottom: var(--space-6) !important;
+    text-align: center !important;
   }
   
   .hero-actions {
-    flex-direction: column;
-    width: 100%;
-    gap: var(--space-3);
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: var(--space-3) !important;
+    align-items: stretch !important;
   }
   
   .hero-btn {
-    width: 100%;
+    width: 100% !important;
+    justify-content: space-between !important;
+    min-height: 70px !important;
   }
   
-  /* Center hero title lines on mobile */
+  /* Center all title lines */
   .hero-title-line1,
   .hero-title-line2,
   .hero-title-line3 {
-    display: block;
-    line-height: 1.1;
-    text-align: center;
+    display: block !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
   }
 }
 
 @media (max-width: 480px) {
   .hero {
-    padding: var(--space-8) var(--space-3) var(--space-6);
+    padding: var(--space-8) var(--space-3) var(--space-6) !important;
   }
   
   .hero-slideshow-side {
-    max-width: 95%;
+    max-width: 95% !important;
   }
   
   .hero-title {
-    font-size: 2rem;
+    font-size: 2rem !important;
   }
   
   .hero-subtitle {
-    font-size: 1rem;
+    font-size: 1rem !important;
+  }
+  
+  .hero-btn {
+    font-size: 0.85rem !important;
+    padding: var(--space-3) var(--space-4) !important;
+    min-height: 65px !important;
   }
 }
-  /* Mobile Responsive for Hero Buttons */
+
+
+
+
+/* Mobile Responsive for Hero Buttons */
   @media (max-width: 768px) {
     .hero-actions {
       flex-direction: column;
@@ -4625,7 +4646,37 @@ body[data-page-type="category"] .slideshow-section,
 body[data-page-type="brand"] .slideshow-section {
   display: none !important;
 }
+/* ============================================
+   CRITICAL: Force hide sections on category pages
+   ============================================ */
 
+/* Hide on ALL category/brand pages - HIGHEST PRIORITY */
+body[data-page-type="category"] .brands-section,
+body[data-page-type="category"] .slideshow-section,
+body[data-page-type="category"] #heroSlideshowContainer,
+body[data-page-type="brand"] .brands-section,
+body[data-page-type="brand"] .slideshow-section,
+body[data-page-type="brand"] #heroSlideshowContainer {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  pointer-events: none !important;
+}
+
+/* Force show ONLY on homepage (no data-page-type attribute) */
+body:not([data-page-type]) .brands-section,
+body:not([data-page-type]) .slideshow-section,
+body:not([data-page-type]) #heroSlideshowContainer {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  position: relative !important;
+  pointer-events: auto !important;
+}
   }
   /* ============================================
     SKELETON LOADING SCREENS
