@@ -384,16 +384,10 @@ addBreadcrumbNavigation(breadcrumbs) {
   const heroTitle = hero.querySelector('.hero-title');
   const heroSubtitle = hero.querySelector('.hero-subtitle');
   
-  if (heroSubtitle) {
-    // Insert after subtitle
-    heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
-  } else if (heroTitle) {
-    // Insert after title if no subtitle
-    heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
-  } else {
-    // Fallback: append to hero content
-    hero.appendChild(breadcrumbNav);
-  }
+// FIXED: Insert breadcrumbs in dedicated container instead of hero
+  const breadcrumbContainer = this.ensureBreadcrumbContainer();
+  breadcrumbContainer.innerHTML = ''; // Clear existing
+  breadcrumbContainer.appendChild(breadcrumbNav);
 }
 
   // LOCATION: public/script.js
@@ -1529,11 +1523,12 @@ updateSectionVisibility(showSections) {
 }
 
 // FIXED: Toggle homepage-only sections (slideshow, brands, hero slideshow)
+// FIXED: Toggle homepage-only sections - HIDE ENTIRE HERO
 toggleHomepageOnlySections(show) {
   const sections = [
-    '.slideshow-section',
-    '.brands-section',
-    '.hero-slideshow-side' // The hero slideshow specifically
+    '.slideshow-section',        // Review gallery
+    '.brands-section',           // Brand grid
+    '.hero'                      // ENTIRE HERO SECTION
   ];
   
   const displayValue = show ? 'block' : 'none';
@@ -1546,12 +1541,37 @@ toggleHomepageOnlySections(show) {
     }
   });
   
-  // FIXED: Handle hero text side separately
-  const heroTextSide = document.querySelector('.hero-text-side');
-  if (heroTextSide && !show) {
-    // On category pages, show breadcrumbs instead of hero content
-    heroTextSide.style.display = 'block'; // Keep visible for breadcrumbs
+  // SPECIAL: On category pages, need breadcrumbs somewhere
+  // Add a breadcrumb container at the top
+  if (!show) {
+    this.ensureBreadcrumbContainer();
   }
+}
+
+ensureBreadcrumbContainer() {
+  // Check if breadcrumb container exists
+  let breadcrumbContainer = document.querySelector('.breadcrumb-container-fixed');
+  
+  if (!breadcrumbContainer) {
+    breadcrumbContainer = document.createElement('div');
+    breadcrumbContainer.className = 'breadcrumb-container-fixed';
+    breadcrumbContainer.style.cssText = `
+      padding: var(--space-4) 0;
+      background: var(--color-white);
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 60px;
+      z-index: 90;
+    `;
+    
+    // Insert after header
+    const header = document.querySelector('.header');
+    if (header && header.nextSibling) {
+      header.parentNode.insertBefore(breadcrumbContainer, header.nextSibling);
+    }
+  }
+  
+  return breadcrumbContainer;
 }
   setupBrandInfo() {
     // Get brand from URL first - THIS IS CRITICAL
@@ -2125,7 +2145,8 @@ groupItemsBySection() {
 
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
-  
+  const loadingStrategy = this.currentPath.length > 0 ? 'lazy' : 
+                         (item.topOrder && item.topOrder < 5) ? 'eager' : 'lazy';
   // Extract image config
   const imageConfig = this.extractImageConfig(item);
   console.log('🔍 Image config for', item.title, ':', imageConfig);
@@ -2155,11 +2176,14 @@ createCardHTML(item) {
         // Fallback: shouldn't happen but just in case
         imageContent = this.getEmojiForCategory(item.key);
       } else {
-        imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
-             style="${imageStyles}" 
-             class="card-image-enhanced"
-             data-method="img-tag"
-             onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
+        imageContent = `<img src="${imageSrc}" 
+     alt="${item.title}" 
+     loading="${loadingStrategy}"
+     decoding="async"
+     style="${imageStyles}" 
+     class="card-image-enhanced"
+     data-method="img-tag"
+     onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'; console.error('Image failed:', '${imageSrc}')">`;
       }
     }
   } else {
