@@ -4483,7 +4483,39 @@ body[data-page-type="brand"] .breadcrumb-nav {
   backface-visibility: visible !important;
 }
 
+/* CRITICAL: Prevent homepage hero grid from crushing inner hero */
+body[data-page-type="category"] .hero-homepage,
+body[data-page-type="brand"] .hero-homepage {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 
+body[data-page-type="category"] .hero,
+body[data-page-type="brand"] .hero {
+  display: block !important;
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
+}
+
+body[data-page-type="category"] .hero .container,
+body[data-page-type="brand"] .hero .container {
+  display: block !important;
+  grid-template-columns: none !important;
+}
+
+body[data-page-type="category"] .hero-inner,
+body[data-page-type="brand"] .hero-inner {
+  display: block !important;
+  position: static !important;
+  width: 100% !important;
+  max-width: 800px !important;
+  margin: 0 auto !important;
+}
 
 
 }
