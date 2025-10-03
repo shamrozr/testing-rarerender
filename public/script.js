@@ -3148,8 +3148,6 @@ setupHeroSlideshow() {
     const viewport = document.getElementById('heroSlideshowViewport');
     const image = document.getElementById('heroSlideshowImage');
     const counter = document.getElementById('heroSlideshowCounter');
-    const prevBtn = document.getElementById('heroSlideshowPrev');
-    const nextBtn = document.getElementById('heroSlideshowNext');
     
     if (!container || !image) {
       console.log('⚠️ Hero slideshow elements not found');
@@ -3183,45 +3181,15 @@ setupHeroSlideshow() {
       newImg.src = current.thumbnail;
     };
     
-    const showNext = () => showImage(currentIndex + 1);
-    const showPrev = () => showImage(currentIndex - 1);
-    
-    // Event listeners
-    if (prevBtn) prevBtn.addEventListener('click', showPrev);
-    if (nextBtn) nextBtn.addEventListener('click', showNext);
-    
-    // Keyboard navigation (only if not in modal)
-    document.addEventListener('keydown', (e) => {
-      if (document.body.getAttribute('data-page-type') === 'category') return;
-      if (document.querySelector('.drive-preview-modal.active')) return;
-      
-      if (e.key === 'ArrowRight') showNext();
-      if (e.key === 'ArrowLeft') showPrev();
-    });
-    
-    // Touch swipe
-    let touchStartX = 0;
-    viewport.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-    
-    viewport.addEventListener('touchend', (e) => {
-      const touchEndX = e.changedTouches[0].screenX;
-      const swipeDistance = touchStartX - touchEndX;
-      
-      if (Math.abs(swipeDistance) > 50) {
-        if (swipeDistance > 0) showNext();
-        else showPrev();
-      }
-    }, { passive: true });
-    
-    // Auto-advance every 5 seconds
-    setInterval(showNext, 5000);
+    // Auto-advance every 5 seconds (NO MANUAL CONTROLS)
+    setInterval(() => {
+      showImage(currentIndex + 1);
+    }, 5000);
     
     // Initialize
     showImage(0);
     
-    console.log('✅ Hero slideshow initialized');
+    console.log('✅ Hero slideshow initialized (auto-advance only)');
   }
 
   setupFooter() {
