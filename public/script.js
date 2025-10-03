@@ -607,16 +607,30 @@ breadcrumbNav.style.cssText = `
   const heroTitle = hero.querySelector('.hero-title');
   const heroSubtitle = hero.querySelector('.hero-subtitle');
   
-  if (heroSubtitle) {
-    // Insert after subtitle
-    heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
-  } else if (heroTitle) {
-    // Insert after title if no subtitle
-    heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
-  } else {
-    // Fallback: append to hero content
-    hero.appendChild(breadcrumbNav);
+  // Insert breadcrumb into hero-inner-wrapper if it exists
+const heroWrapper = hero.querySelector('.hero-inner-wrapper');
+const insertTarget = heroWrapper || hero;
+
+if (heroSubtitle) {
+  // Insert after subtitle
+  heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
+} else if (heroTitle) {
+  // Insert after title if no subtitle
+  heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
+} else {
+  // Fallback: append to hero content
+  insertTarget.appendChild(breadcrumbNav);
+}
+
+// Force position after insertion
+setTimeout(() => {
+  if (breadcrumbNav.parentElement) {
+    breadcrumbNav.style.position = 'relative';
+    breadcrumbNav.style.marginTop = '1.5rem';
+    breadcrumbNav.style.marginBottom = '1.5rem';
+    console.log('✅ Breadcrumb positioned in DOM');
   }
+}, 50);
 }
 
   // LOCATION: public/script.js
