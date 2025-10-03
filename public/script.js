@@ -1895,8 +1895,13 @@ navigateToHome() {
   this.showHomepageHero();
   this.showFeaturedHeading();
   
+  // FIXED: Restore hero visibility when going home
+  const hero = document.querySelector('.hero');
+  if (hero) hero.style.display = 'block';
+  
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
+  // ... rest of the function
   
   // FIXED: Reset scroll position first
   this.resetScrollPosition();
@@ -4190,7 +4195,14 @@ resetScrollPosition() {
   const container = document.getElementById('dynamicSections');
   if (!container) return;
   
+  // FIXED: Hide hero and featured heading during search
+  const hero = document.querySelector('.hero');
+  const featuredHeading = document.getElementById('featuredHeadingSection');
+  if (hero) hero.style.display = 'none';
+  if (featuredHeading) featuredHeading.style.display = 'none';
+  
   if (results.length === 0) {
+    // ... rest of the function
     container.innerHTML = `
       <section class="content-section">
         <div class="container">
