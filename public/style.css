@@ -806,25 +806,27 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .hero {
-    padding: var(--space-8) 0 var(--space-6) 0; /* NO horizontal padding */
+    padding: var(--space-8) 0 var(--space-6) 0;
     overflow: hidden;
   }
   
   .hero .container {
-    padding: 0 var(--space-4) !important; /* Container handles padding */
+    padding: 0 var(--space-4) !important;
+    max-width: 100% !important;
   }
   
   .hero-homepage {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto auto !important;
+    display: flex !important; /* CHANGED from grid */
+    flex-direction: column !important; /* Stack vertically */
     gap: var(--space-6) !important;
     padding: 0 !important;
     margin: 0 !important;
+    width: 100% !important;
   }
   
   /* FIXED: Image on top, full width */
   .hero-slideshow-side {
-    grid-row: 1 !important;
+    order: 1 !important; /* First */
     max-width: 100% !important;
     margin: 0 !important;
     width: 100% !important;
@@ -832,9 +834,10 @@
   
   /* FIXED: Content below image */
   .hero-content-side {
-    grid-row: 2 !important;
-    text-align: center;
+    order: 2 !important; /* Second */
+    text-align: center !important;
     padding: 0 !important;
+    width: 100% !important;
   }
   
   .hero-title {
@@ -846,13 +849,24 @@
     margin-bottom: var(--space-6);
   }
   
+  .hero-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: var(--space-3);
+  }
+  
+  .hero-btn {
+    width: 100%;
+  }
+  
   .hero-slideshow-counter {
     font-size: 0.8rem;
     padding: var(--space-1) var(--space-3);
     bottom: 15px;
   }
 }
-  @media (max-width: 480px) {
+
+@media (max-width: 480px) {
     .hero {
       padding: var(--space-8) var(--space-3) var(--space-6);
     }
