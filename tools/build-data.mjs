@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
-
+const slideshowItems = [];
 const BRANDS_CSV_URL = process.env.BRANDS_CSV_URL;
 const MASTER_CSV_URL = process.env.MASTER_CSV_URL;
 const PLACEHOLDER_THUMB = (process.env.PLACEHOLDER_THUMB || "/thumbs/_placeholder.webp").trim();
@@ -94,10 +94,6 @@ function propagateThumbsFromChildren(node, currentDepth = 0) {
     if (!n.isProduct && n.children) {
       propagateThumbsFromChildren(n.children, currentDepth + 1);
       
-      // FIXED: Only inherit for folder display at depth 2+ (BrandsFolders level)
-      // Level 0: Homepage categories (BAGS, SHOES) - NO inheritance
-      // Level 1: Brand folders (Chanel, Gucci) - NO inheritance  
-      // Level 2+: Brand subfolders - YES inheritance for FOLDER display only
       const shouldInherit = currentDepth >= 2;
       
       if (!n.thumbnail && shouldInherit) {
@@ -107,19 +103,17 @@ function propagateThumbsFromChildren(node, currentDepth = 0) {
           if (child.thumbnail) {
             n.thumbnail = child.thumbnail;
             
-            // INHERIT image config for FOLDER display only
-            // This is ONLY for how the folder itself looks, NOT for child items
             if (child.alignment && child.alignment.trim() !== '') {
               n.alignment = child.alignment;
-              n._inherited_alignment = true; // Mark as inherited for folder display
+              n._inherited_alignment = true;
             }
             if (child.fitting && child.fitting.trim() !== '') {
               n.fitting = child.fitting;
-              n._inherited_fitting = true; // Mark as inherited for folder display
+              n._inherited_fitting = true;
             }
             if (child.scaling && child.scaling.trim() !== '') {
               n.scaling = child.scaling;
-              n._inherited_scaling = true; // Mark as inherited for folder display
+              n._inherited_scaling = true;
             }
             
             console.log(`📸 FOLDER DISPLAY inheritance for ${k} at depth ${currentDepth} from child ${ckey}: alignment=${n.alignment || 'default'}, fitting=${n.fitting || 'default'}, scaling=${n.scaling || 'default'}`);
@@ -135,17 +129,10 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
   for (const k of Object.keys(node)) {
     const n = node[k];
     
-    // Only inherit thumbnails for display purposes
     const currentThumb = n.thumbnail || inheritedThumb || PLACEHOLDER_THUMB || "";
     if (!n.thumbnail && currentThumb) n.thumbnail = currentThumb;
     
-    // CRITICAL: Do NOT inherit image configuration to children
-    // Children without explicit CSV config should use GLOBAL defaults (cover + center)
-    // Children WITH explicit CSV config should keep their config
-    // Only folders inherit for their own display, never pass it down to children
-    
     if (!n.isProduct && n.children) {
-      // Pass only thumbnail to children, never image config
       fillMissingThumbsFromAncestors(n.children, currentThumb, currentDepth + 1);
     }
   }
@@ -187,26 +174,20 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
       continue; 
     }
 
-    // Enhanced brand properties from CSV
     const brandData = {
       name,
-      // Homepage content
       tagline: (r.tagline || r.brandTagline || "").trim(),
       heroTitle: (r.heroTitle || r.hero_title || "").trim(),
       heroSubtitle: (r.heroSubtitle || r.hero_subtitle || "").trim(),
       footerText: (r.footerText || r.footer_text || "").trim(),
-      
-      // Color validation
       colors: {}
     };
 
-    // Process colors with enhanced defaults
     let primary = (r.primaryColor || r.primary_color || "").trim();
     let accent = (r.accentColor || r.accent_color || "").trim();
     let text = (r.textColor || r.text_color || "").trim();
     let bg = (r.bgColor || r.bg_color || "").trim();
 
-    // Enhanced defaults for light professional theme
     if (!HEX.test(primary)) { 
       if (primary) warnings.push(`Brand ${slug}: invalid primaryColor "${primary}" → professional blue used`); 
       primary = "#6366f1";
@@ -226,13 +207,11 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
 
     brandData.colors = { primary, accent, text, bg };
 
-    // WhatsApp validation
     const waRaw = (r.whatsapp || "").trim();
     const whatsapp = WA.test(waRaw) ? waRaw : "";
     if (waRaw && !whatsapp) warnings.push(`Brand ${slug}: WhatsApp is not wa.me/* → ignored`);
     if (whatsapp) brandData.whatsapp = whatsapp;
 
-    // Default category
     brandData.defaultCategory = (r.defaultCategory || r.default_category || "").trim() || "BAGS";
 
     if (brands[slug]) { 
@@ -263,168 +242,163 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
   const folderMeta = new Map();
   const sectionStats = new Map();
 
-  console.log("📝 Processing enhanced catalog entries with image rendering...");
-console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
-let processedCount = 0;
+  console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
+  let processedCount = 0;
 
-for (const r of masterRows) {
-  const name = (r["Name"] || r["Folder/Product"] || "").trim();
-  const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
-  const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
-  const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
-  
-  // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
-  const topOrderRaw = (
-    r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
-    r["Order"] || r["order"] || r["ORDER"] ||
-    r["Priority"] || r["priority"] || r["PRIORITY"] ||
-    r["Rank"] || r["rank"] || r["RANK"] ||
-    r["Sort"] || r["sort"] || r["SORT"] ||
-    r["Position"] || r["position"] || r["POSITION"] || ""
-  ).trim();
-  
-  const section = (r["Section"] || r["section"] || "").trim() || "Featured";
-  const category = (r["Category"] || r["category"] || "").trim();
-
-  // Image rendering columns
-  const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || "").trim();
-  const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim();
-  const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
-  
-  if (!rel || !name) continue;
-  
-  processedCount++;
-  if (processedCount % 50 === 0) {
-    console.log(`  ✨ Processed ${processedCount}/${masterRows.length} items...`);
-  }
-
-  const full = rel;
-  const segs = full.split("/").filter(Boolean);
-  const pathDepth = segs.length;
-  const isCandidateProduct = !!driveLink;
-  const hasChildren = parentsSet.has(full);
-  const isLeafProduct = isCandidateProduct && !hasChildren;
-
-  if (isCandidateProduct && !GDRIVE.test(driveLink)) {
-    invalidDriveLinks.push({ name, rel, driveLink });
-  }
-
-  const normalizedThumb = toThumbSitePath(thumbRel);
-
-  // ENHANCED: Parse TopOrder for items at ANY depth
-  let parsedTopOrder = 999; // Default
-  if (topOrderRaw) {
-    const n = parseInt(topOrderRaw, 10);
-    if (!Number.isNaN(n)) {
-      parsedTopOrder = n;
-      console.log(`✅ BUILD TopOrder for ${name} at depth ${pathDepth} (${isLeafProduct ? 'PRODUCT' : 'FOLDER'}) path ${rel}: ${parsedTopOrder}`);
-    } else {
-      console.log(`⚠️ BUILD Invalid TopOrder "${topOrderRaw}" for ${name} at depth ${pathDepth}, using default 999`);
+  for (const r of masterRows) {
+    const name = (r["Name"] || r["Folder/Product"] || "").trim();
+    const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
+    const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
+    const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+    
+    // CRITICAL: Extract slideshow FIRST before any filtering
+    const slideshowValue = (
+      r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || ""
+    ).trim().toLowerCase();
+    
+    if ((slideshowValue === 'yes' || slideshowValue === 'on') && thumbRel) {
+      const normalizedThumb = toThumbSitePath(thumbRel);
+      slideshowItems.push({
+        image: normalizedThumb,
+        title: name || 'Slideshow Image',
+        path: rel || 'unknown'
+      });
+      console.log(`📸 SLIDESHOW ADDED: ${name} → ${normalizedThumb}`);
     }
-  } else {
-    console.log(`📝 BUILD No TopOrder specified for ${name} at depth ${pathDepth}, using default 999`);
+    
+    const topOrderRaw = (
+      r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
+      r["Order"] || r["order"] || r["ORDER"] ||
+      r["Priority"] || r["priority"] || r["PRIORITY"] ||
+      r["Rank"] || r["rank"] || r["RANK"] ||
+      r["Sort"] || r["sort"] || r["SORT"] ||
+      r["Position"] || r["position"] || r["POSITION"] || ""
+    ).trim();
+    
+    const section = (r["Section"] || r["section"] || "").trim() || "Featured";
+    const category = (r["Category"] || r["category"] || "").trim();
+
+    const imageAlignment = (r["Alignment"] || r["alignment"] || r["ALIGNMENT"] || "").trim();
+    const imageFitting = (r["Fitting"] || r["fitting"] || r["FITTING"] || "").trim();
+    const imageScaling = (r["Scaling"] || r["scaling"] || r["SCALING"] || "").trim();
+    
+    if (!rel || !name) continue;
+    
+    processedCount++;
+    if (processedCount % 50 === 0) {
+      console.log(`  ✨ Processed ${processedCount}/${masterRows.length} items...`);
+    }
+
+    const full = rel;
+    const segs = full.split("/").filter(Boolean);
+    const pathDepth = segs.length;
+    const isCandidateProduct = !!driveLink;
+    const hasChildren = parentsSet.has(full);
+    const isLeafProduct = isCandidateProduct && !hasChildren;
+
+    if (isCandidateProduct && !GDRIVE.test(driveLink)) {
+      invalidDriveLinks.push({ name, rel, driveLink });
+    }
+
+    const normalizedThumb = toThumbSitePath(thumbRel);
+
+    let parsedTopOrder = 999;
+    if (topOrderRaw) {
+      const n = parseInt(topOrderRaw, 10);
+      if (!Number.isNaN(n)) {
+        parsedTopOrder = n;
+        console.log(`✅ BUILD TopOrder for ${name} at depth ${pathDepth} (${isLeafProduct ? 'PRODUCT' : 'FOLDER'}) path ${rel}: ${parsedTopOrder}`);
+      } else {
+        console.log(`⚠️ BUILD Invalid TopOrder "${topOrderRaw}" for ${name} at depth ${pathDepth}, using default 999`);
+      }
+    } else {
+      console.log(`📝 BUILD No TopOrder specified for ${name} at depth ${pathDepth}, using default 999`);
+    }
+
+    if (!sectionStats.has(section)) {
+      sectionStats.set(section, 0);
+    }
+    sectionStats.set(section, sectionStats.get(section) + 1);
+
+    if (isLeafProduct) {
+      const parentSegs = segs.slice(0, -1);
+      const children = ensureFolderNode(tree, parentSegs);
+      children[name] = { 
+        isProduct: true, 
+        driveLink, 
+        thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+        section: section,
+        category: category,
+        TopOrder: parsedTopOrder,
+        topOrder: parsedTopOrder,
+        ...(imageAlignment ? { alignment: imageAlignment } : {}),
+        ...(imageFitting ? { fitting: imageFitting } : {}),
+        ...(imageScaling ? { scaling: imageScaling } : {}),
+      };
+      totalProducts++;
+      console.log(`🎯 BUILD Set PRODUCT ${name} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
+    } else {
+      ensureFolderNode(tree, segs);
+      const k = segs.join("/");
+      const existing = folderMeta.get(k) || {};
+      if (normalizedThumb) existing.thumbnail = normalizedThumb;
+      if (driveLink) existing.driveLink = driveLink;
+      if (section) existing.section = section;
+      if (category) existing.category = category;
+      
+      existing.TopOrder = parsedTopOrder;
+      existing.topOrder = parsedTopOrder;
+      console.log(`📁 BUILD Set FOLDER ${k} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
+      
+      if (imageAlignment) existing.alignment = imageAlignment;
+      if (imageFitting) existing.fitting = imageFitting;
+      if (imageScaling) existing.scaling = imageScaling;
+      
+      folderMeta.set(k, existing);
+    }
   }
 
-  // Track section statistics
-  if (!sectionStats.has(section)) {
-    sectionStats.set(section, 0);
-  }
-  sectionStats.set(section, sectionStats.get(section) + 1);
+  console.log(`📊 BUILD Processed ${totalProducts} products across all depths`);
+  console.log(`📊 BUILD Created ${folderMeta.size} folder entries across all depths`);
 
-  if (isLeafProduct) {
-  // ENHANCED: Products at ANY depth get TopOrder
-  const parentSegs = segs.slice(0, -1);
-  const children = ensureFolderNode(tree, parentSegs);
-  children[name] = { 
-    isProduct: true, 
-    driveLink, 
-    thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
-    section: section,
-    category: category,
-    // CRITICAL: Add TopOrder to products at ANY depth in BOTH formats
-    TopOrder: parsedTopOrder,
-    topOrder: parsedTopOrder,
-    // Image rendering config - only set if explicitly provided
-    ...(imageAlignment ? { alignment: imageAlignment } : {}),
-    ...(imageFitting ? { fitting: imageFitting } : {}),
-    ...(imageScaling ? { scaling: imageScaling } : {}),
-  };
-  totalProducts++;
-  console.log(`🎯 BUILD Set PRODUCT ${name} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
-} else {
-  // ENHANCED: Folders at ANY depth get TopOrder
-  ensureFolderNode(tree, segs);
-  const k = segs.join("/");
-  const existing = folderMeta.get(k) || {};
-  if (normalizedThumb) existing.thumbnail = normalizedThumb;
-  if (driveLink) existing.driveLink = driveLink;
-  if (section) existing.section = section;
-  if (category) existing.category = category;
-  
-  // CRITICAL: Set TopOrder for folders at ANY depth in BOTH formats
-  existing.TopOrder = parsedTopOrder;
-  existing.topOrder = parsedTopOrder;
-  console.log(`📁 BUILD Set FOLDER ${k} at depth ${pathDepth} TopOrder: ${parsedTopOrder}`);
-  
-  // Image rendering config for folders - only set if explicitly provided
-  if (imageAlignment) existing.alignment = imageAlignment;
-  if (imageFitting) existing.fitting = imageFitting;
-  if (imageScaling) existing.scaling = imageScaling;
-  
-  folderMeta.set(k, existing);
-}
-}
-
-console.log(`📊 BUILD Processed ${totalProducts} products across all depths`);
-console.log(`📊 BUILD Created ${folderMeta.size} folder entries across all depths`);
-
-
-  // Attach enhanced folder metadata including image rendering
-  console.log("🔗 Enhancing catalog with sections and image rendering...");
   console.log("🔗 Enhancing catalog with TopOrder at ALL levels...");
 
-function attachFolderMeta(node, prefix = []) {
-  for (const k of Object.keys(node)) {
-    const n = node[k];
-    if (!n.isProduct) {
-      const here = [...prefix, k].join("/");
-      const meta = folderMeta.get(here);
-      if (meta?.thumbnail) n.thumbnail = meta.thumbnail;
-      if (meta?.driveLink) n.driveLink = meta.driveLink;
-      if (meta?.section) n.section = meta.section;
-      if (meta?.category) n.category = meta.category;
-      
-      // CRITICAL: Apply TopOrder and image config to folders only
-      if (typeof meta?.TopOrder !== "undefined") {
-        n.TopOrder = meta.TopOrder;
-        n.topOrder = meta.TopOrder;
-        console.log(`📌 BUILD Applied TopOrder ${meta.TopOrder} to folder: ${here}`);
+  function attachFolderMeta(node, prefix = []) {
+    for (const k of Object.keys(node)) {
+      const n = node[k];
+      if (!n.isProduct) {
+        const here = [...prefix, k].join("/");
+        const meta = folderMeta.get(here);
+        if (meta?.thumbnail) n.thumbnail = meta.thumbnail;
+        if (meta?.driveLink) n.driveLink = meta.driveLink;
+        if (meta?.section) n.section = meta.section;
+        if (meta?.category) n.category = meta.category;
+        
+        if (typeof meta?.TopOrder !== "undefined") {
+          n.TopOrder = meta.TopOrder;
+          n.topOrder = meta.TopOrder;
+          console.log(`📌 BUILD Applied TopOrder ${meta.TopOrder} to folder: ${here}`);
+        } else {
+          n.TopOrder = 999;
+          n.topOrder = 999;
+        }
+        
+        if (meta?.alignment && !n._inherited_alignment) n.alignment = meta.alignment;
+        if (meta?.fitting && !n._inherited_fitting) n.fitting = meta.fitting;
+        if (meta?.scaling && !n._inherited_scaling) n.scaling = meta.scaling;
+        
+        if (n.children) attachFolderMeta(n.children, [...prefix, k]);
       } else {
-        n.TopOrder = 999;
-        n.topOrder = 999;
+        if (typeof n.TopOrder === "undefined") {
+          n.TopOrder = 999;
+          n.topOrder = 999;
+        }
       }
-      
-      // FIXED: Image config for folders only (for folder display)
-      // Do NOT override inherited config if it exists
-      if (meta?.alignment && !n._inherited_alignment) n.alignment = meta.alignment;
-      if (meta?.fitting && !n._inherited_fitting) n.fitting = meta.fitting;
-      if (meta?.scaling && !n._inherited_scaling) n.scaling = meta.scaling;
-      
-      if (n.children) attachFolderMeta(n.children, [...prefix, k]);
-    } else {
-      // ENSURE products have TopOrder fallback but NO image config inheritance
-      if (typeof n.TopOrder === "undefined") {
-        n.TopOrder = 999;
-        n.topOrder = 999;
-      }
-      // Products keep their own explicit CSV config or get GLOBAL defaults via JavaScript
     }
   }
-}
 
-attachFolderMeta(tree);
+  attachFolderMeta(tree);
 
-  // Convert empty folders with drive links to products
   console.log("🔄 Optimizing catalog structure...");
   function convertEmpty(node) {
     for (const k of Object.keys(node)) {
@@ -443,8 +417,6 @@ attachFolderMeta(tree);
   }
   convertEmpty(tree);
 
-  // Enhance catalog with visual and section data
-  // Enhance catalog with visual and section data
   console.log("🖼️  Enhancing visual and section elements with inherited config...");
   propagateThumbsFromChildren(tree);
   fillMissingThumbsFromAncestors(tree);
@@ -455,13 +427,11 @@ attachFolderMeta(tree);
     setCounts(tree[top]);
   }
 
-  // Enhanced health checks including image rendering
   console.log("🔍 Running enhanced quality assurance with image rendering checks...");
   const missingThumbFiles = [];
   const sectionAnalysis = {};
   const imageRenderingStats = { withConfig: 0, total: 0 };
   
-  // Analyze sections and image rendering config
   Object.entries(tree).forEach(([key, item]) => {
     const section = item.section || 'Featured';
     if (!sectionAnalysis[section]) {
@@ -470,60 +440,58 @@ attachFolderMeta(tree);
     sectionAnalysis[section].categories.push(key);
     sectionAnalysis[section].totalItems += item.count || 0;
   });
-console.log("🔍 BUILD Verifying TopOrder coverage...");
-function verifyTopOrder(node, path = []) {
-  for (const [key, item] of Object.entries(node)) {
-    const fullPath = [...path, key].join("/");
-    const hasTopOrder = typeof item.TopOrder !== "undefined" || typeof item.topOrder !== "undefined";
-    
-    if (!hasTopOrder) {
-      console.log(`❌ BUILD Missing TopOrder: ${fullPath}`);
-    } else {
-      console.log(`✅ BUILD TopOrder verified: ${fullPath} = ${item.TopOrder || item.topOrder}`);
-    }
-    
-    if (!item.isProduct && item.children) {
-      verifyTopOrder(item.children, [...path, key]);
-    }
-  }
-}
-verifyTopOrder(tree);
-console.log("✅ BUILD TopOrder verification complete");
-  async function scanMissingThumbs(node, pfx = []) {
-  for (const k of Object.keys(node)) {
-    const n = node[k];
-    imageRenderingStats.total++;
-    
-    // FIXED: Check if item has image rendering config INCLUDING custom
-    // ENHANCED: Check if item has image rendering config (including inherited)
-    if (n.alignment || n.fitting || n.scaling) {
-      imageRenderingStats.withConfig++;
-      if ([...pfx, k].join("/").includes("/")) {
-        console.log(`📸 Config found at ${[...pfx, k].join("/")}: alignment=${n.alignment}, fitting=${n.fitting}, scaling=${n.scaling}`);
-      }
-    }
-    
-    if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
-      const exists = await fileExists(n.thumbnail);
-      if (!exists) {
-        missingThumbFiles.push({ 
-          path: [...pfx, k].join("/"), 
-          thumbnail: n.thumbnail,
-          section: n.section || 'Unknown',
-          hasImageConfig: !!(n.alignment || n.fitting || n.scaling)
 
-        });
+  console.log("🔍 BUILD Verifying TopOrder coverage...");
+  function verifyTopOrder(node, path = []) {
+    for (const [key, item] of Object.entries(node)) {
+      const fullPath = [...path, key].join("/");
+      const hasTopOrder = typeof item.TopOrder !== "undefined" || typeof item.topOrder !== "undefined";
+      
+      if (!hasTopOrder) {
+        console.log(`❌ BUILD Missing TopOrder: ${fullPath}`);
+      } else {
+        console.log(`✅ BUILD TopOrder verified: ${fullPath} = ${item.TopOrder || item.topOrder}`);
+      }
+      
+      if (!item.isProduct && item.children) {
+        verifyTopOrder(item.children, [...path, key]);
       }
     }
-    if (!n.isProduct && n.children) {
-      await scanMissingThumbs(n.children, [...pfx, k]);
+  }
+  verifyTopOrder(tree);
+  console.log("✅ BUILD TopOrder verification complete");
+
+  async function scanMissingThumbs(node, pfx = []) {
+    for (const k of Object.keys(node)) {
+      const n = node[k];
+      imageRenderingStats.total++;
+      
+      if (n.alignment || n.fitting || n.scaling) {
+        imageRenderingStats.withConfig++;
+        if ([...pfx, k].join("/").includes("/")) {
+          console.log(`📸 Config found at ${[...pfx, k].join("/")}: alignment=${n.alignment}, fitting=${n.fitting}, scaling=${n.scaling}`);
+        }
+      }
+      
+      if (n.thumbnail && n.thumbnail !== PLACEHOLDER_THUMB) {
+        const exists = await fileExists(n.thumbnail);
+        if (!exists) {
+          missingThumbFiles.push({ 
+            path: [...pfx, k].join("/"), 
+            thumbnail: n.thumbnail,
+            section: n.section || 'Unknown',
+            hasImageConfig: !!(n.alignment || n.fitting || n.scaling)
+          });
+        }
+      }
+      if (!n.isProduct && n.children) {
+        await scanMissingThumbs(n.children, [...pfx, k]);
+      }
     }
   }
-}
 
   await scanMissingThumbs(tree);
 
-  // Generate enhanced report with image rendering stats
   const report = {
     timestamp: new Date().toISOString(),
     build_version: "2.1.0-image-rendering",
@@ -556,25 +524,23 @@ console.log("✅ BUILD TopOrder verification complete");
         totalItems: data.totalItems
       })),
       sampleCategories: Object.keys(tree).slice(0, 10).map(cat => ({
-  name: cat,
-  items: tree[cat].count || 0,
-  section: tree[cat].section || 'Featured',
-  topOrder: tree[cat].topOrder || 999,
-  hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling),
-  imageConfig: {
-    alignment: tree[cat].alignment || 'inherited/default',
-    fitting: tree[cat].fitting || 'inherited/default', 
-    scaling: tree[cat].scaling || 'inherited/default'
-  }
-}))
+        name: cat,
+        items: tree[cat].count || 0,
+        section: tree[cat].section || 'Featured',
+        topOrder: tree[cat].topOrder || 999,
+        hasImageConfig: !!(tree[cat].alignment || tree[cat].fitting || tree[cat].scaling),
+        imageConfig: {
+          alignment: tree[cat].alignment || 'inherited/default',
+          fitting: tree[cat].fitting || 'inherited/default', 
+          scaling: tree[cat].scaling || 'inherited/default'
+        }
+      }))
     }
   };
 
-  // Save enhanced files
   console.log("💾 Saving enhanced CSV-driven catalog with image rendering...");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   
-  // Create enhanced data.json with sections and image rendering support
   const enhancedData = {
     brands,
     catalog: {
@@ -603,7 +569,25 @@ console.log("✅ BUILD TopOrder verification complete");
     JSON.stringify(enhancedData, null, 2), 
     "utf8"
   );
+  console.log("✅ Saved data.json");
   
+  // SLIDESHOW: Save slideshow.json
+  console.log(`\n📸 Slideshow: ${slideshowItems.length} items collected`);
+  
+  if (slideshowItems.length > 0) {
+    slideshowItems.forEach((item, i) => {
+      console.log(`   ${i + 1}. ${item.title}: ${item.image}`);
+    });
+  }
+  
+  await fs.writeFile(
+    path.join(PUBLIC_DIR, "slideshow.json"),
+    JSON.stringify(slideshowItems, null, 2),
+    "utf8"
+  );
+  
+  console.log(`✅ Saved slideshow.json (${slideshowItems.length} items)`);
+
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
   await fs.writeFile(
     path.join(ROOT, "build", "health.json"), 
@@ -611,7 +595,6 @@ console.log("✅ BUILD TopOrder verification complete");
     "utf8"
   );
 
-  // Generate enhanced summary with sections and image rendering
   const summary = [
     "## 🏆 Enhanced CSV-Driven Catalog Build Summary with Image Rendering",
     "",
@@ -621,6 +604,7 @@ console.log("✅ BUILD TopOrder verification complete");
     `- **Category Collections:** ${Object.keys(tree).length}`,
     `- **Dynamic Sections:** ${Object.keys(sectionAnalysis).length}`,
     `- **Catalog Entries Processed:** ${masterRows.length}`,
+    `- **Slideshow Items:** ${slideshowItems.length}`,
     "",
     "### 🎨 **Image Rendering System**",
     `- **Items with Custom Config:** ${imageRenderingStats.withConfig} / ${imageRenderingStats.total}`,
@@ -640,6 +624,7 @@ console.log("✅ BUILD TopOrder verification complete");
     "- ✅ TopOrder-based sorting",
     "- ✅ Professional light theme",
     "- ✅ Advanced image rendering system",
+    "- ✅ Hero slideshow support",
     "",
     "### 🎯 **Quality Assurance**",
     `- **Missing Thumbnails:** ${missingThumbFiles.length}`,
@@ -678,7 +663,8 @@ console.log("✅ BUILD TopOrder verification complete");
     "- `Category` - Additional categorization",
     "- `Thumbs Path` - Thumbnail image path",
     "- `Drive Link` - Google Drive link for products",
-    "- **`Alignment`** - Image position (center/top/50px 30px/crop-top/etc) - NOW SUPPORTS PIXELS!",
+    "- `slideshow` - Include in hero slideshow (yes/on)",
+    "- **`Alignment`** - Image position (center/top/50px 30px/crop-top/etc)",
     "- **`Fitting`** - Image fit method (fit/fill/contain/cover/scale-down)",
     "- **`Scaling`** - Image scale (120%/300px/1.2)",
     "",
@@ -688,15 +674,15 @@ console.log("✅ BUILD TopOrder verification complete");
     "- **Make image 20% larger:** `Scaling: 120%`",
     "- **Crop bottom-right:** `Alignment: bottom-right, Fitting: cover`",
     "- **Fit entire image:** `Fitting: contain`",
-    "- **Pixel-perfect positioning:** `Custom: 50px 30px`", // ADD THIS LINE
-    "- **Custom crop:** `Custom: crop-top`", // ADD THIS LINE
+    "- **Pixel-perfect positioning:** `Custom: 50px 30px`",
+    "- **Custom crop:** `Custom: crop-top`",
     "",
     "### 🚀 **Next Steps**",
-    "1. Update your CSV files with the new image rendering columns",
-    "2. Set `Alignment` values: center, top, bottom, left, right, top-left, etc.",
-    "3. Set `Fitting` values: fit, fill, contain, cover, scale-down",
-    "4. Set `Scaling` values: 120%, 80%, 300px, 1.5",
-    "5. Set `Custom` values: 50px 30px, crop-top, center 25%, etc.", // ADD THIS LINE
+    "1. Add `slideshow = yes` to Master CSV for hero slideshow images",
+    "2. Update CSV with new image rendering columns",
+    "3. Set `Alignment` values: center, top, bottom, left, right, top-left, etc.",
+    "4. Set `Fitting` values: fit, fill, contain, cover, scale-down",
+    "5. Set `Scaling` values: 120%, 80%, 300px, 1.5",
     "6. Test the enhanced image rendering system",
     "7. Only fill columns when you want custom behavior - defaults preserved"
   ].filter(Boolean).join("\n");
@@ -714,6 +700,7 @@ console.log("✅ BUILD TopOrder verification complete");
   
   console.log(`\n🎉 Successfully built enhanced CSV-driven catalog with image rendering!`);
   console.log(`📁 Output: ${path.join(PUBLIC_DIR, "data.json")}`);
+  console.log(`📸 Slideshow: ${path.join(PUBLIC_DIR, "slideshow.json")}`);
   console.log(`📊 Health Report: ${path.join(ROOT, "build", "health.json")}`);
   console.log("✨ Ready for professional CSV-driven experience with advanced image rendering!");
 })().catch(err => {
