@@ -525,6 +525,29 @@ body[data-page-type="brand"] .hero * {
   max-width: 1400px;
   margin: 0 auto;
 }
+
+/* Mobile: Stack vertically - Slideshow FIRST, then content */
+@media (max-width: 768px) {
+  .hero-homepage {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: var(--space-6) !important;
+  }
+  
+  /* Force slideshow to be first */
+  .hero-slideshow-side {
+    order: 1 !important;
+    max-width: 90% !important;
+    margin: 0 auto !important;
+  }
+  
+  /* Force content to be second */
+  .hero-content-side {
+    order: 2 !important;
+    text-align: center !important;
+    padding: var(--space-4) !important;
+  }
+}
 /* Prevent grid collapse when switching views */
 .hero-homepage[style*="display: none"] {
   display: none !important;
