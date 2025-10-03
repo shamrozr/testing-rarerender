@@ -179,13 +179,28 @@ html {
 }
 
 body {
-  padding-top: 60px; /* FIXED: Standardized desktop padding */
+  padding-top: 80px; /* INCREASED for better mobile spacing */
   font-family: var(--font-primary);
   color: var(--color-text-primary);
   background: var(--color-bg);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Mobile body padding adjustment */
+@media (max-width: 768px) {
+  body {
+    padding-top: 90px; /* More space on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding-top: 100px; /* Even more on small mobile */
+  }
 }
 
 /* Container System */
@@ -351,11 +366,27 @@ body {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: #202124 !important; /* FIXED: Force dark color */
+  color: #202124 !important;
   line-height: 1.2;
   cursor: pointer;
-  display: block !important; /* FIXED: Force visible */
-  opacity: 1 !important; /* FIXED: Force opaque */
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  -webkit-text-fill-color: #202124 !important;
+  text-rendering: optimizeLegibility;
+  z-index: 10;
+  position: relative;
+}
+
+/* Mobile-specific brand name fix */
+@media (max-width: 768px) {
+  .brand-name {
+    font-size: 1.2rem !important;
+    color: #202124 !important;
+    -webkit-text-fill-color: #202124 !important;
+    background: transparent !important;
+    text-shadow: none !important;
+  }
 }
 
 .brand-tagline {
@@ -582,10 +613,24 @@ body {
 }
 
 /* INNER PAGES HERO: Traditional Centered */
+/* INNER PAGES HERO: Traditional Centered */
 .hero-inner {
   max-width: 800px;
   margin: 0 auto;
   text-align: center;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure inner hero content is visible */
+.hero-inner .hero-title,
+.hero-inner .hero-subtitle {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Common Hero Styles */
@@ -1041,21 +1086,36 @@ html {
 /* ============================== */
 
 .breadcrumb-nav {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: 0.9rem;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary) !important;
   padding: var(--space-3) var(--space-6);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98) !important;
   border-radius: var(--radius-full);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  border: 2px solid rgba(99, 102, 241, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   max-width: 600px;
-  margin: var(--space-4) auto var(--space-6) auto;
+  margin: var(--space-6) auto var(--space-6) auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 100;
+}
+
+/* Mobile breadcrumb visibility */
+@media (max-width: 768px) {
+  .breadcrumb-nav {
+    font-size: 0.85rem;
+    padding: var(--space-2) var(--space-4);
+    max-width: 90%;
+    margin: var(--space-4) auto var(--space-4) auto !important;
+    border: 2px solid rgba(99, 102, 241, 0.3) !important;
+  }
 }
 
 .breadcrumb-nav a {
@@ -2297,7 +2357,34 @@ body {
   object-fit: cover;
   display: block;
 }
+/* MOBILE BRAND LOGO FIX */
+@media (max-width: 768px) {
+  .brand-logo-small {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 15% !important; /* Adjust padding for mobile */
+  }
+  
+  .brand-logo-small img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+  
+  .brand-item {
+    min-height: 160px !important; /* Ensure visible size */
+    aspect-ratio: 1 !important;
+  }
+}
 
+/* Force image visibility */
+.brand-logo-small img[src] {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
 /* Fallback emoji - BIGGER */
 .brand-logo-fallback {
   font-size: 5rem;
