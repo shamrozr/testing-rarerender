@@ -43,9 +43,21 @@
   </header>
 
   <!-- Hero Section -->
+<!-- Hero Section with Slideshow -->
   <section class="hero">
     <div class="container">
       <div class="hero-content">
+        <!-- Hero Slideshow (1:1 aspect ratio like photo) -->
+        <div class="hero-slideshow-container" id="heroSlideshowContainer" style="display: none;">
+          <button class="hero-slideshow-nav prev" id="heroSlideshowPrev" aria-label="Previous">‹</button>
+          <div class="hero-slideshow-viewport" id="heroSlideshowViewport">
+            <img class="hero-slideshow-image" id="heroSlideshowImage" alt="Featured product" />
+            <div class="hero-slideshow-loading">Loading...</div>
+          </div>
+          <button class="hero-slideshow-nav next" id="heroSlideshowNext" aria-label="Next">›</button>
+          <div class="hero-slideshow-counter" id="heroSlideshowCounter">1 / 1</div>
+        </div>
+        
         <h1 class="hero-title" id="heroTitle">Discover Luxury Collections</h1>
         <p class="hero-subtitle" id="heroSubtitle">Curated premium products from the world's finest brands. Experience elegance, quality, and sophistication in every piece.</p>
       </div>
