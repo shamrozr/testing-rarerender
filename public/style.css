@@ -386,24 +386,44 @@ body {
   text-rendering: optimizeLegibility;
   z-index: 10;
   position: relative;
+  text-shadow: none !important;
+  background: transparent !important;
+  max-width: 200px;
+  overflow: visible;
+  white-space: normal;
 }
 
 /* Mobile-specific brand name fix */
 @media (max-width: 768px) {
   .brand-name {
-    font-size: 1.2rem !important;
+    font-size: 1.1rem !important;
     color: #202124 !important;
     -webkit-text-fill-color: #202124 !important;
     background: transparent !important;
     text-shadow: none !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 }
-
 .brand-tagline {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
+  font-size: 0.75rem !important;
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
   font-style: italic;
-  margin-top: var(--space-1);
+  margin-top: 2px !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  line-height: 1.2;
+  text-shadow: none !important;
+  background: transparent !important;
+}
+
+@media (max-width: 768px) {
+  .brand-tagline {
+    font-size: 0.7rem !important;
+  }
 }
 
 /* Search Section */
@@ -457,10 +477,7 @@ body {
 /* ==================================================== */
 
 .hero {
-  background: linear-gradient(135deg, 
-    var(--color-light-gray) 0%, 
-    rgba(99, 102, 241, 0.05) 50%,
-    var(--color-soft-gray) 100%);
+  background: #ffffff !important;
   padding: var(--space-16) 0 var(--space-8) 0;
   margin-top: 0;
   overflow: visible !important;
@@ -468,9 +485,10 @@ body {
   position: relative !important;
 }
 
-/* Fix for category pages */
+/* Remove gray background on category pages too */
 body[data-page-type="category"] .hero,
 body[data-page-type="brand"] .hero {
+  background: #ffffff !important;
   min-height: 350px !important;
   padding: 4rem 0 3rem 0 !important;
 }
