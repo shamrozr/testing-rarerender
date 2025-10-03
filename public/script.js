@@ -285,25 +285,67 @@ if (heroSlideshow) {
 
 
 
-// Show homepage hero (with slideshow)
-  showHomepageHero() {
-    const homepageHero = document.getElementById('heroHomepage');
-    const innerHero = document.getElementById('heroInner');
-    
-    if (homepageHero) homepageHero.style.display = 'grid';
-    if (innerHero) innerHero.style.display = 'none';
-    
-    // Update homepage hero content
-    const titleHome = document.getElementById('heroTitleHome');
-    const subtitleHome = document.getElementById('heroSubtitleHome');
-    
-    if (this.data && this.data.brands && this.currentBrand) {
-      const brand = this.data.brands[this.currentBrand];
-      if (titleHome) titleHome.textContent = brand.heroTitle || 'Discover Luxury Collections';
-      if (subtitleHome) subtitleHome.textContent = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
-    }
+/// Show homepage hero (with slideshow)
+showHomepageHero() {
+  const homepageHero = document.getElementById('heroHomepage');
+  const innerHero = document.getElementById('heroInner');
+  const heroSection = document.querySelector('.hero');
+  
+  console.log('🏠 Switching to homepage hero');
+  
+  // Hide inner hero completely
+  if (innerHero) {
+    innerHero.style.cssText = `
+      display: none !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+    `;
   }
   
+  // Reset hero section to homepage state
+  if (heroSection) {
+    heroSection.style.cssText = `
+      background: #ffffff !important;
+      padding: 4rem 0 3rem 0 !important;
+      margin-top: 0 !important;
+      overflow: visible !important;
+      min-height: auto !important;
+      display: block !important;
+    `;
+  }
+  
+  // Show homepage hero with proper grid
+  if (homepageHero) {
+    homepageHero.style.cssText = `
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 3rem !important;
+      align-items: center !important;
+      max-width: 1400px !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      position: relative !important;
+      min-height: 400px !important;
+    `;
+    console.log('✅ Homepage hero restored with grid');
+  }
+  
+  // Update homepage hero content
+  const titleHome = document.getElementById('heroTitleHome');
+  const subtitleHome = document.getElementById('heroSubtitleHome');
+  
+  if (this.data && this.data.brands && this.currentBrand) {
+    const brand = this.data.brands[this.currentBrand];
+    if (titleHome) titleHome.innerHTML = brand.heroTitle || `<span class="hero-title-line1">Establish Yourself</span><span class="hero-title-line2">With <span class="hero-title-highlight">Premium</span></span><span class="hero-title-line3">Accessories</span>`;
+    if (subtitleHome) subtitleHome.textContent = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
+  }
+}
 // Show inner page hero (traditional centered)
 // Show inner page hero (traditional centered)
 showInnerHero() {
@@ -1969,34 +2011,47 @@ updateSectionVisibility(showSections) {
     ];
 
     elements.forEach(({ id, content }) => {
-      const element = document.getElementById(id);
-      if (element) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.textContent = content;
+    
+    // NUCLEAR OPTION: Force visibility with inline styles
+    element.style.cssText = `
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      color: ${id === 'brandName' || id === 'footerBrandName' ? '#202124' : '#5f6368'} !important;
+      -webkit-text-fill-color: ${id === 'brandName' || id === 'footerBrandName' ? '#202124' : '#5f6368'} !important;
+      text-shadow: none !important;
+      background: transparent !important;
+      position: relative !important;
+      z-index: 10 !important;
+    `;
+    
+    console.log(`✅ Force-updated ${id}:`, content);
+    
+    // Triple-check after delays
+    setTimeout(() => {
+      if (element.textContent !== content) {
         element.textContent = content;
-        element.style.display = 'block'; // Ensure visible
-        element.style.visibility = 'visible'; // Force visibility
-        element.style.opacity = '1'; // Force opaque
-        element.style.color = id === 'brandName' ? '#202124' : ''; // Force dark color for brand name
-        
-        // Triple-check after delay
-        setTimeout(() => {
-          if (element.textContent !== content) {
-            element.textContent = content;
-          }
-          if (id === 'brandName') {
-            element.style.color = '#202124';
-          }
-        }, 50);
-        
-        setTimeout(() => {
-          if (element.textContent !== content) {
-            element.textContent = content;
-          }
-          if (id === 'brandName') {
-            element.style.color = '#202124';
-          }
-        }, 200);
       }
-    });
+      if (id === 'brandName' || id === 'footerBrandName') {
+        element.style.color = '#202124';
+        element.style.webkitTextFillColor = '#202124';
+      }
+    }, 50);
+    
+    setTimeout(() => {
+      if (element.textContent !== content) {
+        element.textContent = content;
+      }
+      if (id === 'brandName' || id === 'footerBrandName') {
+        element.style.color = '#202124';
+        element.style.webkitTextFillColor = '#202124';
+      }
+    }, 200);
+  }
+});
 
     // Update logo with initials
     const logoEl = document.getElementById('brandLogo');
@@ -3229,19 +3284,56 @@ getScaleTransform(scaling) {
     // Create category cards
     const categoryCards = [];
     // Find the actual brand thumbnail from the first path
-    let brandThumbnail = '';
-    if (paths.length > 0) {
-      const firstPath = paths[0].split('/');
-      const categoryKey = firstPath[0];
-      const brandKey = firstPath[1];
-      if (this.data.catalog.tree[categoryKey]?.children?.[brandKey]?.thumbnail) {
-        brandThumbnail = this.data.catalog.tree[categoryKey].children[brandKey].thumbnail;
+    // Get thumbnail from first child (product or subfolder)
+let brandThumbnail = '';
+
+if (paths.length > 0) {
+  const firstPath = paths[0].split('/');
+  const categoryKey = firstPath[0];
+  const brandKey = firstPath[1];
+  
+  const brandNode = this.data.catalog.tree[categoryKey]?.children?.[brandKey];
+  
+  if (brandNode) {
+    // Try to get thumbnail from first child
+    if (brandNode.children) {
+      const firstChild = Object.values(brandNode.children)[0];
+      
+      if (firstChild) {
+        // If first child is a product, use its thumbnail
+        if (firstChild.isProduct && firstChild.thumbnail) {
+          brandThumbnail = firstChild.thumbnail;
+          console.log(`✅ Using first product thumbnail for ${brandName}:`, brandThumbnail);
+        }
+        // If first child is a folder, get its first child's thumbnail
+        else if (firstChild.children) {
+          const nestedFirstChild = Object.values(firstChild.children)[0];
+          if (nestedFirstChild?.thumbnail) {
+            brandThumbnail = nestedFirstChild.thumbnail;
+            console.log(`✅ Using nested first child thumbnail for ${brandName}:`, brandThumbnail);
+          }
+        }
+        // Otherwise use the subfolder's thumbnail if available
+        else if (firstChild.thumbnail) {
+          brandThumbnail = firstChild.thumbnail;
+          console.log(`✅ Using first folder thumbnail for ${brandName}:`, brandThumbnail);
+        }
       }
     }
-    // Fallback to constructed path
-    if (!brandThumbnail) {
-      brandThumbnail = `/Cards/${brandName.replace(/\s+/g, '-')}.webp`;
+    
+    // Fallback: Use brand's own thumbnail if no child thumbnail found
+    if (!brandThumbnail && brandNode.thumbnail) {
+      brandThumbnail = brandNode.thumbnail;
+      console.log(`✅ Using brand's own thumbnail for ${brandName}:`, brandThumbnail);
     }
+  }
+}
+
+// Final fallback: constructed path
+if (!brandThumbnail) {
+  brandThumbnail = `/Cards/${brandName.replace(/\s+/g, '-')}.webp`;
+  console.log(`⚠️ Using fallback thumbnail for ${brandName}:`, brandThumbnail);
+}
     
     categories.forEach((catData, categoryName) => {
       categoryCards.push({
