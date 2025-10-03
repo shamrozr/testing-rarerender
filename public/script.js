@@ -125,7 +125,10 @@ if (this.currentPath.length > 0) {
     slideshowSection.style.display = 'none';
     console.log('🙈 Hiding slideshow section (category view)');
   }
-  // HIDE hero slideshow on category pages
+
+
+  
+// ALSO hide hero slideshow on category pages
 const heroSlideshow = document.getElementById('heroSlideshowContainer');
 if (heroSlideshow) {
   heroSlideshow.style.display = 'none';
@@ -344,6 +347,26 @@ showHomepageHero() {
     const brand = this.data.brands[this.currentBrand];
     if (titleHome) titleHome.innerHTML = brand.heroTitle || `<span class="hero-title-line1">Establish Yourself</span><span class="hero-title-line2">With <span class="hero-title-highlight">Premium</span></span><span class="hero-title-line3">Accessories</span>`;
     if (subtitleHome) subtitleHome.textContent = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
+  }
+  // SHOW review slideshow on homepage
+  const reviewSlideshow = document.querySelector('.slideshow-section');
+  if (reviewSlideshow) {
+    reviewSlideshow.style.display = 'block';
+    console.log('👁️ Showing review slideshow (homepage)');
+  }
+  
+  // SHOW browse brands on homepage
+  const brandsSection = document.querySelector('.brands-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'block';
+    console.log('👁️ Showing brands section (homepage)');
+  }
+  
+  // SHOW hero slideshow on homepage
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'block';
+    console.log('👁️ Showing hero slideshow (homepage)');
   }
 }
 // Show inner page hero (traditional centered)
@@ -600,41 +623,49 @@ setTimeout(() => {
     const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
     heroTitle.textContent = `${currentCategory} Collection`;
     
-    // FORCE inline styles
-    heroTitle.style.cssText = `
+    // NUCLEAR FORCE: Inline styles with !important equivalent
+    heroTitle.setAttribute('style', `
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
       color: #202124 !important;
       font-size: 2.5rem !important;
       font-weight: 700 !important;
-      margin-bottom: 1rem !important;
+      margin: 0 auto 1rem auto !important;
+      padding: 0 !important;
+      width: 100% !important;
+      line-height: 1.2 !important;
       text-shadow: none !important;
       -webkit-text-fill-color: #202124 !important;
       background: transparent !important;
+      text-align: center !important;
       position: relative !important;
-      z-index: 11 !important;
-    `;
+      z-index: 20 !important;
+    `);
     
     console.log('✅ Hero title updated:', heroTitle.textContent);
-    console.log('✅ Hero title computed color:', window.getComputedStyle(heroTitle).color);
+    console.log('✅ Title display:', window.getComputedStyle(heroTitle).display);
+    console.log('✅ Title color:', window.getComputedStyle(heroTitle).color);
   }
   
   if (heroSubtitle) {
-    // FORCE inline styles
-    heroSubtitle.style.cssText = `
+    heroSubtitle.setAttribute('style', `
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
       color: #5f6368 !important;
       font-size: 1.1rem !important;
-      margin-bottom: 1.5rem !important;
+      margin: 0 auto 1.5rem auto !important;
+      padding: 0 !important;
+      width: 100% !important;
+      line-height: 1.6 !important;
       text-shadow: none !important;
       -webkit-text-fill-color: #5f6368 !important;
       background: transparent !important;
+      text-align: center !important;
       position: relative !important;
-      z-index: 11 !important;
-    `;
+      z-index: 20 !important;
+    `);
     
     console.log('✅ Hero subtitle visible');
   }
@@ -3336,22 +3367,60 @@ if (!brandThumbnail) {
 }
     
     categories.forEach((catData, categoryName) => {
-      categoryCards.push({
-        key: categoryName,
-        title: `${brandName} ${categoryName}`,
-        description: `${catData.count} ${brandName} products in ${categoryName}`,
-        count: catData.count,
-        thumbnail: brandThumbnail,
-        isProduct: false,
-        topOrder: 999,
-        brandName: brandName,
-        categoryName: categoryName,
-        // Use contain for brand logo as cover
-        alignment: 'center center',
-        fitting: 'contain',
-        scaling: ''
-      });
-    });
+  // Get category-specific thumbnail from its first child
+  let categoryThumbnail = '';
+  
+  const categoryNode = this.data.catalog.tree[categoryName];
+  if (categoryNode && categoryNode.children) {
+    // Find this specific brand in this category
+    const brandNodeInCategory = categoryNode.children[brandKey] || 
+                                 Object.values(categoryNode.children).find(child => 
+                                   this.normalizeBrandName(Object.keys(categoryNode.children).find(k => categoryNode.children[k] === child)) === brandName
+                                 );
+    
+    if (brandNodeInCategory && brandNodeInCategory.children) {
+      // Get first child from THIS specific category
+      const firstChildInCategory = Object.values(brandNodeInCategory.children)[0];
+      
+      if (firstChildInCategory) {
+        if (firstChildInCategory.isProduct && firstChildInCategory.thumbnail) {
+          categoryThumbnail = firstChildInCategory.thumbnail;
+          console.log(`✅ ${categoryName}: Using first product thumbnail:`, categoryThumbnail);
+        } else if (firstChildInCategory.children) {
+          const nestedFirst = Object.values(firstChildInCategory.children)[0];
+          if (nestedFirst?.thumbnail) {
+            categoryThumbnail = nestedFirst.thumbnail;
+            console.log(`✅ ${categoryName}: Using nested first child thumbnail:`, categoryThumbnail);
+          }
+        } else if (firstChildInCategory.thumbnail) {
+          categoryThumbnail = firstChildInCategory.thumbnail;
+          console.log(`✅ ${categoryName}: Using first folder thumbnail:`, categoryThumbnail);
+        }
+      }
+    }
+  }
+  
+  // Fallback to generic brand thumbnail
+  if (!categoryThumbnail) {
+    categoryThumbnail = brandThumbnail;
+    console.log(`⚠️ ${categoryName}: Using fallback thumbnail`);
+  }
+  
+  categoryCards.push({
+    key: categoryName,
+    title: `${brandName} ${categoryName}`,
+    description: `${catData.count} ${brandName} products in ${categoryName}`,
+    count: catData.count,
+    thumbnail: categoryThumbnail, // FIXED: Use category-specific thumbnail
+    isProduct: false,
+    topOrder: 999,
+    brandName: brandName,
+    categoryName: categoryName,
+    alignment: 'center center',
+    fitting: 'contain',
+    scaling: ''
+  });
+});
     
     // Sort by count
     categoryCards.sort((a, b) => b.count - a.count);
