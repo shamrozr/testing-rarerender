@@ -273,6 +273,9 @@ for (const r of masterRows) {
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   
+  // ADDED: Parse slideshow column
+  const isSlideshow = (r["Slideshow"] || r["slideshow"] || "").trim().toLowerCase() === "yes";
+  
   // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
@@ -339,6 +342,7 @@ for (const r of masterRows) {
     isProduct: true, 
     driveLink, 
     thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
+    slideshow: isSlideshow,
     section: section,
     category: category,
     // CRITICAL: Add TopOrder to products at ANY depth in BOTH formats
@@ -574,13 +578,34 @@ console.log("✅ BUILD TopOrder verification complete");
   console.log("💾 Saving enhanced CSV-driven catalog with image rendering...");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   
-  // Create enhanced data.json with sections and image rendering support
-  const enhancedData = {
-    brands,
-    catalog: {
-      totalProducts,
-      tree,
-      sections: Object.keys(sectionAnalysis),
+// ADDED: Extract slideshow items
+console.log("🎬 Extracting slideshow items...");
+const slideshowItems = [];
+function extractSlideshow(node, path = []) {
+  for (const [key, item] of Object.entries(node)) {
+    if (item.slideshow && item.thumbnail) {
+      slideshowItems.push({
+        name: key,
+        path: [...path, key].join('/'),
+        thumbnail: item.thumbnail,
+        category: path[0] || 'Featured'
+      });
+    }
+    if (item.children && !item.isProduct) {
+      extractSlideshow(item.children, [...path, key]);
+    }
+  }
+}
+extractSlideshow(tree);
+console.log(`✅ Found ${slideshowItems.length} slideshow items`);
+
+const enhancedData = {
+  brands,
+  catalog: {
+    totalProducts,
+    tree,
+    sections: Object.keys(sectionAnalysis),
+    slideshow: slideshowItems, // ADDED
       sectionStats: Object.fromEntries(
         Object.entries(sectionAnalysis).map(([name, data]) => [name, data.totalItems])
       )
