@@ -455,6 +455,29 @@ body {
   margin-top: 0;
 }
 
+
+
+/* Remove text shadow/gradient interference on inner hero */
+body[data-page-type="category"] .hero,
+body[data-page-type="brand"] .hero {
+  background: linear-gradient(135deg, 
+    rgba(248, 249, 250, 1) 0%, 
+    rgba(255, 255, 255, 1) 100%) !important;
+}
+
+body[data-page-type="category"] .hero *,
+body[data-page-type="brand"] .hero * {
+  text-shadow: none !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+
+
+
+
+
+
+
 /* HOMEPAGE HERO: Side by Side */
 .hero-homepage {
   display: grid;
@@ -792,6 +815,53 @@ body {
 .hero:has(.hero-homepage[style*="display: grid"]) .hero-inner {
   display: none !important;
 }
+
+/* CRITICAL: Force inner hero visibility on category pages */
+body[data-page-type="category"] .hero-inner,
+body[data-page-type="brand"] .hero-inner {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  min-height: 200px !important;
+}
+
+body[data-page-type="category"] .hero-inner .hero-title,
+body[data-page-type="brand"] .hero-inner .hero-title {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
+  text-shadow: none !important;
+  background: transparent !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1rem !important;
+  position: relative !important;
+  z-index: 11 !important;
+}
+
+body[data-page-type="category"] .hero-inner .hero-subtitle,
+body[data-page-type="brand"] .hero-inner .hero-subtitle {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #5f6368 !important;
+  -webkit-text-fill-color: #5f6368 !important;
+  text-shadow: none !important;
+  background: transparent !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 1.5rem !important;
+  position: relative !important;
+  z-index: 11 !important;
+}
+
+
+
+
+
 /* ============================================
    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
    ============================================ */
@@ -1123,9 +1193,6 @@ html {
 
 
 
-/* Breadcrumb Navigation - FIXED */
-/* ============================== */
-
 .breadcrumb-nav {
   display: flex !important;
   align-items: center;
@@ -1133,65 +1200,62 @@ html {
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: 0.9rem;
-  color: var(--color-text-primary) !important;
+  color: #202124 !important;
   padding: var(--space-3) var(--space-6);
   background: rgba(255, 255, 255, 0.98) !important;
   border-radius: var(--radius-full);
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(99, 102, 241, 0.2) !important;
+  border: 2px solid rgba(99, 102, 241, 0.3) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   max-width: 600px;
   margin: var(--space-6) auto var(--space-6) auto !important;
   visibility: visible !important;
   opacity: 1 !important;
-  position: relative;
-  z-index: 100;
+  position: relative !important;
+  z-index: 100 !important;
+  min-height: 40px !important;
 }
 
-/* Mobile breadcrumb visibility */
-@media (max-width: 768px) {
-  .breadcrumb-nav {
-    font-size: 0.85rem;
-    padding: var(--space-2) var(--space-4);
-    max-width: 90%;
-    margin: var(--space-4) auto var(--space-4) auto !important;
-    border: 2px solid rgba(99, 102, 241, 0.3) !important;
-  }
+/* Force all breadcrumb children visible */
+.breadcrumb-nav * {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .breadcrumb-nav a {
-  color: var(--color-primary) !important;
+  color: #6366f1 !important;
+  -webkit-text-fill-color: #6366f1 !important;
   text-decoration: none;
   font-weight: 600 !important;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   transition: all var(--transition-base);
   display: inline-block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  background: transparent !important;
+  text-shadow: none !important;
 }
 
 .breadcrumb-nav a:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--color-primary);
+  background: rgba(99, 102, 241, 0.1) !important;
+  color: #6366f1 !important;
   transform: translateY(-1px);
 }
 
-.breadcrumb-nav a:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-/* Breadcrumb separator visibility */
+/* Breadcrumb separator */
 .breadcrumb-nav span:not([style*="font-weight"]) {
-  color: var(--color-text-muted) !important;
+  color: #9aa0a6 !important;
+  -webkit-text-fill-color: #9aa0a6 !important;
   opacity: 1 !important;
   visibility: visible !important;
   display: inline !important;
+  background: transparent !important;
+  text-shadow: none !important;
 }
 
 /* Current page in breadcrumb */
 .breadcrumb-nav span[style*="font-weight"] {
-  color: var(--color-text-primary) !important;
+  color: #202124 !important;
+  -webkit-text-fill-color: #202124 !important;
   font-weight: 600 !important;
   padding: var(--space-1) var(--space-2);
   background: rgba(99, 102, 241, 0.15) !important;
@@ -1199,39 +1263,16 @@ html {
   display: inline-block !important;
   visibility: visible !important;
   opacity: 1 !important;
-}
-.breadcrumb-nav span {
-  color: var(--color-text-secondary);
-  user-select: none;
+  text-shadow: none !important;
 }
 
-.breadcrumb-nav span:not([style*="font-weight"]) {
-  /* Separator styling */
-  opacity: 1;
-  color: var(--color-text-muted);
-}
-
-.breadcrumb-nav span[style*="font-weight"] {
-  /* Current page styling */
-  color: var(--color-text-primary);
-  font-weight: 600;
-  padding: var(--space-1) var(--space-2);
-  background: rgba(99, 102, 241, 0.15);
-  border-radius: var(--radius-sm);
-}
-
-/* Mobile responsive adjustments */
+/* Mobile breadcrumb */
 @media (max-width: 768px) {
-  .hero {
-    margin-top: 60px; /* Match mobile header height */
-    padding: var(--space-12) var(--space-4) var(--space-8);
-  }
-}
-
-@media (max-width: 480px) {
-  .hero {
-    margin-top: 55px; /* Match smallest mobile header height */
-    padding: var(--space-8) var(--space-3) var(--space-6);
+  .breadcrumb-nav {
+    font-size: 0.85rem;
+    padding: var(--space-2) var(--space-4);
+    max-width: 90%;
+    min-height: 36px !important;
   }
 }
 
