@@ -267,9 +267,24 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
 console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
 let processedCount = 0;
 
-for (const r of masterRows) {
-  const name = (r["Name"] || r["Folder/Product"] || "").trim();
-  const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
+// CRITICAL: Extract slideshow FIRST before any filtering
+  const slideshowValue = (
+    r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || ""
+  ).trim().toLowerCase();
+  
+  const thumbRel = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+  
+  if ((slideshowValue === 'yes' || slideshowValue === 'on') && thumbRel) {
+    const normalizedThumb = toThumbSitePath(thumbRel);
+    slideshowItems.push({
+      image: normalizedThumb,
+      title: name || 'Slideshow Image',
+      path: rel || 'unknown'
+    });
+    console.log(`📸 SLIDESHOW ADDED: ${name} → ${normalizedThumb}`);
+  }
+  
+  // Now continue with existing logic
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   // Extract slideshow items in the same pass
@@ -622,40 +637,22 @@ await fs.writeFile(
   );
   console.log("✅ Saved data.json");
   
-  // FIXED: Save slideshow.json with better validation
-  console.log(`\n📸 Processing slideshow items...`);
-  console.log(`   Found ${slideshowItems.length} items marked for slideshow`);
+  // SLIDESHOW: Save slideshow.json
+  console.log(`\n📸 Slideshow: ${slideshowItems.length} items collected`);
   
-  if (slideshowItems.length === 0) {
-    console.log("⚠️  No slideshow items found. Add 'slideshow = yes' to Master CSV rows.");
-    // Create empty slideshow.json as fallback
-    await fs.writeFile(
-      path.join(PUBLIC_DIR, "slideshow.json"),
-      JSON.stringify([], null, 2),
-      "utf8"
-    );
-  } else {
-    // Verify images exist
-    const validItems = [];
-    for (const item of slideshowItems) {
-      const imagePath = path.join(PUBLIC_DIR, item.image.replace(/^\//, ''));
-      const exists = await fs.access(imagePath).then(() => true).catch(() => false);
-      
-      if (exists) {
-        validItems.push(item);
-        console.log(`   ✅ ${item.title}: ${item.image}`);
-      } else {
-        console.log(`   ⚠️  ${item.title}: Image not found at ${item.image}`);
-      }
-    }
-    
-    await fs.writeFile(
-      path.join(PUBLIC_DIR, "slideshow.json"),
-      JSON.stringify(validItems, null, 2),
-      "utf8"
-    );
-    console.log(`\n✅ Generated slideshow.json with ${validItems.length} valid items`);
+  if (slideshowItems.length > 0) {
+    slideshowItems.forEach((item, i) => {
+      console.log(`   ${i + 1}. ${item.title}: ${item.image}`);
+    });
   }
+  
+  await fs.writeFile(
+    path.join(PUBLIC_DIR, "slideshow.json"),
+    JSON.stringify(slideshowItems, null, 2),
+    "utf8"
+  );
+  
+  console.log(`✅ Saved slideshow.json (${slideshowItems.length} items)`);
 
   await fs.mkdir(path.join(ROOT, "build"), { recursive: true });
   await fs.writeFile(
