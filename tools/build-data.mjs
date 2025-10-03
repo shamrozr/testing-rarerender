@@ -267,11 +267,17 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
 console.log("📝 Processing enhanced catalog entries with TopOrder at ALL levels...");
 let processedCount = 0;
 
+// ADDED: Collect hero slideshow items
+const heroSlideshowItems = [];
+
 for (const r of masterRows) {
   const name = (r["Name"] || r["Folder/Product"] || "").trim();
   const rel  = normPath(r["RelativePath"] || r["Relative Path"] || "");
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+  
+  // ADDED: Check for hero slideshow flag
+  const isHeroItem = (r["Hero Slideshow"] || r["hero_slideshow"] || "").trim().toLowerCase() === "yes";
   
   // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
@@ -331,7 +337,19 @@ for (const r of masterRows) {
   }
   sectionStats.set(section, sectionStats.get(section) + 1);
 
+
+  // ADDED: Collect hero slideshow item
+  if (isHeroItem && normalizedThumb) {
+    heroSlideshowItems.push({
+      name: name,
+      path: rel,
+      thumbnail: normalizedThumb,
+      driveLink: driveLink
+    });
+  }
+  
   if (isLeafProduct) {
+    
   // ENHANCED: Products at ANY depth get TopOrder
   const parentSegs = segs.slice(0, -1);
   const children = ensureFolderNode(tree, parentSegs);
@@ -575,8 +593,10 @@ console.log("✅ BUILD TopOrder verification complete");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   
   // Create enhanced data.json with sections and image rendering support
+  // Create enhanced data.json with sections, hero slideshow, and image rendering support
   const enhancedData = {
     brands,
+    heroSlideshow: heroSlideshowItems.length > 0 ? heroSlideshowItems : null,
     catalog: {
       totalProducts,
       tree,
