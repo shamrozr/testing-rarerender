@@ -102,20 +102,41 @@ if (this.currentPath.length > 0) {
   this.setupDynamicSections();
 }
 
-// FIXED: Setup brands and slideshow
+// Setup brands and slideshow FIRST (creates the sections)
 this.setupBrands();
 this.setupReviewSlideshow();
 
-// FIXED: Control homepage-only sections visibility
-const isHomepage = this.currentPath.length === 0;
-this.toggleHomepageOnlySections(isHomepage);
-console.log(`📄 Page type: ${isHomepage ? 'HOMEPAGE' : 'CATEGORY PAGE'}`);
+// THEN control visibility based on current view
+if (this.currentPath.length > 0) {
+  // On category/brand view - hide brands and slideshow
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'none';
+    console.log('🙈 Hiding brands section (category view)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'none';
+    console.log('🙈 Hiding slideshow section (category view)');
+  }
+} else {
+  // On homepage - show brands and slideshow
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  if (brandsSection) {
+    brandsSection.style.display = 'block';
+    console.log('👁️ Showing brands section (homepage)');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'block';
+    console.log('👁️ Showing slideshow section (homepage)');
+  }
+}
     
     this.setupFooter();
     this.setupEventListeners();
     this.setupPreviewModal();
-    this.initHeroSlideshow();
-    this.setupHeroButtons();
+
     this.setupFABFunctionality();
     
     // NEW: Setup scroll behavior
@@ -257,7 +278,7 @@ console.log(`📄 Page type: ${isHomepage ? 'HOMEPAGE' : 'CATEGORY PAGE'}`);
   
   // FIXED: Reset scroll position first
   this.resetScrollPosition();
-  this.toggleHomepageOnlySections(false);
+  
   // Navigate to the current path in the data tree
   let currentNode = this.data.catalog.tree;
   let breadcrumbs = [];
@@ -384,18 +405,18 @@ addBreadcrumbNavigation(breadcrumbs) {
   const heroTitle = hero.querySelector('.hero-title');
   const heroSubtitle = hero.querySelector('.hero-subtitle');
   
-// Insert breadcrumbs back into content area
-  const dynamicSections = document.getElementById('dynamicSections');
-  if (dynamicSections) {
-    const existingBreadcrumbs = dynamicSections.querySelector('.breadcrumb-nav');
-    if (existingBreadcrumbs) {
-      existingBreadcrumbs.remove();
-    }
-    
-    // Insert at the very top of content
-    dynamicSections.insertBefore(breadcrumbNav, dynamicSections.firstChild);
+  if (heroSubtitle) {
+    // Insert after subtitle
+    heroSubtitle.insertAdjacentElement('afterend', breadcrumbNav);
+  } else if (heroTitle) {
+    // Insert after title if no subtitle
+    heroTitle.insertAdjacentElement('afterend', breadcrumbNav);
+  } else {
+    // Fallback: append to hero content
+    hero.appendChild(breadcrumbNav);
   }
 }
+
   // LOCATION: public/script.js
 // REPLACE: The entire renderCategoryContents function (around line 600) with this ENHANCED version:
 
@@ -1493,7 +1514,7 @@ debugModalState() {
   
   // Reset state
   this.currentPath = [];
-  this.toggleHomepageOnlySections(true);
+  
   // Re-render homepage
   this.setupDynamicSections();
   
@@ -1526,21 +1547,6 @@ updateSectionVisibility(showSections) {
     slideshowSection.style.display = displayValue;
     console.log(`${showSections ? '👁️ Showing' : '🙈 Hiding'} slideshow section`);
   }
-}
-
-toggleHomepageOnlySections(show) {
-  // Hide review gallery and brand grid on category pages
-  const slideshow = document.querySelector('.slideshow-section');
-  const brands = document.querySelector('.brands-section');
-  const hero = document.querySelector('.hero');
-  
-  const displayValue = show ? 'block' : 'none';
-  
-  if (slideshow) slideshow.style.display = displayValue;
-  if (brands) brands.style.display = displayValue;
-  if (hero) hero.style.display = displayValue;
-  
-  console.log(`${show ? '👁️ Homepage' : '🙈 Category'} sections toggled`);
 }
 
 
@@ -1664,186 +1670,7 @@ toggleHomepageOnlySections(show) {
       element.textContent = content;
     }
   }
-async initHeroSlideshow() {
-  const heroSlideshow = document.getElementById('heroSlideshow');
-  if (!heroSlideshow) {
-    console.log('⚠️ Hero slideshow element not found');
-    return;
-  }
-  
-  // FIXED: Only run on homepage (when no path segments)
-  if (this.currentPath && this.currentPath.length > 0) {
-    console.log('ℹ️ Not homepage, skipping slideshow');
-    return;
-  }
-  
-  console.log('📸 Initializing hero slideshow...');
-  
-  try {
-    // FIXED: Fetch with cache busting
-    const response = await fetch('/slideshow.json?v=' + Date.now());
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const slideshowItems = await response.json();
-    
-    console.log(`✅ Loaded ${slideshowItems.length} slideshow items`);
-    
-    if (!Array.isArray(slideshowItems) || slideshowItems.length === 0) {
-      console.log('⚠️ No slideshow items, using fallback');
-      this.showSlideshowFallback(heroSlideshow);
-      return;
-    }
-    
-    // FIXED: Log each item for debugging
-    slideshowItems.forEach((item, i) => {
-      console.log(`   ${i + 1}. ${item.title}: ${item.image}`);
-    });
-    
-    // Clear existing content
-    heroSlideshow.innerHTML = '';
-    
-    // FIXED: Create slides with error handling
-    slideshowItems.forEach((item, index) => {
-      const slide = document.createElement('div');
-      slide.className = 'hero-slide-image';
-      if (index === 0) slide.classList.add('active');
-      
-      const img = document.createElement('img');
-      img.src = item.image;
-      img.alt = item.title || 'Luxury Product';
-      img.loading = index === 0 ? 'eager' : 'lazy';
-      
-      // FIXED: Handle image load errors
-      img.onerror = () => {
-        console.error(`❌ Failed to load slideshow image: ${item.image}`);
-        slide.style.display = 'none';
-      };
-      
-      img.onload = () => {
-        console.log(`✅ Loaded slideshow image ${index + 1}: ${item.title}`);
-      };
-      
-      slide.appendChild(img);
-      heroSlideshow.appendChild(slide);
-    });
-    
-    // FIXED: Auto-rotate with validation
-    const slides = heroSlideshow.querySelectorAll('.hero-slide-image');
-    
-    if (slides.length > 1) {
-      let currentSlide = 0;
-      console.log(`🔄 Starting slideshow rotation (${slides.length} slides)`);
-      
-      setInterval(() => {
-        slides[currentSlide].classList.remove('active');
-        currentSlide = (currentSlide + 1) % slides.length;
-        slides[currentSlide].classList.add('active');
-      }, 5000);
-    } else {
-      console.log('ℹ️ Single slide, no rotation needed');
-    }
-    
-  } catch (error) {
-    console.error('❌ Slideshow init failed:', error);
-    this.showSlideshowFallback(heroSlideshow);
-  }
-}
 
-showSlideshowFallback(container) {
-  console.log('📦 Using fallback slideshow images');
-  
-  const fallbackImages = [
-    'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800&h=800&fit=crop',
-    'https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&h=800&fit=crop'
-  ];
-  
-  container.innerHTML = fallbackImages.map((url, index) => `
-    <div class="hero-slide-image ${index === 0 ? 'active' : ''}">
-      <img src="${url}" alt="Luxury Collection" loading="${index === 0 ? 'eager' : 'lazy'}">
-    </div>
-  `).join('');
-  
-  // Auto-rotate fallback
-  if (fallbackImages.length > 1) {
-    const slides = container.querySelectorAll('.hero-slide-image');
-    let currentSlide = 0;
-    
-    setInterval(() => {
-      slides[currentSlide].classList.remove('active');
-      currentSlide = (currentSlide + 1) % slides.length;
-      slides[currentSlide].classList.add('active');
-    }, 5000);
-  }
-}
-
-setupHeroButtons() {
-  // "Explore all Luxury Brands" button
-  const exploreAllBtn = document.querySelector('.hero-btn-primary');
-  if (exploreAllBtn) {
-    exploreAllBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const brandsSection = document.querySelector('.brands-section');
-      if (brandsSection) {
-        brandsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  }
-  
-  // FIXED: "Explore Louis Vuitton Collection" button
-  const lvBtn = document.querySelector('.hero-btn-secondary');
-  if (lvBtn) {
-    lvBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      
-      console.log('🔍 Looking for Louis Vuitton in catalog...');
-      
-      // Find Louis Vuitton category in catalog tree
-      const catalog = this.data?.catalog?.tree || {};
-      
-      // Check each top-level category for Louis Vuitton
-      for (const [categoryKey, categoryData] of Object.entries(catalog)) {
-        if (categoryData.children) {
-          const lvKey = Object.keys(categoryData.children).find(key => 
-            key.toLowerCase().includes('louis') || 
-            key.toLowerCase().includes('vuitton') ||
-            key.toLowerCase() === 'lv'
-          );
-          
-          if (lvKey) {
-            console.log(`✅ Found Louis Vuitton at: ${categoryKey}/${lvKey}`);
-            
-            // Navigate to Louis Vuitton category
-            this.currentPath = [categoryKey, lvKey];
-            
-            const params = new URLSearchParams(window.location.search);
-            params.set('path', `${categoryKey}/${lvKey}`);
-            if (this.currentBrand) {
-              params.set('brand', this.currentBrand);
-            }
-            
-            const newURL = `${window.location.pathname}?${params.toString()}`;
-            window.history.pushState({ 
-              path: this.currentPath, 
-              brand: this.currentBrand 
-            }, '', newURL);
-            
-            this.showCategoryView();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-          }
-        }
-      }
-      
-      console.log('❌ Louis Vuitton not found in catalog');
-      alert('Louis Vuitton collection not found. Please check your catalog structure.');
-    });
-  }
-}
-  
   applyBrandColors(colors) {
     if (!colors) return;
     
@@ -2116,7 +1943,7 @@ groupItemsBySection() {
 
 createCardHTML(item) {
   const imageSrc = item.thumbnail && item.thumbnail !== '' ? item.thumbnail : '';
-
+  
   // Extract image config
   const imageConfig = this.extractImageConfig(item);
   console.log('🔍 Image config for', item.title, ':', imageConfig);
@@ -2146,13 +1973,11 @@ createCardHTML(item) {
         // Fallback: shouldn't happen but just in case
         imageContent = this.getEmojiForCategory(item.key);
       } else {
-          imageContent = `<img src="${imageSrc}" 
-               alt="${item.title}" 
-               loading="lazy"
-               style="${imageStyles}" 
-               class="card-image-enhanced"
-               data-method="img-tag"
-               onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
+        imageContent = `<img src="${imageSrc}" alt="${item.title}" loading="lazy" 
+             style="${imageStyles}" 
+             class="card-image-enhanced"
+             data-method="img-tag"
+             onerror="this.parentElement.innerHTML='${this.getEmojiForCategory(item.key)}'">`;
       }
     }
   } else {
