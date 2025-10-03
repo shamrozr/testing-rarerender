@@ -504,36 +504,6 @@
 
 
 
-  .hero-homepage {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-12);
-    align-items: center;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-@media (max-width: 768px) {
-  .hero-homepage {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto auto !important;
-    gap: var(--space-6) !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  
-  .hero-slideshow-side {
-    width: 100% !important;
-    max-width: 90% !important;
-    margin: 0 auto !important;
-  }
-  
-  .hero-content-side {
-    width: 100% !important;
-    text-align: center !important;
-    padding: var(--space-4) !important;
-  }
-}
   /* Prevent grid collapse when switching views */
   .hero-homepage[style*="display: none"] {
     display: none !important;
@@ -2716,20 +2686,20 @@
   /* Brand Category Cards - Contain Fit Override */
   /* =========================================== */
 
+/* Brand Category Cards - Contain Fit Override */
 .brand-category-card .card-image-brand-logo {
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;
   object-position: center center !important;
   background: #ffffff !important;
-  padding: var(--space-4) !important;
+  padding: var(--space-3) !important;
+  display: block !important;
 }
 
-  /* Ensure contain is used for brand category cards */
-  .brand-category-card .card-image {
-    background: #ffffff !important;
-    padding: var(--space-3);
-  }
+.brand-category-card .card-image {
+  background: #ffffff !important;
+}
 
   /* Override any conflicting global styles for brand logos */
   .card-image-brand-logo {
