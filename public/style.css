@@ -351,9 +351,12 @@ body {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #202124 !important; /* FIXED: Force dark visible color */
   line-height: 1.2;
   cursor: pointer;
+  opacity: 1 !important; /* FIXED: Ensure fully opaque */
+  display: block !important; /* FIXED: Ensure visible */
+  -webkit-text-fill-color: #202124 !important; /* FIXED: Override any gradient fills */
 }
 
 .brand-tagline {
