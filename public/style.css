@@ -4219,6 +4219,44 @@ body[data-page-type="category"] .featured-heading-section,
 body[data-page-type="brand"] .featured-heading-section {
   display: none !important;
 }
+  /* OVERRIDE: Force inner hero to be visible when needed */
+#heroInner.active,
+body[data-page-type="category"] #heroInner,
+body[data-page-type="brand"] #heroInner {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+}
+
+/* Ensure hero content is visible */
+#heroInner .hero-content,
+#heroInner.active .hero-content {
+  display: flex !important;
+  flex-direction: column !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+  /* OVERRIDE: Force breadcrumb visibility */
+.breadcrumb-nav {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+  /* Ensure hero text elements are visible on inner pages */
+body[data-page-type="category"] .hero-title,
+body[data-page-type="category"] .hero-subtitle,
+body[data-page-type="brand"] .hero-title,
+body[data-page-type="brand"] .hero-subtitle {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--color-text-primary) !important;
+}
 }
 /* ============================================
    SKELETON LOADING SCREENS
