@@ -664,6 +664,48 @@ body {
     font-size: 1rem;
   }
 }
+
+/* Mobile Responsive for Hero Buttons */
+@media (max-width: 768px) {
+  .hero-actions {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  
+  .hero-btn {
+    width: 100%;
+    justify-content: space-between;
+    min-height: 70px;
+  }
+  
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-title-line1,
+  .hero-title-line2,
+  .hero-title-line3 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-btn {
+    font-size: 0.85rem;
+    padding: var(--space-3) var(--space-4);
+    min-height: 65px;
+  }
+  
+  .hero-btn-text-small {
+    font-size: 0.7rem;
+  }
+  
+  .hero-title-line1,
+  .hero-title-line2,
+  .hero-title-line3 {
+    font-size: 1.75rem;
+  }
+}
 /* ============================================
    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
    ============================================ */
