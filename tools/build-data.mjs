@@ -273,13 +273,6 @@ for (const r of masterRows) {
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   
-  // Parse slideshow column - check ALL possible variations
-  const slideshowRaw = (
-    r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || 
-    r["slide show"] || r["Slide Show"] || ""
-  ).toString().trim().toLowerCase();
-  const isSlideshow = slideshowRaw === "yes" || slideshowRaw === "y" || slideshowRaw === "true" || slideshowRaw === "1";
-  
   // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
     r["TopOrder"] || r["Top Order"] || r["topOrder"] || r["TOP ORDER"] ||
@@ -346,7 +339,6 @@ for (const r of masterRows) {
     isProduct: true, 
     driveLink, 
     thumbnail: normalizedThumb || PLACEHOLDER_THUMB,
-    slideshow: isSlideshow,
     section: section,
     category: category,
     // CRITICAL: Add TopOrder to products at ANY depth in BOTH formats
@@ -582,52 +574,13 @@ console.log("✅ BUILD TopOrder verification complete");
   console.log("💾 Saving enhanced CSV-driven catalog with image rendering...");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   
-// Extract slideshow items
-console.log("🎬 Extracting slideshow items...");
-const slideshowItems = [];
-
-function extractSlideshow(node, path = []) {
-  for (const [key, item] of Object.entries(node)) {
-    const currentPath = [...path, key];
-    
-    // Debug log
-    if (item.slideshow) {
-      console.log(`   ✅ Found slideshow item: ${currentPath.join('/')}`);
-    }
-    
-    if (item.slideshow === true && item.thumbnail) {
-      slideshowItems.push({
-        name: key,
-        path: currentPath.join('/'),
-        thumbnail: item.thumbnail,
-        category: path[0] || 'Featured'
-      });
-    }
-    
-    if (item.children && !item.isProduct) {
-      extractSlideshow(item.children, currentPath);
-    }
-  }
-}
-
-extractSlideshow(tree);
-console.log(`✅ Found ${slideshowItems.length} slideshow items`);
-
-// Debug: Show first 3 slideshow items
-if (slideshowItems.length > 0) {
-  console.log("📋 Sample slideshow items:");
-  slideshowItems.slice(0, 3).forEach(item => {
-    console.log(`   - ${item.name} (${item.path})`);
-  });
-}
-
-const enhancedData = {
-  brands,
-  catalog: {
-    totalProducts,
-    tree,
-    sections: Object.keys(sectionAnalysis),
-    slideshow: slideshowItems, // ADDED
+  // Create enhanced data.json with sections and image rendering support
+  const enhancedData = {
+    brands,
+    catalog: {
+      totalProducts,
+      tree,
+      sections: Object.keys(sectionAnalysis),
       sectionStats: Object.fromEntries(
         Object.entries(sectionAnalysis).map(([name, data]) => [name, data.totalItems])
       )
