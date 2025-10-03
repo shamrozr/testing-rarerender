@@ -41,6 +41,42 @@ function parseCSV(text) {
   });
 }
 
+// EXTRACT SLIDESHOW ITEMS - Add after parseCSV function
+function extractSlideshowItems(masterRows) {
+  console.log("🎬 Extracting slideshow items...");
+  const slideshowItems = [];
+  
+  for (const r of masterRows) {
+    // Check slideshow column (case-insensitive)
+    const slideshowValue = (r.slideshow || r.Slideshow || r.SLIDESHOW || "").trim().toLowerCase();
+    const isSlideshow = slideshowValue === "yes" || slideshowValue === "on" || slideshowValue === "true";
+    
+    if (!isSlideshow) continue;
+    
+    const name = (r["Name"] || r["Folder/Product"] || "").trim();
+    const thumbRel = (r["Thumbs Path"] || r["Thumb"] || "").trim();
+    const rel = normPath(r["RelativePath"] || r["Relative Path"] || "");
+    
+    if (!name || !thumbRel) {
+      console.log(`⚠️ SLIDESHOW item skipped (missing name or thumb): ${name}`);
+      continue;
+    }
+    
+    const normalizedThumb = toThumbSitePath(thumbRel);
+    
+    slideshowItems.push({
+      image: normalizedThumb,
+      title: name,
+      path: rel
+    });
+    
+    console.log(`📸 SLIDESHOW ADDED: ${name} → ${normalizedThumb}`);
+  }
+  
+  console.log(`✅ Extracted ${slideshowItems.length} slideshow items\n`);
+  return slideshowItems;
+}
+
 function normPath(p) {
   if (!p) return "";
   const parts = p.replace(/\\/g, "/").split("/").map(s => s.trim()).filter(Boolean);
@@ -166,14 +202,28 @@ function fillMissingThumbsFromAncestors(node, inheritedThumb = "", currentDepth 
     process.exit(1);
   }
   
-  const [brandsCSV, masterCSV] = await Promise.all([brandsRes.text(), masterRes.text()]);
-  const brandsRows = parseCSV(brandsCSV);
-  const masterRows = parseCSV(masterCSV);
-  
-  console.log(`📊 Parsed ${brandsRows.length} brands and ${masterRows.length} catalog items`);
+  // In the main async function, after parsing CSVs:
+const [brandsCSV, masterCSV] = await Promise.all([brandsRes.text(), masterRes.text()]);
+const brandsRows = parseCSV(brandsCSV);
+const masterRows = parseCSV(masterCSV);
 
-  const warnings = [];
-  const hardErrors = [];
+console.log(`📊 Parsed ${brandsRows.length} brands and ${masterRows.length} catalog items`);
+
+// ⭐ EXTRACT SLIDESHOW ITEMS FIRST - BEFORE ANY PATH FILTERING
+const slideshowItems = extractSlideshowItems(masterRows);
+
+// Save slideshow.json immediately
+await fs.mkdir(PUBLIC_DIR, { recursive: true });
+await fs.writeFile(
+  path.join(PUBLIC_DIR, "slideshow.json"),
+  JSON.stringify(slideshowItems, null, 2),
+  "utf8"
+);
+console.log(`💾 Saved slideshow.json with ${slideshowItems.length} items\n`);
+
+// Continue with rest of build...
+const warnings = [];
+const hardErrors = [];
 
   // Process Enhanced Brands with Homepage Content
   console.log("🏷️  Processing enhanced brands...");
