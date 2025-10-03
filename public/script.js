@@ -584,8 +584,28 @@ navigateToBrandOnly(brandName) {
   // Add body attribute for CSS targeting
   document.body.setAttribute('data-page-type', 'category');
   
+  // FIXED: FORCE HIDE sections on category view
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
+  if (brandsSection) {
+    brandsSection.style.display = 'none';
+    console.log('🙈 FORCE HIDING brands in showCategoryView');
+  }
+  if (slideshowSection) {
+    slideshowSection.style.display = 'none';
+    console.log('🙈 FORCE HIDING slideshow in showCategoryView');
+  }
+  if (heroSlideshow) {
+    heroSlideshow.style.display = 'none';
+    console.log('🙈 FORCE HIDING hero slideshow in showCategoryView');
+  }
+  
   // FIXED: Reset scroll position first
   this.resetScrollPosition();
+  
+
   
   // Navigate to the current path in the data tree
   let currentNode = this.data.catalog.tree;
