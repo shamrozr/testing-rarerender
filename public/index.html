@@ -13,15 +13,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=2.0" />
   <meta name="theme-color" content="#6366f1" />
-  <!-- Performance optimization -->
-  <link rel="preload" as="image" href="/thumbs/_placeholder.webp">
-  <style>
-    /* Prevent layout shift while images load */
-    .card-image { min-height: 200px; background: #f8f9fa; }
-    .card-image img { opacity: 0; transition: opacity 0.3s; }
-    .card-image img.loaded { opacity: 1; }
-  </style>
-  
 </head>
 <body>
   <!-- Professional Header -->
@@ -51,34 +42,15 @@
     </div>
   </header>
 
+  <!-- Hero Section -->
   <section class="hero">
-  <div class="hero-split">
-    <!-- Left side: Slideshow -->
-    <div class="hero-slideshow-side" id="heroSlideshow">
-      <!-- Slideshow images injected here -->
-    </div>
-    
-    <!-- Right side: Text content -->
-    <div class="hero-text-side">
-      <h1 class="hero-main-title">
-        Establish Yourself With <span class="hero-highlight">Premium</span> Accessories
-      </h1>
-      <p class="hero-description">
-        Premium accessories can include items like luxury Watches, Leather goods, Designer handbags, Fine jewellery and High-end Footwear. Choose premium accessories that reflect your personality and lifestyle is essential.
-      </p>
-      <div class="hero-buttons">
-        <a href="#brands" class="hero-btn hero-btn-primary">
-          Explore all Luxury Brands
-          <span class="btn-arrow">→</span>
-        </a>
-        <a href="#louisvuitton" class="hero-btn hero-btn-secondary">
-          Explore Louis Vuitton Collection
-          <span class="btn-arrow">→</span>
-        </a>
+    <div class="container">
+      <div class="hero-content">
+        <h1 class="hero-title" id="heroTitle">Discover Luxury Collections</h1>
+        <p class="hero-subtitle" id="heroSubtitle">Curated premium products from the world's finest brands. Experience elegance, quality, and sophistication in every piece.</p>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
   
 
