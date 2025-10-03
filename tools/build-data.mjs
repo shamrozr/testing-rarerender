@@ -273,8 +273,12 @@ for (const r of masterRows) {
   const driveLink = (r["Drive Link"] || r["Drive"] || "").trim();
   const thumbRel  = (r["Thumbs Path"] || r["Thumb"] || "").trim();
   
-  // ADDED: Parse slideshow column
-  const isSlideshow = (r["Slideshow"] || r["slideshow"] || "").trim().toLowerCase() === "yes";
+  // Parse slideshow column - check ALL possible variations
+  const slideshowRaw = (
+    r["slideshow"] || r["Slideshow"] || r["SLIDESHOW"] || 
+    r["slide show"] || r["Slide Show"] || ""
+  ).toString().trim().toLowerCase();
+  const isSlideshow = slideshowRaw === "yes" || slideshowRaw === "y" || slideshowRaw === "true" || slideshowRaw === "1";
   
   // ENHANCED: Support TopOrder for ALL levels and ALL naming variations
   const topOrderRaw = (
@@ -578,26 +582,44 @@ console.log("✅ BUILD TopOrder verification complete");
   console.log("💾 Saving enhanced CSV-driven catalog with image rendering...");
   await fs.mkdir(PUBLIC_DIR, { recursive: true });
   
-// ADDED: Extract slideshow items
+// Extract slideshow items
 console.log("🎬 Extracting slideshow items...");
 const slideshowItems = [];
+
 function extractSlideshow(node, path = []) {
   for (const [key, item] of Object.entries(node)) {
-    if (item.slideshow && item.thumbnail) {
+    const currentPath = [...path, key];
+    
+    // Debug log
+    if (item.slideshow) {
+      console.log(`   ✅ Found slideshow item: ${currentPath.join('/')}`);
+    }
+    
+    if (item.slideshow === true && item.thumbnail) {
       slideshowItems.push({
         name: key,
-        path: [...path, key].join('/'),
+        path: currentPath.join('/'),
         thumbnail: item.thumbnail,
         category: path[0] || 'Featured'
       });
     }
+    
     if (item.children && !item.isProduct) {
-      extractSlideshow(item.children, [...path, key]);
+      extractSlideshow(item.children, currentPath);
     }
   }
 }
+
 extractSlideshow(tree);
 console.log(`✅ Found ${slideshowItems.length} slideshow items`);
+
+// Debug: Show first 3 slideshow items
+if (slideshowItems.length > 0) {
+  console.log("📋 Sample slideshow items:");
+  slideshowItems.slice(0, 3).forEach(item => {
+    console.log(`   - ${item.name} (${item.path})`);
+  });
+}
 
 const enhancedData = {
   brands,
