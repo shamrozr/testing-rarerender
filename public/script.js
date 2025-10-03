@@ -309,35 +309,72 @@ if (heroSlideshow) {
 showInnerHero() {
   const homepageHero = document.getElementById('heroHomepage');
   const innerHero = document.getElementById('heroInner');
+  const heroSection = document.querySelector('.hero');
+  const heroContainer = heroSection?.querySelector('.container');
   
   console.log('🔄 Switching to inner hero');
   
+  // STEP 1: Completely remove homepage hero from flow
   if (homepageHero) {
-    homepageHero.style.display = 'none';
-    homepageHero.style.height = '0';
-    homepageHero.style.overflow = 'hidden';
-    console.log('✅ Homepage hero hidden');
+    homepageHero.style.cssText = `
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      position: absolute !important;
+      pointer-events: none !important;
+    `;
+    console.log('✅ Homepage hero completely removed');
   }
   
+  // STEP 2: Fix hero section to be normal block
+  if (heroSection) {
+    heroSection.style.cssText = `
+      display: block !important;
+      width: 100% !important;
+      min-height: 350px !important;
+      padding: 4rem 0 3rem 0 !important;
+      overflow: visible !important;
+      position: relative !important;
+      background: linear-gradient(135deg, #f8f9fa 0%, rgba(99, 102, 241, 0.05) 50%, #f1f3f4 100%) !important;
+    `;
+  }
+  
+  // STEP 3: Fix container to be normal block
+  if (heroContainer) {
+    heroContainer.style.cssText = `
+      display: block !important;
+      max-width: 1200px !important;
+      margin: 0 auto !important;
+      padding: 0 1rem !important;
+      width: 100% !important;
+      overflow: visible !important;
+    `;
+  }
+  
+  // STEP 4: Show and force inner hero dimensions
   if (innerHero) {
-    // CRITICAL: Force dimensions BEFORE display
-    innerHero.style.width = '100%';
-    innerHero.style.maxWidth = '800px';
-    innerHero.style.minHeight = '200px';
-    innerHero.style.padding = '4rem 1rem';
-    innerHero.style.margin = '0 auto';
-    innerHero.style.boxSizing = 'border-box';
+    innerHero.style.cssText = `
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 100% !important;
+      max-width: 800px !important;
+      min-height: 200px !important;
+      padding: 2rem 1rem !important;
+      margin: 0 auto !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+      z-index: 10 !important;
+      text-align: center !important;
+    `;
     
-    // Then show it
-    innerHero.style.display = 'block';
-    innerHero.style.visibility = 'visible';
-    innerHero.style.opacity = '1';
-    innerHero.style.position = 'relative';
-    innerHero.style.zIndex = '10';
+    console.log('✅ Inner hero shown');
+    console.log('Inner hero rect:', innerHero.getBoundingClientRect());
     
-    console.log('✅ Inner hero shown with dimensions');
-    
-    // Force title and subtitle visibility WITH dimensions
+    // STEP 5: Force title and subtitle visibility
     setTimeout(() => {
       const title = innerHero.querySelector('.hero-title');
       const subtitle = innerHero.querySelector('.hero-subtitle');
@@ -350,15 +387,23 @@ showInnerHero() {
           color: #202124 !important;
           font-size: 2.5rem !important;
           font-weight: 700 !important;
-          margin-bottom: 1rem !important;
+          margin: 0 auto 1rem auto !important;
+          padding: 0 !important;
           width: 100% !important;
           max-width: 100% !important;
           line-height: 1.2 !important;
           text-shadow: none !important;
           -webkit-text-fill-color: #202124 !important;
           background: transparent !important;
+          text-align: center !important;
         `;
-        console.log('✅ Title dimensions:', title.getBoundingClientRect());
+        
+        const titleRect = title.getBoundingClientRect();
+        console.log('✅ Title rect:', titleRect);
+        
+        if (titleRect.height === 0) {
+          title.innerHTML = title.textContent; // Force reflow
+        }
       }
       
       if (subtitle) {
@@ -368,17 +413,21 @@ showInnerHero() {
           opacity: 1 !important;
           color: #5f6368 !important;
           font-size: 1.1rem !important;
-          margin-bottom: 1.5rem !important;
+          margin: 0 auto 1.5rem auto !important;
+          padding: 0 !important;
           width: 100% !important;
           max-width: 100% !important;
           line-height: 1.6 !important;
           text-shadow: none !important;
           -webkit-text-fill-color: #5f6368 !important;
           background: transparent !important;
+          text-align: center !important;
         `;
-        console.log('✅ Subtitle dimensions:', subtitle.getBoundingClientRect());
+        
+        const subtitleRect = subtitle.getBoundingClientRect();
+        console.log('✅ Subtitle rect:', subtitleRect);
       }
-    }, 10);
+    }, 50);
   }
 }
 
