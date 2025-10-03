@@ -395,7 +395,7 @@ addBreadcrumbNavigation(breadcrumbs) {
     // Insert at the very top of content
     dynamicSections.insertBefore(breadcrumbNav, dynamicSections.firstChild);
   }
-
+}
   // LOCATION: public/script.js
 // REPLACE: The entire renderCategoryContents function (around line 600) with this ENHANCED version:
 
