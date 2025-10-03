@@ -280,20 +280,12 @@ if (this.currentPath.length > 0) {
 
 
 // Show homepage hero (with slideshow)
-  // Show homepage hero (with slideshow)
   showHomepageHero() {
     const homepageHero = document.getElementById('heroHomepage');
     const innerHero = document.getElementById('heroInner');
     
-    if (homepageHero) {
-      homepageHero.style.display = 'grid';
-      homepageHero.classList.add('active');
-    }
-    
-    if (innerHero) {
-      innerHero.style.display = 'none';
-      innerHero.classList.remove('active');
-    }
+    if (homepageHero) homepageHero.style.display = 'grid';
+    if (innerHero) innerHero.style.display = 'none';
     
     // Update homepage hero content
     const titleHome = document.getElementById('heroTitleHome');
@@ -307,43 +299,13 @@ if (this.currentPath.length > 0) {
   }
   
   // Show inner page hero (traditional centered)
- // Show inner page hero (traditional centered)
-  // Show inner page hero (traditional centered)
-showInnerHero() {
-  const homepageHero = document.getElementById('heroHomepage');
-  const innerHero = document.getElementById('heroInner');
-  const heroContainer = document.querySelector('.hero');
-  
-  console.log('🎯 showInnerHero called');
-  
-  if (homepageHero) {
-    homepageHero.style.display = 'none';
-    homepageHero.classList.remove('active');
+  showInnerHero() {
+    const homepageHero = document.getElementById('heroHomepage');
+    const innerHero = document.getElementById('heroInner');
+    
+    if (homepageHero) homepageHero.style.display = 'none';
+    if (innerHero) innerHero.style.display = 'block';
   }
-  
-  // CRITICAL: Show hero container first
-  if (heroContainer) {
-    heroContainer.style.display = 'block';
-    heroContainer.style.visibility = 'visible';
-    heroContainer.style.opacity = '1';
-    heroContainer.style.minHeight = '300px';
-    console.log('✅ Hero container visible');
-  }
-  
-  if (innerHero) {
-    innerHero.style.display = 'block';
-    innerHero.style.visibility = 'visible';
-    innerHero.style.opacity = '1';
-    innerHero.classList.add('active');
-    console.log('✅ Inner hero visible');
-  }
-  
-  // Force browser repaint
-  setTimeout(() => {
-    if (heroContainer) heroContainer.style.transform = 'translateZ(0)';
-    setTimeout(() => { if (heroContainer) heroContainer.style.transform = ''; }, 10);
-  }, 50);
-}
 
 
   // Show featured heading (homepage only)
@@ -433,19 +395,6 @@ showInnerHero() {
 
   // Show category contents
   this.renderCategoryContents(currentNode, breadcrumbs);
-    
- console.log('🔍 Category view debug:');
-  console.log('  - Inner hero:', document.getElementById('heroInner')?.style.display);
-  console.log('  - Homepage hero:', document.getElementById('heroHomepage')?.style.display);
-  console.log('  - Breadcrumb:', document.querySelector('.breadcrumb-nav') ? 'exists' : 'missing');
-    // Force browser repaint
-setTimeout(() => {
-  const innerHero = document.getElementById('heroInner');
-  if (innerHero) {
-    innerHero.style.transform = 'translateZ(0)';
-    setTimeout(() => innerHero.style.transform = '', 10);
-  }
-}, 50);
 }
 
 
@@ -456,15 +405,10 @@ setTimeout(() => {
     if (heroTitle && breadcrumbs.length > 0) {
       const currentCategory = breadcrumbs[breadcrumbs.length - 1].name;
       heroTitle.textContent = `${currentCategory} Collection`;
-      heroTitle.style.display = 'block';
-      console.log('✅ Updated hero title:', heroTitle.textContent);
     }
     
     if (heroSubtitle) {
-      heroSubtitle.style.display = 'block'; // Show subtitle
-      const categoryName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : '';
-      heroSubtitle.textContent = `Explore ${categoryName} products across our premium collection`;
-      console.log('✅ Updated hero subtitle');
+      heroSubtitle.style.display = 'none'; // Hide subtitle on category pages
     }
 
     // Add breadcrumb navigation
@@ -1749,12 +1693,29 @@ updateSectionVisibility(showSections) {
       const element = document.getElementById(id);
       if (element) {
         element.textContent = content;
+        element.style.display = 'block'; // Ensure visible
+        element.style.visibility = 'visible'; // Force visibility
+        element.style.opacity = '1'; // Force opaque
+        element.style.color = id === 'brandName' ? '#202124' : ''; // Force dark color for brand name
         
-        // ONLY force brand name specific styles
-        if (id === 'brandName') {
-          element.removeAttribute('style'); // Clear all inline styles
-          element.classList.add('brand-name-visible'); // Add class instead
-        }
+        // Triple-check after delay
+        setTimeout(() => {
+          if (element.textContent !== content) {
+            element.textContent = content;
+          }
+          if (id === 'brandName') {
+            element.style.color = '#202124';
+          }
+        }, 50);
+        
+        setTimeout(() => {
+          if (element.textContent !== content) {
+            element.textContent = content;
+          }
+          if (id === 'brandName') {
+            element.style.color = '#202124';
+          }
+        }, 200);
       }
     });
 
