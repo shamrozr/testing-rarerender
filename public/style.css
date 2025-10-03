@@ -347,25 +347,15 @@ body {
   justify-content: center;
 }
 
-.brand-name,
-.brand-name-visible {
+.brand-name {
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-weight: 600;
-  color: #202124 !important;
+  color: #202124 !important; /* FIXED: Force dark color */
   line-height: 1.2;
   cursor: pointer;
-  display: inline-block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Prevent gradient text fill override */
-.brand-name-visible {
-  background: none !important;
-  -webkit-background-clip: unset !important;
-  -webkit-text-fill-color: #202124 !important;
-  background-clip: unset !important;
+  display: block !important; /* FIXED: Force visible */
+  opacity: 1 !important; /* FIXED: Force opaque */
 }
 
 .brand-tagline {
@@ -592,40 +582,10 @@ body {
 }
 
 /* INNER PAGES HERO: Traditional Centered */
-/* INNER PAGES HERO: Traditional Centered */
 .hero-inner {
   max-width: 800px;
   margin: 0 auto;
   text-align: center;
-  display: none;
-  position: relative !important;
-  z-index: 1 !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.hero-inner.active {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Force visibility on category pages */
-body[data-page-type="category"] .hero-inner,
-body[data-page-type="brand"] .hero-inner {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  min-height: 200px !important;
-}
-
-/* Ensure hero container is visible */
-body[data-page-type="category"] .hero,
-body[data-page-type="brand"] .hero {
-  display: block !important;
-  visibility: visible !important;
-  min-height: 300px !important;
-  position: relative !important;
 }
 
 /* Common Hero Styles */
@@ -745,35 +705,6 @@ body[data-page-type="brand"] .hero {
   .hero-title-line3 {
     font-size: 1.75rem;
   }
-
-
-  
-}
-
-
-/* Force hero visibility on category pages */
-body[data-page-type="category"] .hero,
-body[data-page-type="brand"] .hero {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  min-height: 300px !important;
-}
-
-body[data-page-type="category"] .hero-inner,
-body[data-page-type="brand"] .hero-inner {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-body[data-page-type="category"] .hero-title,
-body[data-page-type="category"] .hero-subtitle,
-body[data-page-type="brand"] .hero-title,
-body[data-page-type="brand"] .hero-subtitle {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
 }
 /* ============================================
    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
@@ -1108,14 +1039,15 @@ html {
 
 /* Breadcrumb Navigation - FIXED */
 /* ============================== */
+
 .breadcrumb-nav {
-  display: flex !important;
+  display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--space-2);
   font-size: 0.9rem;
-  color: var(--color-text-primary) !important;
+  color: var(--color-text-primary);
   padding: var(--space-3) var(--space-6);
   background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-full);
@@ -1124,29 +1056,6 @@ html {
   box-shadow: var(--shadow-sm);
   max-width: 600px;
   margin: var(--space-4) auto var(--space-6) auto;
-  visibility: visible !important;
-  opacity: 1 !important;
-  position: relative !important;
-  z-index: 100 !important; /* Above everything */
-}
-
-.breadcrumb-nav a {
-  color: var(--color-primary) !important;
-  text-decoration: none;
-  font-weight: 500;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-base);
-}
-
-.breadcrumb-nav a:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--color-primary);
-  transform: translateY(-1px);
-}
-
-.breadcrumb-nav span {
-  color: var(--color-text-primary) !important;
 }
 
 .breadcrumb-nav a {
@@ -4261,47 +4170,6 @@ a:focus-visible {
 body[data-page-type="category"] .featured-heading-section,
 body[data-page-type="brand"] .featured-heading-section {
   display: none !important;
-}
-  /* OVERRIDE: Force inner hero to be visible when needed */
-#heroInner.active,
-body[data-page-type="category"] #heroInner,
-body[data-page-type="brand"] #heroInner {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  position: relative !important;
-}
-
-/* Ensure hero content is visible */
-#heroInner .hero-content,
-#heroInner.active .hero-content {
-  display: flex !important;
-  flex-direction: column !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-  /* OVERRIDE: Force breadcrumb visibility */
-.breadcrumb-nav {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  position: relative !important;
-  z-index: 10 !important;
-}
-
-  /* Ensure hero text elements are visible on inner pages */
-/* Force hero text visibility on inner pages */
-body[data-page-type="category"] .hero-title,
-body[data-page-type="category"] .hero-subtitle,
-body[data-page-type="brand"] .hero-title,
-body[data-page-type="brand"] .hero-subtitle {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  color: var(--color-text-primary) !important;
-  position: relative !important;
-  z-index: 10 !important;
 }
 }
 /* ============================================
