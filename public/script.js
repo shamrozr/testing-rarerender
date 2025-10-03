@@ -112,6 +112,18 @@ class CSVCatalogApp {
 this.setupBrands();
 this.setupReviewSlideshow();
 this.setupHeroSlideshow();
+// IMMEDIATELY hide if not on homepage
+if (this.currentPath.length > 0) {
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
+  if (brandsSection) brandsSection.style.display = 'none';
+  if (slideshowSection) slideshowSection.style.display = 'none';
+  if (heroSlideshow) heroSlideshow.style.display = 'none';
+  
+  console.log('🔒 Initial hide: not on homepage');
+}
 // THEN control visibility based on current view
 if (this.currentPath.length > 0) {
   // On category/brand view - hide brands and slideshow
@@ -577,9 +589,17 @@ navigateToBrandOnly(brandName) {
 }
   
   showCategoryView() {
+
+  
+  if (brandsSection) brandsSection.remove();
+  if (slideshowSection) slideshowSection.remove();
+  if (heroSlideshow) heroSlideshow.style.display = 'none';
+  
   // Show inner hero layout
   this.showInnerHero();
   this.hideFeaturedHeading();
+  
+  // ... rest of your existing code
   
   // Add body attribute for CSS targeting
   document.body.setAttribute('data-page-type', 'category');
@@ -3341,22 +3361,21 @@ getScaleTransform(scaling) {
       .join(' ');
   }
   showBrandView(brandName, paths, categories) {
-  // FIXED: HIDE homepage sections when viewing brand
+  // FIXED: FORCE HIDE sections - do this FIRST
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
   const heroSlideshow = document.getElementById('heroSlideshowContainer');
   
   if (brandsSection) {
-    brandsSection.style.display = 'none';
-    console.log('🙈 Hiding brands section (brand view)');
+    brandsSection.style.display = 'none !important';
+    brandsSection.remove(); // NUCLEAR: remove from DOM
   }
   if (slideshowSection) {
-    slideshowSection.style.display = 'none';
-    console.log('🙈 Hiding slideshow section (brand view)');
+    slideshowSection.style.display = 'none !important';
+    slideshowSection.remove(); // NUCLEAR: remove from DOM
   }
   if (heroSlideshow) {
-    heroSlideshow.style.display = 'none';
-    console.log('🙈 Hiding hero slideshow (brand view)');
+    heroSlideshow.style.display = 'none !important';
   }
   
   // Show inner hero layout
@@ -3366,7 +3385,7 @@ getScaleTransform(scaling) {
   document.body.setAttribute('data-page-type', 'brand');
   this.resetScrollPosition();
   
-  // ... rest of existing code continues
+  // ... rest of your existing showBrandView code
   
   // ... rest of function continues
     
