@@ -91,8 +91,14 @@ body {
 
 .hero-title {
   font-weight: 700;
-  color: var(--color-text-primary);
-  /* REMOVED gradient that was making text transparent */
+  background: linear-gradient(
+    135deg,
+    var(--color-text-primary) 0%,
+    var(--color-primary) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Card titles with better hierarchy */
@@ -342,32 +348,12 @@ body {
 }
 
 .brand-name {
-  font-family: var(--font-display) !important;
-  font-size: 1.3rem !important;
-  font-weight: 600 !important;
-  /* NUCLEAR FIX: Multiple fallbacks for visibility */
-  color: #000000 !important;
-  background: none !important;
-  background-clip: initial !important;
-  -webkit-background-clip: initial !important;
-  -webkit-text-fill-color: #000000 !important;
-  line-height: 1.2 !important;
-  cursor: pointer !important;
-  opacity: 1 !important;
-  display: inline-block !important;
-  visibility: visible !important;
-  /* Remove any potential gradient interference */
-  background-image: none !important;
-  filter: none !important;
-  mix-blend-mode: normal !important;
-  isolation: isolate !important;
-}
-
-/* ALSO FIX: Remove any gradient from hero title that might interfere */
-.hero-title {
-  background: none !important;
-  -webkit-text-fill-color: inherit !important;
-  color: var(--color-text-primary) !important;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  cursor: pointer;
 }
 
 .brand-tagline {
@@ -424,250 +410,54 @@ body {
   color: var(--color-text-muted);
 }
 
-/* ============================================
-   HERO SECTION - SPLIT LAYOUT LIKE DEMO
-   ============================================ */
+/* Hero Section */
+/* ============ */
 
 .hero {
-  background: #e8e8e8;
-  padding: 0;
+  background: linear-gradient(135deg, 
+    var(--color-light-gray) 0%, 
+    rgba(99, 102, 241, 0.05) 50%,
+    var(--color-soft-gray) 100%);
+  padding: var(--space-16) 0 var(--space-8) 0; /* Added top padding to account for header */
+  text-align: center;
+  margin-top: 0; /* Reset any margins */
 }
 
-.hero-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 600px;
-  max-width: 1400px;
+.hero-content {
+  max-width: 800px;
   margin: 0 auto;
 }
 
-/* Left side: Slideshow */
-.hero-slideshow-side {
-  position: relative;
-  background: #f5f5f5;
-  overflow: hidden;
-}
-
-.hero-slide-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 1.5s ease-in-out;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-}
-
-.hero-slide-image.active {
-  opacity: 1;
-  z-index: 1;
-}
-
-.hero-slide-image img {
-  max-width: 90%;
-  max-height: 90%;
-  object-fit: contain;
-  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.15));
-}
-
-/* Right side: Text content */
-.hero-text-side {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 60px;
-  background: #e8e8e8;
-}
-
-.hero-main-title {
+.hero-title {
   font-family: var(--font-display);
   font-size: 3.5rem;
   font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-6);
   line-height: 1.2;
-  color: #1a1a1a;
-  margin-bottom: 24px;
-  letter-spacing: -0.02em;
-}
-
-.hero-highlight {
-  background: linear-gradient(135deg, #b8985f, #d4af6a);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero-description {
-  font-size: 1.1rem;
-  line-height: 1.7;
-  color: #4a4a4a;
-  margin-bottom: 32px;
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.hero-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-}
-
-.hero-btn-primary {
-  background: linear-gradient(135deg, #b8985f, #d4af6a);
-  color: white;
-}
-
-.hero-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(184, 152, 95, 0.4);
-}
-
-.hero-btn-secondary {
-  background: rgba(184, 152, 95, 0.15);
-  color: #4a4a4a;
-  border: 2px solid rgba(184, 152, 95, 0.3);
-}
-
-.hero-btn-secondary:hover {
-  background: rgba(184, 152, 95, 0.25);
-  border-color: rgba(184, 152, 95, 0.5);
-}
-
-.btn-arrow {
-  font-size: 1.2rem;
-  transition: transform 0.3s ease;
-}
-
-.hero-btn:hover .btn-arrow {
-  transform: translateX(4px);
-}
-
-/* Mobile: Stack vertically */
-@media (max-width: 968px) {
-  .hero-split {
-    grid-template-columns: 1fr;
-  }
-  
-  .hero-slideshow-side {
-    min-height: 400px;
-    order: 1;
-  }
-  
-  .hero-text-side {
-    padding: 40px 24px;
-    order: 2;
-  }
-  
-  .hero-main-title {
-    font-size: 2.2rem;
-  }
-  
-  .hero-description {
-    font-size: 1rem;
-  }
-  
-  .hero-buttons {
-    flex-direction: column;
-  }
-  
-  .hero-btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-/* ============================================
-   HERO SLIDESHOW - AUTO-ROTATING BACKGROUND
-   ============================================ */
-
-.hero {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Slideshow container */
-.hero-slideshow {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-/* Individual slide images */
-.hero-slide-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0;
-  transition: opacity 1.5s ease-in-out;
-}
-
-.hero-slide-bg.active {
-  opacity: 1;
-  z-index: 1;
-}
-
-/* Dark overlay so text is readable */
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.5) 0%,
-    rgba(0, 0, 0, 0.3) 100%
-  );
-  z-index: 1;
-}
-
-/* Hero content stays on top */
-.hero-content {
-  position: relative;
-  z-index: 2;
-}
-
-/* Make title white for contrast */
-.hero-title {
-  color: white;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .hero-subtitle {
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-10);
+  line-height: 1.6;
+}
+/* Reduce spacing between hero and first section */
+.hero + #dynamicSections .content-section:first-child {
+  padding-top: var(--space-5);
 }
 
-/* Mobile optimization */
-@media (max-width: 768px) {
-  .hero-slideshow {
-    background-size: cover;
-  }
-  
-  .hero-overlay {
-    background: rgba(0, 0, 0, 0.6); /* Darker on mobile for readability */
-  }
+/* Remove section header from category pages */
+.content-section .section-header {
+  margin-bottom: var(--space-8);
 }
+
+/* Hide section headers on category pages */
+body[data-page-type="category"] .section-header {
+  display: none;
+}
+
 /* ============================================
    QUICK WIN 2: SUBTLE BACKGROUND GRADIENTS
    ============================================ */
@@ -2189,7 +1979,7 @@ body {
 /* ========================= */
 
 /* ============================================
-   BRANDS SECTION - ACTUALLY WORKS NOW
+   BRANDS SECTION - FIXED
    ============================================ */
 
 .brands-section {
@@ -2214,92 +2004,108 @@ body {
   margin: 0 auto;
 }
 
+/* Square container with actual size */
 .brand-item {
   background: white;
+  padding: 0;
   border-radius: var(--radius-xl);
-  border: 2px solid rgba(0, 0, 0, 0.08); /* Light border like cards */
+  border: 2px solid var(--color-border);
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  display: flex !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 220px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); /* Subtle shadow */
+  width: 100%; /* Fill grid cell */
+  aspect-ratio: 1; /* Square shape */
+  min-height: 160px; /* Minimum size on mobile */
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .brand-item:hover {
   border-color: var(--color-primary);
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
+/* Logo container fills the card */
 .brand-logo-small {
-  width: 85%;
-  height: 85%;
-  display: flex !important;
+  width: 100%;
+  height: 100%;
+  display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 20%; /* More space around logo */
 }
 
+/* Logo image - BIGGER */
 .brand-logo-small img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  display: block !important;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  display: block;
 }
 
+/* Fallback emoji - BIGGER */
 .brand-logo-fallback {
   font-size: 5rem;
+  line-height: 1;
 }
 
+/* Hide text in browse brands section */
 .brand-info,
 .brand-name-display,
 .brand-count {
   display: none !important;
 }
 
+/* Mobile: 2 columns, BIGGER boxes */
 @media (max-width: 768px) {
   .brands-grid {
     grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--space-4);
   }
   
   .brand-item {
-    height: 220px !important; /* Bigger on mobile */
-  }
-  
-  .brand-logo-small {
-    width: 85% !important;
-    height: 85% !important;
+    min-height: 180px; /* Taller on mobile */
   }
 }
 
+/* Tablet: 3 columns */
 @media (min-width: 769px) and (max-width: 1024px) {
   .brands-grid {
     grid-template-columns: repeat(3, 1fr) !important;
+    gap: var(--space-5);
   }
   
   .brand-item {
-    height: 180px !important;
+    min-height: 150px;
   }
 }
 
+/* Desktop: 5 columns */
 @media (min-width: 1025px) and (max-width: 1399px) {
   .brands-grid {
     grid-template-columns: repeat(5, 1fr) !important;
   }
   
   .brand-item {
-    height: 160px !important;
+    min-height: 140px;
   }
 }
 
+/* Large desktop: 6 columns */
 @media (min-width: 1400px) {
   .brands-grid {
     grid-template-columns: repeat(6, 1fr) !important;
   }
   
   .brand-item {
-    height: 150px !important;
+    min-height: 130px;
   }
 }
 
@@ -4100,44 +3906,6 @@ a:focus-visible {
   .preview-close {
     transition: none;
   }
-  /* ============================================
-   BREADCRUMB CONTAINER FOR CATEGORY PAGES
-   ============================================ */
-
-.breadcrumb-container-fixed {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 60px;
-}
-
-.breadcrumb-container-fixed .breadcrumb-nav {
-  margin: 0; /* Remove default margins when in fixed container */
-}
-
-/* ============================================
-   HIDE HERO ON CATEGORY PAGES
-   ============================================ */
-
-body[data-page-type="category"] .hero,
-body[data-page-type="brand"] .hero {
-  display: none !important;
-  border: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-}
-
-/* Ensure breadcrumbs are visible and properly spaced */
-.breadcrumb-nav {
-  margin: var(--space-6) auto;
-}
-
-/* Remove any lingering borders/shadows */
-#dynamicSections {
-  border-top: none !important;
-}
 }
 /* ============================================
    SKELETON LOADING SCREENS
