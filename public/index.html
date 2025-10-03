@@ -43,10 +43,11 @@
   </header>
 
   <!-- Hero Section -->
-<!-- Hero Section - Side by Side Layout -->
+<!-- Hero Section - Dual Layout -->
   <section class="hero">
     <div class="container">
-      <div class="hero-layout">
+      <!-- HOMEPAGE HERO: Side by Side Layout -->
+      <div class="hero-layout hero-homepage" id="heroHomepage">
         <!-- LEFT: Hero Slideshow -->
         <div class="hero-slideshow-side" id="heroSlideshowContainer" style="display: none;">
           <div class="hero-slideshow-viewport" id="heroSlideshowViewport">
@@ -58,9 +59,15 @@
         
         <!-- RIGHT: Hero Content -->
         <div class="hero-content-side">
-          <h1 class="hero-title" id="heroTitle">Discover Luxury Collections</h1>
-          <p class="hero-subtitle" id="heroSubtitle">Curated premium products from the world's finest brands. Experience elegance, quality, and sophistication in every piece.</p>
+          <h1 class="hero-title" id="heroTitleHome">Discover Luxury Collections</h1>
+          <p class="hero-subtitle" id="heroSubtitleHome">Curated premium products from the world's finest brands. Experience elegance, quality, and sophistication in every piece.</p>
         </div>
+      </div>
+      
+      <!-- INNER PAGES HERO: Traditional Centered Layout -->
+      <div class="hero-content hero-inner" id="heroInner" style="display: none;">
+        <h1 class="hero-title" id="heroTitle">Discover Luxury Collections</h1>
+        <p class="hero-subtitle" id="heroSubtitle">Curated premium products from the world's finest brands. Experience elegance, quality, and sophistication in every piece.</p>
       </div>
     </div>
   </section>
