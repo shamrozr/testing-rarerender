@@ -312,38 +312,36 @@ if (this.currentPath.length > 0) {
 showInnerHero() {
   const homepageHero = document.getElementById('heroHomepage');
   const innerHero = document.getElementById('heroInner');
+  const heroContainer = document.querySelector('.hero');
+  
+  console.log('🎯 showInnerHero called');
   
   if (homepageHero) {
     homepageHero.style.display = 'none';
     homepageHero.classList.remove('active');
   }
   
-  if (innerHero) {
-    innerHero.style.display = 'block';
-    innerHero.classList.add('active');
-    
-    // Force visibility
-    innerHero.style.visibility = 'visible';
-    innerHero.style.opacity = '1';
-    innerHero.style.position = 'relative';
-    innerHero.style.zIndex = '1';
-    
-    console.log('✅ Inner hero shown with forced visibility');
-  }
-  
-  // Force parent container visibility
-  const heroContainer = document.querySelector('.hero');
+  // CRITICAL: Show hero container first
   if (heroContainer) {
     heroContainer.style.display = 'block';
     heroContainer.style.visibility = 'visible';
+    heroContainer.style.opacity = '1';
     heroContainer.style.minHeight = '300px';
-    heroContainer.style.position = 'relative';
+    console.log('✅ Hero container visible');
+  }
+  
+  if (innerHero) {
+    innerHero.style.display = 'block';
+    innerHero.style.visibility = 'visible';
+    innerHero.style.opacity = '1';
+    innerHero.classList.add('active');
+    console.log('✅ Inner hero visible');
   }
   
   // Force browser repaint
   setTimeout(() => {
-    if (innerHero) innerHero.style.transform = 'translateZ(0)';
-    setTimeout(() => { if (innerHero) innerHero.style.transform = ''; }, 10);
+    if (heroContainer) heroContainer.style.transform = 'translateZ(0)';
+    setTimeout(() => { if (heroContainer) heroContainer.style.transform = ''; }, 10);
   }, 50);
 }
 
