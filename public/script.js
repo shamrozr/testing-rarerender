@@ -588,25 +588,8 @@ navigateToBrandOnly(brandName) {
   }
 }
   
-  showCategoryView() {
-
-  
-  if (brandsSection) brandsSection.style.display = 'none';
-  if (slideshowSection) slideshowSection.style.display = 'none';
-  if (heroSlideshow) heroSlideshow.style.display = 'none';
-  
-  // Show inner hero layout
-  this.showInnerHero();
-  this.hideFeaturedHeading();
-  
-  // ... rest of your existing code (keep everything else)
-  
-  // ... rest of your existing code
-  
-  // Add body attribute for CSS targeting
-  document.body.setAttribute('data-page-type', 'category');
-  
-  // FIXED: FORCE HIDE sections on category view
+showCategoryView() {
+  // FIXED: Force hide sections IMMEDIATELY when entering category view
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
   const heroSlideshow = document.getElementById('heroSlideshowContainer');
@@ -624,10 +607,15 @@ navigateToBrandOnly(brandName) {
     console.log('🙈 FORCE HIDING hero slideshow in showCategoryView');
   }
   
-  // FIXED: Reset scroll position first
-  this.resetScrollPosition();
+  // Show inner hero layout
+  this.showInnerHero();
+  this.hideFeaturedHeading();
   
-
+  // Add body attribute for CSS targeting
+  document.body.setAttribute('data-page-type', 'category');
+  
+  // Reset scroll position
+  this.resetScrollPosition();
   
   // Navigate to the current path in the data tree
   let currentNode = this.data.catalog.tree;
@@ -649,40 +637,18 @@ navigateToBrandOnly(brandName) {
 
   // Update hero section for category view
   this.updateHeroForCategory(breadcrumbs);
-// Debug: Check if hero is visible
-setTimeout(() => {
-  const innerHero = document.getElementById('heroInner');
-  const heroTitle = document.getElementById('heroTitle');
-  const breadcrumb = document.querySelector('.breadcrumb-nav');
-  
-  const innerRect = innerHero?.getBoundingClientRect();
-  const titleRect = heroTitle?.getBoundingClientRect();
-  const breadcrumbRect = breadcrumb?.getBoundingClientRect();
-  
-  console.log('🔍 Hero dimensions check:', {
-    innerHero: innerRect ? `${innerRect.width}x${innerRect.height}` : 'not found',
-    heroTitle: titleRect ? `${titleRect.width}x${titleRect.height}` : 'not found',
-    breadcrumb: breadcrumbRect ? `${breadcrumbRect.width}x${breadcrumbRect.height}` : 'not found'
-  });
-  
-  if (innerRect && (innerRect.width === 0 || innerRect.height === 0)) {
-    console.error('❌ Hero inner has no dimensions! Force fixing...');
-    innerHero.style.width = '100%';
-    innerHero.style.minHeight = '200px';
-  }
-  
-  if (titleRect && (titleRect.width === 0 || titleRect.height === 0)) {
-    console.error('❌ Title has no dimensions! Force fixing...');
-    heroTitle.style.width = '100%';
-  }
-}, 200);
-  // HIDE brands and slideshow sections on category pages
-  this.updateSectionVisibility(false);
 
   // Show category contents
   this.renderCategoryContents(currentNode, breadcrumbs);
+  
+  // FINAL LOCK: Ensure sections stay hidden after rendering
+  setTimeout(() => {
+    if (brandsSection) brandsSection.style.display = 'none';
+    if (slideshowSection) slideshowSection.style.display = 'none';
+    if (heroSlideshow) heroSlideshow.style.display = 'none';
+    console.log('🔒 Final lock: sections hidden');
+  }, 100);
 }
-
 
   updateHeroForCategory(breadcrumbs) {
   const heroTitle = document.getElementById('heroTitle');
@@ -1976,14 +1942,10 @@ navigateToHome() {
   this.showHomepageHero();
   this.showFeaturedHeading();
   
-  // FIXED: Restore hero visibility when going home
-  const hero = document.querySelector('.hero');
-  if (hero) hero.style.display = 'block';
-  
   // Remove category page attribute
   document.body.removeAttribute('data-page-type');
   
-  // FIXED: Reset scroll position first
+  // Reset scroll position
   this.resetScrollPosition();
   
   // Update URL
@@ -1999,9 +1961,10 @@ navigateToHome() {
   // Reset state
   this.currentPath = [];
   
-  // CRITICAL: Recreate sections if they were removed
+  // CRITICAL: Ensure sections exist before showing
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
   
   if (!brandsSection || !slideshowSection) {
     console.log('🔄 Sections were removed, reloading page to restore them');
@@ -2012,27 +1975,32 @@ navigateToHome() {
   // Re-render homepage
   this.setupDynamicSections();
   
-  // FIXED: SHOW brands and slideshow sections on homepage
+  // FORCE SHOW sections on homepage
   if (brandsSection) {
     brandsSection.style.display = 'block';
-    console.log('👁️ Restored brands section');
+    console.log('👁️ FORCE SHOWING brands section (homepage)');
   }
   if (slideshowSection) {
     slideshowSection.style.display = 'block';
-    console.log('👁️ Restored slideshow section');
+    console.log('👁️ FORCE SHOWING slideshow section (homepage)');
   }
-  
-  // SHOW hero slideshow on homepage (MOVED HERE - declare once)
-  const heroSlideshow = document.getElementById('heroSlideshowContainer');
   if (heroSlideshow) {
     heroSlideshow.style.display = 'block';
-    console.log('👁️ Showing hero slideshow (homepage)');
+    console.log('👁️ FORCE SHOWING hero slideshow (homepage)');
   }
   
-  // CRITICAL: Force homepage hero to show properly
+  // Reset hero
+  this.setupBrandInfo();
+  
+  // Remove breadcrumbs
+  const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
+  if (existingBreadcrumbs) {
+    existingBreadcrumbs.remove();
+  }
+  
+  // Force homepage hero display
   const homepageHero = document.getElementById('heroHomepage');
   const innerHero = document.getElementById('heroInner');
-  const heroSection = document.querySelector('.hero');
   
   if (innerHero) {
     innerHero.style.cssText = `
@@ -2059,27 +2027,7 @@ navigateToHome() {
     `;
     console.log('✅ Homepage hero restored');
   }
-  
-  if (heroSection) {
-    heroSection.style.cssText = `
-      background: linear-gradient(135deg, var(--color-light-gray) 0%, rgba(99, 102, 241, 0.05) 50%, var(--color-soft-gray) 100%) !important;
-      padding: var(--space-16) 0 var(--space-8) 0 !important;
-      margin-top: 0 !important;
-      overflow: visible !important;
-      min-height: auto !important;
-    `;
-  }
-  
-  // Reset hero
-  this.setupBrandInfo();
-  
-  // Remove breadcrumbs
-  const existingBreadcrumbs = document.querySelector('.breadcrumb-nav');
-  if (existingBreadcrumbs) {
-    existingBreadcrumbs.remove();
-  }
 }
-
 
 
 // Helper function to control section visibility
