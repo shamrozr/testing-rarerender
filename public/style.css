@@ -507,7 +507,20 @@ body[data-page-type="brand"] .hero * {
   max-width: 1400px;
   margin: 0 auto;
 }
+/* Prevent grid collapse when switching views */
+.hero-homepage[style*="display: none"] {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
 
+.hero-inner[style*="display: block"] {
+  display: block !important;
+  height: auto !important;
+  min-height: 200px !important;
+} 
 .hero-slideshow-side {
   position: relative;
   width: 100%;
@@ -672,7 +685,55 @@ body[data-page-type="brand"] .hero * {
 /* Force inner hero title visibility */
 .hero-inner .hero-title {
   display: block !important;
+  visibility: visible !important;/* INNER PAGES HERO: Traditional Centered */
+.hero-inner {
+  max-width: 800px;
+  width: 100% !important;
+  margin: 0 auto;
+  text-align: center;
+  display: block !important;
   visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  padding: var(--space-8) var(--space-4) !important;
+  min-height: 200px !important;
+  box-sizing: border-box !important;
+}
+
+/* Force inner hero title visibility */
+.hero-inner .hero-title {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+  font-family: var(--font-display);
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: var(--space-4) !important;
+  line-height: 1.2 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  text-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Force inner hero subtitle visibility */
+.hero-inner .hero-subtitle {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--color-text-secondary) !important;
+  -webkit-text-fill-color: var(--color-text-secondary) !important;
+  font-size: 1.1rem !important;
+  line-height: 1.6 !important;
+  margin-bottom: var(--space-6) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  text-shadow: none !important;
+  background: transparent !important;
+}
   opacity: 1 !important;
   color: var(--color-text-primary) !important;
   font-family: var(--font-display);
