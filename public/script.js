@@ -69,14 +69,7 @@ class CSVCatalogApp {
   }
 
   async init() {
-  // DEBUG: Monitor sections visibility
-  setInterval(() => {
-    const brands = document.querySelector('.brands-section');
-    const slideshow = document.querySelector('.slideshow-section');
-    const heroSlide = document.getElementById('heroSlideshowContainer');
-    const bodyAttr = document.body.getAttribute('data-page-type');
-    
-  }, 2000);
+
   
   try {
     await this.loadData();
@@ -389,7 +382,7 @@ showHomepageHero() {
         `;
       }
       
-      console.log('📱 Applied MOBILE vertical layout');
+      //console.log('📱 Applied MOBILE vertical layout');
       
     } else {
       // DESKTOP: Grid layout - side by side
@@ -406,7 +399,7 @@ showHomepageHero() {
         position: relative !important;
         min-height: 400px !important;
       `;
-      console.log('🖥️ Applied DESKTOP grid layout');
+      //console.log('🖥️ Applied DESKTOP grid layout');
     }
   }
   
@@ -439,7 +432,7 @@ showInnerHero() {
   const heroSection = document.querySelector('.hero');
   const heroContainer = heroSection?.querySelector('.container');
   
-  console.log('🔄 Switching to inner hero');
+  //console.log('🔄 Switching to inner hero');
   
   // STEP 1: Completely remove homepage hero from flow
   if (homepageHero) {
@@ -453,7 +446,7 @@ showInnerHero() {
       position: absolute !important;
       pointer-events: none !important;
     `;
-    console.log('✅ Homepage hero completely removed');
+    //console.log('✅ Homepage hero completely removed');
   }
   
   // STEP 2: Fix hero section to be normal block
