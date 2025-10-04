@@ -2671,8 +2671,19 @@
     }
   }
 
-  /* Browse All Brands Section */
-  /* ========================= */
+/* ============================================
+   BRANDS SECTION - HOMEPAGE ONLY
+   ============================================ */
+
+/* Default: Hide brands section everywhere */
+.brands-section {
+  display: none !important;
+}
+
+/* Only show on homepage (when body has no data-page-type attribute) */
+body:not([data-page-type]) .brands-section {
+  display: block !important;
+}
 
   /* ============================================
     BRANDS SECTION - FIXED
