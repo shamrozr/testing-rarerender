@@ -4676,48 +4676,16 @@
     max-width: 800px !important;
     margin: 0 auto !important;
   }
-/* Hide brands and gallery on category pages */
-body[data-page-type="category"] .brands-section,
-body[data-page-type="brand"] .brands-section {
-  display: none !important;
-}
 
-body[data-page-type="category"] .slideshow-section,
-body[data-page-type="brand"] .slideshow-section {
-  display: none !important;
-}
-/* ============================================
-   CRITICAL: Force hide sections on category pages
-   ============================================ */
 
-/* Hide on ALL category/brand pages - HIGHEST PRIORITY */
+  
+/* Simple visibility control - ONE rule only */
 body[data-page-type="category"] .brands-section,
 body[data-page-type="category"] .slideshow-section,
-body[data-page-type="category"] #heroSlideshowContainer,
 body[data-page-type="brand"] .brands-section,
-body[data-page-type="brand"] .slideshow-section,
-body[data-page-type="brand"] #heroSlideshowContainer {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  overflow: hidden !important;
-  position: absolute !important;
-  pointer-events: none !important;
+body[data-page-type="brand"] .slideshow-section {
+  display: none;
 }
-
-/* Force show ONLY on homepage (no data-page-type attribute) */
-body:not([data-page-type]) .brands-section,
-body:not([data-page-type]) .slideshow-section,
-body:not([data-page-type]) #heroSlideshowContainer {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  height: auto !important;
-  position: relative !important;
-  pointer-events: auto !important;
-}
-
 
 /* Performance: Contain animations and prevent layout thrashing */
 .content-card {
