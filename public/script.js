@@ -637,35 +637,17 @@ navigateToBrandOnly(brandName) {
 }
   
 showCategoryView() {
-  // FIXED: Force hide sections IMMEDIATELY when entering category view
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  // 1. Update body attribute (CSS handles hiding via selectors)
+  document.body.setAttribute('data-page-type', 'category');
   
-  if (brandsSection) {
-    brandsSection.style.display = 'none';
-    console.log('🙈 FORCE HIDING brands in showCategoryView');
-  }
-  if (slideshowSection) {
-    slideshowSection.style.display = 'none';
-    console.log('🙈 FORCE HIDING slideshow in showCategoryView');
-  }
-  if (heroSlideshow) {
-    heroSlideshow.style.display = 'none';
-    console.log('🙈 FORCE HIDING hero slideshow in showCategoryView');
-  }
-  
-  // Show inner hero layout
+  // 2. Show inner hero
   this.showInnerHero();
   this.hideFeaturedHeading();
   
-  // Add body attribute for CSS targeting
-  document.body.setAttribute('data-page-type', 'category');
-  
-  // Reset scroll position
+  // 3. Reset scroll
   this.resetScrollPosition();
   
-  // Navigate to the current path in the data tree
+  // 4. Navigate to path
   let currentNode = this.data.catalog.tree;
   let breadcrumbs = [];
   
@@ -683,19 +665,13 @@ showCategoryView() {
     }
   }
 
-  // Update hero section for category view
+  // 5. Update hero
   this.updateHeroForCategory(breadcrumbs);
 
-  // Show category contents
+  // 6. Render content
   this.renderCategoryContents(currentNode, breadcrumbs);
   
-  // FINAL LOCK: Ensure sections stay hidden after rendering
-  setTimeout(() => {
-    if (brandsSection) brandsSection.style.display = 'none';
-    if (slideshowSection) slideshowSection.style.display = 'none';
-    if (heroSlideshow) heroSlideshow.style.display = 'none';
-    //console.log('🔒 Final lock: sections hidden');
-  }, 100);
+  // NO MORE MANUAL HIDING - Let CSS handle it via body[data-page-type]
 }
 
   updateHeroForCategory(breadcrumbs) {
