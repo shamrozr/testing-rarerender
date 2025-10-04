@@ -4717,6 +4717,31 @@ body:not([data-page-type]) #heroSlideshowContainer {
   position: relative !important;
   pointer-events: auto !important;
 }
+
+
+/* Performance: Contain animations and prevent layout thrashing */
+.content-card {
+  contain: layout style paint;
+  will-change: transform;
+}
+
+.brands-section,
+.slideshow-section {
+  contain: layout style;
+}
+
+/* Prevent animation queue buildup on mobile */
+@media (max-width: 768px) {
+  .content-card {
+    animation-duration: 0.3s !important; /* Faster on mobile */
+  }
+  
+  .content-card:nth-child(n+7) {
+    animation: none !important; /* No animation after 6 cards */
+  }
+}
+
+
   }
   /* ============================================
     SKELETON LOADING SCREENS
