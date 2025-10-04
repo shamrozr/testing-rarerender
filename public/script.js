@@ -431,15 +431,9 @@ showHomepageHero() {
   window.addEventListener('resize', handleResize);
 }
 
-// Show inner page hero (traditional centered)
-// Show inner page hero (traditional centered)
 showInnerHero() {
   const homepageHero = document.getElementById('heroHomepage');
   const innerHero = document.getElementById('heroInner');
-  const heroSection = document.querySelector('.hero');
-  const heroContainer = heroSection?.querySelector('.container');
-  
-  console.log('🔄 Switching to inner hero');
   
   // STEP 1: Completely remove homepage hero from flow
   if (homepageHero) {
@@ -453,107 +447,8 @@ showInnerHero() {
       position: absolute !important;
       pointer-events: none !important;
     `;
-    console.log('✅ Homepage hero completely removed');
   }
-  
-  // STEP 2: Fix hero section to be normal block
-  if (heroSection) {
-    heroSection.style.cssText = `
-      display: block !important;
-      width: 100% !important;
-      min-height: 350px !important;
-      padding: 4rem 0 3rem 0 !important;
-      overflow: visible !important;
-      position: relative !important;
-      background: linear-gradient(135deg, #f8f9fa 0%, rgba(99, 102, 241, 0.05) 50%, #f1f3f4 100%) !important;
-    `;
-  }
-  
-  // STEP 3: Fix container to be normal block
-  if (heroContainer) {
-    heroContainer.style.cssText = `
-      display: block !important;
-      max-width: 1200px !important;
-      margin: 0 auto !important;
-      padding: 0 1rem !important;
-      width: 100% !important;
-      overflow: visible !important;
-    `;
-  }
-  
-  // STEP 4: Show and force inner hero dimensions
-  if (innerHero) {
-    innerHero.style.cssText = `
-      display: block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      width: 100% !important;
-      max-width: 800px !important;
-      min-height: 200px !important;
-      padding: 2rem 1rem !important;
-      margin: 0 auto !important;
-      box-sizing: border-box !important;
-      position: relative !important;
-      z-index: 10 !important;
-      text-align: center !important;
-    `;
-    
-    
-    // STEP 5: Force title and subtitle visibility
-    setTimeout(() => {
-      const title = innerHero.querySelector('.hero-title');
-      const subtitle = innerHero.querySelector('.hero-subtitle');
-      
-      if (title) {
-        title.style.cssText = `
-          display: block !important;
-          visibility: visible !important;
-          opacity: 1 !important;
-          color: #202124 !important;
-          font-size: 2.5rem !important;
-          font-weight: 700 !important;
-          margin: 0 auto 1rem auto !important;
-          padding: 0 !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          line-height: 1.2 !important;
-          text-shadow: none !important;
-          -webkit-text-fill-color: #202124 !important;
-          background: transparent !important;
-          text-align: center !important;
-        `;
-        
-        const titleRect = title.getBoundingClientRect();
-        console.log('✅ Title rect:', titleRect);
-        
-        if (titleRect.height === 0) {
-          title.innerHTML = title.textContent; // Force reflow
-        }
-      }
-      
-      if (subtitle) {
-        subtitle.style.cssText = `
-          display: block !important;
-          visibility: visible !important;
-          opacity: 1 !important;
-          color: #5f6368 !important;
-          font-size: 1.1rem !important;
-          margin: 0 auto 1.5rem auto !important;
-          padding: 0 !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          line-height: 1.6 !important;
-          text-shadow: none !important;
-          -webkit-text-fill-color: #5f6368 !important;
-          background: transparent !important;
-          text-align: center !important;
-        `;
-        
-        const subtitleRect = subtitle.getBoundingClientRect();
-        console.log('✅ Subtitle rect:', subtitleRect);
-      }
-    }, 50);
-  }
+  // ...
 }
 
 
@@ -1037,15 +932,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
       if (gridContainer) this.addSmartCentering(gridContainer, items.length);
     }, 10);
   }
-   // ADD THIS AT THE VERY END:
-  // FORCE hide sections after rendering
-  setTimeout(() => {
-    const brandsSection = document.querySelector('.brands-section');
-    const slideshowSection = document.querySelector('.slideshow-section');
-    if (brandsSection) brandsSection.style.display = 'none';
-    if (slideshowSection) slideshowSection.style.display = 'none';
-    //console.log('🔒 Locked sections hidden in renderCategoryContents');
-  }, 50);
+
 
 }
 
