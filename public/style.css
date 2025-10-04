@@ -74,33 +74,7 @@
   /* ============================================
     QUICK WIN 5: REFINED TYPOGRAPHY
     ============================================ */
-/* Emergency performance mode for mobile */
-@media (max-width: 768px) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.15s !important;
-  }
-  
-  .content-card:nth-child(n+7) {
-    animation: none !important;
-  }
-  
-  /* Disable expensive effects */
-  .header,
-  .search-input:focus,
-  .preview-header,
-  .preview-navigation {
-    backdrop-filter: none !important;
-  }
-  
-  /* Prevent layout thrashing */
-  .brands-section,
-  .slideshow-section {
-    display: none;
-    contain: strict;
-  }
-}
+
   /* Improved readability */
   body {
     line-height: 1.65;
@@ -4753,7 +4727,27 @@ body[data-page-type="brand"] .slideshow-section {
     visibility: visible !important;
   }
 }
-
+/* CRITICAL: Reduce animations on mobile to prevent GPU overload */
+@media (max-width: 768px) {
+  .content-card {
+    animation-duration: 0.2s !important; /* Faster */
+  }
+  
+  /* Only animate first 6 cards */
+  .content-card:nth-child(n+7) {
+    animation: none !important;
+    animation-delay: 0s !important;
+  }
+  
+  /* Disable hover transforms on mobile - they conflict with touch */
+  .content-card:hover {
+    transform: none !important;
+  }
+  
+  .content-card:active {
+    transform: scale(0.98) !important; /* Touch feedback only */
+  }
+}
   }
   /* ============================================
     SKELETON LOADING SCREENS
