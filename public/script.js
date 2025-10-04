@@ -110,9 +110,18 @@ class CSVCatalogApp {
     }
 
 // Setup brands and slideshow FIRST (creates the sections)
-this.setupBrands();
+// REPLACE with this:
+// Setup slideshow (always)
 this.setupReviewSlideshow();
 this.setupHeroSlideshow();
+
+// Setup brands ONLY if on homepage
+if (this.currentPath.length === 0) {
+  console.log('🏠 On homepage, setting up brands section');
+  this.setupBrands();
+} else {
+  console.log('📄 On inner page, skipping brands setup');
+}
 // IMMEDIATELY hide if not on homepage
 if (this.currentPath.length > 0) {
   const brandsSection = document.querySelector('.brands-section');
@@ -1963,32 +1972,26 @@ navigateToHome() {
   // Reset state
   this.currentPath = [];
   
-  // CRITICAL: Ensure sections exist before showing
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  const heroSlideshow = document.getElementById('heroSlideshowContainer');
-  
-  if (!brandsSection || !slideshowSection) {
-    console.log('🔄 Sections were removed, reloading page to restore them');
-    window.location.href = window.location.pathname + '?' + params.toString();
-    return;
-  }
+  // CRITICAL: Re-setup brands when returning to homepage
+  console.log('🔄 Re-setting up brands for homepage');
+  this.setupBrands();
   
   // Re-render homepage
   this.setupDynamicSections();
   
   // FORCE SHOW sections on homepage
+  const brandsSection = document.querySelector('.brands-section');
+  const slideshowSection = document.querySelector('.slideshow-section');
+  const heroSlideshow = document.getElementById('heroSlideshowContainer');
+  
   if (brandsSection) {
     brandsSection.style.display = 'block';
-
   }
   if (slideshowSection) {
     slideshowSection.style.display = 'block';
-
   }
   if (heroSlideshow) {
     heroSlideshow.style.display = 'block';
-
   }
   
   // Reset hero
@@ -3107,99 +3110,106 @@ getScaleTransform(scaling) {
     return emojiMap[category?.toUpperCase()] || '🎁';
   }
 
-  setupBrands() {
-    const brandsGrid = document.getElementById('brandsGrid');
-    if (!brandsGrid || !this.data.catalog?.tree) return;
+setupBrands() {
+  // CRITICAL: Only setup brands on homepage
+  if (this.currentPath.length > 0) {
+    console.log('🚫 Not on homepage, skipping brands setup');
+    return;
+  }
+  
+  const brandsGrid = document.getElementById('brandsGrid');
+  if (!brandsGrid || !this.data.catalog?.tree) return;
 
-    // Extract ONLY brands (not categories) from inside categories
-    const brandMap = new Map();
-    
-    const extractBrands = (categoryNode, categoryName) => {
-      // categoryNode.children contains the actual brands (Chanel, Gucci, etc.)
-      for (const [brandKey, brandItem] of Object.entries(categoryNode.children || {})) {
-        if (!brandItem.isProduct && brandItem.children) {
-          const normalizedName = this.normalizeBrandName(brandKey);
-          
-          if (!brandMap.has(normalizedName)) {
-            brandMap.set(normalizedName, {
-              displayName: normalizedName,
-              categories: new Map(),
-              totalCount: 0,
-              paths: [],
-              thumbnail: brandItem.thumbnail || '' // Get from CSV Thumbs Path
-            });
-          }
-          
-          const brandData = brandMap.get(normalizedName);
-          
-          // Store category with its data
-          if (!brandData.categories.has(categoryName)) {
-            brandData.categories.set(categoryName, {
-              count: 0,
-              thumbnail: categoryNode.thumbnail || ''
-            });
-          }
-          
-          const catData = brandData.categories.get(categoryName);
-          catData.count += brandItem.count || 0;
-          
-          brandData.totalCount += brandItem.count || 0;
-          brandData.paths.push(`${categoryName}/${brandKey}`);
-          
-          // Use thumbnail from CSV if available, fallback to constructed path
-          if (!brandData.thumbnail && brandItem.thumbnail) {
-            brandData.thumbnail = brandItem.thumbnail;
-          } else if (!brandData.thumbnail) {
-            // Fallback to constructed path
-            brandData.thumbnail = `/Cards/${normalizedName.replace(/\s+/g, '-')}.webp`;
-          }
+  // Extract ONLY brands (not categories) from inside categories
+  const brandMap = new Map();
+  
+  const extractBrands = (categoryNode, categoryName) => {
+    // categoryNode.children contains the actual brands (Chanel, Gucci, etc.)
+    for (const [brandKey, brandItem] of Object.entries(categoryNode.children || {})) {
+      if (!brandItem.isProduct && brandItem.children) {
+        const normalizedName = this.normalizeBrandName(brandKey);
+        
+        if (!brandMap.has(normalizedName)) {
+          brandMap.set(normalizedName, {
+            displayName: normalizedName,
+            categories: new Map(),
+            totalCount: 0,
+            paths: [],
+            thumbnail: brandItem.thumbnail || ''
+          });
+        }
+        
+        const brandData = brandMap.get(normalizedName);
+        
+        // Store category with its data
+        if (!brandData.categories.has(categoryName)) {
+          brandData.categories.set(categoryName, {
+            count: 0,
+            thumbnail: categoryNode.thumbnail || ''
+          });
+        }
+        
+        const catData = brandData.categories.get(categoryName);
+        catData.count += brandItem.count || 0;
+        
+        brandData.totalCount += brandItem.count || 0;
+        brandData.paths.push(`${categoryName}/${brandKey}`);
+        
+        // Use thumbnail from CSV if available, fallback to constructed path
+        if (!brandData.thumbnail && brandItem.thumbnail) {
+          brandData.thumbnail = brandItem.thumbnail;
+        } else if (!brandData.thumbnail) {
+          // Fallback to constructed path
+          brandData.thumbnail = `/Cards/${normalizedName.replace(/\s+/g, '-')}.webp`;
         }
       }
-    };
-    
-    // Only iterate through top-level categories (BAGS, SHOES, etc.)
-    for (const [categoryKey, categoryItem] of Object.entries(this.data.catalog.tree)) {
-      if (!categoryItem.isProduct) {
-        extractBrands(categoryItem, categoryKey);
-      }
     }
-
-    // Convert to array and sort by count
-    const brands = Array.from(brandMap.entries())
-      .map(([name, data]) => ({
-        name,
-        categories: data.categories,
-        count: data.totalCount,
-        paths: data.paths,
-        thumbnail: data.thumbnail
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    // Homepage: Small logo on left + text (list style)
-    brandsGrid.innerHTML = brands.map(brand => `
-      <div class="brand-item" data-brand="${brand.name}" data-paths='${JSON.stringify(brand.paths)}' data-categories='${JSON.stringify(Array.from(brand.categories.entries()))}' role="button" tabindex="0">
-        <div class="brand-logo-small">
-          <img src="${brand.thumbnail}" alt="${brand.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-          <div class="brand-logo-fallback" style="display: none;">${this.getEmojiForCategory('BAGS')}</div>
-        </div>
-        <div class="brand-info">
-          <div class="brand-name-display">${brand.name}</div>
-          <div class="brand-count">${brand.count} items</div>
-        </div>
-      </div>
-    `).join('');
-
-    // Add click handlers for brands
-    document.querySelectorAll('.brand-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const brandName = item.dataset.brand;
-        const paths = JSON.parse(item.dataset.paths);
-        const categories = new Map(JSON.parse(item.dataset.categories));
-        this.showBrandView(brandName, paths, categories);
-      });
-    });
+  };
+  
+  // Only iterate through top-level categories (BAGS, SHOES, etc.)
+  for (const [categoryKey, categoryItem] of Object.entries(this.data.catalog.tree)) {
+    if (!categoryItem.isProduct) {
+      extractBrands(categoryItem, categoryKey);
+    }
   }
 
+  // Convert to array and sort by count
+  const brands = Array.from(brandMap.entries())
+    .map(([name, data]) => ({
+      name,
+      categories: data.categories,
+      count: data.totalCount,
+      paths: data.paths,
+      thumbnail: data.thumbnail
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  // Homepage: Small logo on left + text (list style)
+  brandsGrid.innerHTML = brands.map(brand => `
+    <div class="brand-item" data-brand="${brand.name}" data-paths='${JSON.stringify(brand.paths)}' data-categories='${JSON.stringify(Array.from(brand.categories.entries()))}' role="button" tabindex="0">
+      <div class="brand-logo-small">
+        <img src="${brand.thumbnail}" alt="${brand.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="brand-logo-fallback" style="display: none;">${this.getEmojiForCategory('BAGS')}</div>
+      </div>
+      <div class="brand-info">
+        <div class="brand-name-display">${brand.name}</div>
+        <div class="brand-count">${brand.count} items</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Add click handlers for brands
+  document.querySelectorAll('.brand-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const brandName = item.dataset.brand;
+      const paths = JSON.parse(item.dataset.paths);
+      const categories = new Map(JSON.parse(item.dataset.categories));
+      this.showBrandView(brandName, paths, categories);
+    });
+  });
+  
+  console.log('✅ Brands section setup complete (homepage only)');
+}
 
 
   
