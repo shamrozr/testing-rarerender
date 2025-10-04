@@ -122,7 +122,7 @@ if (this.currentPath.length === 0) {
 } else {
   console.log('📄 On inner page, skipping brands setup');
 }
-// IMMEDIATELY hide if not on homepage
+/*// IMMEDIATELY hide if not on homepage
 if (this.currentPath.length > 0) {
   const brandsSection = document.querySelector('.brands-section');
   const slideshowSection = document.querySelector('.slideshow-section');
@@ -133,7 +133,9 @@ if (this.currentPath.length > 0) {
   if (heroSlideshow) heroSlideshow.style.display = 'none';
   
 
-}
+}*/
+
+/*
 // THEN control visibility based on current view
 if (this.currentPath.length > 0) {
   // On category/brand view - hide brands and slideshow
@@ -168,7 +170,7 @@ if (heroSlideshow) {
     slideshowSection.style.display = 'block';
 
   }
-}
+}*/
     
     this.setupFooter();
     this.setupEventListeners();
@@ -631,12 +633,14 @@ navigateToBrandOnly(brandName) {
 }
   
 showCategoryView() {
-  // 1. Update body attribute (CSS handles hiding via selectors)
+  // 1. CRITICAL: Set body attribute FIRST (CSS handles hiding)
   document.body.setAttribute('data-page-type', 'category');
+  console.log('🔒 Set data-page-type=category, brands should be hidden');
   
   // 2. Show inner hero
   this.showInnerHero();
   this.hideFeaturedHeading();
+
   
   // 3. Reset scroll
   this.resetScrollPosition();
@@ -1949,6 +1953,10 @@ debugModalState() {
 
   
 navigateToHome() {
+  // CRITICAL: Remove data-page-type attribute FIRST
+  document.body.removeAttribute('data-page-type');
+  console.log('🏠 Removed data-page-type, brands should be visible');
+  
   // Show homepage hero layout
   this.showHomepageHero();
   this.showFeaturedHeading();
@@ -3318,11 +3326,9 @@ setupBrands() {
       .join(' ');
   }
   showBrandView(brandName, paths, categories) {
-
-
-
-    document.body.setAttribute('data-page-type', 'brand');
-
+  // CRITICAL: Set body attribute FIRST
+  document.body.setAttribute('data-page-type', 'brand');
+  console.log('🔒 Set data-page-type=brand, brands should be hidden');
   
   // Show inner hero layout
   this.showInnerHero();
