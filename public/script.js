@@ -3971,30 +3971,9 @@ setupEventListeners() {
 
 
 setupSectionVisibilityEnforcer() {
-    const enforceVisibility = () => {
-      const pageType = document.body.getAttribute('data-page-type');
-      const brands = document.querySelector('.brands-section');
-      const slideshow = document.querySelector('.slideshow-section');
-      const heroSlide = document.getElementById('heroSlideshowContainer');
-      
-      if (pageType === 'category' || pageType === 'brand') {
-        if (brands) brands.style.display = 'none';
-        if (slideshow) slideshow.style.display = 'none';
-        if (heroSlide) heroSlide.style.display = 'none';
-      } else {
-        if (brands) brands.style.display = 'block';
-        if (slideshow) slideshow.style.display = 'block';
-        if (heroSlide) heroSlide.style.display = 'block';
-      }
-    };
-    
-    // ✅ ONLY use MutationObserver - NO setInterval
-    const observer = new MutationObserver(enforceVisibility);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-page-type'] });
-    
-    // Run once on setup
-    enforceVisibility();
-  }
+  // CSS handles visibility via body[data-page-type] - no JS needed
+  console.log('✅ Section visibility controlled by CSS');
+}
 
 
 setupScrollBehavior() {
