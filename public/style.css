@@ -4678,7 +4678,7 @@
   }
 
 
-  
+
 /* Simple visibility control - ONE rule only */
 body[data-page-type="category"] .brands-section,
 body[data-page-type="category"] .slideshow-section,
@@ -4709,6 +4709,24 @@ body[data-page-type="brand"] .slideshow-section {
   }
 }
 
+
+/* Mobile: Prevent content collapse during navigation */
+@media (max-width: 768px) {
+  #dynamicSections {
+    min-height: 300px;
+    position: relative;
+  }
+  
+  .content-section {
+    min-height: 200px;
+  }
+  
+  /* Prevent flash of hidden content */
+  body[data-page-type] .hero-inner {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
 
   }
   /* ============================================
