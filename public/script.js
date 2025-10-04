@@ -3308,36 +3308,19 @@ getScaleTransform(scaling) {
       .join(' ');
   }
   showBrandView(brandName, paths, categories) {
-  // FIXED: HIDE sections (don't remove them)
-  const brandsSection = document.querySelector('.brands-section');
-  const slideshowSection = document.querySelector('.slideshow-section');
-  const heroSlideshow = document.getElementById('heroSlideshowContainer');
-  
-  if (brandsSection) {
-    brandsSection.style.display = 'none';
-    console.log('🙈 Hiding brands section (brand view)');
-  }
-  if (slideshowSection) {
-    slideshowSection.style.display = 'none';
-    console.log('🙈 Hiding slideshow section (brand view)');
-  }
-  if (heroSlideshow) {
-    heroSlideshow.style.display = 'none';
-    console.log('🙈 Hiding hero slideshow (brand view)');
-  }
+
+
+
+    document.body.setAttribute('data-page-type', 'brand');
+
   
   // Show inner hero layout
   this.showInnerHero();
   this.hideFeaturedHeading();
   
-  document.body.setAttribute('data-page-type', 'brand');
+  
   this.resetScrollPosition();
-  
-  // ... rest of your existing code (keep everything else)
-  
-  // ... rest of your existing showBrandView code
-  
-  // ... rest of function continues
+
     
     // Update hero for brand view
     const heroTitle = document.getElementById('heroTitle');
