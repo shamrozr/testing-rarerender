@@ -413,15 +413,7 @@ showHomepageHero() {
     if (subtitleHome) subtitleHome.textContent = brand.heroSubtitle || 'Curated premium products from the world\'s finest brands.';
   }
   
-  // Re-apply on window resize
-  const handleResize = () => {
-    if (homepageHero && homepageHero.style.display !== 'none') {
-      this.showHomepageHero();
-    }
-  };
-  
-  window.removeEventListener('resize', handleResize);
-  window.addEventListener('resize', handleResize);
+
 }
 
 // Show inner page hero (traditional centered)
@@ -3899,29 +3891,25 @@ setupEventListeners() {
   // Card clicks - UNIFIED PREVIEW
   // Card clicks - UNIFIED PREVIEW with debounce
 let clickTimeout;
+// Card clicks - UNIFIED PREVIEW
+let lastTap = 0;
 document.addEventListener('click', (e) => {
-  // Debounce rapid clicks
-  if (clickTimeout) return;
-  
-  clickTimeout = setTimeout(() => {
-    clickTimeout = null;
-  }, 300);
+  // Prevent double-tap issues on mobile
+  const now = Date.now();
+  if (now - lastTap < 300) {
+    return; // Ignore rapid taps
+  }
+  lastTap = now;
   
   const card = e.target.closest('.content-card, .taxonomy-item');
   if (!card) return;
   
-  // Ignore if navigation in progress
-  if (this.isNavigating) return;
-  
-
-    if (!card) return;
-    
-    const app = window.catalogApp;
-    if (!app) {
-      console.warn('⚠️ App instance not available');
-      return;
-    }
-    
+  // Prevent navigation if already in progress
+  if (this.isNavigating) {
+    e.preventDefault();
+    e.stopPropagation();
+    return;
+  }    
     const brand = card.dataset.brand;
     const category = card.dataset.category;
     const isProduct = card.dataset.isProduct === 'true';
@@ -4127,7 +4115,7 @@ navigateToPath(path) {
   }
   
   this.isNavigating = true; // 🔒 Lock
-  
+  document.body.classList.add('navigating');
   try {
     const pathSegments = path.split('/').filter(Boolean);
     this.currentPath = pathSegments;
@@ -4149,6 +4137,7 @@ navigateToPath(path) {
     // 🔓 Always unlock, even if error
     setTimeout(() => {
       this.isNavigating = false;
+      document.body.classList.remove('navigating');
     }, 300); // Unlock after 300ms
   }
 }
