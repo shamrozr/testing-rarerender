@@ -4836,8 +4836,27 @@ body[data-page-type="brand"] .brands-section {
   display: none !important;
 }
 
-/* Slideshow (reviews) can stay visible on all pages */
+/* NUCLEAR: Force hide brands section on inner pages */
+body[data-page-type="category"] .brands-section,
+body[data-page-type="brand"] .brands-section {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  pointer-events: none !important;
+}
 
+/* Ensure brands section is visible on homepage */
+body:not([data-page-type]) .brands-section {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  position: relative !important;
+  pointer-events: auto !important;
+}
 
   }
   /* ============================================
