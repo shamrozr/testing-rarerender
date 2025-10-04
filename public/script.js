@@ -694,7 +694,7 @@ showCategoryView() {
     if (brandsSection) brandsSection.style.display = 'none';
     if (slideshowSection) slideshowSection.style.display = 'none';
     if (heroSlideshow) heroSlideshow.style.display = 'none';
-    console.log('🔒 Final lock: sections hidden');
+    //console.log('🔒 Final lock: sections hidden');
   }, 100);
 }
 
@@ -904,12 +904,12 @@ renderCategoryContents(currentNode, breadcrumbs) {
   const container = document.getElementById('dynamicSections');
   if (!container) return;
 
-  console.log('🔍 DEEP NESTED DEBUG: Current node structure:', currentNode);
-  console.log('🗂️ BREADCRUMBS:', breadcrumbs.map(b => b.name).join(' > '));
+  //console.log('🔍 DEEP NESTED DEBUG: Current node structure:', currentNode);
+  //console.log('🗂️ BREADCRUMBS:', breadcrumbs.map(b => b.name).join(' > '));
 
   const items = Object.entries(currentNode).map(([key, item]) => {
     const currentPath = breadcrumbs.length > 0 ? breadcrumbs.map(b => b.name).join('/') + '/' + key : key;
-    
+/*    
     // COMPREHENSIVE DEBUG: Check ALL possible TopOrder variations
     console.log(`🔍 DEEP ITEM DEBUG for ${key} at path ${currentPath}:`, {
       fullItem: item,
@@ -928,7 +928,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
       sort: item.sort
       
     });
-
+*/
     const extractTopOrder = (item, itemKey, fullPath) => {
       // Check EVERY possible variation
       const variations = [
@@ -1068,7 +1068,7 @@ renderCategoryContents(currentNode, breadcrumbs) {
     const slideshowSection = document.querySelector('.slideshow-section');
     if (brandsSection) brandsSection.style.display = 'none';
     if (slideshowSection) slideshowSection.style.display = 'none';
-    console.log('🔒 Locked sections hidden in renderCategoryContents');
+    //console.log('🔒 Locked sections hidden in renderCategoryContents');
   }, 50);
 
 }
@@ -1087,7 +1087,7 @@ debugCSVData() {
         const currentPath = [...path, key];
         const topOrder = item.topOrder || item['Top Order'] || item.top_order || 'NOT FOUND';
         
-        console.log(`${currentPath.join('/')} - topOrder: ${topOrder}`, item);
+        //console.log(`${currentPath.join('/')} - topOrder: ${topOrder}`, item);
         
         if (item.children && !item.isProduct) {
           walkTree(item.children, currentPath);
@@ -2443,7 +2443,7 @@ groupItemsBySection() {
       // TopOrder has ABSOLUTE priority on homepage too
       if (a.topOrder !== b.topOrder) {
         const result = a.topOrder - b.topOrder;
-        console.log(`  → 🏆 HOMEPAGE TopOrder WINS: ${result > 0 ? b.title : a.title}`);
+        //console.log(`  → 🏆 HOMEPAGE TopOrder WINS: ${result > 0 ? b.title : a.title}`);
         return result;
       }
       
@@ -2766,7 +2766,7 @@ generateImageStyles(config) {
     console.log('🖼️ Using background-image method');
     return 'BACKGROUND_METHOD'; // Special flag for createCardHTML
   } else {
-console.log('📐 Using standard img tag method');
+//console.log('📐 Using standard img tag method');
     
     // FIXED: Apply explicit config OR let CSS apply global defaults
     // Never inherit folder config - each item is independent
@@ -2791,10 +2791,10 @@ console.log('📐 Using standard img tag method');
         const objectPosition = this.getObjectPosition(config.alignment);
         styles.push(`object-position: ${objectPosition}`);
       }
-      console.log(`🎯 Applied explicit alignment: ${config.alignment}`);
+      //console.log(`🎯 Applied explicit alignment: ${config.alignment}`);
     } else {
       // Item has no explicit alignment - let CSS apply global default (center center)
-      console.log(`🌍 Using global default alignment (center center) via CSS`);
+      //console.log(`🌍 Using global default alignment (center center) via CSS`);
     }
     
     // Scaling (if provided) - keep this unchanged
