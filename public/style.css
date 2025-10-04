@@ -610,17 +610,20 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-5) var(--space-6); /* Increased padding */
+  padding: var(--space-5) var(--space-6);
   border-radius: var(--radius-lg);
   border: none;
   cursor: pointer;
   font-family: var(--font-primary);
-  font-size: 1rem; /* Increased from 0.95rem */
-  line-height: 1.5; /* Increased from 1.3 */
-  transition: all var(--transition-smooth);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: transform 0.2s ease; /* CHANGED: Only transform, not "all" */
   position: relative;
   overflow: hidden;
-  min-height: 90px; /* Increased from 80px */
+  min-height: 90px;
+  height: 90px; /* ADDED: Fixed height */
+  contain: layout style paint; /* ADDED: CSS containment */
+  will-change: transform; /* ADDED: GPU hint */
 }
 
 .hero-btn strong {
@@ -682,7 +685,34 @@
     box-shadow: 0 6px 20px rgba(139, 148, 112, 0.4);
     transform: translateY(-2px);
   }
-
+/* CRITICAL: Prevent layout shift on mobile */
+@media (max-width: 768px) {
+  .hero-btn {
+    height: 80px !important; /* Fixed height on mobile */
+    min-height: 80px !important;
+    padding: var(--space-4) var(--space-5) !important;
+  }
+  
+  .hero-btn span:first-child {
+    line-height: 1.3 !important; /* Stable line height */
+  }
+  
+  .hero-btn-text-small {
+    position: absolute !important;
+    bottom: 10px !important;
+    left: 20px !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Prevent hero from shifting during load */
+  .hero {
+    min-height: 500px !important; /* Reserve space */
+  }
+  
+  .hero-content-side {
+    min-height: 350px !important; /* Reserve space */
+  }
+}
   /* INNER PAGES HERO: Traditional Centered */
   /* INNER PAGES HERO: Traditional Centered */
   .hero-inner {
@@ -1779,20 +1809,27 @@
   }
 
   .card-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    /* FIXED: Changed to pure white to match website body */
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 3rem;
-    position: relative;
-    overflow: hidden;
-    /* Add border to better define the image area */
-    border: 1px solid var(--color-border-light, #f1f3f4);
-  }
+  width: 100%;
+  height: 200px;
+  min-height: 200px; /* ADDED: Reserve space */
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border-light, #f1f3f4);
+  contain: layout style paint; /* ADDED: Prevent layout shift */
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center center;
+}
 
   /* FIXED: Ensure ALL images in cards have proper sizing with higher specificity */
   .card-image img,
@@ -4748,6 +4785,54 @@ body[data-page-type="brand"] .slideshow-section {
     transform: scale(0.98) !important; /* Touch feedback only */
   }
 }
+
+
+
+/* CRITICAL: Disable all transitions during navigation */
+body.navigating * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* NUCLEAR: Simplify hero on mobile to prevent layout shift */
+@media (max-width: 768px) {
+  .hero {
+    padding: var(--space-8) 0 var(--space-6) 0 !important;
+  }
+  
+  .hero-homepage {
+    min-height: 500px !important;
+  }
+  
+  .hero-slideshow-side {
+    aspect-ratio: 1 / 1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  .hero-title {
+    font-size: 2rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 1.5rem !important;
+  }
+  
+  /* Disable all hero animations on mobile */
+  .hero * {
+    animation: none !important;
+    transition: transform 0.2s ease !important;
+  }
+}
+
+
+
+
   }
   /* ============================================
     SKELETON LOADING SCREENS
