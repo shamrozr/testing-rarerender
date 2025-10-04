@@ -8,7 +8,7 @@ class CSVCatalogApp {
   this.currentPath = [];
   this.sections = new Map();
   this.isLoading = false;
-  
+  this.isNavigating = false;
   // Scroll behavior properties
   this.lastScrollY = 0;
   this.scrollThreshold = 100;
@@ -871,12 +871,15 @@ setTimeout(() => {
 
 renderCategoryContents(currentNode, breadcrumbs) {
   const container = document.getElementById('dynamicSections');
-  if (!container) return;
+  if (!container) {
+    return;
+  }
 
-  //console.log('🔍 DEEP NESTED DEBUG: Current node structure:', currentNode);
-  //console.log('🗂️ BREADCRUMBS:', breadcrumbs.map(b => b.name).join(' > '));
-
-  const items = Object.entries(currentNode).map(([key, item]) => {
+  // CRITICAL: Disable all pointer events during DOM replacement
+  document.body.style.pointerEvents = 'none';
+  
+  try {
+    const items = Object.entries(currentNode).map(([key, item]) => {
     const currentPath = breadcrumbs.length > 0 ? breadcrumbs.map(b => b.name).join('/') + '/' + key : key;
 /*    
     // COMPREHENSIVE DEBUG: Check ALL possible TopOrder variations
@@ -1023,17 +1026,19 @@ renderCategoryContents(currentNode, breadcrumbs) {
       </div>
     </section>
   `;
-
   if (gridClass === 'grid-smart') {
+        setTimeout(() => {
+          const gridContainer = document.getElementById(containerId);
+          if (gridContainer) this.addSmartCentering(gridContainer, items.length);
+        }, 10);
+      }
+  } finally {
+    // CRITICAL: Re-enable pointer events after DOM is stable
     setTimeout(() => {
-      const gridContainer = document.getElementById(containerId);
-      if (gridContainer) this.addSmartCentering(gridContainer, items.length);
-    }, 10);
+      document.body.style.pointerEvents = 'auto';
+    }, 100);
   }
-
-
 }
-
   
 debugCSVData() {
   console.log('=== CSV DATA DEBUG ===');
@@ -3539,7 +3544,14 @@ if (!brandThumbnail) {
   }
 
 navigateToBrandCategory(brandName, categoryName) {
-  this.resetScrollPosition();
+  if (this.isNavigating) {
+    return;
+  }
+  
+  this.isNavigating = true;
+  
+  try {
+    this.resetScrollPosition();
   
   // FIXED: Keep sections hidden when navigating to brand category
   const brandsSection = document.querySelector('.brands-section');
@@ -3577,6 +3589,11 @@ navigateToBrandCategory(brandName, categoryName) {
   
   // Show category view
   this.showCategoryView();
+  } finally {
+    setTimeout(() => {
+      this.isNavigating = false;
+    }, 300);
+  }
 }
 
   
@@ -3880,8 +3897,23 @@ setupEventListeners() {
   }
 
   // Card clicks - UNIFIED PREVIEW
-  document.addEventListener('click', (e) => {
-    const card = e.target.closest('.content-card, .taxonomy-item');
+  // Card clicks - UNIFIED PREVIEW with debounce
+let clickTimeout;
+document.addEventListener('click', (e) => {
+  // Debounce rapid clicks
+  if (clickTimeout) return;
+  
+  clickTimeout = setTimeout(() => {
+    clickTimeout = null;
+  }, 300);
+  
+  const card = e.target.closest('.content-card, .taxonomy-item');
+  if (!card) return;
+  
+  // Ignore if navigation in progress
+  if (this.isNavigating) return;
+  
+
     if (!card) return;
     
     const app = window.catalogApp;
@@ -4058,6 +4090,14 @@ updateHeaderVisibility() {
 
 // ADD this method to reset scroll position:
 resetScrollPosition() {
+
+  const isScrolling = Math.abs(window.scrollY - this.lastScrollY) > 5;
+  
+  if (!isScrolling) {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }
+
+
   // Reset header state
   const header = document.querySelector('.header');
   if (header) {
@@ -4079,31 +4119,39 @@ resetScrollPosition() {
   }, 50);
 }
 
-  navigateToPath(path) {
-  // FIXED: Reset scroll position first
-  this.resetScrollPosition();
-  
-  // Build new path
-  const pathSegments = path.split('/').filter(Boolean);
-  this.currentPath = pathSegments;
-  
-  // Update URL
-  const params = new URLSearchParams(window.location.search);
-  params.set('path', path);
-  if (this.currentBrand) {
-    params.set('brand', this.currentBrand);
+navigateToPath(path) {
+  // CRITICAL: Prevent multiple simultaneous navigations
+  if (this.isNavigating) {
+    console.warn('⚠️ Navigation already in progress, ignoring');
+    return;
   }
   
-  const newURL = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ 
-    path: pathSegments, 
-    brand: this.currentBrand 
-  }, '', newURL);
+  this.isNavigating = true; // 🔒 Lock
   
-  // Show category view
-  this.showCategoryView();
+  try {
+    const pathSegments = path.split('/').filter(Boolean);
+    this.currentPath = pathSegments;
+    
+    const params = new URLSearchParams(window.location.search);
+    params.set('path', path);
+    if (this.currentBrand) {
+      params.set('brand', this.currentBrand);
+    }
+    
+    const newURL = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({ 
+      path: pathSegments, 
+      brand: this.currentBrand 
+    }, '', newURL);
+    
+    this.showCategoryView();
+  } finally {
+    // 🔓 Always unlock, even if error
+    setTimeout(() => {
+      this.isNavigating = false;
+    }, 300); // Unlock after 300ms
+  }
 }
-
 
   openProduct(driveLink, product, productTitle) {
   console.log('🎯 openProduct called', { driveLink, hasProduct: !!product, productTitle });
@@ -4122,18 +4170,24 @@ resetScrollPosition() {
 }
 
   navigateToCategory(category) {
-  // FIXED: Reset scroll position first
-  this.resetScrollPosition();
-  
-  // Build new path
-  let newPath;
-  if (this.currentPath.length === 0) {
-    // From homepage
-    newPath = [category];
-  } else {
-    // From current path
-    newPath = [...this.currentPath, category];
+  // CRITICAL: Prevent multiple simultaneous navigations
+  if (this.isNavigating) {
+    return;
   }
+  
+  this.isNavigating = true;
+  
+  try {
+    // Reset scroll position first
+    this.resetScrollPosition();
+    
+    // Build new path
+    let newPath;
+    if (this.currentPath.length === 0) {
+      newPath = [category];
+    } else {
+      newPath = [...this.currentPath, category];
+    }
   
   // Update state
   this.currentPath = newPath;
@@ -4154,7 +4208,15 @@ resetScrollPosition() {
   
   // Show category view
   this.showCategoryView();
+} finally {
+    setTimeout(() => {
+      this.isNavigating = false;
+    }, 300);
+  }
 }
+
+
+
   // Force brand refresh when URL changes
   handleBrandNavigation() {
     const urlParams = new URLSearchParams(window.location.search);
