@@ -76,12 +76,6 @@ class CSVCatalogApp {
     const heroSlide = document.getElementById('heroSlideshowContainer');
     const bodyAttr = document.body.getAttribute('data-page-type');
     
-    console.log('🔍 VISIBILITY CHECK:', {
-      bodyAttribute: bodyAttr || 'homepage',
-      brandsDisplay: brands?.style.display || 'not set',
-      slideshowDisplay: slideshow?.style.display || 'not set',
-      heroSlideDisplay: heroSlide?.style.display || 'not set'
-    });
   }, 2000);
   
   try {
@@ -92,13 +86,11 @@ class CSVCatalogApp {
       return;
     }
 
-    // DEBUG: Verify topOrder data is available
-    console.log('🔍 Checking topOrder data after load...');
+
     if (this.data.catalog && this.data.catalog.tree) {
       Object.entries(this.data.catalog.tree).forEach(([key, item]) => {
         const topOrder = item.topOrder || item['Top Order'] || item.top_order;
         if (topOrder !== undefined) {
-          console.log(`✅ ${key} has topOrder: ${topOrder}`);
         } else {
           console.log(`❌ ${key} missing topOrder`);
         }
@@ -138,7 +130,7 @@ if (this.currentPath.length > 0) {
   if (slideshowSection) slideshowSection.style.display = 'none';
   if (heroSlideshow) heroSlideshow.style.display = 'none';
   
-  console.log('🔒 Initial hide: not on homepage');
+
 }
 // THEN control visibility based on current view
 if (this.currentPath.length > 0) {
@@ -147,11 +139,11 @@ if (this.currentPath.length > 0) {
   const slideshowSection = document.querySelector('.slideshow-section');
   if (brandsSection) {
     brandsSection.style.display = 'none';
-    console.log('🙈 Hiding brands section (category view)');
+
   }
   if (slideshowSection) {
     slideshowSection.style.display = 'none';
-    console.log('🙈 Hiding slideshow section (category view)');
+
   }
 
 
@@ -160,7 +152,7 @@ if (this.currentPath.length > 0) {
 const heroSlideshow = document.getElementById('heroSlideshowContainer');
 if (heroSlideshow) {
   heroSlideshow.style.display = 'none';
-  console.log('🙈 Hiding hero slideshow (category view)');
+
 }
 } else {
   // On homepage - show brands and slideshow
@@ -168,11 +160,11 @@ if (heroSlideshow) {
   const slideshowSection = document.querySelector('.slideshow-section');
   if (brandsSection) {
     brandsSection.style.display = 'block';
-    console.log('👁️ Showing brands section (homepage)');
+
   }
   if (slideshowSection) {
     slideshowSection.style.display = 'block';
-    console.log('👁️ Showing slideshow section (homepage)');
+
   }
 }
     
@@ -506,8 +498,6 @@ showInnerHero() {
       text-align: center !important;
     `;
     
-    console.log('✅ Inner hero shown');
-    console.log('Inner hero rect:', innerHero.getBoundingClientRect());
     
     // STEP 5: Force title and subtitle visibility
     setTimeout(() => {
@@ -1020,20 +1010,20 @@ renderCategoryContents(currentNode, breadcrumbs) {
   // DEBUG: Show extracted topOrder values with full paths
   console.log('🎯 DEEP EXTRACTED TopOrder VALUES:');
   items.forEach(item => {
-    console.log(`   ${item.fullPath}: TopOrder=${item.topOrder} (${item.isProduct ? 'PRODUCT' : 'FOLDER'})`);
+
   });
 
   // ENHANCED SORTING: TopOrder has ABSOLUTE PRIORITY at ANY depth
   const currentDepth = breadcrumbs.length;
-  console.log(`📊 DEEP SORTING ${items.length} items at depth ${currentDepth} by TopOrder (absolute priority)`);
+
 
   items.sort((a, b) => {
-    console.log(`🔄 DEEP Comparing: ${a.title}(${a.topOrder}) vs ${b.title}(${b.topOrder})`);
+
     
     // TopOrder has ABSOLUTE PRIORITY - works at any depth
     if (a.topOrder !== b.topOrder) {
       const result = a.topOrder - b.topOrder;
-      console.log(`  → 🏆 DEEP TopOrder WINS: ${result > 0 ? b.title : a.title} (${result > 0 ? b.topOrder : a.topOrder})`);
+
       return result;
     }
     
@@ -1051,10 +1041,6 @@ renderCategoryContents(currentNode, breadcrumbs) {
     return a.title.localeCompare(b.title);
   });
 
-  console.log(`✅ DEEP FINAL SORT ORDER at depth ${currentDepth}:`);
-  items.forEach((item, index) => {
-    console.log(`   ${index + 1}. ${item.title} (TopOrder: ${item.topOrder})`);
-  });
 
   const gridClass = this.getGridClass(items.length);
   const containerId = `category-${Math.random().toString(36).substr(2, 9)}`;
@@ -2036,15 +2022,15 @@ navigateToHome() {
   // FORCE SHOW sections on homepage
   if (brandsSection) {
     brandsSection.style.display = 'block';
-    console.log('👁️ FORCE SHOWING brands section (homepage)');
+
   }
   if (slideshowSection) {
     slideshowSection.style.display = 'block';
-    console.log('👁️ FORCE SHOWING slideshow section (homepage)');
+
   }
   if (heroSlideshow) {
     heroSlideshow.style.display = 'block';
-    console.log('👁️ FORCE SHOWING hero slideshow (homepage)');
+
   }
   
   // Reset hero
@@ -2425,7 +2411,7 @@ groupItemsBySection() {
         if (value !== undefined && value !== null && value !== '') {
           const parsed = parseInt(value);
           if (!isNaN(parsed)) {
-            console.log(`✅ HOMEPAGE TopOrder for ${key}: ${variation} = ${parsed}`);
+
             return parsed;
           }
         }
@@ -2452,7 +2438,7 @@ groupItemsBySection() {
   // FIXED: Sort each section by TopOrder on HOMEPAGE
   this.sections.forEach((items, sectionName) => {
     items.sort((a, b) => {
-      console.log(`🏠 HOMEPAGE sorting in ${sectionName}: ${a.title}(${a.topOrder}) vs ${b.title}(${b.topOrder})`);
+
       
       // TopOrder has ABSOLUTE priority on homepage too
       if (a.topOrder !== b.topOrder) {
@@ -2470,7 +2456,7 @@ groupItemsBySection() {
       return a.title.localeCompare(b.title);
     });
     
-    console.log(`📋 Final HOMEPAGE ${sectionName} order:`, items.map(item => `${item.title}(${item.topOrder})`));
+
   });
 }  
   createSectionHTML(sectionName, items) {
@@ -2539,7 +2525,7 @@ createCardHTML(item) {
   
   // Extract image config
   const imageConfig = this.extractImageConfig(item);
-  console.log('🔍 Image config for', item.title, ':', imageConfig);
+
   
   let imageContent = '';
   
@@ -2548,7 +2534,7 @@ createCardHTML(item) {
     const isBackgroundMethod = this.isBackgroundImageMethod(imageConfig.fitting);
     
     if (isBackgroundMethod) {
-      console.log('🖼️ Using background-image method for', item.title);
+
       
       // Generate background-image styles
       const backgroundStyles = this.generateBackgroundImageStyles(imageSrc, imageConfig);
@@ -2557,7 +2543,7 @@ createCardHTML(item) {
       imageContent = `<div class="card-image-background" style="${backgroundStyles}" data-method="background"></div>`;
       
     } else {
-      console.log('📐 Using standard img tag method for', item.title);
+
       
       // Generate standard img styles
       const imageStyles = this.generateImageStyles(imageConfig);
@@ -2607,7 +2593,7 @@ createCardHTML(item) {
 }
 
 extractImageConfig(item) {
-  console.log('Item data for image config:', item);
+
   
   // Extract raw values - only from explicit CSV data
   const rawAlignment = item.alignment || item.Alignment || item.ALIGNMENT || 
@@ -2628,14 +2614,14 @@ extractImageConfig(item) {
                            (rawScaling && rawScaling.trim() !== '');
   
   if (hasExplicitConfig) {
-    console.log(`✅ EXPLICIT config found for ${item.title || item.key}`);
+
     return {
       alignment: (rawAlignment && rawAlignment.trim() !== '') ? rawAlignment : null,
       fitting: (rawFitting && rawFitting.trim() !== '') ? rawFitting : null,     
       scaling: (rawScaling && rawScaling.trim() !== '') ? rawScaling : null
     };
   } else {
-    console.log(`🌍 GLOBAL defaults will apply for ${item.title || item.key}`);
+
     return {
       alignment: null, // Will get global default (center center)
       fitting: null,   // Will get global default (cover)
@@ -2769,7 +2755,7 @@ getKeywordPosition(alignmentStr) {
 }
 // 2. REPLACE the generateImageStyles function in public/script.js:
 generateImageStyles(config) {
-  console.log('🎯 Generating styles with config:', config);
+
   
   const styles = [];
   
@@ -2792,7 +2778,7 @@ console.log('📐 Using standard img tag method');
       console.log(`🎯 Applied explicit fitting: ${fitMethod}`);
     } else {
       // Item has no explicit fitting - let CSS apply global default (cover)
-      console.log(`🌍 Using global default fitting (cover) via CSS`);
+
     }
 
     if (config.alignment && config.alignment.trim() !== '') {
@@ -2867,7 +2853,7 @@ generateBackgroundImageStyles(imageSrc, config) {
   // Support ALL positioning methods
   const backgroundPosition = this.getBackgroundPosition(config.alignment);
   styles.push(`background-position: ${backgroundPosition}`);
-  console.log('🎯 Applied background-position:', backgroundPosition);
+
   
   // Never repeat
   styles.push(`background-repeat: no-repeat`);
@@ -2879,7 +2865,7 @@ generateBackgroundImageStyles(imageSrc, config) {
   styles.push(`transition: all var(--transition-smooth, 0.3s ease)`);
   
   const finalStyles = styles.join('; ');
-  console.log('🎨 Complete background styles:', finalStyles);
+
   
   return finalStyles;
 }
@@ -2890,7 +2876,7 @@ generateBackgroundImageStyles(imageSrc, config) {
 getBackgroundSize(fitting) {
 
   const fittingStr = String(fitting).toLowerCase().trim();
-  console.log(`🔍 Processing fitting: "${fittingStr}"`);
+
   
   // Handle "natural" combinations
   if (fittingStr.includes('natural')) {
@@ -4008,47 +3994,15 @@ setupEventListeners() {
   window.addEventListener('popstate', (e) => {
     this.handleBrowserNavigation();
   });
-
-
-
-
-
-
-
-
-
-
-  
-  // ============================================
-  // 👇 Added: Touch/gesture prevention snippet
-  // ============================================
-  
-  // FIXED: Prevent double-tap zoom with JavaScript backup
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', (e) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) {
-      e.preventDefault();
-    }
-    lastTouchEnd = now;
-  }, { passive: false });
-  
-  // Prevent pinch zoom
-  document.addEventListener('gesturestart', (e) => {
-    e.preventDefault();
-  });
-  
-  document.addEventListener('gesturechange', (e) => {
-    e.preventDefault();
-  });
-  
-  document.addEventListener('gestureend', (e) => {
-    e.preventDefault();
-  });
 }
 
-    // ADD THIS COMPLETE FUNCTION RIGHT HERE (inside the class)
-  setupSectionVisibilityEnforcer() {
+
+
+
+
+
+
+setupSectionVisibilityEnforcer() {
     const enforceVisibility = () => {
       const pageType = document.body.getAttribute('data-page-type');
       const brands = document.querySelector('.brands-section');
@@ -4056,56 +4010,37 @@ setupEventListeners() {
       const heroSlide = document.getElementById('heroSlideshowContainer');
       
       if (pageType === 'category' || pageType === 'brand') {
-        // FORCE HIDE on category pages
-        if (brands && brands.style.display !== 'none') {
-          brands.style.display = 'none';
-          console.log('⚡ ENFORCER: Hiding brands');
-        }
-        if (slideshow && slideshow.style.display !== 'none') {
-          slideshow.style.display = 'none';
-          console.log('⚡ ENFORCER: Hiding slideshow');
-        }
-        if (heroSlide && heroSlide.style.display !== 'none') {
-          heroSlide.style.display = 'none';
-          console.log('⚡ ENFORCER: Hiding hero slideshow');
-        }
+        if (brands) brands.style.display = 'none';
+        if (slideshow) slideshow.style.display = 'none';
+        if (heroSlide) heroSlide.style.display = 'none';
       } else {
-        // FORCE SHOW on homepage
-        if (brands && brands.style.display !== 'block') {
-          brands.style.display = 'block';
-          console.log('⚡ ENFORCER: Showing brands');
-        }
-        if (slideshow && slideshow.style.display !== 'block') {
-          slideshow.style.display = 'block';
-          console.log('⚡ ENFORCER: Showing slideshow');
-        }
-        if (heroSlide && heroSlide.style.display !== 'block') {
-          heroSlide.style.display = 'block';
-          console.log('⚡ ENFORCER: Showing hero slideshow');
-        }
+        if (brands) brands.style.display = 'block';
+        if (slideshow) slideshow.style.display = 'block';
+        if (heroSlide) heroSlide.style.display = 'block';
       }
     };
     
-    // Run every 100ms to catch any changes
-    setInterval(enforceVisibility, 100);
-    
-    // Also watch for body attribute changes
+    // ✅ ONLY use MutationObserver - NO setInterval
     const observer = new MutationObserver(enforceVisibility);
     observer.observe(document.body, { attributes: true, attributeFilter: ['data-page-type'] });
     
-    console.log('⚡ Section visibility enforcer activated');
+    // Run once on setup
+    enforceVisibility();
   }
 
-// ADD this method after setupEventListeners():
+
 setupScrollBehavior() {
   const header = document.querySelector('.header');
   if (!header) return;
 
   let ticking = false;
+  let lastKnownScrollPosition = 0;
 
   const handleScroll = () => {
+    lastKnownScrollPosition = window.scrollY;
+    
     if (!ticking) {
-      requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
         this.updateHeaderVisibility();
         ticking = false;
       });
@@ -4113,8 +4048,17 @@ setupScrollBehavior() {
     }
   };
 
-  // Throttled scroll listener
-  window.addEventListener('scroll', handleScroll, { passive: true });
+  // Throttled scroll listener with debounce protection
+  let scrollTimeout;
+  const debouncedScroll = () => {
+    clearTimeout(scrollTimeout);
+    handleScroll();
+    scrollTimeout = setTimeout(() => {
+      handleScroll(); // Final update when scrolling stops
+    }, 150);
+  };
+
+  window.addEventListener('scroll', debouncedScroll, { passive: true });
 }
 
     findProductByPath(pathString) {
@@ -4145,7 +4089,6 @@ setupScrollBehavior() {
   return null;
 }
 
-// ADD this method after setupScrollBehavior():
 updateHeaderVisibility() {
   const header = document.querySelector('.header');
   if (!header) return;
@@ -4154,28 +4097,24 @@ updateHeaderVisibility() {
   const scrollDelta = currentScrollY - this.lastScrollY;
   const pastThreshold = currentScrollY > this.scrollThreshold;
 
-  // FIXED: More sensitive upward scroll detection
-  // Show header on ANY upward movement (scrollDelta < 0)
-  // But require at least 15px of movement to avoid false triggers
-  const isScrollingUp = scrollDelta < -15; // 15px minimum upward movement
-  const isScrollingDown = scrollDelta > 5; // 5px minimum downward movement
+  const isScrollingUp = scrollDelta < -15;
+  const isScrollingDown = scrollDelta > 5;
 
+  // Batch DOM changes
   if (pastThreshold && isScrollingDown && !this.isHeaderCollapsed) {
-    // Scrolling down - hide header
     header.classList.add('collapsed');
     this.isHeaderCollapsed = true;
   } else if (isScrollingUp && this.isHeaderCollapsed) {
-    // FIXED: Any clear upward scroll shows header (no threshold check)
     header.classList.remove('collapsed');
     this.isHeaderCollapsed = false;
-  } else if (!pastThreshold) {
-    // At top of page - always show header
+  } else if (!pastThreshold && this.isHeaderCollapsed) {
     header.classList.remove('collapsed');
     this.isHeaderCollapsed = false;
   }
 
   this.lastScrollY = currentScrollY;
 }
+
 
 // ADD this method to reset scroll position:
 resetScrollPosition() {
