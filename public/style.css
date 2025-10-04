@@ -4830,7 +4830,13 @@ body.navigating * {
   }
 }
 
+/* UPDATED: Only hide brands section on inner pages, keep slideshow */
+body[data-page-type="category"] .brands-section,
+body[data-page-type="brand"] .brands-section {
+  display: none !important;
+}
 
+/* Slideshow (reviews) can stay visible on all pages */
 
 
   }
